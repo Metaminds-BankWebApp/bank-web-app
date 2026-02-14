@@ -1,26 +1,112 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --primecore-background: #f3f5f7;
+  --primecore-foreground: #1f2937;
+  --primecore-border: #d9dee5;
+  --primecore-primary: #2f9d94;
+  --primecore-deep: #025f67;
+  --primecore-navy: #063154;
+  --primecore-surface: #ffffff;
+  --primecore-surface-soft: #eef2f6;
+  --badge-success-bg: #dcfce7;
+  --badge-success-border: #86efac;
+  --badge-success-text: #166534;
+  --badge-warning-bg: #fef3c7;
+  --badge-warning-border: #fcd34d;
+  --badge-warning-text: #92400e;
+  --badge-danger-bg: #fee2e2;
+  --badge-danger-border: #fca5a5;
+  --badge-danger-text: #991b1b;
+  --badge-info-bg: #eaf7f6;
+  --badge-info-border: #9fcfcb;
+  --badge-info-text: #0f6f74;
+  --notice-success-bg: #ecfdf3;
+  --notice-success-border: #bbf7d0;
+  --notice-success-text: #166534;
+  --notice-success-subtext: #166534;
+  --notice-danger-bg: #fef2f2;
+  --notice-danger-border: #fecaca;
+  --notice-danger-text: #991b1b;
+  --notice-danger-subtext: #991b1b;
+  --notice-warning-bg: #fffbeb;
+  --notice-warning-border: #fde68a;
+  --notice-warning-text: #92400e;
+  --notice-warning-subtext: #92400e;
+  --toast-success-bg: #ffffff;
+  --toast-success-border: #86efac;
+  --toast-success-text: #166534;
+  --toast-danger-bg: #ffffff;
+  --toast-danger-border: #fca5a5;
+  --toast-danger-text: #991b1b;
+  --toast-info-bg: #ffffff;
+  --toast-info-border: #9fcfcb;
+  --toast-info-text: #063154;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.dark {
+  color-scheme: dark;
+  --primecore-background: #063154;
+  --primecore-foreground: #f7f6f2;
+  --primecore-border: rgba(188, 197, 204, 0.35);
+  --primecore-primary: #2f9d94;
+  --primecore-deep: #5eead4; /* Lighter teal for dark mode */
+  --primecore-navy: #e0f2fe; /* Light blue text for dark mode */
+  --primecore-surface: #0a2944;
+  --primecore-surface-soft: #0e3555;
+  --badge-success-bg: color-mix(in oklab, #065f46 46%, transparent);
+  --badge-success-border: #047857;
+  --badge-success-text: #d1fae5;
+  --badge-warning-bg: color-mix(in oklab, #92400e 48%, transparent);
+  --badge-warning-border: #b45309;
+  --badge-warning-text: #fef3c7;
+  --badge-danger-bg: color-mix(in oklab, #991b1b 48%, transparent);
+  --badge-danger-border: #b91c1c;
+  --badge-danger-text: #fee2e2;
+  --badge-info-bg: color-mix(in oklab, #2f9d94 28%, transparent);
+  --badge-info-border: color-mix(in oklab, #2f9d94 55%, transparent);
+  --badge-info-text: #f7f6f2;
+  --notice-success-bg: color-mix(in oklab, #065f46 24%, transparent);
+  --notice-success-border: color-mix(in oklab, #047857 52%, transparent);
+  --notice-success-text: #d1fae5;
+  --notice-success-subtext: color-mix(in oklab, #d1fae5 84%, transparent);
+  --notice-danger-bg: color-mix(in oklab, #991b1b 26%, transparent);
+  --notice-danger-border: color-mix(in oklab, #b91c1c 52%, transparent);
+  --notice-danger-text: #fee2e2;
+  --notice-danger-subtext: color-mix(in oklab, #fee2e2 84%, transparent);
+  --notice-warning-bg: color-mix(in oklab, #92400e 24%, transparent);
+  --notice-warning-border: color-mix(in oklab, #b45309 52%, transparent);
+  --notice-warning-text: #fef3c7;
+  --notice-warning-subtext: color-mix(in oklab, #fef3c7 84%, transparent);
+  --toast-success-bg: color-mix(in oklab, #065f46 34%, transparent);
+  --toast-success-border: color-mix(in oklab, #047857 60%, transparent);
+  --toast-success-text: #d1fae5;
+  --toast-danger-bg: color-mix(in oklab, #991b1b 34%, transparent);
+  --toast-danger-border: color-mix(in oklab, #b91c1c 60%, transparent);
+  --toast-danger-text: #fee2e2;
+  --toast-info-bg: color-mix(in oklab, #2f9d94 32%, transparent);
+  --toast-info-border: color-mix(in oklab, #2f9d94 60%, transparent);
+  --toast-info-text: #f7f6f2;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--primecore-border);
   }
-}
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  body {
+    min-height: 100vh;
+    background-color: var(--primecore-background);
+    color: var(--primecore-foreground);
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color 300ms ease-out, color 300ms ease-out;
+  }
+
+  ::selection {
+    background-color: var(--primecore-primary);
+    color: var(--primecore-surface);
+  }
 }
