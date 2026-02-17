@@ -27,8 +27,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             "w-full rounded-lg border bg-(--primecore-surface) px-3.5 py-2.5 text-sm text-(--primecore-foreground)",
             "placeholder:text-(--primecore-foreground)/55",
             "border-(--primecore-border) focus-visible:outline-none",
-            "focus-visible:ring-2 focus-visible:ring-[#2F9D94] focus-visible:ring-offset-2",
-            "ring-offset-(--primecore-foreground)",
+            "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+            "ring-offset-background",
             error && "border-red-500 focus-visible:ring-red-500",
             className,
           )}

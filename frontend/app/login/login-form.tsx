@@ -142,9 +142,9 @@ export function LoginForm() {
   }
 
   return (
-    <section className="w-full max-w-xl space-y-8 text-[#1f2937]">
+    <section className="w-full max-w-xl space-y-8 text-(--primecore-foreground)">
       <header className="space-y-2">
-        <h1 className="text-2xl text-center font-bold text-[#0d3b66]">Login</h1>
+        <h1 className="text-2xl text-center font-bold text-(--primecore-foreground)">Login</h1>
       </header>
 
       <form onSubmit={onSubmit} className="space-y-5">
@@ -155,8 +155,8 @@ export function LoginForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           placeholder="Email"
-          labelClassName="text-[#6b7280]"
-          className="h-14 rounded-2xl border-[#d9dee5] bg-white text-[#1f2937] placeholder:text-[#9ca3af] ring-offset-white"
+          labelClassName="text-(--primecore-foreground)/70"
+          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
         />
 
         <Input
@@ -166,17 +166,17 @@ export function LoginForm() {
           value={password}
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Password"
-          labelClassName="text-[#6b7280]"
-          className="h-14 rounded-2xl border-[#d9dee5] bg-white text-[#1f2937] placeholder:text-[#9ca3af] ring-offset-white"
+          labelClassName="text-(--primecore-foreground)/70"
+          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
         />
 
         <div className="space-y-1.5">
-          <label htmlFor="login-role" className="text-sm font-medium text-[#6b7280]">Role (demo fallback)</label>
+          <label htmlFor="login-role" className="text-sm font-medium text-(--primecore-foreground)/70">Role (demo fallback)</label>
           <select
             id="login-role"
             value={selectedRole}
             onChange={(event) => setSelectedRole(event.target.value as UserRole)}
-            className="h-14 w-full rounded-2xl border border-[#d9dee5] bg-white px-4 text-sm text-[#1f2937] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2F9D94] focus-visible:ring-offset-2 ring-offset-white"
+            className="h-14 w-full rounded-2xl border border-(--primecore-border) bg-(--primecore-surface) px-4 text-sm text-(--primecore-foreground) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ring-offset-background"
           >
             {roleOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -188,13 +188,13 @@ export function LoginForm() {
 
         {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 
-        <Button type="submit" className="mt-3 h-12 w-full rounded-xl bg-[#0d3b66] text-xl font-semibold hover:bg-[#0b3155]" loading={isSubmitting}>
+        <Button type="submit" className="mt-3 h-12 w-full rounded-xl bg-primary text-xl font-semibold text-white hover:bg-primary/90" loading={isSubmitting}>
           {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
 
-        <p className="text-center text-sm text-[#6b7280]">
+        <p className="text-center text-sm text-(--primecore-foreground)/70">
           Back to{" "}
-          <Link href="/register" className="font-medium text-[#1f2937] underline-offset-4 hover:underline">
+          <Link href="/register" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
             registration page
           </Link>
         </p>

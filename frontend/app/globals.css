@@ -2,14 +2,14 @@
 
 :root {
   color-scheme: light;
-  --primecore-background: #f3f5f7;
-  --primecore-foreground: #1f2937;
-  --primecore-border: #d9dee5;
-  --primecore-primary: #2f9d94;
-  --primecore-deep: #025f67;
-  --primecore-navy: #063154;
+  --primecore-background: #edf2ff;
+  --primecore-foreground: #0f172a;
+  --primecore-border: #d6e0f4;
+  --primecore-primary: #3b82f6;
+  --primecore-deep: #1d4ed8;
+  --primecore-navy: #1e293b;
   --primecore-surface: #ffffff;
-  --primecore-surface-soft: #eef2f6;
+  --primecore-surface-soft: #eaf0ff;
   --badge-success-bg: #dcfce7;
   --badge-success-border: #86efac;
   --badge-success-text: #166534;
@@ -47,47 +47,64 @@
 
 .dark {
   color-scheme: dark;
-  --primecore-background: #063154;
-  --primecore-foreground: #f7f6f2;
-  --primecore-border: rgba(188, 197, 204, 0.35);
-  --primecore-primary: #2f9d94;
-  --primecore-deep: #5eead4; /* Lighter teal for dark mode */
-  --primecore-navy: #e0f2fe; /* Light blue text for dark mode */
-  --primecore-surface: #0a2944;
-  --primecore-surface-soft: #0e3555;
-  --badge-success-bg: color-mix(in oklab, #065f46 46%, transparent);
-  --badge-success-border: #047857;
-  --badge-success-text: #d1fae5;
-  --badge-warning-bg: color-mix(in oklab, #92400e 48%, transparent);
-  --badge-warning-border: #b45309;
-  --badge-warning-text: #fef3c7;
-  --badge-danger-bg: color-mix(in oklab, #991b1b 48%, transparent);
-  --badge-danger-border: #b91c1c;
-  --badge-danger-text: #fee2e2;
-  --badge-info-bg: color-mix(in oklab, #2f9d94 28%, transparent);
-  --badge-info-border: color-mix(in oklab, #2f9d94 55%, transparent);
-  --badge-info-text: #f7f6f2;
-  --notice-success-bg: color-mix(in oklab, #065f46 24%, transparent);
-  --notice-success-border: color-mix(in oklab, #047857 52%, transparent);
+  /* Deep void background inspired by the dashboard image */
+  --primecore-background: #060814;
+  --primecore-foreground: #FFFFFF;
+  
+  /* Glassy/Subtle borders */
+  --primecore-border: rgba(194, 214, 255, 0.16);
+  
+  /* Electric Blue/Purple tones for Primary */
+  --primecore-primary: #4F46E5; /* Indigo/Blue vibe */
+  --primecore-deep: #4338ca;
+  --primecore-navy: #1e1b4b;
+
+  /* Card Surfaces - Darker, cleaner */
+  --primecore-surface: #0d1324;
+  --primecore-surface-soft: #17213d;
+
+  /* Adjust badges to fit the neon/dark aesthetic */
+  --badge-success-bg: rgba(16, 185, 129, 0.15);
+  --badge-success-border: rgba(16, 185, 129, 0.25);
+  --badge-success-text: #34d399;
+  
+  --badge-warning-bg: rgba(245, 158, 11, 0.15);
+  --badge-warning-border: rgba(245, 158, 11, 0.25);
+  --badge-warning-text: #fbbf24;
+  
+  --badge-danger-bg: rgba(239, 68, 68, 0.15);
+  --badge-danger-border: rgba(239, 68, 68, 0.25);
+  --badge-danger-text: #f87171;
+  
+  --badge-info-bg: rgba(59, 130, 246, 0.15);
+  --badge-info-border: rgba(59, 130, 246, 0.25);
+  --badge-info-text: #60a5fa;
+
+  /* Notices/Toasts - keeping similar transparency logic */
+  --notice-success-bg: rgba(6, 95, 70, 0.3);
+  --notice-success-border: rgba(5, 150, 105, 0.4);
   --notice-success-text: #d1fae5;
-  --notice-success-subtext: color-mix(in oklab, #d1fae5 84%, transparent);
-  --notice-danger-bg: color-mix(in oklab, #991b1b 26%, transparent);
-  --notice-danger-border: color-mix(in oklab, #b91c1c 52%, transparent);
+  --notice-success-subtext: #a7f3d0;
+  
+  --notice-danger-bg: rgba(153, 27, 27, 0.3);
+  --notice-danger-border: rgba(220, 38, 38, 0.4);
   --notice-danger-text: #fee2e2;
-  --notice-danger-subtext: color-mix(in oklab, #fee2e2 84%, transparent);
-  --notice-warning-bg: color-mix(in oklab, #92400e 24%, transparent);
-  --notice-warning-border: color-mix(in oklab, #b45309 52%, transparent);
+  --notice-danger-subtext: #fecaca;
+  
+  --notice-warning-bg: rgba(146, 64, 14, 0.3);
+  --notice-warning-border: rgba(217, 119, 6, 0.4);
   --notice-warning-text: #fef3c7;
-  --notice-warning-subtext: color-mix(in oklab, #fef3c7 84%, transparent);
-  --toast-success-bg: color-mix(in oklab, #065f46 34%, transparent);
-  --toast-success-border: color-mix(in oklab, #047857 60%, transparent);
-  --toast-success-text: #d1fae5;
-  --toast-danger-bg: color-mix(in oklab, #991b1b 34%, transparent);
-  --toast-danger-border: color-mix(in oklab, #b91c1c 60%, transparent);
-  --toast-danger-text: #fee2e2;
-  --toast-info-bg: color-mix(in oklab, #2f9d94 32%, transparent);
-  --toast-info-border: color-mix(in oklab, #2f9d94 60%, transparent);
-  --toast-info-text: #f7f6f2;
+  --notice-warning-subtext: #fde68a;
+
+  --toast-success-bg: #0F111A;
+  --toast-success-border: #059669;
+  --toast-success-text: #34d399;
+  --toast-danger-bg: #0F111A;
+  --toast-danger-border: #dc2626;
+  --toast-danger-text: #f87171;
+  --toast-info-bg: #0F111A;
+  --toast-info-border: #2563eb;
+  --toast-info-text: #60a5fa;
 }
 
 @layer base {
@@ -98,11 +115,23 @@
   body {
     min-height: 100vh;
     background-color: var(--primecore-background);
+    background-image:
+      radial-gradient(1200px 560px at 12% -8%, rgba(59, 130, 246, 0.2), transparent 60%),
+      radial-gradient(1100px 560px at 100% 8%, rgba(99, 102, 241, 0.16), transparent 62%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(237, 242, 255, 0.7));
     color: var(--primecore-foreground);
     font-family: var(--font-geist-sans), system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background-color 300ms ease-out, color 300ms ease-out;
+    transition: background-color 300ms ease-out, background-image 300ms ease-out, color 300ms ease-out;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(1200px 560px at 12% -8%, rgba(56, 189, 248, 0.24), transparent 60%),
+      radial-gradient(1200px 620px at 96% 2%, rgba(79, 70, 229, 0.35), transparent 62%),
+      radial-gradient(900px 480px at 50% 102%, rgba(37, 99, 235, 0.2), transparent 70%),
+      linear-gradient(180deg, #050a1f 0%, #060814 50%, #040610 100%);
   }
 
   ::selection {

@@ -18,7 +18,7 @@ export function Navbar({ className }: NavbarProps) {
     <header className={cn("sticky top-0 z-50 border-b border-(--primecore-border) bg-(--primecore-surface)/95 backdrop-blur", className)}>
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 text-base font-semibold text-(--primecore-foreground)">
-          <Building2 size={18} className="text-[#2F9D94]" />
+          <Building2 size={18} className="text-primary" />
           <span>{siteConfig.name}</span>
         </Link>
 
@@ -43,7 +43,7 @@ export function Navbar({ className }: NavbarProps) {
           </Link>
           <Link
             href={siteConfig.navbar.auth.signup.href}
-            className="inline-flex h-9 items-center justify-center rounded-xl bg-[#2F9D94] px-3 text-sm font-medium text-[#F7F6F2] transition-colors hover:bg-[#258b84]"
+            className="inline-flex h-9 items-center justify-center rounded-xl bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-primary/90"
           >
             {siteConfig.navbar.auth.signup.title}
           </Link>
@@ -82,7 +82,7 @@ export function Navbar({ className }: NavbarProps) {
               </Link>
               <Link
                 href={siteConfig.navbar.auth.signup.href}
-                className="inline-flex h-9 flex-1 items-center justify-center rounded-xl bg-[#2F9D94] px-3 text-sm font-medium text-[#F7F6F2] transition-colors hover:bg-[#258b84]"
+                className="inline-flex h-9 flex-1 items-center justify-center rounded-xl bg-primary px-3 text-sm font-medium text-white transition-colors hover:bg-primary/90"
               >
                 {siteConfig.navbar.auth.signup.title}
               </Link>

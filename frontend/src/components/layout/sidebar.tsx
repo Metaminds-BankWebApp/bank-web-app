@@ -68,7 +68,7 @@ export function Sidebar({ role, className }: SidebarProps) {
             logout();
             router.replace("/login?force=true");
           }}
-          className="relative flex w-full items-center gap-3 rounded-lg px-6 py-3 text-left text-sm font-semibold text-white/85 transition-colors hover:bg-white/12"
+          className="relative flex w-full items-center gap-3 rounded-lg px-6 py-3 text-left text-sm font-semibold text-white/90 transition-colors hover:bg-white/12"
         >
           <Icon size={18} className="text-white/75" />
           <span>{item.title}</span>
@@ -96,8 +96,8 @@ export function Sidebar({ role, className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "sticky top-0 flex h-screen w-full flex-col overflow-y-auto text-white md:w-[260px]",
-        roleConfig.colorClass,
+        "sticky top-0 flex h-screen w-full flex-col overflow-y-auto text-white md:w-65",
+        "bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)]",
         className,
       )}
     >

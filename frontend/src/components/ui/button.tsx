@@ -6,13 +6,13 @@ type ButtonSize = "sm" | "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-[#2F9D94] text-[#F7F6F2] shadow-[0_8px_18px_-14px_rgba(2,95,103,0.9)] hover:bg-[#258b84] dark:bg-[linear-gradient(120deg,#2F9D94,#025F67)] dark:hover:brightness-105",
+    "bg-primary text-white shadow-[0_8px_18px_-14px_rgba(79,70,229,0.5)] hover:bg-primary/90 hover:brightness-110 active:scale-[0.98] transition-transform duration-200 dark:bg-[linear-gradient(120deg,var(--primecore-primary),#4338ca)] dark:shadow-[0_4px_20px_-8px_rgba(79,70,229,0.7)]",
   secondary:
-    "bg-[#15466f] text-[#F7F6F2] hover:bg-[#0f3b5f] dark:bg-[#113a5e] dark:hover:bg-[#17507f]",
+    "bg-(--primecore-surface-soft) text-(--primecore-foreground) hover:bg-(--primecore-surface-soft)/90 dark:bg-(--primecore-surface-soft) dark:text-white dark:hover:bg-(--primecore-surface-soft)/80 border border-(--primecore-border)",
   outline:
-    "border border-(--primecore-border) bg-transparent text-(--primecore-foreground) hover:bg-[#2F9D94]/10 dark:hover:bg-[#2F9D94]/14",
+    "border border-(--primecore-border) bg-transparent text-(--primecore-foreground) hover:bg-primary/10 hover:border-primary/50 dark:hover:bg-primary/15",
   ghost:
-    "bg-transparent text-(--primecore-foreground) hover:bg-[#2F9D94]/10 dark:hover:bg-[#2F9D94]/20",
+    "bg-transparent text-(--primecore-foreground) hover:bg-primary/10 dark:hover:bg-primary/20",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

@@ -13,12 +13,14 @@ const config: Config = {
         background: "var(--primecore-background)",
         foreground: "var(--primecore-foreground)",
         border: "var(--primecore-border)",
+        surface: "var(--primecore-surface)",
+        "surface-soft": "var(--primecore-surface-soft)",
         primary: {
-          DEFAULT: "#2F9D94",
-          foreground: "#F7F6F2",
+          DEFAULT: "var(--primecore-primary)",
+          foreground: "var(--primecore-foreground)",
         },
-        deep: "#025F67",
-        navy: "#063154",
+        deep: "var(--primecore-deep)",
+        navy: "var(--primecore-navy)",
       },
       fontFamily: {
         sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],

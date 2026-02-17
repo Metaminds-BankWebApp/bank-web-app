@@ -1,33 +1,33 @@
 "use client";
 
 import {
+  ArrowRightLeft,
+  Banknote,
   Car,
-  Download,
-  FilePlus2,
+  Clock,
+  LayoutDashboard,
+  FileClock,
   FileText,
   GraduationCap,
+  HelpCircle,
   History,
   Home,
-  Info,
-  LayoutDashboard,
-  LineChart,
+  Lightbulb,
   LogOut,
   PieChart,
-  PlusCircle,
-  Receipt,
-  Send,
   Settings,
-  ShieldCheck,
+  TrendingUp,
   User,
-  ChevronLeft,
-  ChevronRight,
+  UserPlus,
+  Wallet,
+  Receipt,
+  Grid
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store";
-import { ModeToggle } from "@/src/components/mode-toggle";
 
 type FeatureKey = "spendiq" | "creditlens" | "loansense" | "transact";
 type FeatureRole = "PUBLIC_CUSTOMER" | "BANK_CUSTOMER";
@@ -35,80 +35,127 @@ type FeatureRole = "PUBLIC_CUSTOMER" | "BANK_CUSTOMER";
 type FeatureMeta = {
   title: string;
   hrefByRole: Record<FeatureRole, string>;
-  icon: "line-chart" | "shield-check" | "file-text" | "send";
+  subtitle?: string;
   colorClass: string;
 };
 
 type SubNavItem = {
   title: string;
-  hrefSuffix: string;
+  href: string; // Changed from hrefSuffix for clarity, or construct it
   icon: React.ComponentType<{ size?: number; className?: string }>;
+};
+
+type SidebarSection = {
+  label?: string;
+  items: SubNavItem[];
 };
 
 const featureMeta: Record<FeatureKey, FeatureMeta> = {
   spendiq: {
-    title: "SpendIQ",
+    title: "PrimeCore",
+    subtitle: "SpendIQ",
     hrefByRole: {
       PUBLIC_CUSTOMER: "/public-customer/spendiq",
       BANK_CUSTOMER: "/bank-customer/spendiq",
     },
-    icon: "line-chart",
-    colorClass: "bg-[#3e9fd3]",
+    colorClass: "bg-[#0b1a3a]", // Dark Navy
   },
   creditlens: {
-    title: "CreditLens",
+    title: "PrimeCore",
+    subtitle: "CreditLens",
     hrefByRole: {
       PUBLIC_CUSTOMER: "/public-customer/creditlens",
       BANK_CUSTOMER: "/bank-customer/creditlens",
     },
-    icon: "shield-check",
-    colorClass: "bg-[#0d3b66]",
+    colorClass: "bg-[#0a234c]", // Slightly lighter/teal navy
   },
   loansense: {
-    title: "LoanSense",
+    title: "PrimeCore",
+    subtitle: "LoanSense",
     hrefByRole: {
-      PUBLIC_CUSTOMER: "/public-customer", // Not accessible, placeholder
+      PUBLIC_CUSTOMER: "/public-customer",
       BANK_CUSTOMER: "/bank-customer/loansense",
     },
-    icon: "file-text",
-    colorClass: "bg-[#2f9d94]",
+    colorClass: "bg-[#0d3b66]", // Strong Blue
   },
   transact: {
-    title: "Transact",
+    title: "PrimeCore",
+    subtitle: "Transact",
     hrefByRole: {
-      PUBLIC_CUSTOMER: "/public-customer", // Not accessible, placeholder
+      PUBLIC_CUSTOMER: "/public-customer",
       BANK_CUSTOMER: "/bank-customer/transact",
     },
-    icon: "send",
-    colorClass: "bg-[#0b6d76]",
+    colorClass: "bg-[#0e4f62]", // Teal
   },
 };
 
-const featureSubNav: Record<FeatureKey, SubNavItem[]> = {
-  spendiq: [
-    { title: "Overview", hrefSuffix: "", icon: LayoutDashboard },
-    { title: "Add Expense", hrefSuffix: "/add", icon: PlusCircle },
-    { title: "Expense History", hrefSuffix: "/history", icon: History },
-    { title: "Monthly Summary", hrefSuffix: "/summary", icon: PieChart },
-    { title: "Budget Settings", hrefSuffix: "/settings", icon: Settings },
-  ],
-  creditlens: [
-    { title: "New Evaluation", hrefSuffix: "/new", icon: FilePlus2 },
-    { title: "Evaluation History", hrefSuffix: "/history", icon: History },
-    { title: "Download Report", hrefSuffix: "/report", icon: Download },
-  ],
-  loansense: [
-    { title: "Eligibility Overview", hrefSuffix: "", icon: LayoutDashboard },
-    { title: "Personal Loan", hrefSuffix: "/personal", icon: User },
-    { title: "Vehicle Loan", hrefSuffix: "/vehicle", icon: Car },
-    { title: "Education Loan", hrefSuffix: "/education", icon: GraduationCap },
-    { title: "Interest Policy Info", hrefSuffix: "/policy", icon: Info },
-  ],
-  transact: [
-    { title: "New Transfer", hrefSuffix: "", icon: Send },
-    { title: "Transfer History", hrefSuffix: "/history", icon: History },
-    { title: "Transaction Receipt", hrefSuffix: "/receipt", icon: Receipt },
-  ],
+// Helper to build links
+const getFeatureLinks = (feature: FeatureKey, role: FeatureRole): SidebarSection[] => {
+  const base = featureMeta[feature].hrefByRole[role];
+  
+  if (feature === "spendiq") {
+    return [
+      {
+        label: "General",
+        items: [
+          { title: "Dashboard", href: base, icon: Home },
+          { title: "Expenses History", href: `${base}/history`, icon: FileText },
+          { title: "Category Analysis", href: `${base}/analysis`, icon: UserPlus }, // Following prompt, icon name might be placeholder
+          { title: "Budget Management", href: `${base}/budget`, icon: Wallet },
+          { title: "Profile", href: `${base}/profile`, icon: User },
+        ]
+      }
+    ];
+  }
+  
+  if (feature === "creditlens") {
+    return [
+      {
+        label: "General",
+        items: [
+          { title: "Dashboard", href: base, icon: Home },
+          { title: "Trend Analysis", href: `${base}/trends`, icon: TrendingUp },
+          { title: "Credit Insight", href: `${base}/insight`, icon: Lightbulb },
+          { title: "Reports", href: `${base}/report`, icon: FileText },
+          { title: "Profile", href: `${base}/profile`, icon: User },
+        ]
+      }
+    ];
+  }
+
+  if (feature === "loansense") {
+    return [
+      {
+        label: "General",
+        items: [
+          { title: "Dashboard", href: base, icon: Home },
+          { title: "Personal Loan", href: `${base}/personal`, icon: Banknote },
+          { title: "Vehicle Loan", href: `${base}/vehicle`, icon: Car },
+          { title: "Educational Loan", href: `${base}/education`, icon: GraduationCap },
+          { title: "Housing Loan", href: `${base}/policy`, icon: Home }, // Using existing route logic if possible, or new
+          { title: "Loan Eligibility History", href: `${base}/history`, icon: History },
+          { title: "Profile", href: `${base}/profile`, icon: User },
+        ]
+      }
+    ];
+  }
+
+  if (feature === "transact") {
+    return [
+      {
+        label: "General",
+        items: [
+          { title: "Dashboard", href: base, icon: Home },
+          { title: "Transfer", href: `${base}/transfer`, icon: ArrowRightLeft },
+          { title: "Add Beneficiary", href: `${base}/beneficiary`, icon: UserPlus },
+          { title: "Transaction History", href: `${base}/history`, icon: FileClock },
+          { title: "Profile", href: `${base}/profile`, icon: User },
+        ]
+      }
+    ];
+  }
+
+  return [];
 };
 
 const dashboardHrefByRole: Record<FeatureRole, string> = {
@@ -126,125 +173,108 @@ export function FeatureSidebar({ role, feature, className }: FeatureSidebarProps
   const pathname = usePathname();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-
+  
   const currentMeta = featureMeta[feature];
-
-  const renderLink = (label: string, href: string, icon: React.ComponentType<{ size?: number; className?: string }>) => {
-    const Icon = icon;
-    // Strict matching for Overview to avoid highlighting it for all sub-routes, 
-    // BUT usually Overview is parent so it might stay highlighted.
-    // However, here Overview is hrefSuffix="" -> base path. 
-    // "Add Expense" is base path + /add.
-    // If I use startsWith, Overview will match everything. 
-    // Fix: Exact match if it's the root (unless sub-routes are physically nested in Next.js which they are).
-    // Let's use exact match for base path if possible, or handle it smartly.
-    // Actually, common sidebar pattern: if I am in /add, Overview is NOT active.
-    // So exact match for overview, startsWith for others?
-    // Simplified: pathname === href OR pathname.startsWith(`${href}/`)
-    // If href is /spendiq, and pathname is /spendiq/add
-    // /spendiq/add DOES start with /spendiq/.
-    // So Overview would be active.
-    // I need a way to distinguish.
-    
-    // Quick fix: Check if href implies root (ends in feature name) and current path is longer.
-    const isRoot = href === featureMeta[feature].hrefByRole[role];
-    const isActive = isRoot 
-      ? pathname === href 
-      : pathname === href || pathname.startsWith(`${href}/`);
-
-    // Special case for "All Apps" (Back to Hub)
-    const isHub = label === "All Apps";
-    const isHubActive = isHub && pathname === href; // Only exact match for hub
-
-    return (
-      <Link
-        key={label + href}
-        href={href}
-        title={isCollapsed ? label : undefined}
-        className={cn(
-          "relative flex items-center gap-3 rounded-lg py-3 text-sm font-semibold transition-all duration-200",
-          isCollapsed ? "justify-center px-2" : "px-6",
-          (isHub ? isHubActive : isActive)
-            ? "bg-white/25 text-white before:absolute before:bottom-0 before:left-0 before:top-0 before:w-1 before:rounded-r before:bg-white"
-            : "text-white/85 hover:bg-white/12",
-        )}
-      >
-        <Icon size={18} className={cn((isHub ? isHubActive : isActive) ? "text-white" : "text-white/75")} />
-        {!isCollapsed && <span>{label}</span>}
-      </Link>
-    );
-  };
+  const sections = getFeatureLinks(feature, role);
 
   return (
     <aside 
       className={cn(
-        "sticky top-0 flex h-screen flex-col overflow-y-auto text-white transition-all duration-300", 
-        isCollapsed ? "w-[80px]" : "w-full md:w-[260px]",
-        currentMeta.colorClass, 
+        "sticky top-0 h-screen w-64 flex-col overflow-y-auto text-white transition-all duration-300 shadow-xl z-50", 
+        currentMeta.colorClass,
         className
       )}
     >
-      <div className={cn("flex items-center px-6 pb-8 pt-8", isCollapsed ? "flex-col gap-4 px-2" : "justify-between")}>
-        {!isCollapsed && (
-          <div>
-            <p className="text-2xl font-bold leading-tight tracking-tight text-white">PrimeCore</p>
-            <p className="text-base font-normal text-white/70">{currentMeta.title}</p>
-          </div>
-        )}
-        {isCollapsed && (
-             <div className="font-bold text-xl tracking-tight">PC</div>
-        )}
+      {/* Brand Header */}
+      <div className="px-8 py-8 md:py-10">
+        <h1 className="text-2xl font-bold leading-tight tracking-tight text-white mb-1">
+          {currentMeta.title}
+        </h1>
+        <p className="text-sm font-medium text-white/70 tracking-wide">{currentMeta.subtitle}</p>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 px-4 space-y-6">
         
-        <div className="flex flex-col gap-2 items-center">
-             <button 
-               onClick={() => setIsCollapsed(!isCollapsed)}
-               className="rounded-full p-1 hover:bg-white/20 transition-colors"
-             >
-               {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-             </button>
-             {!isCollapsed && <ModeToggle className="text-white hover:bg-white/20 hover:text-white" />}
-             {isCollapsed && <ModeToggle className="text-white hover:bg-white/20 hover:text-white" />}
+        {/* All Apps Link */}
+        <div className="mb-6">
+           <Link 
+             href={dashboardHrefByRole[role]}
+             className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors hover:bg-white/5 rounded-lg"
+           >
+             <Grid size={18} />
+             <span>All Apps</span>
+           </Link>
         </div>
-      </div>
 
-      <div className={cn("mb-2", isCollapsed ? "text-center" : "px-6")}>
-        <p className="text-xs font-semibold uppercase tracking-wider text-white/50">{isCollapsed ? "---" : "Menu"}</p>
-      </div>
-      
-      <nav className="space-y-1 px-3">
-        {/* Back to Hub */}
-        {renderLink("All Apps", dashboardHrefByRole[role], Home)}
-        
-        <div className="my-2 px-3"><div className="h-px bg-white/20" /></div>
+        {/* Feature Sections */}
+        {sections.map((section, idx) => (
+           <div key={idx} className="space-y-2">
+              {section.label && (
+                <div className="px-4 mb-2">
+                   <p className="text-[11px] font-bold uppercase tracking-wider text-white/40">{section.label}</p>
+                </div>
+              )}
+              <div className="space-y-1">
+                 {section.items.map((tab) => {
+                    const isActive = tab.href === currentMeta.hrefByRole[role] 
+                      ? pathname === tab.href 
+                      : pathname.startsWith(tab.href);
+                      
+                    return (
+                      <Link
+                        key={tab.title + tab.href}
+                        href={tab.href}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
+                          isActive
+                            ? "bg-white/10 text-white shadow-sm backdrop-blur-sm"
+                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                        )}
+                      >
+                        <tab.icon size={18} className={cn(isActive ? "text-white" : "text-white/70")} />
+                        <span>{tab.title}</span>
+                      </Link>
+                    );
+                 })}
+              </div>
+           </div>
+        ))}
 
-        {/* Feature Specific Tabs */}
-        {featureSubNav[feature]?.map((tab) => {
-           const basePath = featureMeta[feature].hrefByRole[role];
-           // Remove trailing slash if any to avoid double slashes
-           const cleanBase = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
-           const href = `${cleanBase}${tab.hrefSuffix}`;
-           return renderLink(tab.title, href, tab.icon);
-        })}
+        {/* Other Section */}
+        <div className="space-y-2 pt-4">
+           <div className="px-4 mb-2">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-white/40">Other</p>
+           </div>
+           <div className="space-y-1">
+              <Link href="/help" className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-all">
+                  <HelpCircle size={18} className="text-white/70" />
+                  <span>Help & Support</span>
+              </Link>
+              <Link href="/settings" className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-all">
+                  <Settings size={18} className="text-white/70" />
+                  <span>Setting</span>
+              </Link>
+           </div>
+        </div>
+
       </nav>
 
-      <div className="mt-auto px-3 pb-8 pt-6">
+      {/* Footer / Logout */}
+      <div className="mt-auto px-6 pb-8 pt-4">
         <button
           type="button"
           onClick={() => {
             logout();
             router.replace("/login?force=true");
           }}
-          title={isCollapsed ? "Log Out" : undefined}
-          className={cn(
-            "relative flex w-full items-center gap-3 rounded-lg py-3 text-left text-sm font-semibold text-white/85 transition-colors hover:bg-white/12",
-            isCollapsed ? "justify-center px-2" : "px-6"
-          )}
+          className="flex w-full items-center gap-3 text-left text-sm font-medium text-white/70 transition-colors hover:text-white hover:bg-white/5 px-4 py-3 rounded-lg"
         >
-          <LogOut size={18} className="text-white/75" />
-          {!isCollapsed && <span>Log Out</span>}
+          <LogOut size={18} />
+          <span>Log Out</span>
         </button>
       </div>
     </aside>
   );
 }
+
