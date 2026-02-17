@@ -1,5 +1,11 @@
-import { MockFeaturePage } from "@/src/components/mock-feature-page";
+import React from 'react'
 
-export default function TransactHistoryPage() {
-  return <MockFeaturePage title="Transfer History" description="View past transfers and receipts." />;
+function page() {
+  return (
+    <div>
+      
+    </div>
+  )
 }
+
+export default page
