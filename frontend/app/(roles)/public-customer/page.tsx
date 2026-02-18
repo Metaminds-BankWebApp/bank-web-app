@@ -6,28 +6,16 @@ import { LogoutButton } from "@/src/components/logout-button";
 import { 
   Briefcase, 
   LineChart, 
-  FileText, 
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  Wallet,
+  GraduationCap
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 
 export default function PublicCustomerRolePage() {
   const features = [
-    { 
-      title: "Digital Application", 
-      description: "Submit your financial profile for rapid account approval.",
-      href: "/public-customer/application",
-      icon: FileText,
-      status: "REQUIRED",
-      statusColor: "text-blue-500 bg-blue-500/10",
-      progressLabel: "COMPLETION",
-      progressValue: 15,
-      progressColor: "bg-blue-500",
-      progressText: "In Progress",
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-100"
-    },
     { 
       title: "SpendIQ", 
       description: "Real-time cashflow categorization and waste detection.",
@@ -40,7 +28,8 @@ export default function PublicCustomerRolePage() {
       progressColor: "bg-amber-500",
       progressText: "Demo Mode",
       iconColor: "text-amber-600",
-      iconBg: "bg-amber-100"
+      iconBg: "bg-amber-100",
+      locked: false
     },
     { 
       title: "CreditLens", 
@@ -54,7 +43,38 @@ export default function PublicCustomerRolePage() {
       progressColor: "bg-purple-500",
       progressText: "Demo Mode",
       iconColor: "text-purple-600",
-      iconBg: "bg-purple-100"
+      iconBg: "bg-purple-100",
+      locked: false
+    },
+    { 
+      title: "LoanSense", 
+      description: "Personalized loan options and rate tracking.",
+      href: "/public-customer/loansense",
+      icon: GraduationCap,
+      status: "LOCKED",
+      statusColor: "text-slate-500 bg-slate-500/10",
+      progressLabel: "ACCESS LEVEL",
+      progressValue: 0,
+      progressColor: "bg-slate-300",
+      progressText: "Locked",
+      iconColor: "text-slate-400",
+      iconBg: "bg-slate-100",
+      locked: true
+    },
+    { 
+      title: "Transact", 
+      description: "Secure payments and transaction history.",
+      href: "/public-customer/transact",
+      icon: Wallet,
+      status: "LOCKED",
+      statusColor: "text-slate-500 bg-slate-500/10",
+      progressLabel: "ACCESS LEVEL",
+      progressValue: 0,
+      progressColor: "bg-slate-300",
+      progressText: "Locked",
+      iconColor: "text-slate-400",
+      iconBg: "bg-slate-100",
+      locked: true
     },
   ];
 
@@ -69,7 +89,7 @@ export default function PublicCustomerRolePage() {
 
   return (
     <AuthGuard requiredRole="PUBLIC_CUSTOMER">
-      <div className="min-h-screen w-full bg-[#021c3b] relative overflow-hidden flex flex-col font-sans text-white">
+      <div className="min-h-screen w-full bg-[#021c3b] relative flex flex-col font-sans text-white">
         
         {/* Background Gradients */}
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-500/20 blur-[150px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/4"></div>
@@ -100,16 +120,16 @@ export default function PublicCustomerRolePage() {
                 </div>
              </div>
              
-             <LogoutButton className="text-white/70 hover:text-white hover:bg-white/10" variant="ghost" />
+             <LogoutButton className="text-white/70 hover:text-white hover:bg-white/10"/>
           </div>
         </header>
 
 
         <main className="relative z-10 flex-1 w-full max-w-[1600px] mx-auto p-8 md:px-12 flex flex-col justify-center">
             
-            <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-16 items-center flex-1">
+            <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-16 items-start flex-1 mb-16">
                 {/* Left Column: Text & CTA */}
-                <div className="flex flex-col justify-center space-y-8">
+                <div className="flex flex-col justify-center space-y-8 sticky top-24">
                     <h1 className="text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight">
                        Welcome to PrimeCore <br />
                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">Public Access</span>
@@ -136,45 +156,55 @@ export default function PublicCustomerRolePage() {
                 {/* Right Column: Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                    {features.map((item, i) => (
-                      <Link href={item.href} key={i} className="group h-full">
-                         <div className="bg-white rounded-[2rem] p-8 h-full min-h-[220px] flex flex-col justify-between shadow-xl transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl relative overflow-hidden group-hover:ring-2 ring-white/20">
-                            
-                            <div className="flex justify-between items-start mb-6">
-                               <div className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center ${item.iconColor} transition-transform group-hover:scale-110 duration-300`}>
-                                  <item.icon className="w-6 h-6" />
-                               </div>
-                               <span className={`px-3 py-1 text-[10px] uppercase ${item.statusColor} rounded-full font-bold tracking-wider`}>
-                                  {item.status}
-                               </span>
-                            </div>
+                      <div key={i} className={`group h-full ${item.locked ? 'cursor-not-allowed' : ''}`}>
+                         <Link href={item.locked ? "#" : item.href} className={`block h-full ${item.locked ? 'pointer-events-none' : ''}`}>
+                            <div className={`bg-white rounded-[2rem] p-8 h-full min-h-[220px] flex flex-col justify-between shadow-xl transition-all duration-300 relative overflow-hidden ${!item.locked ? 'hover:-translate-y-2 hover:shadow-2xl group-hover:ring-2 ring-white/20' : 'opacity-80 grayscale-[0.8]'}`}>
+                                
+                                {item.locked && (
+                                    <div className="absolute top-4 right-4 z-20">
+                                        <div className="bg-slate-800/80 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-semibold backdrop-blur-sm shadow-md">
+                                            <Lock className="w-3 h-3" /> Locked
+                                        </div>
+                                    </div>
+                                )}
 
-                            <div className="mb-8">
-                               <h3 className="text-xl font-bold text-slate-800 mb-2 tracking-tight">{item.title}</h3>
-                               <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[95%]">
-                                  {item.description}
-                               </p>
-                            </div>
+                                <div className="flex justify-between items-start mb-6">
+                                <div className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center ${item.iconColor} transition-transform ${!item.locked && 'group-hover:scale-110'} duration-300`}>
+                                    <item.icon className="w-6 h-6" />
+                                </div>
+                                <span className={`px-3 py-1 text-[10px] uppercase ${item.statusColor} rounded-full font-bold tracking-wider`}>
+                                    {item.status}
+                                </span>
+                                </div>
 
-                            <div className="mt-auto">
-                               <div className="flex justify-between items-end mb-2">
-                                  <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{item.progressLabel}</span>
-                                  <span className={`text-[10px] font-bold ${item.progressText === "Ultra" ? "text-blue-600" : item.progressText === "Incomplete" ? "text-slate-400" : "text-emerald-600"}`}>
-                                     {item.progressText}
-                                  </span>
-                               </div>
-                               <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                  <div className={`h-full ${item.progressColor} rounded-full transition-all duration-1000 ease-out`} style={{ width: `${item.progressValue}%` }}></div>
-                               </div>
-                            </div>
+                                <div className="mb-8">
+                                <h3 className="text-xl font-bold text-slate-800 mb-2 tracking-tight">{item.title}</h3>
+                                <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[95%]">
+                                    {item.description}
+                                </p>
+                                </div>
 
-                         </div>
-                      </Link>
+                                <div className="mt-auto">
+                                <div className="flex justify-between items-end mb-2">
+                                    <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{item.progressLabel}</span>
+                                    <span className={`text-[10px] font-bold ${item.progressText === "Ultra" ? "text-blue-600" : item.progressText === "Incomplete" ? "text-slate-400" : item.progressText === "Locked" ? "text-slate-500" : "text-emerald-600"}`}>
+                                        {item.progressText}
+                                    </span>
+                                </div>
+                                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div className={`h-full ${item.progressColor} rounded-full transition-all duration-1000 ease-out`} style={{ width: `${item.progressValue}%` }}></div>
+                                </div>
+                                </div>
+
+                            </div>
+                         </Link>
+                      </div>
                    ))}
                 </div>
             </div>
 
             {/* Bottom Section: Checklist */}
-            <div className="mt-16 bg-white rounded-[1.5rem] p-4 pr-12 pl-8 flex flex-col xl:flex-row items-center gap-8 shadow-2xl shadow-black/10 max-w-full">
+            <div className="mt-8 bg-white rounded-[1.5rem] p-4 pr-12 pl-8 flex flex-col xl:flex-row items-center gap-8 shadow-2xl shadow-black/10 max-w-full">
                 <div className="flex items-center gap-4 min-w-max border-b xl:border-b-0 xl:border-r border-slate-100 pb-4 xl:pb-0 xl:pr-8">
                     <div className="bg-slate-50 p-2 rounded-full">
                         <CheckCircle2 className="w-5 h-5 text-blue-500" />

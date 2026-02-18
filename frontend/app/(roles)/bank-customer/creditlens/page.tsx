@@ -24,7 +24,9 @@ import {
   PointElement,
   LineElement,
   Title,
-  Filler
+  Filler,
+  ChartEvent,
+  ActiveElement,
 } from "chart.js";
 
 ChartJS.register(
@@ -77,7 +79,7 @@ export default function CreditLensDashboard() {
         label: "Credit Score",
         data: [745, 750, 755, 760, 772, 775, 780],
         borderColor: "#0a234c",
-        backgroundColor: (context: any) => {
+        backgroundColor: (context: { chart: { ctx: CanvasRenderingContext2D } }) => {
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 300);
           gradient.addColorStop(0, "rgba(10, 35, 76, 0.2)");
