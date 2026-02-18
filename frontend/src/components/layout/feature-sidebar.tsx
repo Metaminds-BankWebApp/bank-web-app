@@ -261,7 +261,7 @@ export function FeatureSidebar({ role, feature, className }: FeatureSidebarProps
       </nav>
 
       {/* Footer / Logout */}
-      <div className="mt-auto px-6 pb-8 pt-4">
+      <div className="mt-auto px-6 pb-4 pt-4">
         <button
           type="button"
           onClick={() => {
