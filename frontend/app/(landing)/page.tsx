@@ -13,11 +13,11 @@ export default function LandingPage() {
       <Navbar />
       <main>
         landing page
-        {/* <HeroSection />
+         <HeroSection />
         <ModulesSection />
         <WhyChooseSection />
         <StepsSection />
-        <CtaBannerSection /> */}
+        <CtaBannerSection /> 
       </main>
       <Footer />
     </div>
