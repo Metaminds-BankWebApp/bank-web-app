@@ -81,10 +81,10 @@ export default function Page() {
 				</div>
 
 				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-					<SummaryCard label="Max Eligible Amount" value="LKR 3,450,000" variant="dark" />
-					<SummaryCard label="Recommended Tenure" value="24–60 months" variant="dark" />
-					<SummaryCard label="Estimated EMI Range" value="LKR (60,000 – 88,000)" variant="light" />
-					<SummaryCard label="Interest" value="15.0%" variant="light" />
+					<SummaryCard label="Max Eligible Amount" value="LKR 5,900,000" variant="dark" />
+					<SummaryCard label="Recommended Tenure" value="36–84 months" variant="dark" />
+					<SummaryCard label="Estimated EMI Range" value="LKR (50,000 – 88,000)" variant="light" />
+					<SummaryCard label="Interest" value="12.0%" variant="light" />
 				</div>
 			</section>
 
