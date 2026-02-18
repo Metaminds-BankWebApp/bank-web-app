@@ -19,7 +19,7 @@ export default function CreditAnalysisCustomerPage() {
       <div className="flex min-h-screen bg-[#f3f4f6]">
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden" />
         <main className="flex-1 p-8 lg:p-10 overflow-y-auto w-full max-w-400 mx-auto">
-          <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl bg-[#0d3b66] p-4 text-white shadow-sm">
+          <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] p-4 text-white shadow-sm">
             <h1 className="text-2xl font-semibold tracking-tight">Customer Profile</h1>
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-4">

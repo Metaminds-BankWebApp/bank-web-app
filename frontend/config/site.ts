@@ -105,7 +105,7 @@ export const siteConfig = {
     },
     BANK_OFFICER: {
       roleLabel: "Bank Officer",
-      appName: "PrimeCore",
+      appName: "Bank Officer",
       colorClass: "bg-[#0d3b66]", // Matching screenshot dark theme
       items: [
         { title: "Dashboard", href: "/bank-officer", icon: "layout-dashboard", section: "general" },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { 
@@ -22,10 +23,13 @@ import { CRIBRetrieval } from "./components/step-7-crib-retrieval";
 import { Review } from "./components/step-8-review";
 import { SuccessView } from "./components/success-view";
 
+const generateCustomerId = () => `PC-${Math.floor(100000 + Math.random() * 900000)}`;
+
 export default function AddCustomerPage() {
   const [step, setStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
+  const [generatedId, setGeneratedId] = useState("");
   
   const steps = [
     { id: 1, label: "Personal Details" },
@@ -47,6 +51,7 @@ export default function AddCustomerPage() {
       setStep(step + 1);
     } else {
       // Submit form
+      setGeneratedId(generateCustomerId());
       setIsSuccess(true);
     }
   };
@@ -106,7 +111,7 @@ export default function AddCustomerPage() {
               <div className="h-8 w-px bg-white/20" />
               <div className="flex items-center gap-3">
                 <div className="relative h-10 w-10 overflow-hidden rounded-full bg-white/10">
-                  <img src="https://ui-avatars.com/api/?name=Kamal+E&background=random" alt="User" className="h-full w-full object-cover" />
+                  <Image src="https://ui-avatars.com/api/?name=Kamal+E&background=random" alt="User" fill sizes="40px" className="object-cover" />
                   <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0d3b66] bg-green-500"></div>
                 </div>
                 <div className="hidden text-sm md:block">
@@ -118,10 +123,10 @@ export default function AddCustomerPage() {
           </header>
 
           {isSuccess ? (
-             <div className="bg-white rounded-xl shadow-sm border border-slate-100 min-h-[600px] flex items-center justify-center">
+             <div className="bg-white rounded-xl shadow-sm border border-slate-100 min-h-150 flex items-center justify-center">
                 <SuccessView 
-                   customerName={formData.fullName} 
-                   generatedId={`PC-${Math.floor(100000 + Math.random() * 900000)}`}
+                   customerName={formData.fullName}  
+                   generatedId={generatedId}
                    onReset={handleReset}
                 />
              </div>
@@ -140,11 +145,11 @@ export default function AddCustomerPage() {
                     
                     {/* Stepper */}
                     <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-100 overflow-x-auto">
-                       <div className="flex items-center justify-between min-w-[600px] relative">
+                       <div className="flex items-center justify-between min-w-150 relative">
                           {/* Connecting Line Background */}
                           <div className="absolute top-4 left-0 w-full h-0.5 bg-slate-100 z-0"></div>
 
-                          {steps.map((s, i) => (
+                          {steps.map((s) => (
                              <div key={s.id} className="relative z-10 flex flex-col items-center gap-3 flex-1">
                                 <div 
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-300

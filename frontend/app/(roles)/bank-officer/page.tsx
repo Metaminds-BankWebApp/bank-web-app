@@ -52,11 +52,11 @@ export default function BankOfficerRolePage() {
                   <div className="mb-4 flex items-end justify-between">
                     <div>
                       <p className="text-sm text-gray-500">In Progress</p>
-                      <p className="text-2xl font-bold text-[#0d3b66]">$231,032,444</p>
+                      <p className="text-2xl font-bold text-[#0d3b66]">LKR 231,032,444</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-500">Sales Target</p>
-                      <p className="text-xl font-bold text-gray-400">$500,000,000</p>
+                      <p className="text-sm text-gray-500">Target</p>
+                      <p className="text-xl font-bold text-gray-400">LKR 500,000,000</p>
                     </div>
                   </div>
                   <div className="relative h-4 w-full rounded-full bg-gray-100">
@@ -116,14 +116,14 @@ export default function BankOfficerRolePage() {
             <div className="flex flex-col gap-6">
                <div className="grid grid-cols-2 gap-4">
                   {/* Card 1 */}
-                  <Card className="col-span-1 border-none bg-[#3b82f6] text-white shadow-sm">
+                  <Card className="col-span-1 border-none bg-[#3b82f6] text-[#0d3b66] shadow-sm">
                      <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-4">
                            <p className="text-xs font-medium opacity-90">Total Customers</p>
                            <span className="text-xs">↗</span>
                         </div>
                         <p className="text-2xl font-bold mb-2">81.000</p>
-                        <p className="text-[10px] text-white/80">↗ 10.6% <span className="opacity-60">From last week</span></p>
+                        <p className="text-[10px] text-[#0d3b66]/80">↗ 10.6% <span className="opacity-60">From last week</span></p>
                      </CardContent>
                   </Card>
 
@@ -189,8 +189,8 @@ export default function BankOfficerRolePage() {
                      <tr>
                        <th className="px-6 py-3 font-medium text-gray-500">Name Customer</th>
                        <th className="px-6 py-3 font-medium text-gray-500">Contact</th>
-                       <th className="px-6 py-3 font-medium text-gray-500">Purchases</th>
-                       <th className="px-6 py-3 font-medium text-gray-500">Order QTY</th>
+                       <th className="px-6 py-3 font-medium text-gray-500">Transactions</th>
+                       <th className="px-6 py-3 font-medium text-gray-500"></th>
                        <th className="px-6 py-3 font-medium text-gray-500">Address</th>
                        <th className="px-6 py-3 font-medium text-gray-500 text-right">Action</th>
                      </tr>
