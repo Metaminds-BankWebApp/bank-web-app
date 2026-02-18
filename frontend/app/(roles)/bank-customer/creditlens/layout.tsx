@@ -1,4 +1,3 @@
-
 import { FeatureLayout } from "@/src/components/layout";
 
 export default function Layout({ children }: { children: React.ReactNode }) {

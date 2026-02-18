@@ -1,263 +1,125 @@
 "use client";
 
-import { AuthGuard } from "@/src/components/auth";
-import { 
-  Bell, 
-  Mail, 
-  TrendingUp,
-  AlertCircle,
-  CheckCircle2,
-  Shield,
-  Clock,
-  CreditCard,
-  ArrowUpRight
-} from "lucide-react";
-import { Button } from "@/src/components/ui/button";
-import { Doughnut, Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Filler,
-  ChartEvent,
-  ActiveElement,
-} from "chart.js";
+import { useRouter } from "next/navigation";
+import CreditRiskGauge from "./components/CreditRiskGauge";
+import CreditRiskTrendChart from "./components/CreditRiskTrendChart";
+import RiskFactorBars from "./components/RiskFactorBars";
+import CreditLensHeader from "@/src/components/ui/Creditlens-header";
 
-ChartJS.register(
-  ArcElement, 
-  Tooltip, 
-  Legend,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Filler
-);
+export default function PublicCustomerCreditLensPage() {
+  const router = useRouter();
 
-export default function CreditLensDashboard() {
-  
-  // Gauge Chart Data (Credit Score)
-  const score = 780;
-  const maxScore = 850;
-  
-  const gaugeData = {
-    labels: ["Score", "Remaining"],
-    datasets: [
-      {
-        data: [score, maxScore - score],
-        backgroundColor: ["#4ade80", "#e2e8f0"], // Green for good, slate for empty
-        borderWidth: 0,
-        circumference: 180,
-        rotation: 270,
-        cutout: "85%",
-        borderRadius: 10,
-      },
-    ],
-  };
+  // Mock data (same values as your design)
+  const score = 55;
+  const riskLabel = "Medium";
 
-  const gaugeOptions = {
-    plugins: {
-      legend: { display: false },
-      tooltip: { enabled: false },
-    },
-    maintainAspectRatio: false,
-    responsive: true,
-  };
-
-  // Score History Data
-  const historyData = {
-    labels: ["Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb"],
-    datasets: [
-      {
-        label: "Credit Score",
-        data: [745, 750, 755, 760, 772, 775, 780],
-        borderColor: "#0a234c",
-        backgroundColor: (context: { chart: { ctx: CanvasRenderingContext2D } }) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, "rgba(10, 35, 76, 0.2)");
-          gradient.addColorStop(1, "rgba(10, 35, 76, 0)");
-          return gradient;
-        },
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: "#0a234c",
-        pointBorderColor: "#fff",
-        pointBorderWidth: 2,
-        pointRadius: 4,
-      },
-    ],
-  };
-
-  const historyOptions = {
-    plugins: {
-      legend: { display: false },
-    },
-    scales: {
-      y: {
-        min: 700,
-        max: 850,
-        grid: { color: "#f1f5f9" },
-        ticks: { font: { size: 10 } },
-      },
-      x: {
-        grid: { display: false },
-        ticks: { font: { size: 10 } },
-      },
-    },
-    maintainAspectRatio: false,
-    responsive: true,
-  };
+  const factors = [
+    { name: "Payment history", value: 18, max: 30, color: "#fbbf24" }, // amber
+    { name: "DTI", value: 12, max: 25, color: "#34d399" }, // green
+    { name: "Credit utilization", value: 20, max: 20, color: "#ef4444" }, // red
+    { name: "Income stability", value: 0, max: 15, color: "#e5e7eb" }, // gray
+    { name: "Active Facilities", value: 5, max: 10, color: "#34d399" }, // green
+  ];
 
   return (
-    <AuthGuard requiredRole="BANK_CUSTOMER">
-      <div className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
+    <div className="space-y-3 mt-4 ml-4 mr-4">
+      <CreditLensHeader
+        title="Dashboard"
+        subtitle=""
+        name="John Doe"
+        role="Public Customer"
+      />
+
+
+      {/* Main big card (Gauge + Score factors in SAME card) */}
+      <section className="rounded-3xl bg-[radial-gradient(circle_at_25%_20%,#0d4a6d_0%,#082a43_48%,#061f34_100%)] pt-1 pb-0 pr-4 pl-4 text-white shadow-md mr-4 ml-4">
         
-         {/* Header */}
-        <header className="flex flex-col md:flex-row justify-between items-center bg-[#0a234c] text-white p-3 rounded-2xl shadow-lg gap-4">
-          <h1 className="text-xl font-bold tracking-wide w-full md:w-auto">Credit Risk Overview</h1>
-          <div className="flex items-center gap-6 w-full md:w-auto justify-end">
-            <div className="flex gap-4">
-               <button className="relative p-2 hover:bg-white/10 rounded-full transition-colors"><Mail size={20} /><span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-[#0a234c]"></span></button>
-               <button className="relative p-2 hover:bg-white/10 rounded-full transition-colors"><Bell size={20} /><span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-[#0a234c]"></span></button>
-            </div>
-            <div className="flex items-center gap-3 border-l border-white/20 pl-6">
-               <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white overflow-hidden relative">
-                  <div className="w-full h-full bg-gradient-to-br from-slate-400 to-slate-600"></div>
-               </div>
-               <div className="hidden md:block text-right">
-                  <p className="text-sm font-bold leading-none">Kamal Edirisinghe</p>
-                  <p className="text-xs text-white/70 mt-1">User</p>
-               </div>
-            </div>
-          </div>
-        </header>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Credit Score Gauge Card */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm flex flex-col items-center justify-center relative">
-            <h2 className="text-lg font-bold text-slate-900 absolute top-8 left-8">Current Score</h2>
-            <div className="w-64 h-32 mt-10 relative">
-               <Doughnut data={gaugeData} options={gaugeOptions} />
-               <div className="absolute inset-0 flex flex-col items-center justify-end pb-2">
-                  <span className="text-5xl font-bold text-[#0a234c]">{score}</span>
-                  <span className="text-emerald-500 font-bold text-sm bg-emerald-50 px-3 py-1 rounded-full mt-2">Excellent</span>
-               </div>
-            </div>
-            <p className="text-center text-slate-500 text-sm mt-8 max-w-[200px]">
-               Your score is higher than 85% of customers. Great job!
-            </p>
-          </div>
+        <div className="mt-6 grid gap-10 lg:grid-cols-[550px_1fr]">
+  {/* LEFT: Score */}
+  <div className="flex flex-col items-center justify-center">
+    <h3 className=" text-lg font-semibold text-white/90">
+      Your Credit Risk Score
+    </h3>
 
-          {/* History Chart */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm lg:col-span-2">
-             <div className="flex justify-between items-center mb-6">
-               <h2 className="text-lg font-bold text-slate-900">Score History</h2>
-               <Button variant="outline" size="sm" className="text-xs border-slate-200">Last 6 Months</Button>
-             </div>
-             <div className="h-64">
-                <Line data={historyData} options={historyOptions} />
-             </div>
-          </div>
+    <div className="relative h-[260px] w-full max-w-[420px]">
+      <CreditRiskGauge value={score} />
 
+      {/* Center text inside gauge */}
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-end pb-10">
+        <div className="text-4xl font-extrabold tracking-tight text-[#fbbf24]">
+          {score}
         </div>
-
-        {/* Risk Factors Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-           {/* Factor 1 */}
-           <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                 <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <Clock size={24} />
-                 </div>
-                 <BadgeCheck className="text-emerald-500" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-1">Payment History</h3>
-              <p className="text-sm text-slate-500 mb-4">100% On Time</p>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                 <div className="bg-blue-600 h-full w-full"></div>
-              </div>
-           </div>
-
-           {/* Factor 2 */}
-           <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                 <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-                    <CreditCard size={24} />
-                 </div>
-                 <BadgeCheck className="text-emerald-500" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-1">Utilization</h3>
-              <p className="text-sm text-slate-500 mb-4">12% Used</p>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                 <div className="bg-indigo-600 h-full w-[12%]"></div>
-              </div>
-           </div>
-
-           {/* Factor 3 */}
-           <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                 <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-                    <Shield size={24} />
-                 </div>
-                 <BadgeAlert className="text-amber-500" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-1">Credit Age</h3>
-              <p className="text-sm text-slate-500 mb-4">2 Years 4 Mos</p>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                 <div className="bg-amber-500 h-full w-[40%]"></div>
-              </div>
-           </div>
-
-           {/* Factor 4 */}
-           <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                 <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                    <TrendingUp size={24} />
-                 </div>
-                 <BadgeCheck className="text-emerald-500" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-1">Total Accounts</h3>
-              <p className="text-sm text-slate-500 mb-4">8 Active</p>
-              <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                 <div className="bg-purple-600 h-full w-[80%]"></div>
-              </div>
-           </div>
-        </div>
-
-        {/* Offers Section */}
-        <div className="bg-[#0a234c] rounded-3xl p-8 text-white relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-           <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-              <div>
-                 <h2 className="text-2xl font-bold mb-2">Pre-Approved for Platinum Card</h2>
-                 <p className="text-slate-300 max-w-lg">Based on your excellent credit score, you are eligible for our lowest interest rate platinum credit card with zero annual fees.</p>
-              </div>
-              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-8 py-6 rounded-xl shadow-lg shadow-emerald-900/20 flex items-center gap-2">
-                 Apply Now <ArrowUpRight size={20} />
-              </Button>
-           </div>
-        </div>
-
+        <div className="mt-2 text-base text-white/80">{riskLabel}</div>
       </div>
-    </AuthGuard>
+    </div>
+  </div>
+
+  {/* RIGHT: Score Factors */}
+  <div className="flex flex-col justify-center pr-10">
+    <h4 className="mb-3 text-center text-lg font-semibold text-white/90">
+      Score Factors
+    </h4>
+
+    <div className="mt-2">
+      <RiskFactorBars factors={factors} />
+    </div>
+  </div>
+</div>
+
+      </section>
+
+      {/* Bottom row (Trend + Tips) */}
+      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] mr-4 ml-4">
+        <div className="rounded-3xl bg-[linear-gradient(135deg,#0b2a44,#072033)] p-4 text-white shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <h4 className="font-semibold">
+              Credit risk score in this last 6 months
+            </h4>
+
+            <button 
+              onClick={() => router.push("/public-customer/creditlens/trends")}
+              className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white"
+            >
+              Show All
+              <span aria-hidden>↗</span>
+            </button>
+          </div>
+
+          <CreditRiskTrendChart />
+        </div>
+
+        <div className="relative overflow-hidden rounded-3xl bg-[linear-gradient(135deg,#0b2a44,#072033)] p-4 text-white shadow-sm">
+          {/* subtle lines/pattern */}
+          <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/5 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-10 h-56 w-56 rounded-full bg-white/5 blur-2xl" />
+
+          <div className="flex h-full flex-col justify-between">
+            <div>
+              <h4 className="text-xl font-semibold">
+                Decrease your Credit Risk Score
+              </h4>
+              <p className="mt-2 text-sm text-white/70">
+                Understand the key factors increasing your credit risk and how
+                they affect your overall score. Follow practical steps to
+                reduce liabilities, improve payment behavior, and strengthen
+                your financial profile.
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <button 
+                onClick={() => router.push("/public-customer/creditlens/insight")}
+                className="rounded-md bg-white px-4 py-2 font-medium text-[#072033] hover:bg-white/90"
+              >
+                Learn More
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 
-// Icons helper components since I didn't import them correctly above
-function BadgeCheck({ className }: { className?: string }) {
-   return <CheckCircle2 size={18} className={className} />;
-}
 
-function BadgeAlert({ className }: { className?: string }) {
-   return <AlertCircle size={18} className={className} />;
-}
