@@ -12,12 +12,12 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-(--primecore-background) text-(--primecore-foreground)">
       <main>
-          {/* <HeroSection /> }
+           <HeroSection /> 
         <ModulesSection />
         <WhyChooseSection />
         <StepsSection />
         <MetricsSection />
-        <CtaBannerSection /> */}
+        <CtaBannerSection /> 
       </main>
       <Footer className="mt-4" />
     </div>
