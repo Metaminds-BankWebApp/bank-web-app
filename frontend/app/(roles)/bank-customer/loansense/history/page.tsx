@@ -123,8 +123,13 @@ export default function Page() {
   const [activeLoanFilter, setActiveLoanFilter] = useState('All Loans');
   const [activeDateFilter, setActiveDateFilter] = useState('Last 3 months');
 
-  const loanFilters = ['All Loans', 'Personal Loan', 'Vehicle Loan', 'Educational Loan', 'Housing Loan'];
+  const loanFilters = ['All Loans', 'Personal Loan', 'Vehicle Loan', 'Education Loan', 'Housing Loan'];
   const dateFilters = ['Last Month', 'Last 3 months', 'Last 6 months', 'Last Year'];
+
+  // Filter logic: if "All Loans" is selected, show all rows; otherwise filter by loanType
+  const filteredData = activeLoanFilter === 'All Loans'
+    ? historyData
+    : historyData.filter((row) => row.loanType === activeLoanFilter);
 
   return (
     <main className="p-6 space-y-6">
@@ -216,7 +221,7 @@ export default function Page() {
               </tr>
             </thead>
             <tbody>
-              {historyData.map((row, index) => (
+              {filteredData.map((row, index) => (
                 <tr
                   key={row.id}
                   className={`border-b border-gray-100 transition-colors hover:bg-gray-50 ${
