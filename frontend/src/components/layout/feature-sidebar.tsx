@@ -4,8 +4,6 @@ import {
   ArrowRightLeft,
   Banknote,
   Car,
-  Clock,
-  LayoutDashboard,
   FileClock,
   FileText,
   GraduationCap,
@@ -14,18 +12,15 @@ import {
   Home,
   Lightbulb,
   LogOut,
-  PieChart,
   Settings,
   TrendingUp,
   User,
   UserPlus,
   Wallet,
-  Receipt,
   Grid
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store";
 

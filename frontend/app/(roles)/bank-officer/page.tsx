@@ -1,8 +1,7 @@
 import { Badge, Card, CardContent, CardHeader } from "@/src/components/ui";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
-import { Bell, Mail, MoreHorizontal, Search, Settings, Eye, Pencil, Trash2 } from "lucide-react";
-import Image from "next/image";
+import { Bell, Mail, Eye, Pencil, Trash2 } from "lucide-react";
 
 export default function BankOfficerRolePage() {
   return (

@@ -49,6 +49,11 @@ export function Sidebar({ role, className }: SidebarProps) {
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const roleConfig = getSidebarRoleConfig(role);
+  const activeHref = roleConfig.items
+    .filter((item) => item.icon !== "log-out")
+    .map((item) => item.href)
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0];
 
   const generalItems = roleConfig.items.filter((item) => item.section === "general");
   const otherItems = roleConfig.items.filter((item) => item.section === "other");
@@ -57,7 +62,7 @@ export function Sidebar({ role, className }: SidebarProps) {
   const renderItem = (item: SidebarItem) => {
     const Icon = iconMap[item.icon];
     const isLogout = item.icon === "log-out";
-    const isActive = !isLogout && (pathname === item.href || pathname.startsWith(`${item.href}/`));
+    const isActive = !isLogout && item.href === activeHref;
 
     if (isLogout) {
       return (

@@ -17,7 +17,6 @@ import {
 } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
 import { Bell, Mail, ArrowUpRight, Search } from "lucide-react";
-import React from 'react';
 
 ChartJS.register(
   CategoryScale,
@@ -39,7 +38,7 @@ const lineData = {
       label: "Transactions",
       data: [1500, 2200, 1800, 2900, 2400, 3100, 3800, 2500, 3900, 2800, 3500, 2100],
       borderColor: "#0e4f62",
-      backgroundColor: (context: any) => {
+      backgroundColor: (context: { chart: { ctx: CanvasRenderingContext2D } }) => {
         const ctx = context.chart.ctx as CanvasRenderingContext2D;
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
         gradient.addColorStop(0, "rgba(14, 79, 98, 0.5)");
