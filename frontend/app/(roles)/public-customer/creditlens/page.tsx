@@ -23,7 +23,7 @@ export default function PublicCustomerCreditLensPage() {
       <CreditLensHeader
         title="Dashboard"
         subtitle=""
-        name="Dineth Edirisinghe"
+        name="John Doe"
         role="Public Customer"
       />
 

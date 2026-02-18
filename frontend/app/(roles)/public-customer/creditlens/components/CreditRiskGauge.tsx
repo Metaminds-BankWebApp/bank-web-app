@@ -15,11 +15,11 @@ export default function CreditRiskGauge({ value }: Props) {
   const data = {
     datasets: [
       {
-        data: [30, 30, 30],
+        data: [33, 33, 33],
         backgroundColor: ["#34d399", "#fbbf24", "#ef4444"],
         borderWidth: 0,
         hoverOffset: 0,
-        borderRadius: 12,
+        borderRadius: 0,
       },
     ],
   };
@@ -131,7 +131,7 @@ ctx.stroke();
 const options: any = {
   rotation: -90,        // start at LEFT
   circumference: 180,   // draw to RIGHT across the TOP
-  cutout: "72%",
+  cutout: "85%",
   responsive: true,
   maintainAspectRatio: false,
   animation: { duration: 600 },
