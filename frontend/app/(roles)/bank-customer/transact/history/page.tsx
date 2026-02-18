@@ -18,7 +18,7 @@ const mockData = [
 		amount: 'LKR 25,000.00',
 		status: 'success',
 		date: '2026-02-10',
-		reference: 'REF-20260210-001',
+		reference: 'REF-20260210',
 	},
 	{
 		id: '2',
@@ -26,10 +26,10 @@ const mockData = [
 		receiverAcc: '1122334455',
 		senderName: 'John Smith',
 		senderAcc: '0987654321',
-		amount: 'LKR 150,000.00',
+		amount: 'LKR 15,000.00',
 		status: 'failed',
 		date: '2026-02-08',
-		reference: 'REF-20260208-012',
+		reference: 'REF-20260208',
 	},
 ]
 
@@ -47,7 +47,7 @@ export default function Page() {
 								<Search className="w-4 h-4" />
 							</span>
 							<Input
-								placeholder="Search for id, name customer"
+								placeholder="Search for account number"
 								className="pl-10 w-full"
 								aria-label="Search transactions"
 							/>
@@ -72,7 +72,7 @@ export default function Page() {
 								<th className="px-4 py-3">Receiver’s acc no</th>
 								<th className="px-4 py-3">Sender’s name</th>
 								<th className="px-4 py-3">Sender’s acc no</th>
-								<th className="px-4 py-3">Amount</th>
+								<th className="px-4 py-4">Amount</th>
 								<th className="px-4 py-3">Status</th>
 								<th className="px-4 py-3">Date</th>
 								<th className="px-4 py-3">Reference no</th>
@@ -87,7 +87,7 @@ export default function Page() {
 									<td className="px-4 py-3 align-middle">{row.receiverAcc}</td>
 									<td className="px-4 py-3 align-middle">{row.senderName}</td>
 									<td className="px-4 py-3 align-middle">{row.senderAcc}</td>
-									<td className="px-4 py-3 align-middle">{row.amount}</td>
+									<td className="px-4 py-4 align-middle">{row.amount}</td>
 									<td className="px-4 py-3 align-middle">
 										<Badge variant={row.status === 'success' ? 'success' : 'danger'}>
 											{row.status === 'success' ? 'Success' : 'Failed'}
