@@ -105,18 +105,18 @@ export const siteConfig = {
     },
     BANK_OFFICER: {
       roleLabel: "Bank Officer",
-      appName: "PrimeCore",
+      appName: "Bank Officer",
       colorClass: "bg-[#0d3b66]", // Matching screenshot dark theme
       items: [
         { title: "Dashboard", href: "/bank-officer", icon: "layout-dashboard", section: "general" },
-        { title: "Add Customer", href: "/bank-officer/add-customer", icon: "users", section: "general" },
+        { title: "All Customers", href: "/bank-officer/all-customers", icon: "users", section: "general" },
+        { title: "Add Customer", href: "/bank-officer/add-customer", icon: "user", section: "general" },
         { title: "History", href: "/bank-officer/history", icon: "history", section: "general" },
-        { title: "Statistics", href: "/bank-officer/statistics", icon: "line-chart", section: "general" },
-        { title: "Inbox", href: "/bank-officer/inbox", icon: "inbox", section: "general" },
-        { title: "Profile", href: "/bank-officer/profile", icon: "user", section: "general" },
+        { title: "Credit Analysis", href: "/bank-officer/credit-analysis", icon: "line-chart", section: "general" },
+        { title: "Transactions", href: "/bank-officer/transactions", icon: "wallet", section: "general" },
         { title: "Help & Support", href: "/bank-officer/support", icon: "help-circle", section: "other" },
         { title: "Setting", href: "/bank-officer/settings", icon: "settings", section: "other" },
-        { title: "Log Out", href: "/login", icon: "log-out", section: "account" },
+        { title: "Log Out", href: "/login", icon: "log-out", section: "account" }, 
       ],
     },
     ADMIN: {

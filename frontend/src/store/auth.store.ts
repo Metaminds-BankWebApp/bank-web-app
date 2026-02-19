@@ -5,10 +5,10 @@ import { authPersistence } from "@/src/store/auth.storage";
 
 type AuthUser = LoginResponse["user"];
 
-export type RoleRedirectPath = "/public-customer" | "/bank-customer" | "/bank-officer" | "/admin";
+export type RoleRedirectPath = "/public-customer/application" | "/bank-customer" | "/bank-officer" | "/admin";
 
 const roleRedirectMap: Record<UserRole, RoleRedirectPath> = {
-  PUBLIC_CUSTOMER: "/public-customer",
+  PUBLIC_CUSTOMER: "/public-customer/application",
   BANK_CUSTOMER: "/bank-customer",
   BANK_OFFICER: "/bank-officer",
   ADMIN: "/admin",

@@ -17,7 +17,6 @@ import {
 } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
 import { Bell, Mail, ArrowUpRight, Search } from "lucide-react";
-import React from 'react';
 
 ChartJS.register(
   CategoryScale,

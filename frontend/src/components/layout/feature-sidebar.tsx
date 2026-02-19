@@ -4,8 +4,6 @@ import {
   ArrowRightLeft,
   Banknote,
   Car,
-  Clock,
-  LayoutDashboard,
   FileClock,
   FileText,
   GraduationCap,
@@ -14,18 +12,15 @@ import {
   Home,
   Lightbulb,
   LogOut,
-  PieChart,
   Settings,
   TrendingUp,
   User,
   UserPlus,
   Wallet,
-  Receipt,
   Grid
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store";
 
@@ -132,7 +127,7 @@ const getFeatureLinks = (feature: FeatureKey, role: FeatureRole): SidebarSection
           { title: "Personal Loan", href: `${base}/personal`, icon: Banknote },
           { title: "Vehicle Loan", href: `${base}/vehicle`, icon: Car },
           { title: "Educational Loan", href: `${base}/education`, icon: GraduationCap },
-          { title: "Housing Loan", href: `${base}/policy`, icon: Home }, // Using existing route logic if possible, or new
+          { title: "Housing Loan", href: `${base}/housing`, icon: Home }, // Using existing route logic if possible, or new
           { title: "Loan Eligibility History", href: `${base}/history`, icon: History },
           { title: "Profile", href: `${base}/profile`, icon: User },
         ]
@@ -261,7 +256,7 @@ export function FeatureSidebar({ role, feature, className }: FeatureSidebarProps
       </nav>
 
       {/* Footer / Logout */}
-      <div className="mt-auto px-6 pb-8 pt-4">
+      <div className="mt-auto px-6 pb-4 pt-4">
         <button
           type="button"
           onClick={() => {

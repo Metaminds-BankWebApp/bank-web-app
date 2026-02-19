@@ -1,25 +1,26 @@
-import { Footer, Navbar } from "@/src/components/layout";
+import { Footer } from "@/src/components/layout";
 import {
   CtaBannerSection,
   HeroSection,
+  MetricsSection,
   ModulesSection,
   StepsSection,
-  WhyChooseSection,
 } from "./components";
+import { WhyChooseSection } from "./components/why-choose-section";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-(--primecore-background)">
-      <Navbar />
-      <main>
-        landing page
-        {/* <HeroSection />
+    <div className="min-h-screen bg-(--primecore-background) text-(--primecore-foreground) overflow-x-hidden">
+      <main className="space-y-12 lg:space-y-16">
+        <HeroSection />
         <ModulesSection />
         <WhyChooseSection />
         <StepsSection />
-        <CtaBannerSection /> */}
+        <MetricsSection />
+        <CtaBannerSection />
       </main>
-      <Footer />
+
+      <Footer className="mt-8" />
     </div>
   );
 }
