@@ -142,7 +142,7 @@ export default function TransactDashboard() {
                </div>
            </div>
 
-           <div className="bg-[#000000] text-white p-6 rounded-2xl shadow-md h-36 flex flex-col justify-between relative overflow-hidden group">
+           <div className="bg-[#0b3e5a] text-white p-6 rounded-2xl shadow-md h-36 flex flex-col justify-between relative overflow-hidden group">
                <div className="flex justify-between items-start z-10">
                    <span className="text-sm font-medium opacity-90">Total Transactions</span>
                    <ArrowUpRight size={18} className="text-white/50" />
