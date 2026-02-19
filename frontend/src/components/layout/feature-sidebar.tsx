@@ -85,7 +85,7 @@ const featureMeta: Record<FeatureKey, FeatureMeta> = {
       PUBLIC_CUSTOMER: "/public-customer",
       BANK_CUSTOMER: "/bank-customer/transact",
     },
-    colorClass: "bg-[#0e4f62]", // Teal
+    colorClass: "bg-[#0B3E5A]", 
   },
 };
 

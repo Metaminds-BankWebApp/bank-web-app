@@ -38,7 +38,7 @@ const lineData = {
       fill: true,
       label: "Transactions",
       data: [1500, 2200, 1800, 2900, 2400, 3100, 3800, 2500, 3900, 2800, 3500, 2100],
-      borderColor: "#0e4f62",
+      borderColor: "#0c3f4fff",
       backgroundColor: (context: any) => {
         const ctx = context.chart.ctx as CanvasRenderingContext2D;
         const gradient = ctx.createLinearGradient(0, 0, 0, 400);
@@ -58,7 +58,7 @@ const lineOptions: ChartOptions<"line"> = {
   plugins: {
     legend: { display: false },
     tooltip: { 
-      backgroundColor: "#0e4f62",
+      backgroundColor: "#094151ff",
       displayColors: false,
       callbacks: { label: (c) => `LKR ${c.raw}` }
     },
@@ -89,7 +89,7 @@ const doughnutData = {
   datasets: [
     {
       data: [89, 11],
-      backgroundColor: ["#2f9d94", "#ef4444"],
+      backgroundColor: ["#399FD8", "#0B3E5A"],
       borderWidth: 0,
       hoverOffset: 4,
     },
@@ -110,7 +110,7 @@ export default function TransactDashboard() {
       <div className="flex flex-col gap-8 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
         
         {/* Header */}
-        <header className="flex flex-col md:flex-row justify-between items-center bg-[#0e4f62] text-white p-6 rounded-2xl shadow-lg gap-4">
+        <header className="flex flex-col md:flex-row justify-between items-center bg-[#0B3E5A] text-white p-6 rounded-2xl shadow-lg gap-4">
           <h1 className="text-2xl font-bold tracking-wide w-full md:w-auto">Dashboard</h1>
           <div className="flex items-center gap-6 w-full md:w-auto justify-end">
             <div className="flex gap-4">
@@ -131,7 +131,7 @@ export default function TransactDashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-           <div className="bg-[#0e4f62] text-white p-6 rounded-2xl shadow-md h-36 flex flex-col justify-between relative overflow-hidden group">
+           <div className="bg-[#0B3E5A] text-white p-6 rounded-2xl shadow-md h-36 flex flex-col justify-between relative overflow-hidden group">
                <div className="flex justify-between items-start z-10">
                    <span className="text-sm font-medium opacity-90">Current Balance</span>
                    <ArrowUpRight size={18} className="text-white/50" />
@@ -142,7 +142,7 @@ export default function TransactDashboard() {
                </div>
            </div>
 
-           <div className="bg-[#0e4f62] text-white p-6 rounded-2xl shadow-md h-36 flex flex-col justify-between relative overflow-hidden group">
+           <div className="bg-[#000000] text-white p-6 rounded-2xl shadow-md h-36 flex flex-col justify-between relative overflow-hidden group">
                <div className="flex justify-between items-start z-10">
                    <span className="text-sm font-medium opacity-90">Total Transactions</span>
                    <ArrowUpRight size={18} className="text-white/50" />

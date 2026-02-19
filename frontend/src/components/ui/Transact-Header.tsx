@@ -9,7 +9,7 @@ interface TransactHeaderProps {
 
 export default function TransactHeader({ title = 'Dashboard', subtitle = 'User', rightContent }: TransactHeaderProps) {
   return (
-     <header className="flex flex-col md:flex-row justify-between items-center bg-[#0e4f62] text-white p-6 rounded-2xl shadow-lg gap-4">
+     <header className="flex flex-col md:flex-row justify-between items-center bg-[#0B3E5A] text-white p-6 rounded-2xl shadow-lg gap-4">
           <h1 className="text-2xl font-bold tracking-wide w-full md:w-auto">{title}</h1>
           <div className="flex items-center gap-6 w-full md:w-auto justify-end">
             <div className="flex gap-4">
