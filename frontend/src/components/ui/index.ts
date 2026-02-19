@@ -10,4 +10,4 @@ export * from "./skeleton";
 export * from "./switch";
 export * from "./table";
 export * from "./toast";
-export * from "./progress";
+export * from "./loansenseheader";

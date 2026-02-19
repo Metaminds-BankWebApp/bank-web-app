@@ -1,5 +1,6 @@
 import { Badge } from "@/src/components/ui";
-import { PageShell, Section } from "@/src/components/layout";
+import { Section } from "@/src/components/layout";
+import { LandingPageShell } from "./landing-page-shell";
 
 const metrics = [
   { value: "2%", label: "Interest on savings accounts." },
@@ -10,12 +11,12 @@ const metrics = [
 export function MetricsSection() {
   return (
     <Section className="pb-8 pt-10">
-      <PageShell className="text-center">
+      <LandingPageShell className="text-center">
         <Badge variant="info" className="mx-auto">
           Our statistics
         </Badge>
 
-        <h2 className="mt-5 text-3xl font-semibold text-(--primecore-foreground)">Banking that works for you.</h2>
+        <h2 className="mt-6 text-3xl font-semibold text-(--primecore-foreground)">Banking that works for you.</h2>
         <p className="mx-auto mt-3 max-w-2xl text-sm text-(--primecore-foreground)/70 sm:text-base">
           Powering smarter credit decisions through instant risk evaluation, a structured rule-based scoring model,
           multi-role banking support, and secure data handling to ensure reliable, fast, and trustworthy financial
@@ -30,7 +31,7 @@ export function MetricsSection() {
             </div>
           ))}
         </div>
-      </PageShell>
+      </LandingPageShell>
     </Section>
   );
 }

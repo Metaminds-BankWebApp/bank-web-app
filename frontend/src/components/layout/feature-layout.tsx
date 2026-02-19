@@ -17,7 +17,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
     <AuthGuard requiredRole={role}>
       <div className="flex min-h-screen">
         <FeatureSidebar role={role} feature={feature} className="max-lg:hidden" />
-        <main className="flex-1 rounded-l-[28px] bg-(--primecore-surface) p-4 lg:p-0">
+        <main className="flex-1 rounded-l-[28px] bg-white p-4 lg:p-0">
           {children}
         </main>
       </div>

@@ -80,7 +80,7 @@ const featureMeta: Record<FeatureKey, FeatureMeta> = {
       PUBLIC_CUSTOMER: "/public-customer",
       BANK_CUSTOMER: "/bank-customer/transact",
     },
-    colorClass: "bg-[#0e4f62]", // Teal
+    colorClass: "bg-[#0B3E5A]", 
   },
 };
 
@@ -127,7 +127,7 @@ const getFeatureLinks = (feature: FeatureKey, role: FeatureRole): SidebarSection
           { title: "Personal Loan", href: `${base}/personal`, icon: Banknote },
           { title: "Vehicle Loan", href: `${base}/vehicle`, icon: Car },
           { title: "Educational Loan", href: `${base}/education`, icon: GraduationCap },
-          { title: "Housing Loan", href: `${base}/policy`, icon: Home }, // Using existing route logic if possible, or new
+          { title: "Housing Loan", href: `${base}/housing`, icon: Home }, // Using existing route logic if possible, or new
           { title: "Loan Eligibility History", href: `${base}/history`, icon: History },
           { title: "Profile", href: `${base}/profile`, icon: User },
         ]
@@ -256,7 +256,7 @@ export function FeatureSidebar({ role, feature, className }: FeatureSidebarProps
       </nav>
 
       {/* Footer / Logout */}
-      <div className="mt-auto px-6 pb-8 pt-4">
+      <div className="mt-auto px-6 pb-4 pt-4">
         <button
           type="button"
           onClick={() => {
