@@ -13,31 +13,23 @@ import { Bar } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
+const labels = ["April", "May", "June", "July", "August", "September"];
+const realValues = [85, 50, 90, 70, 60, 55];
+
 export default function CreditRiskBarChart() {
-  const labels = ["April", "May", "June", "July", "August", "September"];
-
-  // keep the real values stable
-  const realValues = useMemo(() => [85, 50, 90, 70, 60, 55], []);
-
   const PURPLE = "rgba(168,85,247,0.75)";
   const GREEN = "rgba(34,197,94,0.80)";
 
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-
-  // ✅ start from 0 then animate to real values
-  const [chartValues, setChartValues] = useState<number[]>(
-    () => realValues.map(() => 0)
-  );
+  const [chartValues, setChartValues] = useState<number[]>(() => realValues.map(() => 0));
 
   useEffect(() => {
-    // reset to 0 then set actual values next frame (forces animation)
-    setChartValues(realValues.map(() => 0));
     const raf = requestAnimationFrame(() => setChartValues(realValues));
     return () => cancelAnimationFrame(raf);
-  }, [realValues]);
+  }, []);
 
-  const data = useMemo(() => {
-    return {
+  const data = useMemo(
+    () => ({
       labels,
       datasets: [
         {
@@ -45,25 +37,22 @@ export default function CreditRiskBarChart() {
           data: chartValues,
           borderRadius: 12,
           borderSkipped: false as const,
-          barThickness: 44,
-          backgroundColor: labels.map((_, i) =>
-            hoverIndex === i ? GREEN : PURPLE
-          ),
+          barThickness: 50,
+          backgroundColor: labels.map((_, index) => (hoverIndex === index ? GREEN : PURPLE)),
         },
       ],
-    };
-  }, [hoverIndex, chartValues, labels]);
+    }),
+    [hoverIndex, chartValues]
+  );
 
   const options: ChartOptions<"bar"> = {
     responsive: true,
     maintainAspectRatio: false,
-
     animation: {
       duration: 900,
       easing: "easeOutQuart",
       delay: (ctx) => (ctx.dataIndex ?? 0) * 90,
     },
-
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -74,7 +63,6 @@ export default function CreditRiskBarChart() {
         displayColors: false,
       },
     },
-
     scales: {
       x: {
         ticks: { color: "rgba(15,23,42,0.55)", font: { size: 12 } },
@@ -85,11 +73,10 @@ export default function CreditRiskBarChart() {
         min: 0,
         max: 100,
         ticks: { stepSize: 25, color: "rgba(15,23,42,0.45)" },
-        grid: { color: "rgba(15,23,42,0.12)", borderDash: [5, 5] },
+        grid: { color: "rgba(15,23,42,0.12)" },
         border: { display: false },
       },
     },
-
     onHover: (_event, elements) => {
       if (elements?.length) setHoverIndex(elements[0].index);
       else setHoverIndex(null);
@@ -97,9 +84,8 @@ export default function CreditRiskBarChart() {
   };
 
   return (
-    <div className="h-[300px] w-full">
+    <div className="h-full min-h-[280px] w-full min-w-0 sm:min-h-[320px] lg:min-h-[420px] xl:min-h-[460px]">
       <Bar data={data} options={options} />
     </div>
   );
 }
-

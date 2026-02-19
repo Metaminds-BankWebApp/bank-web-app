@@ -62,7 +62,7 @@ export default function CreditRiskTrendChart() {
   };
 
   return (
-    <div className="h-[220px] w-full min-w-0 sm:h-[240px] lg:h-[260px]">
+    <div className="h-full min-h-[150px] w-full min-w-0 sm:min-h-[170px] lg:min-h-[180px] xl:min-h-[200px]">
       <Line data={data} options={options} />
     </div>
   );

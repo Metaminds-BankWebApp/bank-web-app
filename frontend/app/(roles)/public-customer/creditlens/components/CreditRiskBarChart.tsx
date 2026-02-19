@@ -37,7 +37,7 @@ export default function CreditRiskBarChart() {
           data: chartValues,
           borderRadius: 12,
           borderSkipped: false as const,
-          barThickness: 44,
+          barThickness: 50,
           backgroundColor: labels.map((_, index) => (hoverIndex === index ? GREEN : PURPLE)),
         },
       ],
@@ -73,8 +73,8 @@ export default function CreditRiskBarChart() {
         min: 0,
         max: 100,
         ticks: { stepSize: 25, color: "rgba(15,23,42,0.45)" },
-        grid: { color: "rgba(15,23,42,0.12)", borderDash: [5, 5] },
-        border: { display: false },
+        grid: { color: "rgba(15,23,42,0.12)" },
+        border: { display: false, dash: [5, 5] },
       },
     },
     onHover: (_event, elements) => {
@@ -84,7 +84,7 @@ export default function CreditRiskBarChart() {
   };
 
   return (
-    <div className="h-[220px] w-full min-w-0 sm:h-[260px] lg:h-[300px]">
+    <div className="h-full min-h-[280px] w-full min-w-0 sm:min-h-[320px] lg:min-h-[420px] xl:min-h-[460px]">
       <Bar data={data} options={options} />
     </div>
   );

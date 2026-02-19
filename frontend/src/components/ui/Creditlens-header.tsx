@@ -36,8 +36,8 @@ export default function CreditLensHeader({
         ) : null}
 
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-semibold leading-tight sm:text-xl">{title}</h2>
-          {subtitle ? <p className="truncate text-xs text-white/70 sm:text-sm">{subtitle}</p> : null}
+          <h2 className="truncate text-xl font-semibold leading-tight sm:text-2xl">{title}</h2>
+          {subtitle ? <p className="truncate text-sm text-white/70">{subtitle}</p> : null}
         </div>
       </div>
 
@@ -85,7 +85,7 @@ export default function CreditLensHeader({
         <div className="flex min-w-0 items-center gap-2 rounded-full bg-white/10 px-2 py-1 sm:px-3">
           <div className="h-8 w-8 shrink-0 rounded-full bg-white/20" />
           <div className="hidden min-w-0 text-sm leading-tight sm:block">
-            <div className="truncate font-medium">{name}</div>
+            <div className="truncate text-base font-medium">{name}</div>
             <div className="truncate text-xs text-white/60">{role}</div>
           </div>
         </div>
