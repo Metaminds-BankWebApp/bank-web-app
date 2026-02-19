@@ -122,7 +122,7 @@ export default function TransactDashboard() {
                   <div className="w-full h-full bg-gradient-to-br from-slate-400 to-slate-600"></div>
                </div>
                <div className="hidden md:block text-right">
-                  <p className="text-sm font-bold leading-none">Kamal Edirisinghe</p>
+                  <p className="text-sm font-bold leading-none">Dineth Dovindu</p>
                   <p className="text-xs text-white/70 mt-1">User</p>
                </div>
             </div>
