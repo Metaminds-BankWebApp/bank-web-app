@@ -37,7 +37,7 @@ export default function CreditRiskBarChart() {
           data: chartValues,
           borderRadius: 12,
           borderSkipped: false as const,
-          barThickness: 50,
+          barThickness: 60,
           backgroundColor: labels.map((_, index) => (hoverIndex === index ? GREEN : PURPLE)),
         },
       ],

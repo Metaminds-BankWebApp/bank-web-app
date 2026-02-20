@@ -1,7 +1,7 @@
-import { Footer } from "@/src/components/layout";
 import {
   CtaBannerSection,
   HeroSection,
+  LandingFooter,
   MetricsSection,
   ModulesSection,
   StepsSection,
@@ -20,7 +20,7 @@ export default function LandingPage() {
         <CtaBannerSection />
       </main>
 
-      <Footer className="mt-8" />
+      <LandingFooter />
     </div>
   );
 }
