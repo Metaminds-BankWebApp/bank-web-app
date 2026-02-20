@@ -99,10 +99,10 @@ const getFeatureLinks = (feature: FeatureKey, role: FeatureRole): SidebarSection
         label: "General",
         items: [
           { title: "Dashboard", href: base, icon: Home },
+          { title: "Add Expense", href: `${base}/add`, icon: Receipt },
           { title: "Expenses History", href: `${base}/history`, icon: FileText },
           { title: "Category Analysis", href: `${base}/category`, icon: UserPlus }, // Following prompt, icon name might be placeholder
           { title: "Budget Management", href: `${base}/budget`, icon: Wallet },
-          
           { title: "Profile", href: `${base}/profile`, icon: User },
           { title: "Settings", href: `${base}/settings`, icon: Settings },
         ]
