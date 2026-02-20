@@ -20,6 +20,7 @@ import React from 'react';
 import Link from "next/link";
 
 export default function LoanSenseDashboard() {
+    const [isModalOpen, setIsModalOpen] = React.useState(false);
   const loans = [
     { title: "Personal Loan", subtitle: "Flexible personal financing for your needs", status: "Eligible", statusColor: "text-emerald-500 bg-emerald-50", amount: "2,150,000", path: "/bank-customer/loansense/personal" },
     { title: "Vehicle Loan", subtitle: "Finance your dream vehicle", status: "Eligible", statusColor: "text-emerald-500 bg-emerald-50", amount: "3,450,000", path: "/bank-customer/loansense/vehicle" },
@@ -172,15 +173,141 @@ export default function LoanSenseDashboard() {
                              </div>
                         </div>
 
-                         <button className="w-full mt-6 bg-[#2c5282] hover:bg-[#1e3a5f] text-white text-sm font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-blue-900/10">
-                             How is this calculated?
+                         <button onClick={() => setIsModalOpen(true)} className="w-full mt-6 bg-[#2c5282] hover:bg-[#1e3a5f] text-white text-sm font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-blue-900/10">
+                              How is this calculated?
                          </button>
+
 
                     </div>
                 </div>
 
             </div>
         </div>
+{/* Calculation Modal */}
+{isModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+
+    {/* Overlay */}
+    <div
+      className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      onClick={() => setIsModalOpen(false)}
+    />
+
+    {/* Modal Content */}
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="relative bg-white w-[92%] max-w-2xl rounded-2xl shadow-2xl p-8 z-10"
+    >
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 className="text-xl font-semibold text-[#0d3b66]">
+          How Your Loan Eligibility Is Calculated
+        </h2>
+        <button
+          onClick={() => setIsModalOpen(false)}
+          className="text-slate-400 hover:text-slate-700 transition text-lg"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Scrollable Content */}
+      <div className="space-y-6 text-sm text-slate-700 leading-relaxed max-h-[65vh] overflow-y-auto pr-2">
+
+        {/* Step 1 */}
+        <div className="bg-slate-50 rounded-lg p-4 border">
+          <h3 className="font-semibold text-slate-800 mb-2">
+            1️⃣ Calculate Total Monthly Debt Obligations (TMDO)
+          </h3>
+          <p>
+            We calculate how much you already pay each month for existing
+            financial commitments.
+          </p>
+          <p className="mt-2 font-medium text-slate-800">
+            TMDO = Loan EMIs + Leasing Payments + Credit Card Minimum Payments
+          </p>
+        </div>
+
+        {/* Step 2 */}
+        <div className="bg-slate-50 rounded-lg p-4 border">
+          <h3 className="font-semibold text-slate-800 mb-2">
+            2️⃣ Determine Your Debt Burden Ratio (DBR)
+          </h3>
+          <p>
+            DBR shows what percentage of your income is currently used to repay debts.
+          </p>
+          <p className="mt-2 font-medium text-slate-800">
+            DBR = TMDO ÷ Monthly Income
+          </p>
+        </div>
+
+        {/* Step 3 */}
+        <div className="bg-slate-50 rounded-lg p-4 border">
+          <h3 className="font-semibold text-slate-800 mb-2">
+            3️⃣ Apply Bank Policy Limit
+          </h3>
+          <p>
+            The bank allows only a fixed portion of your income to be used for total debt repayments.
+          </p>
+          <p className="mt-2 font-medium text-slate-800">
+            Max Allowed EMI = Monthly Income × DBR Policy Limit
+          </p>
+        </div>
+
+        {/* Step 4 */}
+        <div className="bg-slate-50 rounded-lg p-4 border">
+          <h3 className="font-semibold text-slate-800 mb-2">
+            4️⃣ Calculate Available EMI Capacity
+          </h3>
+          <p>
+            This is the additional monthly repayment amount you can safely afford.
+          </p>
+          <p className="mt-2 font-medium text-slate-800">
+            Available EMI = Max Allowed EMI − TMDO
+          </p>
+        </div>
+
+        {/* Step 5 */}
+        <div className="bg-slate-50 rounded-lg p-4 border">
+          <h3 className="font-semibold text-slate-800 mb-2">
+            5️⃣ Apply Credit Risk Adjustment
+          </h3>
+          <p>
+            Your credit risk level determines how much of the calculated amount
+            the bank is willing to approve.
+          </p>
+          <p className="mt-2 font-medium text-slate-800">
+            Final Loan Amount = Available EMI × Tenure × Risk Multiplier
+          </p>
+        </div>
+
+        {/* Summary */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-900 font-medium">
+            ✔ In summary, your eligibility is determined by your income,
+            existing financial commitments, bank policy limits, and your credit risk profile.
+          </p>
+        </div>
+
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 flex justify-end border-t pt-4">
+        <button
+          onClick={() => setIsModalOpen(false)}
+          className="bg-[#0d3b66] hover:bg-[#082d4a] text-white px-6 py-2 rounded-lg text-sm font-semibold transition"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+
       </div>
     </AuthGuard>
   );
