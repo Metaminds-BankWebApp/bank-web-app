@@ -88,9 +88,11 @@ export default function SpendIQDashboard() {
     <div className="p-6 space-y-8 bg-gradient-to-br from-[#f0f4ff] to-[#e6ecf9] min-h-screen">
 
       <SpendIqHeader title="SpendIQ – Expense Overview" />
+      
 
       {/* -------- GLASS SUMMARY CARDS -------- */}
       <div className="grid md:grid-cols-4 gap-6">
+        
         <GlassCard
           title="Total Expenses"
           value="LKR 25,600"
@@ -124,13 +126,16 @@ export default function SpendIQDashboard() {
 
           <div className="relative h-80 flex items-center justify-center">
             <Doughnut data={data} options={options} />
-          </div>
-          <div className="absolute text-center">
+            <div className="absolute text-center">
               <p className="text-xs text-gray-600">Total</p>
               <p className="text-lg font-bold text-[#0a234c]">
                 {total.toLocaleString()} LKR
               </p>
+              <br></br><br></br><br></br><br></br>
             </div>
+            
+          </div>
+          
         </div>
 
         {/* GLASS BUDGET SECTION */}
