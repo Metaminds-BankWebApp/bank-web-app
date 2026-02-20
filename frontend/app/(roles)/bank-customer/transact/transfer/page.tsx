@@ -16,34 +16,38 @@ export default function Page() {
     <div className="px-8 py-6 sm:px-6 lg:px-8">
       <TransactHeader title="Transfer" subtitle="Dineth Dovindu" />
 
-      <div className="flex justify-end mt-20 mb-8 max-w-6xl mx-auto pr-[7rem]">
-        <Link
-          href="/bank-customer/transact/beneficiary"
-          className="text-[#155E63] font-medium hover:underline"
-        >
-          + Add Beneficiary
-        </Link>
-      </div>
+     <div className="flex justify-end mt-8 mb-8 pr-[7rem]">
+  <Link
+    href="/bank-customer/transact/beneficiary"
+    className="inline-flex items-center gap-2 px-5 py-2.5 
+               bg-[#e6f4f6] text-[#155E63] 
+               rounded-full font-medium 
+               hover:bg-[#d1ecef] transition-all duration-200"
+  >
+    + Add Beneficiary
+  </Link>
+</div>
 
-      <Card className="rounded-xl shadow-sm p-8 max-w-5xl mx-auto w-full mt-[2rem]">
-        <form className="space-y-6">
 
-          <div className="space-y-1">
+      <Card className="rounded-xl shadow-sm p-8 max-w-7xl mx-auto w-6xl mt-[2rem]">
+        <form className="space-y-9">
+
+          <div className="space-y-2">
             <Label htmlFor="accountNumber">Account Number</Label>
             <Input id="accountNumber" type="text" placeholder="Enter account number" />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="beneficiaryName">Beneficiary Name</Label>
             <Input id="beneficiaryName" type="text" placeholder="Beneficiary full name" />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="amount">Amount</Label>
             <Input id="amount" type="number" placeholder="0.00" />
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="remark">Remark</Label>
             <Input id="remark" type="text" placeholder="Add a note (optional)" />
           </div>

@@ -107,13 +107,13 @@ const doughnutOptions: ChartOptions<"doughnut"> = {
 export default function TransactDashboard() {
   return (
     <AuthGuard requiredRole="BANK_CUSTOMER">
-      <div className="px-8 pt-4 pb-8 min-h-screen bg-gray-50 text-slate-800">
+      
 
     <div className="bg-white px-8 py-6 sm:px-6 lg:px-8">
             <TransactHeader title="Dashboard" subtitle="Dineth dovindu" />
 
         {/* Stats Grid */}
-  <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
            <div className="bg-[#0B3E5A] text-white p-6 rounded-2xl shadow-md h-36 flex flex-col justify-between relative overflow-hidden group">
                <div className="flex justify-between items-start z-10">
                    <span className="text-sm font-medium opacity-90">Current Balance</span>
@@ -160,7 +160,7 @@ export default function TransactDashboard() {
         </div>
 
         {/* Charts Section */}
-  <div className="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div className="mt-18 grid grid-cols-1 lg:grid-cols-3 gap-8">
            
            {/* Timeline Chart */}
            <div className="lg:col-span-2 bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
@@ -225,7 +225,6 @@ export default function TransactDashboard() {
         </div>
 
       </div>
-    </div>
     </AuthGuard>
   );
 }
