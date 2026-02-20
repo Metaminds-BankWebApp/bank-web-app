@@ -1,5 +1,12 @@
-import { MockFeaturePage } from "@/src/components/mock-feature-page";
+import { Bell, Mail } from "lucide-react";
+import{SpendIqHeader} from "@/src/components/SpendIqHeader";
 
 export default function SpendIQSettingsPage() {
-  return <MockFeaturePage title="Budget Settings" description="Configure monthly limits and alerts." />;
+  return (
+    
+    <div className="p-6">
+      <SpendIqHeader title="SpendIQ Settings" />
+      
+    </div>
+  );
 }
