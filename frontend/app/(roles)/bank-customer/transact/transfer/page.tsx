@@ -193,7 +193,7 @@ export default function Page() {
                   CUSTOMER NAME
                 </span>
                 <span className="font-semibold text-slate-800">
-                  Bashitha
+                  Dineth
                 </span>
               </div>
 
