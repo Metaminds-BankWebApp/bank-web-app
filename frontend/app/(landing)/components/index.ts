@@ -1,5 +1,6 @@
 export * from "./cta-banner-section";
 export * from "./hero-section";
+export * from "./landing-footer";
 export * from "./metrics-section";
 export * from "./modules-section";
 export * from "./steps-section";

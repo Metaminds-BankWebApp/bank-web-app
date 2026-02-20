@@ -28,22 +28,22 @@ export default function ReportMetricCard({
 
   return (
     <div
-      className={`rounded-2xl border ${t.ring} bg-white/80 p-5 shadow-[0_14px_45px_-35px_rgba(2,44,67,0.40)]`}
+      className={`min-w-0 rounded-2xl border ${t.ring} bg-white/80 p-4 shadow-[0_14px_45px_-35px_rgba(2,44,67,0.40)] sm:p-5`}
     >
-      <div className="flex items-start gap-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${t.iconBg} ${t.icon}`}>
+      <div className="flex min-w-0 items-start gap-3">
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${t.iconBg} ${t.icon} sm:h-10 sm:w-10`}>
           {icon}
         </div>
 
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
   <div className="text-sm font-medium text-slate-600">{title}</div>
 
   {/* stack value + subValue vertically */}
-  <div className="mt-2 flex flex-col items-start">
-    <div className="text-xl font-bold text-slate-900">{value}</div>
+  <div className="mt-2 flex min-w-0 flex-col items-start">
+    <div className="break-words text-lg font-bold text-slate-900 sm:text-xl">{value}</div>
 
     {subValue ? (
-      <div className="mt-1 text-sm font-normal text-slate-500 leading-tight">
+      <div className="mt-1 break-words text-sm font-normal leading-tight text-slate-500">
         {subValue}
       </div>
     ) : null}

@@ -3,9 +3,7 @@
 import React, { useMemo, useState } from "react";
 import CreditLensHeader from "@/src/components/ui/Creditlens-header";
 import { Button } from "@/src/components/ui/button";
-import { Download } from "lucide-react";
-
-
+import { Download, Banknote, ReceiptText, CreditCard, Landmark } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -13,46 +11,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
-
 import ReportMetricCard from "./components/ReportMetricCard";
 import CreditSummaryDonut from "./components/CreditSummaryDonut";
 import BehaviorExposureCard from "./components/BehaviorExposureCard";
 import RiskPointsBreakdown from "./components/RiskPointsBreakdown";
 
-import { Banknote, ReceiptText, CreditCard, Landmark } from "lucide-react";
-
 type Factor = { name: string; value: number; max: number; color: string };
 
 type ReportSnapshot = {
   month: string;
-
   income: number;
   loanEmi: number;
   creditCardBalance: number;
   creditCardLimit: number;
   otherLiabilities: number;
-
   score: number;
   riskLabel: "Low" | "Medium" | "High";
   evaluationType: string;
   lastUpdated: string;
-
   missedPayments: number;
   activeFacilities: number;
-  dti: number; // %
-  utilization: number; // %
+  dti: number;
+  utilization: number;
   dtiLabel: "Low" | "Medium" | "High";
-
   factors: Factor[];
 };
 
 export default function ReportPage() {
+  const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
 
-  const handleDownload = () => {
-  console.log("Download Full Report clicked:", selectedMonth);
-};
-
-  // ✅ same 6 months style you used before (you can change later to dynamic)
   const snapshots: ReportSnapshot[] = useMemo(
     () => [
       {
@@ -79,7 +66,6 @@ export default function ReportPage() {
           { name: "Active Facilities", value: 5, max: 10, color: "#22c55e" },
         ],
       },
-      // Keep same structure for the rest (dummy variations)
       {
         month: "May",
         income: 145000,
@@ -205,59 +191,47 @@ export default function ReportPage() {
   );
 
   const months = snapshots.map((s) => s.month);
-  const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
-
-
 
   const current = useMemo(() => {
-  if (!selectedMonth) return snapshots[0]; // or snapshots[snapshots.length - 1]
-  return snapshots.find((s) => s.month === selectedMonth) ?? snapshots[0];
+    if (!selectedMonth) return snapshots[0];
+    return snapshots.find((s) => s.month === selectedMonth) ?? snapshots[0];
   }, [selectedMonth, snapshots]);
 
+  const handleDownload = () => {
+    console.log("Download Full Report clicked:", selectedMonth);
+  };
 
   return (
-    <div className="space-y-1 mt-3 ml-4 mr-4">
-      <CreditLensHeader
-        title="Report"
-        subtitle=""
-        name="Kamal Edirisinghe"
-        role="Public Customer"
-      />
+    <div className="w-full min-h-[calc(100dvh-1.25rem)] space-y-4 overflow-x-hidden px-1 pt-2 sm:space-y-5 sm:px-2 lg:min-h-[calc(100dvh-2rem)] lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
+      <CreditLensHeader title="Report" subtitle="" name="Kamal Edirisinghe" role="Public Customer" />
 
-      <div className="mx-auto w-full max-w-[1180px] px-4 pb-8 pt-1 lg:px-6">
-        {/* Month dropdown (top-right like screenshot) */}
-        {/* Top actions row: Download (left) + Month dropdown (right) */}
-<div className="mt-2 flex items-center justify-between gap-3">
-  {/* Left: Month dropdown */}
-  <div className="w-[190px]">
-    <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-      <SelectTrigger className="h-10 rounded-xl bg-white/90">
-        <SelectValue placeholder="Select Month" />
-      </SelectTrigger>
-      <SelectContent>
-        {months.map((m) => (
-          <SelectItem key={m} value={m}>
-            {m}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
+      <div className="pb-6 pt-1 sm:pb-8 lg:px-2 xl:px-3">
+        <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="w-full sm:w-[190px]">
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger className="h-10 rounded-xl bg-white/90">
+                <SelectValue placeholder="Select Month" />
+              </SelectTrigger>
+              <SelectContent>
+                {months.map((month) => (
+                  <SelectItem key={month} value={month}>
+                    {month}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-  {/* Right: Download button */}
-  <Button
-    onClick={handleDownload}
-    className="h-10 rounded-xl bg-sky-500 px-5 text-white hover:bg-sky-600"
-  >
-    <Download className="mr-2 h-4 w-4" />
-    Download Full Report
-  </Button>
-</div>
+          <Button
+            onClick={handleDownload}
+            className="h-10 w-full rounded-xl bg-sky-500 px-5 text-white hover:bg-sky-600 sm:w-auto"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Download Full Report
+          </Button>
+        </div>
 
-
-
-        {/* Top 4 cards */}
-        <div className="mt-4 grid gap-4 lg:grid-cols-4">
+        <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ReportMetricCard
             title="Monthly Income"
             value={`LKR ${current.income.toLocaleString()}`}
@@ -288,43 +262,34 @@ export default function ReportPage() {
           />
         </div>
 
-        {/* 3 big cards row */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_1.05fr_1fr]">
-          {/* Credit Summary */}
-          <div className="rounded-[26px] bg-white/92 p-7 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)]">
-            <h3 className="text-center text-xl font-semibold text-slate-900">
-              Credit Summary
-            </h3>
+        <div className="mt-6 grid min-w-0 grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[1.05fr_1.05fr_1fr]">
+          <div className="min-w-0 rounded-2xl bg-white/92 p-5 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)] sm:p-6 md:rounded-[26px] md:p-7">
+            <h3 className="text-center text-lg font-semibold text-slate-900 sm:text-xl">Credit Summary</h3>
 
             <div className="mt-6 flex justify-center">
               <CreditSummaryDonut score={current.score} riskLabel={current.riskLabel} />
             </div>
 
             <div className="mt-6 border-t pt-5 text-sm text-slate-600">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span>Evaluation Type:</span>
                 <span className="font-semibold text-slate-900">{current.evaluationType}</span>
               </div>
 
-              <div className="mt-3 flex items-center justify-between">
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                 <span>Risk Category:</span>
                 <span className="font-semibold text-amber-600">{current.riskLabel}</span>
               </div>
 
-              <div className="mt-5 text-center text-xs text-slate-400">
-                LAST UPDATED: {current.lastUpdated}
-              </div>
+              <div className="mt-5 text-center text-xs text-slate-400">LAST UPDATED: {current.lastUpdated}</div>
             </div>
           </div>
 
-          {/* Credit Behavior & Exposure */}
           <BehaviorExposureCard snapshot={current} />
 
-          {/* Risk Points Breakdown */}
           <RiskPointsBreakdown factors={current.factors} score={current.score} />
         </div>
 
-        {/* Bottom footnote */}
         <div className="mt-6 text-center text-xs text-slate-400">
           This report is generated based on user provided financial data and system rules.
           <div className="mt-1">© 2024 PrimeCore CreditLens. All rights reserved.</div>

@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/src/components/ui";
 import { Section } from "@/src/components/layout";
 import { LandingPageShell } from "./landing-page-shell";
 
@@ -6,41 +5,44 @@ const steps = [
   {
     step: "1",
     title: "Collect Financial Data",
-    text: "Income, debts, credit usage, and payment history.",
+    text: "Income, debts, credit usage, and payment history are structured into an analysis-ready profile.",
   },
   {
     step: "2",
     title: "Calculate Risk Indicators",
-    text: "DTI ratio, utilization rate, exposure factors, and stability.",
+    text: "DTI ratio, utilization trends, exposure factors, and repayment stability are measured instantly.",
   },
   {
     step: "3",
     title: "Generate Score & Insights",
-    text: "Risk level classification and explanation of influencing factors.",
+    text: "A clear score with confidence indicators explains the strongest factors influencing eligibility.",
   },
 ] as const;
 
 export function StepsSection() {
   return (
-    <Section className="pt-10">
+    <Section id="how-it-works" className="pt-8  sm:pt-10  ">
       <LandingPageShell>
-        <div className="rounded-2xl border border-[#0a456f] bg-[linear-gradient(145deg,#08263f,#0c3f63)] p-6 text-[#e8f4ff] sm:p-8">
-          <div className="mb-6 space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#9ec5e1]">Your guide, step by step</p>
-            <h2 className="max-w-2xl text-3xl font-bold leading-tight sm:text-5xl">From financial data to credit decisions</h2>
+        <section className="rounded-2xl border border-[#16537d] bg-[linear-gradient(125deg,#082f56_0%,#0b3f6b_58%,#1a79bb_100%)] p-6 text-white sm:p-9">
+          <div className="mb-6 space-y-3">
+            <span className="inline-flex rounded-full border border-white/30 bg-white/10 px-4 py-2 text-xs font-semibold tracking-wide text-white/90 sm:text-sm">
+              Your Guide, Step by Step
+            </span>
+            <h2 className="max-w-2xl text-4xl font-semibold leading-tight sm:text-5xl">
+              From Financial Data to Credit Decisions
+            </h2>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+
+          <div className="grid gap-4 md:grid-cols-3">
             {steps.map((item) => (
-              <Card key={item.step} className="border-[#266286] bg-[#0f3e61]/70 text-[#e8f4ff] min-h-[220px] flex flex-col">
-                <CardContent className="space-y-3 p-6 flex-1">
-                  <p className="text-5xl font-bold">{item.step}</p>
-                  <h3 className="text-xl font-semibold">{item.title}</h3>
-                  <p className="text-sm text-[rgba(232,244,255,0.85)]">{item.text}</p>
-                </CardContent>
-              </Card>
+              <article key={item.step} className="rounded-2xl border border-white/15 bg-white/8 p-6 pb-16 backdrop-blur-sm">
+                <p className="text-6xl font-semibold text-[#9fd8ff]">{item.step}</p>
+                <h3 className="mt-4 text-2xl font-semibold">{item.title}</h3>
+                <p className="mt-3 text-base leading-relaxed text-white/85">{item.text}</p>
+              </article>
             ))}
           </div>
-        </div>
+        </section>
       </LandingPageShell>
     </Section>
   );

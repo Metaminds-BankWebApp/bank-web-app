@@ -15,8 +15,8 @@ export default function BehaviorExposureCard({
   };
 }) {
   return (
-    <div className="rounded-[26px] bg-white/92 p-7 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)]">
-      <h3 className="text-center text-xl font-semibold text-slate-900">
+    <div className="min-w-0 rounded-2xl bg-white/92 p-5 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)] sm:p-6 md:rounded-[26px] md:p-7">
+      <h3 className="text-center text-lg font-semibold text-slate-900 sm:text-xl">
         Credit Behavior &amp; Exposure
       </h3>
 
@@ -35,7 +35,7 @@ export default function BehaviorExposureCard({
           sub=""
         />
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <Row
             icon={<Percent className="h-5 w-5 text-emerald-600" />}
             title="Debt-to-Income (DTI)"
@@ -73,15 +73,15 @@ function Row({
   compact?: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-4 ${compact ? "" : ""}`}>
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50">
+    <div className={`flex min-w-0 items-center gap-3 sm:gap-4 ${compact ? "" : ""}`}>
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 sm:h-10 sm:w-10">
         {icon}
       </div>
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-slate-600">{title}</div>
-        <div className="mt-1 flex items-baseline gap-2">
-          <div className="text-lg font-bold text-slate-900">{value}</div>
+        <div className="mt-1 flex flex-wrap items-baseline gap-2">
+          <div className="text-base font-bold text-slate-900 sm:text-lg">{value}</div>
           {sub ? <div className="text-xs text-slate-500">{sub}</div> : null}
         </div>
       </div>
