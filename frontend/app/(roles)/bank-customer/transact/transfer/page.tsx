@@ -13,7 +13,7 @@ export default function Page() {
   const router = useRouter()
 
   return (
-    <div className="px-4 py-6 sm:px-6 lg:px-8">
+    <div className="px-8 py-6 sm:px-6 lg:px-8">
       <TransactHeader title="Transfer" subtitle="Dineth Dovindu" />
 
       <div className="flex justify-end mt-20 mb-8 max-w-6xl mx-auto pr-[7rem]">

@@ -11,7 +11,7 @@ export default function Page() {
   const router = useRouter()
 
   return (
-    <div className="bg-white px-8 py-8">
+    <div className="bg-white px-8 py-6">
       <TransactHeader title="Account Detail" subtitle="Dineth dovindu" />
 
       <section className="max-w-6xl mx-auto mt-8">
