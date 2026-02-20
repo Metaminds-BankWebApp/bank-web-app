@@ -53,7 +53,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
   return (
     <AuthGuard requiredRole={role}>
       <FeatureLayoutContext.Provider value={contextValue}>
-        <div className="flex min-h-screen overflow-x-hidden">
+        <div className="flex h-screen overflow-hidden">
           <FeatureSidebar role={role} feature={feature} className="hidden lg:flex" />
 
           <div
@@ -95,7 +95,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
             </div>
           </div>
 
-          <main className="min-w-0 flex-1 overflow-x-hidden rounded-none bg-(--primecore-surface) p-3 sm:p-4 lg:rounded-l-[28px] lg:p-0">
+          <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none bg-(--primecore-surface) p-3 sm:p-4 lg:rounded-l-[28px] lg:p-0">
             {children}
           </main>
         </div>
