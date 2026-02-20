@@ -94,11 +94,13 @@ export default function LoanSenseDashboard() {
                 </div>
             </div>
 
+             <h3 className="text-lg font-bold text-slate-800 mb-4">Loan Categories</h3>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {/* Loan Categories List */}
                 <div className="lg:col-span-2 space-y-4">
-                    <h3 className="text-lg font-bold text-slate-800 mb-4">Loan Categories</h3>
+                   
                     
                     {loans.map((loan, idx) => (
                         <Link key={idx} href={loan.path} className="block">
@@ -252,7 +254,7 @@ export default function LoanSenseDashboard() {
             The bank allows only a fixed portion of your income to be used for total debt repayments.
           </p>
           <p className="mt-2 font-medium text-slate-800">
-            Max Allowed EMI = Monthly Income × DBR PolicyLimit
+            Max Allowed EMI = Monthly Income × DBR Policy Limit
           </p>
         </div>
 
