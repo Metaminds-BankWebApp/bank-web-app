@@ -13,9 +13,16 @@ export function WhyChooseSection() {
     <Section id="about" className="pt-8 sm:pt-10">
       <LandingPageShell>
         <div className="text-center">
-          <span className="inline-flex rounded-full border border-[#cedae6] bg-white px-4 py-2 text-xs font-semibold tracking-wide text-[#5d7186] sm:text-sm">
-            Banking for the Future
-          </span>
+          <div className="inline-flex items-center gap-3 rounded-[32px] border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
+            <Image
+              src="/primecore%20logo%20only%20blue.png"
+              alt="PrimeCore icon"
+              width={44}
+              height={44}
+              className="h-8 w-8 sm:h-10 sm:w-10"
+            />
+            <span className="text-sm font-medium sm:text-lg">Banking for the Future</span>
+          </div>
           <h2 className="mt-5 text-4xl font-semibold text-[#1a2632] sm:text-5xl">Why Choose PrimeCore</h2>
         </div>
 

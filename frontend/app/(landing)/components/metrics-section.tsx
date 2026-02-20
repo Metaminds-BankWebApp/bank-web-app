@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Section } from "@/src/components/layout";
 import { LandingPageShell } from "./landing-page-shell";
 
@@ -11,9 +12,16 @@ export function MetricsSection() {
   return (
     <Section className="pt-8 sm:pt-10">
       <LandingPageShell className="text-center">
-        <span className="inline-flex rounded-full border border-[#d2deea] bg-white px-4 py-2 text-xs font-semibold tracking-wide text-[#4c6f91] sm:text-sm">
-          Our Statistics
-        </span>
+        <div className="inline-flex items-center gap-3 rounded-[32px] border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
+          <Image
+            src="/primecore%20logo%20only%20blue.png"
+            alt="PrimeCore icon"
+            width={44}
+            height={44}
+            className="h-8 w-8 sm:h-10 sm:w-10"
+          />
+          <span className="text-sm font-medium sm:text-lg">Our Statistics</span>
+        </div>
 
         <h2 className="mx-auto mt-6 max-w-3xl text-4xl font-semibold text-[#0f2238] sm:text-5xl">
           Banking That Works for You.
