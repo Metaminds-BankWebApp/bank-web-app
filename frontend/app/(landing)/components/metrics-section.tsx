@@ -1,4 +1,4 @@
-import { Badge } from "@/src/components/ui";
+import Image from "next/image";
 import { Section } from "@/src/components/layout";
 import { LandingPageShell } from "./landing-page-shell";
 
@@ -10,24 +10,32 @@ const metrics = [
 
 export function MetricsSection() {
   return (
-    <Section className="pb-8 pt-10">
+    <Section className="pt-8 sm:pt-10">
       <LandingPageShell className="text-center">
-        <Badge variant="info" className="mx-auto">
-          Our statistics
-        </Badge>
+        <div className="inline-flex items-center gap-3 rounded-[32px] border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
+          <Image
+            src="/primecore%20logo%20only%20blue.png"
+            alt="PrimeCore icon"
+            width={44}
+            height={44}
+            className="h-8 w-8 sm:h-10 sm:w-10"
+          />
+          <span className="text-sm font-medium sm:text-lg">Our Statistics</span>
+        </div>
 
-        <h2 className="mt-6 text-3xl font-semibold text-(--primecore-foreground)">Banking that works for you.</h2>
-        <p className="mx-auto mt-3 max-w-2xl text-sm text-(--primecore-foreground)/70 sm:text-base">
-          Powering smarter credit decisions through instant risk evaluation, a structured rule-based scoring model,
-          multi-role banking support, and secure data handling to ensure reliable, fast, and trustworthy financial
-          assessments.
+        <h2 className="mx-auto mt-6 max-w-3xl text-4xl font-semibold text-[#0f2238] sm:text-5xl">
+          Banking That Works for You.
+        </h2>
+        <p className="mx-auto mt-4 max-w-3xl text-base leading-relaxed text-[#4f6379]">
+          Powering smarter credit decisions through transparent scoring, multi-role workflows, and secure financial
+          data processing for reliable, fast assessments.
         </p>
 
-        <div className="mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-3">
-          {metrics.map((metric) => (
-            <div key={metric.value} className="space-y-1">
-              <p className="text-4xl font-bold text-primary">{metric.value}</p>
-              <p className="text-sm font-medium text-(--primecore-foreground)/80">{metric.label}</p>
+        <div className="mx-auto mt-10 grid max-w-5xl gap-8 sm:grid-cols-3">
+          {metrics.map((item) => (
+            <div key={item.value} className="space-y-2">
+              <p className="text-5xl font-semibold text-[#2f86bf]">{item.value}</p>
+              <p className="text-base text-[#2a3f56]">{item.label}</p>
             </div>
           ))}
         </div>

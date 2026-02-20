@@ -1,41 +1,59 @@
 import Image from "next/image";
-import { Button } from "@/src/components/ui";
+import Link from "next/link";
 import { Section } from "@/src/components/layout";
 import { LandingPageShell } from "./landing-page-shell";
 
 export function CtaBannerSection() {
   return (
-    <Section className="pt-8 pb-8">
+    <Section className="pb-8 pt-8 sm:pt-10">
       <LandingPageShell>
-        <div className="relative overflow-hidden rounded-2xl border border-[#2F9D94]/35 bg-[linear-gradient(135deg,#0a3555,#0f4d74)] px-6 py-8 text-[#f7f6f2] sm:px-10 sm:py-10">
-          <div className="grid items-center gap-8 lg:grid-cols-2">
-            <div className="space-y-4 max-w-lg">
-              <p className="inline-flex rounded-full border border-white/35 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/90">
-                We are PrimeCore
+        <section className="relative overflow-hidden rounded-2xl border border-[#16537d] bg-[linear-gradient(125deg,#082f56_0%,#0a3f6b_57%,#1a79bb_100%)] px-6 py-8 text-white sm:px-10 sm:py-10">
+          <div className="pointer-events-none absolute -right-10 top-[-20%] h-72 w-72 rounded-full bg-[#6bcfff]/20 blur-[110px]" />
+
+          <div className="relative z-10 grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+            <div className="max-w-xl space-y-4 pb-1 sm:space-y-5">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-white/90">
+                <Image
+                  src="/primecore%20logo%20only%20white.png"
+                  alt="PrimeCore icon"
+                  width={28}
+                  height={28}
+                  className="h-5 w-5 sm:h-6 sm:w-6"
+                />
+                <span className="text-xs font-semibold tracking-wide sm:text-sm">We Are PrimeCore</span>
+              </div>
+              <h2 className="text-4xl font-semibold leading-tight sm:text-5xl">Ready to Understand Your Credit Profile?</h2>
+              <p className="text-base leading-relaxed text-white/85">
+                Make informed financial decisions with reliable credit insights and instant eligibility analysis.
               </p>
-              <h2 className="text-3xl font-bold leading-tight sm:text-5xl">Ready to understand your credit profile?</h2>
-              <p className="text-sm text-[#d6ebf9]/90 sm:text-base">
-                Make informed financial decisions with reliable credit insights and eligibility analysis.
-              </p>
-              <div className="flex flex-wrap gap-3 pt-4">
-                <Button className="h-11 bg-primary px-6 text-white hover:bg-primary/90">Check My Credit Risk</Button>
-                <Button variant="outline" className="h-11 border-white/45 bg-white px-6 text-(--primecore-foreground) hover:bg-white/90">
-                  Explore Features
-                </Button>
+
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Link
+                  href="/login"
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-6 text-sm font-semibold text-[#123456] transition-colors hover:bg-white/90"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#3ca3e4] px-6 text-sm font-semibold text-white transition-colors hover:bg-[#3198dc]"
+                >
+                  Sign Up
+                </Link>
               </div>
             </div>
 
-            <div className="relative min-h-[260px] lg:min-h-[360px]">
+            <div className="relative min-h-[260px] sm:min-h-[300px] lg:min-h-[350px]">
               <Image
-                src="/register.png"
-                alt="PrimeCore customer"
+                src="/cta-banner%20landing%20page%20image%202.png"
+                alt="PrimeCore customer ready to start credit journey"
                 fill
                 className="object-contain object-bottom"
-                sizes="(min-width: 1024px) 36vw, 90vw"
+                sizes="(min-width: 1024px) 38vw, 86vw"
               />
             </div>
           </div>
-        </div>
+        </section>
       </LandingPageShell>
     </Section>
   );
