@@ -8,18 +8,12 @@ import {
   PointElement,
   LineElement,
   Tooltip,
-  Filler, // ✅ ADD
+  Filler,
+  ChartOptions,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Tooltip,
-  Filler // ✅ ADD
-);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 export default function CreditRiskTrendChart() {
   const labels = ["April", "May", "June", "July", "August", "September"];
@@ -30,9 +24,9 @@ export default function CreditRiskTrendChart() {
       {
         label: "Credit Risk Score",
         data: [80, 50, 92, 70, 60, 55],
-        borderColor: "#a3e635", // line color
-        backgroundColor: "rgba(163,230,53,0.25)", // ✅ stronger green fill
-        fill: "origin", // ✅ fill to the x-axis (bottom)
+        borderColor: "#a3e635",
+        backgroundColor: "rgba(163,230,53,0.25)",
+        fill: "origin",
         tension: 0.35,
         pointRadius: 2.5,
         pointHoverRadius: 4,
@@ -40,7 +34,7 @@ export default function CreditRiskTrendChart() {
     ],
   };
 
-  const options: any = {
+  const options: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -68,7 +62,7 @@ export default function CreditRiskTrendChart() {
   };
 
   return (
-    <div className="h-44 w-full">
+    <div className="h-full min-h-[150px] w-full min-w-0 sm:min-h-[170px] lg:min-h-[180px] xl:min-h-[200px]">
       <Line data={data} options={options} />
     </div>
   );

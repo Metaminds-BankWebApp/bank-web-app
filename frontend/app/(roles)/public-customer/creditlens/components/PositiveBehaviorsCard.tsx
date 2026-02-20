@@ -5,18 +5,18 @@ import { BadgeCheck, CheckCircle2 } from "lucide-react";
 
 export default function PositiveBehaviorsCard() {
   return (
-    <div className="rounded-[26px] border border-slate-200/70 bg-white/90 pt-3 pr-5 pl-5 pb-3 shadow-[0_18px_50px_-35px_rgba(2,44,67,0.35)]">
+    <div className="min-w-0 rounded-2xl border border-slate-200/70 bg-white/90 px-4 pb-4 pt-3 shadow-[0_18px_50px_-35px_rgba(2,44,67,0.35)] sm:px-5 sm:pb-3 md:rounded-[26px]">
       {/* Title */}
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
           <BadgeCheck className="h-5 w-5" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Positive Behaviors</h3>
+        <h3 className="text-base font-semibold text-slate-900 sm:text-lg">Positive Behaviors</h3>
       </div>
 
       <div className="mt-6 space-y-5">
         {/* 1 */}
-        <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-1 h-6 w-6 text-emerald-500" />
             <div className="flex-1">
@@ -33,7 +33,7 @@ export default function PositiveBehaviorsCard() {
         </div>
 
         {/* 2 */}
-        <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-1 h-6 w-6 text-emerald-500" />
             <div className="flex-1">
@@ -50,7 +50,7 @@ export default function PositiveBehaviorsCard() {
         </div>
 
         {/* 3 */}
-        <div className="rounded-2xl border border-slate-200/60 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-1 h-6 w-6 text-emerald-500" />
             <div className="flex-1">

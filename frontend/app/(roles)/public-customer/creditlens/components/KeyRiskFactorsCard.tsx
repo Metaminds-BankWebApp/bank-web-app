@@ -5,19 +5,19 @@ import { AlertTriangle, CreditCard, CircleAlert } from "lucide-react";
 
 export default function KeyRiskFactorsCard() {
   return (
-    <div className="rounded-[26px] border border-slate-200/70 bg-white/90 pt-3 pr-5 pl-5 pb-3 shadow-[0_18px_50px_-35px_rgba(2,44,67,0.35)]">
+    <div className="min-w-0 rounded-2xl border border-slate-200/70 bg-white/90 px-4 pb-4 pt-3 shadow-[0_18px_50px_-35px_rgba(2,44,67,0.35)] sm:px-5 sm:pb-3 md:rounded-[26px]">
       {/* Title */}
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
           <AlertTriangle className="h-5 w-5" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">Key Risk Factors</h3>
+        <h3 className="text-base font-semibold text-slate-900 sm:text-lg">Key Risk Factors</h3>
       </div>
 
       {/* Items */}
       <div className="mt-6 space-y-5">
         {/* 1 */}
-        <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-5">
+        <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-4 sm:p-5">
           <div className="flex items-start gap-3">
             <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-500">
               <CreditCard className="h-5 w-5" />
@@ -40,7 +40,7 @@ export default function KeyRiskFactorsCard() {
         </div>
 
         {/* 2 */}
-        <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-5">
+        <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-4 sm:p-5">
           <div className="flex items-start gap-3">
             <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-red-500">
               <CircleAlert className="h-5 w-5" />
@@ -56,7 +56,7 @@ export default function KeyRiskFactorsCard() {
         </div>
 
         {/* 3 */}
-        <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-5">
+        <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-4 sm:p-5">
           <div className="flex items-start gap-3">
             <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
               <div className="h-5 w-5 rounded-sm border border-amber-300/70 bg-amber-200/40" />
