@@ -4,9 +4,11 @@ import { Mail, Bell } from "lucide-react";
 
 type LoanSenseHeaderProps = {
   title: string;
+  name?: string;
+  role?: string;
 };
 
-export default function LoanSenseHeader({ title }: LoanSenseHeaderProps) {
+export default function LoanSenseHeader({ title, name = "Kamal Edirisinghe", role = "User" }: LoanSenseHeaderProps) {
   return (
     <header className="flex flex-col md:flex-row justify-between items-center bg-[#0d3b66] text-white p-6 rounded-2xl shadow-lg gap-4">
           <h1 className="text-2xl font-bold tracking-wide w-full md:w-auto"> {title}</h1>
@@ -20,8 +22,8 @@ export default function LoanSenseHeader({ title }: LoanSenseHeaderProps) {
                   <div className="w-full h-full bg-gradient-to-br from-slate-400 to-slate-600"></div>
                </div>
                <div className="hidden md:block text-right">
-                  <p className="text-sm font-bold leading-none">Kamal Edirisinghe</p>
-                  <p className="text-xs text-white/70 mt-1">User</p>
+                  <p className="text-sm font-bold leading-none">{name}</p>
+                  <p className="text-xs text-white/70 mt-1">{role}</p>
                </div>
             </div>
           </div>
