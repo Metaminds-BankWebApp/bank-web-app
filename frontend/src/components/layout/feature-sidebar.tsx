@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  ArrowLeftFromLine,
+  ArrowRightFromLine,
   ArrowRightLeft,
   Banknote,
   Car,
@@ -20,6 +22,7 @@ import {
   Grid
 } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store";
@@ -169,69 +172,122 @@ export function FeatureSidebar({ role, feature, className, onNavigate }: Feature
   const pathname = usePathname();
   const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
-  
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved) {
+      setTimeout(() => setIsCollapsed(JSON.parse(saved)), 0);
+    }
+  }, []);
+
+  const toggleCollapse = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem("sidebar-collapsed", JSON.stringify(newState));
+  };
+
   const currentMeta = featureMeta[feature];
   const sections = getFeatureLinks(feature, role);
 
   return (
-    <aside 
+    <aside
       className={cn(
-        "sticky top-0 h-screen w-64 flex-col overflow-y-auto text-white transition-all duration-300 shadow-xl z-50", 
+        "sticky top-0 h-screen flex-col overflow-y-auto text-white transition-all duration-300 shadow-xl z-50",
         currentMeta.colorClass,
+        isCollapsed ? "w-20" : "w-64",
         className
       )}
     >
       {/* Brand Header */}
-      <div className="px-8 py-8 md:py-10">
-        <h1 className="text-2xl font-bold leading-tight tracking-tight text-white mb-1">
-          {currentMeta.title}
-        </h1>
-        <p className="text-sm font-medium text-white/70 tracking-wide">{currentMeta.subtitle}</p>
+      <div className={cn("flex flex-col items-center", isCollapsed ? "py-6 gap-6" : "px-6 py-8 md:py-10")}>
+        <div className={cn("w-full flex items-center justify-between", isCollapsed && "flex-col gap-6")}>
+          {isCollapsed ? (
+             <button
+               onClick={toggleCollapse}
+               className="p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+               title="Expand Sidebar"
+             >
+               <ArrowRightFromLine size={20} />
+             </button>
+          ) : (
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold leading-tight tracking-tight text-white mb-1">
+                {currentMeta.title}
+              </h1>
+              <p className="text-sm font-medium text-white/70 tracking-wide">{currentMeta.subtitle}</p>
+            </div>
+          )}
+
+          {!isCollapsed && (
+            <button
+              onClick={toggleCollapse}
+              className="p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+              title="Collapse Sidebar"
+            >
+              <ArrowLeftFromLine size={20} />
+            </button>
+          )}
+
+          {isCollapsed && (
+             <h1 className="text-xl font-bold leading-tight tracking-tight text-white">
+               PC
+             </h1>
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-4 space-y-6">
-        
+
         {/* All Apps Link */}
         <div className="mb-6">
-           <Link 
+           <Link
              href={dashboardHrefByRole[role]}
              onClick={onNavigate}
-             className="flex items-center gap-3 px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors hover:bg-white/5 rounded-lg"
+             className={cn(
+               "flex items-center gap-3 px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors hover:bg-white/5 rounded-lg",
+               isCollapsed && "justify-center px-2"
+             )}
            >
              <Grid size={18} />
-             <span>All Apps</span>
+             {!isCollapsed && <span>All Apps</span>}
            </Link>
         </div>
 
         {/* Feature Sections */}
         {sections.map((section, idx) => (
            <div key={idx} className="space-y-2">
-              {section.label && (
+              {section.label && !isCollapsed && (
                 <div className="px-4 mb-2">
                    <p className="text-[11px] font-bold uppercase tracking-wider text-white/40">{section.label}</p>
                 </div>
               )}
               <div className="space-y-1">
-                 {section.items.map((tab) => {
-                    const isActive = tab.href === currentMeta.hrefByRole[role] 
-                      ? pathname === tab.href 
-                      : pathname.startsWith(tab.href);
-                      
+                 {section.items.map((item, itemIdx) => {
+                    const isDashboard = item.href === currentMeta.hrefByRole[role];
+                    const isActive = isDashboard 
+                      ? pathname === item.href 
+                      : pathname.startsWith(item.href);
+
+                    const Icon = item.icon;
+
                     return (
                       <Link
-                        key={tab.title + tab.href}
-                        href={tab.href}
+                        key={itemIdx}
+                        href={item.href}
                         onClick={onNavigate}
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
                           isActive
                             ? "bg-white/10 text-white shadow-sm backdrop-blur-sm"
-                            : "text-white/70 hover:bg-white/5 hover:text-white"
+                            : "text-white/70 hover:bg-white/5 hover:text-white",
+                          isCollapsed && "justify-center px-2"
                         )}
+                        title={isCollapsed ? item.title : undefined}
                       >
-                        <tab.icon size={18} className={cn(isActive ? "text-white" : "text-white/70")} />
-                        <span>{tab.title}</span>
+                        <Icon size={18} className={cn(isActive ? "text-white" : "text-white/70")} />
+                        {!isCollapsed && <span>{item.title}</span>}
                       </Link>
                     );
                  })}
@@ -240,18 +296,36 @@ export function FeatureSidebar({ role, feature, className, onNavigate }: Feature
         ))}
 
         {/* Other Section */}
-        <div className="space-y-2 pt-4">
-           <div className="px-4 mb-2">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-white/40">Other</p>
-           </div>
+        <div className="space-y-2 pt-4 border-t border-white/10 mt-4">
+           {!isCollapsed && (
+             <div className="px-4 mb-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-white/40">Other</p>
+             </div>
+           )}
            <div className="space-y-1">
-              <Link href="/help" onClick={onNavigate} className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-all">
+              <Link
+                href="/help"
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-all",
+                  isCollapsed && "justify-center px-2"
+                )}
+                title={isCollapsed ? "Help & Support" : undefined}
+              >
                   <HelpCircle size={18} className="text-white/70" />
-                  <span>Help & Support</span>
+                  {!isCollapsed && <span>Help & Support</span>}
               </Link>
-              <Link href="/settings" onClick={onNavigate} className="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-all">
+              <Link
+                href="/settings"
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-white transition-all",
+                  isCollapsed && "justify-center px-2"
+                )}
+                title={isCollapsed ? "Settings" : undefined}
+              >
                   <Settings size={18} className="text-white/70" />
-                  <span>Setting</span>
+                  {!isCollapsed && <span>Settings</span>}
               </Link>
            </div>
         </div>
@@ -259,7 +333,7 @@ export function FeatureSidebar({ role, feature, className, onNavigate }: Feature
       </nav>
 
       {/* Footer / Logout */}
-      <div className="mt-auto px-6 pb-4 pt-4">
+      <div className={cn("mt-auto px-6 pb-4 pt-4", isCollapsed && "px-2")}>
         <button
           type="button"
           onClick={() => {
@@ -267,10 +341,14 @@ export function FeatureSidebar({ role, feature, className, onNavigate }: Feature
             logout();
             router.replace("/login?force=true");
           }}
-          className="flex w-full items-center gap-3 text-left text-sm font-medium text-white/70 transition-colors hover:text-white hover:bg-white/5 px-4 py-3 rounded-lg"
+          className={cn(
+            "flex w-full items-center gap-3 text-left text-sm font-medium text-white/70 transition-colors hover:text-white hover:bg-white/5 px-4 py-3 rounded-lg",
+            isCollapsed && "justify-center px-2"
+          )}
+          title={isCollapsed ? "Log Out" : undefined}
         >
           <LogOut size={18} />
-          <span>Log Out</span>
+          {!isCollapsed && <span>Log Out</span>}
         </button>
       </div>
     </aside>
