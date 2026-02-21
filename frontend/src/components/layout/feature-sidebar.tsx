@@ -17,6 +17,7 @@ import {
   User,
   UserPlus,
   Wallet,
+  Receipt,
   Grid
 } from "lucide-react";
 import Link from "next/link";

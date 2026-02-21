@@ -1,93 +1,87 @@
 "use client";
 
-import { Mail, Bell, Plus } from "lucide-react";
+import { SpendIqHeader } from "@/src/components/SpendIqHeader";
 
 export default function CategoryAnalysisPage() {
   const categories = [
     {
       name: "Utilities",
       amount: 20000,
-      percentage: 32.2,
+      percent: 32.2,
       expenses: 1,
-      budgetUsed: 200,
-      budgetTotal: 250,
+      used: 200,
+      total: 250,
     },
     {
       name: "Food & Dining",
       amount: 15000,
-      percentage: 25.2,
+      percent: 25.2,
       expenses: 3,
-      budgetUsed: 156.75,
-      budgetTotal: 400,
+      used: 156.75,
+      total: 400,
     },
     {
       name: "Shopping",
       amount: 10000,
-      percentage: 19.3,
+      percent: 19.3,
       expenses: 1,
-      budgetUsed: 120,
-      budgetTotal: 300,
+      used: 120,
+      total: 300,
     },
     {
       name: "Healthcare",
       amount: 5000,
-      percentage: 10.5,
+      percent: 10.5,
       expenses: 1,
-      budgetUsed: 65,
-      budgetTotal: 100,
+      used: 65,
+      total: 100,
     },
     {
       name: "Entertainment",
       amount: 2000,
-      percentage: 8.0,
+      percent: 8.0,
       expenses: 1,
-      budgetUsed: 50,
-      budgetTotal: 200,
+      used: 50,
+      total: 200,
     },
     {
       name: "Transportation",
       amount: 6000,
-      percentage: 4.8,
+      percent: 4.8,
       expenses: 1,
-      budgetUsed: 30,
-      budgetTotal: 150,
+      used: 30,
+      total: 150,
     },
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8 bg-[#f4f6fb] min-h-screen">
+      
+      <SpendIqHeader title="Category Analysis" />
 
-      {/* HEADER */}
-      <header className="flex justify-between items-center bg-[#0a234c] text-white p-4 rounded-2xl shadow-lg">
-        <h1 className="text-xl font-bold">Category Analysis</h1>
-
-        <div className="flex items-center gap-6">
-          <Mail size={20} />
-          <Bell size={20} />
-          <button className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg text-sm font-medium">
-            <Plus size={16} />
-            Add Expense
-          </button>
-        </div>
-      </header>
-
-      {/* BAR CHART (Simple Mock Version) */}
-      <div className="bg-white rounded-xl p-6 shadow border">
-        <h2 className="text-sm font-semibold mb-4 text-gray-600">
+      {/* CHART SECTION */}
+      <div className="bg-white rounded-2xl shadow-md p-8">
+        <h2 className="text-sm font-semibold text-gray-600 mb-6">
           Spending by Category
         </h2>
 
-        <div className="space-y-4">
+        {/* Fake Bar Chart (UI style) */}
+        <div className="space-y-6">
           {categories.map((cat) => (
             <div key={cat.name}>
-              <div className="flex justify-between text-sm mb-1">
-                <span>{cat.name}</span>
-                <span>{cat.amount.toLocaleString()} LKR</span>
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium text-gray-700">
+                  {cat.name}
+                </span>
+                <span className="text-gray-500">
+                  {cat.amount.toLocaleString()} LKR
+                </span>
               </div>
-              <div className="h-3 bg-gray-200 rounded-full">
+
+              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                  className="h-3 bg-blue-500 rounded-full"
-                  style={{ width: `${cat.percentage}%` }}
+                  className="h-3 bg-[#0a234c] rounded-full transition-all duration-1000 ease-out"
+                  style={{ width: `${cat.percent}%` }}
                 />
               </div>
             </div>
@@ -96,51 +90,60 @@ export default function CategoryAnalysisPage() {
       </div>
 
       {/* CATEGORY CARDS */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {categories.map((cat) => (
-          <div
-            key={cat.name}
-            className="bg-white rounded-xl p-6 shadow border space-y-3"
-          >
-            <div className="flex justify-between items-center">
-              <h3 className="font-semibold">{cat.name}</h3>
-              <span className="text-xs bg-black text-white px-3 py-1 rounded-full">
-                On Track
-              </span>
-            </div>
+      <div className="grid md:grid-cols-3 gap-8">
+        {categories.map((cat) => {
+          const usagePercent = (cat.used / cat.total) * 100;
 
-            <h2 className="text-xl font-bold">
-              {cat.amount.toLocaleString()} LKR
-            </h2>
-
-            <p className="text-sm text-gray-500">
-              {cat.percentage}% of total expenses
-            </p>
-
-            <div>
-              <div className="h-2 bg-gray-200 rounded-full">
-                <div
-                  className="h-2 bg-black rounded-full"
-                  style={{
-                    width: `${
-                      (cat.budgetUsed / cat.budgetTotal) * 100
-                    }%`,
-                  }}
-                />
+          return (
+            <div
+              key={cat.name}
+              className="bg-white rounded-2xl shadow-md p-6 space-y-4 hover:shadow-lg transition"
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-semibold text-gray-700">
+                  {cat.name}
+                </h3>
+                <span className="text-xs bg-[#0a234c] text-white px-3 py-1 rounded-full">
+                  On Track
+                </span>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                ${cat.budgetUsed.toFixed(2)} / $
-                {cat.budgetTotal.toFixed(2)}
-              </p>
-            </div>
 
-            <p className="text-xs text-gray-400">
-              {cat.expenses} expense
-              {cat.expenses > 1 && "s"}
-            </p>
-          </div>
-        ))}
+              {/* Amount */}
+              <div>
+                <h2 className="text-lg font-bold text-gray-800">
+                  {cat.amount.toLocaleString()}.00 LKR
+                </h2>
+                <p className="text-xs text-gray-500">
+                  {cat.percent}% of total expenses
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {cat.expenses} expense{cat.expenses > 1 && "s"}
+                </p>
+              </div>
+
+              {/* Budget Usage */}
+              <div>
+                <p className="text-xs text-gray-500 mb-2">
+                  Budget Usage
+                </p>
+
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-2 bg-black rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${usagePercent}%` }}
+                  />
+                </div>
+
+                <p className="text-xs text-gray-400 mt-2">
+                  ${cat.used.toFixed(2)} / ${cat.total.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
     </div>
   );
 }
