@@ -27,6 +27,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/src/components/ui/select";
+import { useToast } from "@/src/components/ui/toast";
 import { cn } from "@/src/lib/utils";
 
 // --- Types ---
@@ -166,15 +167,26 @@ export default function PublicCustomerApplicationPage() {
 
   const nextStep = () => setStep(prev => Math.min(prev + 1, 5));
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
-  
+  const { showToast } = useToast();
+
   const submitApplication = () => {
     // Logic to submit data would go here
-    router.push("/public-customer"); // Redirect to dashboard
+    // In a real app, you would send formData to the backend
+    
+    showToast({ 
+      title: "Application Submitted", 
+      description: "Your application has been received. Redirecting to dashboard...",
+      type: "success"
+    });
+    
+    setTimeout(() => {
+      router.replace("/public-customer"); // Redirect to dashboard
+    }, 1500);
   };
 
   return (
     <AuthGuard requiredRole="PUBLIC_CUSTOMER">
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center py-12 px-4 font-sans text-slate-800">
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center py-12 px-4 pb-32 font-sans text-slate-800">
         
         {/* Header Logo */}
         <div className="w-full max-w-6xl flex justify-end mb-8">
@@ -819,21 +831,23 @@ export default function PublicCustomerApplicationPage() {
 
         {/* Global Navigation Buttons (Bottom) */}
         {step < 5 && (
-           <div className="w-full max-w-6xl flex justify-between items-center mt-12 py-8 border-t border-slate-200">
-              <Button variant="outline" onClick={prevStep} disabled={step === 1} className="gap-2 border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
-                 <ArrowLeft size={16} /> Back
-              </Button>
-              
-              <div className="flex flex-col items-end">
-                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Next Step</span>
-                 <div className="flex items-center gap-4">
-                    <span className="font-bold text-slate-800 text-sm">
-                       {step === 1 ? "Loans" : step === 2 ? "Credit Cards" : step === 3 ? "Liabilities" : "Review"}
-                    </span>
-                    <Button onClick={nextStep} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white gap-2 px-6 rounded-lg shadow-lg shadow-blue-400/20">
-                       Next Section <ArrowRight size={16} />
-                    </Button>
-                 </div>
+           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-4 px-6 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+              <div className="max-w-6xl mx-auto flex justify-between items-center">
+                  <Button variant="outline" onClick={prevStep} disabled={step === 1} className="gap-2 border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 h-10 px-6">
+                     <ArrowLeft size={16} /> Back
+                  </Button>
+                  
+                  <div className="flex items-center gap-4">
+                     <div className="hidden sm:flex flex-col items-end mr-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Next Step</span>
+                        <span className="font-bold text-slate-800 text-xs">
+                           {step === 1 ? "Loans" : step === 2 ? "Credit Cards" : step === 3 ? "Liabilities" : "Review"}
+                        </span>
+                     </div>
+                     <Button onClick={nextStep} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white gap-2 px-8 h-10 rounded-lg shadow-lg shadow-blue-400/20">
+                           Next <span className="hidden sm:inline">Section</span> <ArrowRight size={16} />
+                     </Button>
+                  </div>
               </div>
            </div>
         )}

@@ -89,7 +89,7 @@ export default function PublicCustomerRolePage() {
 
   return (
     <AuthGuard requiredRole="PUBLIC_CUSTOMER">
-      <div className="min-h-screen w-full bg-[#021c3b] relative flex flex-col font-sans text-white">
+      <div className="min-h-screen w-full bg-[#021c3b] relative overflow-hidden flex flex-col font-sans text-white">
         
         {/* Background Gradients */}
         <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-500/20 blur-[150px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/4"></div>
@@ -127,9 +127,9 @@ export default function PublicCustomerRolePage() {
 
         <main className="relative z-10 flex-1 w-full max-w-[1600px] mx-auto p-8 md:px-12 flex flex-col justify-center">
             
-            <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-16 items-start flex-1 mb-16">
+            <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-16 items-start flex-1">
                 {/* Left Column: Text & CTA */}
-                <div className="flex flex-col justify-center space-y-8 sticky top-24">
+                <div className="flex flex-col justify-center space-y-6 sticky top-24">
                     <h1 className="text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight">
                        Welcome to PrimeCore <br />
                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">Public Access</span>
@@ -169,12 +169,12 @@ export default function PublicCustomerRolePage() {
                                 )}
 
                                 <div className="flex justify-between items-start mb-6">
-                                <div className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center ${item.iconColor} transition-transform ${!item.locked && 'group-hover:scale-110'} duration-300`}>
+                                {/* <div className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center ${item.iconColor} transition-transform ${!item.locked && 'group-hover:scale-110'} duration-300`}>
                                     <item.icon className="w-6 h-6" />
-                                </div>
-                                <span className={`px-3 py-1 text-[10px] uppercase ${item.statusColor} rounded-full font-bold tracking-wider`}>
+                                </div> */}
+                                {/* <span className={`px-3 py-1 text-[10px] uppercase ${item.statusColor} rounded-full font-bold tracking-wider`}>
                                     {item.status}
-                                </span>
+                                </span> */}
                                 </div>
 
                                 <div className="mb-8">
@@ -204,7 +204,7 @@ export default function PublicCustomerRolePage() {
             </div>
 
             {/* Bottom Section: Checklist */}
-            <div className="mt-8 bg-white rounded-[1.5rem] p-4 pr-12 pl-8 flex flex-col xl:flex-row items-center gap-8 shadow-2xl shadow-black/10 max-w-full">
+            <div className=" bg-white rounded-[1.5rem] p-4 pr-12 pl-8 flex flex-col xl:flex-row items-center gap-8 shadow-2xl shadow-black/10 max-w-full">
                 <div className="flex items-center gap-4 min-w-max border-b xl:border-b-0 xl:border-r border-slate-100 pb-4 xl:pb-0 xl:pr-8">
                     <div className="bg-slate-50 p-2 rounded-full">
                         <CheckCircle2 className="w-5 h-5 text-blue-500" />

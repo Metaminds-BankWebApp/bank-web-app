@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ToastProvider>
-            <div className="min-h-screen">{children}</div>
+            <div className="min-h-dvh">{children}</div>
           </ToastProvider>
         </ThemeProvider>
       </body>

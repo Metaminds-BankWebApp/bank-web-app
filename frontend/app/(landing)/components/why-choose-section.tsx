@@ -10,10 +10,10 @@ const commentCards = [
 
 export function WhyChooseSection() {
   return (
-    <Section id="about" className="pt-8 sm:pt-10">
+    <Section id="about" className="pt-8 sm:pt-10 min-h-[84svh] lg:min-h-[92svh]">
       <LandingPageShell>
         <div className="text-center">
-          <div className="inline-flex items-center gap-3 rounded-[32px] border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
+          <div className="inline-flex items-center gap-3 rounded-4xl border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
             <Image
               src="/primecore%20logo%20only%20blue.png"
               alt="PrimeCore icon"
@@ -65,7 +65,7 @@ export function WhyChooseSection() {
 
           <article className="relative rounded-2xl bg-[#c8dce9] p-5 sm:p-6 lg:pr-80">
             <div className="grid items-center gap-6 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-              <div className="relative mx-auto w-full max-w-[360px]">
+              <div className="relative mx-auto w-full max-w-90">
                 <Image
                   src="/24%207%20work.png"
                   alt="24/7 support and risk evaluation illustration"
@@ -103,21 +103,21 @@ export function WhyChooseSection() {
                 alt={commentCards[0].alt}
                 width={commentCards[0].width}
                 height={commentCards[0].height}
-                className="h-auto w-[250px] rounded-xl shadow-[0_16px_25px_-20px_rgba(8,30,54,0.5)] xl:w-[290px]"
+                className="h-auto w-62.5 rounded-xl shadow-[0_16px_25px_-20px_rgba(8,30,54,0.5)] xl:w-72.5"
               />
               <Image
                 src={commentCards[1].src}
                 alt={commentCards[1].alt}
                 width={commentCards[1].width}
                 height={commentCards[1].height}
-                className="ml-[-80px] h-auto w-[260px] rounded-xl shadow-[0_16px_25px_-20px_rgba(8,30,54,0.5)] xl:w-[310px]"
+                className="-ml-20 h-auto w-65 rounded-xl shadow-[0_16px_25px_-20px_rgba(8,30,54,0.5)] xl:w-77.5"
               />
               <Image
                 src={commentCards[2].src}
                 alt={commentCards[2].alt}
                 width={commentCards[2].width}
                 height={commentCards[2].height}
-                className="h-auto w-[280px] rounded-xl shadow-[0_16px_25px_-20px_rgba(8,30,54,0.5)] xl:w-[330px]"
+                className="h-auto w-70 rounded-xl shadow-[0_16px_25px_-20px_rgba(8,30,54,0.5)] xl:w-82.5"
               />
             </div>
           </article>

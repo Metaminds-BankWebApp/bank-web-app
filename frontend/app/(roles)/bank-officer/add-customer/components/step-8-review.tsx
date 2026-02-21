@@ -96,7 +96,7 @@ export function Review({ formData, onNext, onBack }: StepProps) {
       </div>
 
       {/* Actions */}
-      <div className="bg-slate-50 px-8 py-4 flex items-center justify-between border-t border-slate-100">
+      <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-slate-200 px-8 py-4 flex items-center justify-between z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <Button 
           variant="ghost" 
           onClick={onBack}
@@ -104,8 +104,8 @@ export function Review({ formData, onNext, onBack }: StepProps) {
         >
             <ArrowLeft size={16} /> Back
         </Button>
-        <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-slate-400 mr-4 cursor-pointer hover:text-slate-600">Save Draft</span>
+        <div className="flex items-center gap-4">
+            <span className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600">Save Draft</span>
             <Button 
               onClick={onNext}
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"

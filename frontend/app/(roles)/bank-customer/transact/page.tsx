@@ -15,6 +15,7 @@ import {
   ArcElement,
   ChartOptions
 } from "chart.js";
+import type { Chart } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
 import { ArrowUpRight } from "lucide-react";
 import TransactHeader from "@/src/components/ui/Transact-Header";

@@ -129,8 +129,8 @@ export function CRIBRetrieval({ formData, updateFormData, onNext, onBack }: Step
           </div>
        </div>
 
-       <div className="flex justify-between pt-4">
-          <Button variant="ghost" onClick={onBack} className="text-slate-500 hover:text-slate-800">
+       <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-slate-200 px-8 py-4 flex items-center justify-between z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <Button variant="ghost" onClick={onBack} className="text-slate-500 hover:text-slate-800 hover:bg-slate-100">
              <ArrowLeft size={16} className="mr-2" /> Back
           </Button>
           <Button onClick={onNext} className="bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">

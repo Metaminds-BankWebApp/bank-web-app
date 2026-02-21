@@ -1,54 +1,28 @@
-import { Badge, Card, CardContent, CardHeader } from "@/src/components/ui";
+import { Card, CardContent, CardHeader } from "@/src/components/ui";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
-import { Bell, Mail, Eye, Pencil, Trash2 } from "lucide-react";
+import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
 
 export default function BankOfficerRolePage() {
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
-      <div className="flex min-h-screen bg-[#f3f4f6]">
-        <Sidebar role="BANK_OFFICER" className="max-lg:hidden" />
-        <main className="flex-1 p-8 lg:p-10 overflow-y-auto">
-          {/* Header */}
-          <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] p-4 text-white shadow-sm">
-            <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
-                <button className="relative text-white/80 hover:text-white">
-                  <Mail size={20} />
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">2</span>
-                </button>
-                <button className="relative text-white/80 hover:text-white">
-                  <Bell size={20} />
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">8</span>
-                </button>
-              </div>
-              <div className="h-8 w-px bg-white/20" />
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-full bg-white/10">
-                  {/* Placeholder Avatar */}
-                  <img src="https://ui-avatars.com/api/?name=Kamal+E&background=random" alt="User" className="h-full w-full object-cover" />
-                  <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0d3b66] bg-green-500"></div>
-                </div>
-                <div className="hidden text-sm md:block">
-                  <p className="font-semibold leading-none">Kamal Edirisinghe</p>
-                  <p className="text-white/60">User</p>
-                </div>
-              </div>
-            </div>
-          </header>
+      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
+        <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
+      <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
+          <BankOfficerHeader title="Dashboard" className="mb-5 shrink-0" />
 
-          <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
+          <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="grid gap-6 xl:grid-cols-[2fr_1fr] min-h-full">
             
             {/* Left Column */}
-            <div className="space-y-6">
+            <div className="flex flex-col gap-6 h-full">
               {/* Bank Target */}
-              <Card className="border-none shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <Card className="border-none shadow-sm flex flex-col justify-center h-[35%]">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 shrink-0">
                   <h2 className="text-lg font-semibold">Bank Target</h2>
                   <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-semibold text-gray-500 cursor-pointer hover:bg-gray-50">Show All</span>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex flex-col justify-center flex-1">
                   <div className="mb-4 flex items-end justify-between">
                     <div>
                       <p className="text-sm text-gray-500">In Progress</p>
@@ -68,8 +42,8 @@ export default function BankOfficerRolePage() {
               </Card>
 
               {/* Chart Section */}
-              <Card className="border-none shadow-sm">
-                <CardHeader className="flex flex-row items-center justify-between">
+              <Card className="border-none shadow-sm flex-1 flex flex-col h-[65%]">
+                <CardHeader className="flex flex-row items-center justify-between shrink-0">
                   <h2 className="text-lg font-semibold">Average credit score trend</h2>
                   <div className="flex items-center gap-4">
                      <div className="flex items-center gap-2 text-xs">
@@ -83,14 +57,14 @@ export default function BankOfficerRolePage() {
                      <button className="text-xs font-semibold text-gray-500 hover:text-gray-900">Show All ↗</button>
                   </div>
                 </CardHeader>
-                <CardContent>
-                   <div className="mb-4 flex justify-between text-xs text-gray-400">
+                <CardContent className="flex-1 flex flex-col">
+                   <div className="mb-4 flex justify-between text-xs text-gray-400 shrink-0">
                       {['Jan', 'Feb', 'Mar', 'Apr', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Des'].map(m => (
                         <span key={m}>{m}</span>
                       ))}
                    </div>
                    {/* Simplified Chart Visual */}
-                   <div className="relative h-64 w-full border-l border-b border-gray-100 bg-[url('/chart-placeholder.svg')] bg-cover bg-no-repeat">
+                   <div className="relative flex-1 w-full border-l border-b border-gray-100 bg-[url('/chart-placeholder.svg')] bg-cover bg-no-repeat">
                       <div className="absolute left-1/4 top-1/2 rounded-lg bg-white p-2 shadow-lg border border-gray-100">
                         <div className="flex items-center justify-between gap-4 mb-1">
                            <span className="text-[10px] text-gray-400">Average item persale</span>
@@ -113,73 +87,99 @@ export default function BankOfficerRolePage() {
             </div>
 
             {/* Right Column - Stats Grid */}
-            <div className="flex flex-col gap-6">
-               <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-5 h-full">
+               <div className="grid grid-cols-2 gap-4 h-[40%]">
                   {/* Card 1 */}
-                  <Card className="col-span-1 border-none bg-[#3b82f6] text-[#0d3b66] shadow-sm">
-                     <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-4">
+                  <Card className="col-span-1 border-none bg-[#3b82f6] text-[#0d3b66] shadow-sm flex flex-col justify-center">
+                     <CardContent className="p-4 flex flex-col justify-between h-full">
+                        <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium opacity-90">Total Customers</p>
                            <span className="text-xs">↗</span>
                         </div>
-                        <p className="text-2xl font-bold mb-2">81.000</p>
-                        <p className="text-[10px] text-[#0d3b66]/80">↗ 10.6% <span className="opacity-60">From last week</span></p>
+                        <div>
+                           <p className="text-2xl font-bold mb-1">81.000</p>
+                           <p className="text-[10px] text-[#0d3b66]/80">↗ 10.6% <span className="opacity-60">From last week</span></p>
+                        </div>
                      </CardContent>
                   </Card>
 
                   {/* Card 2 */}
-                  <Card className="col-span-1 border-none bg-white shadow-sm">
-                     <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-4">
-                           <p className="text-xs font-medium text-gray-500">Low Risk Customers</p>
+                  <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center">
+                     <CardContent className="p-4 flex flex-col justify-between h-full">
+                        <div className="flex justify-between items-start mb-1">
+                           <p className="text-xs font-medium text-gray-500">Low Risk</p>
                            <span className="text-xs text-gray-400">↗</span>
                         </div>
-                        <p className="text-2xl font-bold text-[#0d3b66] mb-2">5.000</p>
-                        <p className="text-[10px] text-green-500">↗ 1.5% <span className="text-gray-400">From last week</span></p>
+                        <div>
+                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">5.000</p>
+                           <p className="text-[10px] text-green-500">↗ 1.5% <span className="text-gray-400">From last week</span></p>
+                        </div>
                      </CardContent>
                   </Card>
 
                    {/* Card 3 */}
-                   <Card className="col-span-1 border-none bg-white shadow-sm">
-                     <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-4">
-                           <p className="text-xs font-medium text-gray-500">Medium Risk Customers</p>
+                   <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center">
+                     <CardContent className="p-4 flex flex-col justify-between h-full">
+                        <div className="flex justify-between items-start mb-1">
+                           <p className="text-xs font-medium text-gray-500">Medium Risk</p>
                            <span className="text-xs text-gray-400">↗</span>
                         </div>
-                        <p className="text-2xl font-bold text-[#0d3b66] mb-2">12.000</p>
-                        <p className="text-[10px] text-green-500">↗ 3.6% <span className="text-gray-400">From last week</span></p>
+                        <div>
+                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">12.000</p>
+                           <p className="text-[10px] text-green-500">↗ 3.6% <span className="text-gray-400">From last week</span></p>
+                        </div>
                      </CardContent>
                   </Card>
 
                   {/* Card 4 */}
-                  <Card className="col-span-1 border-none bg-white shadow-sm">
-                     <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-4">
-                           <p className="text-xs font-medium text-gray-500">High Risk Customers</p>
+                  <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center">
+                     <CardContent className="p-4 flex flex-col justify-between h-full">
+                        <div className="flex justify-between items-start mb-1">
+                           <p className="text-xs font-medium text-gray-500">High Risk</p>
                            <span className="text-xs text-gray-400">↗</span>
                         </div>
-                        <p className="text-2xl font-bold text-[#0d3b66] mb-2">5.000</p>
-                        <p className="text-[10px] text-red-500">↘ 1.5% <span className="text-gray-400">From last week</span></p>
+                        <div>
+                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">5.000</p>
+                           <p className="text-[10px] text-red-500">↘ 1.5% <span className="text-gray-400">From last week</span></p>
+                        </div>
                      </CardContent>
                   </Card>
                </div>
 
-               {/* Promo Card */}
-               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg">
-                  <div className="relative z-10">
-                     <h3 className="mb-2 text-2xl font-bold">Increase your sales</h3>
-                     <p className="mb-6 text-xs text-white/80 leading-relaxed max-w-[80%]">
-                        Discover the Proven Methods to Skyrocket Your Sales! Unleash the Potential of Your Business and Achieve Remarkable Growth.
-                     </p>
-                     <button className="rounded-lg bg-white px-4 py-2 text-xs font-bold text-[#0d3b66] hover:bg-gray-100">Learn More</button>
+               <div className="grid grid-rows-2 gap-5 flex-1">
+                  <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center">
+                     <div className="relative z-10 flex flex-col justify-center h-full">
+                        <h3 className="mb-3 text-2xl font-bold">Pending Verifications</h3>
+                        <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">
+                           18 customer profiles are waiting for KYC and income document validation.
+                        </p>
+                        <div>
+                           <button className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">Review Queue</button>
+                        </div>
+                     </div>
+                     <div className="absolute -bottom-4 -right-4 h-40 w-40 rounded-full border-20 border-white/10"></div>
+                     <div className="absolute top-6 right-6 h-20 w-20 rounded-full bg-white/5 blur-xl"></div>
                   </div>
-                  <div className="absolute -bottom-4 -right-4 h-32 w-32 rounded-full border-[16px] border-white/10"></div>
-                  <div className="absolute top-8 right-8 h-16 w-16 rounded-full bg-white/5 blur-xl"></div>
+
+                  <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center">
+                     <div className="relative z-10 flex flex-col justify-center h-full">
+                        <h3 className="mb-3 text-2xl font-bold">Loan Pipeline</h3>
+                        <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">
+                           27 loan applications are in progress, with 6 requiring officer decision today.
+                        </p>
+                        <div>
+                           <button className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">View Applications</button>
+                        </div>
+                     </div>
+                     <div className="absolute -bottom-4 -right-4 h-40 w-40 rounded-full border-20 border-white/10"></div>
+                     <div className="absolute top-6 right-6 h-20 w-20 rounded-full bg-white/5 blur-xl"></div>
+                  </div>
                </div>
             </div>
           </div>
+          </div>
 
-          {/* Recent Customers Table */}
+          {/* Recent Customers Table
           <div className="mt-6">
              <Card className="border-none shadow-sm">
                <CardHeader className="pb-2"><h2 className="text-lg font-semibold text-[#0d3b66]">Recent customers</h2></CardHeader>
@@ -231,7 +231,7 @@ export default function BankOfficerRolePage() {
                  </table>
                </CardContent>
              </Card>
-          </div>
+          </div> */}
         </main>
       </div>
     </AuthGuard>

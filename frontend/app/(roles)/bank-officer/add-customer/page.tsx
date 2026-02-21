@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { 
-  Bell, 
-  Mail, 
   CheckCircle2, 
   User, 
   ShieldCheck,
@@ -22,6 +19,7 @@ import { CRIBRequest } from "./components/step-6-crib-request";
 import { CRIBRetrieval } from "./components/step-7-crib-retrieval";
 import { Review } from "./components/step-8-review";
 import { SuccessView } from "./components/success-view";
+import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
 
 const generateCustomerId = () => `PC-${Math.floor(100000 + Math.random() * 900000)}`;
 
@@ -91,37 +89,12 @@ export default function AddCustomerPage() {
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
-      <div className="flex min-h-screen bg-[#f3f4f6]">
-        <Sidebar role="BANK_OFFICER" className="max-lg:hidden" />
-        <main className="flex-1 p-8 lg:p-10 overflow-y-auto">
-          {/* Header */}
-          <header className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] p-4 text-white shadow-sm">
-            <h1 className="text-2xl font-semibold tracking-tight">Add Customer</h1>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
-                <button className="relative text-white/80 hover:text-white">
-                  <Mail size={20} />
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">2</span>
-                </button>
-                <button className="relative text-white/80 hover:text-white">
-                  <Bell size={20} />
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">8</span>
-                </button>
-              </div>
-              <div className="h-8 w-px bg-white/20" />
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-full bg-white/10">
-                  <Image src="https://ui-avatars.com/api/?name=Kamal+E&background=random" alt="User" fill sizes="40px" className="object-cover" />
-                  <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0d3b66] bg-green-500"></div>
-                </div>
-                <div className="hidden text-sm md:block">
-                  <p className="font-semibold leading-none">Kamal Edirisinghe</p>
-                  <p className="text-white/60">User</p>
-                </div>
-              </div>
-            </div>
-          </header>
+      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
+        <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
+      <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
+          <BankOfficerHeader title="Add Customer" className="mb-6 shrink-0" />
 
+          <div className="flex-1 overflow-y-auto min-h-0 pb-24">
           {isSuccess ? (
              <div className="bg-white rounded-xl shadow-sm border border-slate-100 min-h-150 flex items-center justify-center">
                 <SuccessView 
@@ -234,6 +207,7 @@ export default function AddCustomerPage() {
               </div>
             </>
           )}
+          </div>
         </main>
       </div>
     </AuthGuard>

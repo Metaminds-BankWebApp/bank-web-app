@@ -10,9 +10,9 @@ const metrics = [
 
 export function MetricsSection() {
   return (
-    <Section className="pt-8 sm:pt-10">
+    <Section className="pt-8 sm:pt-10 min-h-[64svh] lg:min-h-[70svh]">
       <LandingPageShell className="text-center">
-        <div className="inline-flex items-center gap-3 rounded-[32px] border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
+        <div className="inline-flex items-center gap-3 rounded-4xl border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
           <Image
             src="/primecore%20logo%20only%20blue.png"
             alt="PrimeCore icon"

@@ -114,6 +114,7 @@ export const siteConfig = {
         { title: "History", href: "/bank-officer/history", icon: "history", section: "general" },
         { title: "Credit Analysis", href: "/bank-officer/credit-analysis", icon: "line-chart", section: "general" },
         { title: "Transactions", href: "/bank-officer/transactions", icon: "wallet", section: "general" },
+        { title: "Profile", href: "/bank-officer/profile", icon: "user", section: "general" },
         { title: "Help & Support", href: "/bank-officer/support", icon: "help-circle", section: "other" },
         { title: "Setting", href: "/bank-officer/settings", icon: "settings", section: "other" },
         { title: "Log Out", href: "/login", icon: "log-out", section: "account" }, 
