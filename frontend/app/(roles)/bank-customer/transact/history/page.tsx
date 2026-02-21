@@ -68,7 +68,7 @@ const mockData = [
 
 export default function Page() {
 	return (
-		<div className="bg-white px-4 py-6 sm:px-6 lg:px-8">
+		<div className="bg-white px-8 py-6 sm:px-6 lg:px-8">
 			<TransactHeader title="Transaction History" subtitle="Dineth dovindu" />
                   <div className="flex float-right mt-20 mb-8 max-w-6xl mx-auto pr-[7rem]">
                     </div>

@@ -1,8 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useMotionValue, useTransform, type MotionValue } from "framer-motion";
 import { Section } from "@/src/components/layout";
 import { LandingPageShell } from "./landing-page-shell";
 import React, { useRef } from "react";
@@ -102,23 +102,10 @@ function FloatingSymbol({
 }
 
 export function HeroSection() {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
-    const { left, top } = currentTarget.getBoundingClientRect();
-    mouseX.set(clientX - left);
-    mouseY.set(clientY - top);
-  }
-
   return (
-    <Section className="pt-3 sm:pt-5 lg:pt-6">
+    <Section className="pt-4 sm:pt-6">
       <LandingPageShell>
-        <section 
-          onMouseMove={handleMouseMove}
-          className="relative flex min-h-[80svh] flex-col overflow-hidden rounded-[30px] bg-[linear-gradient(122deg,#08305a_0%,#0a3f6d_57%,#1f84c4_100%)] px-5 pb-8 pt-7 text-white sm:min-h-[84svh] sm:px-8 sm:pt-8 lg:min-h-[90svh] lg:px-12 lg:pb-0 lg:pt-9"
-        >
-
+        <section className="relative overflow-hidden rounded-[30px] bg-[linear-gradient(122deg,#08305a_0%,#0a3f6d_57%,#1f84c4_100%)] px-5 pb-8 pt-4 text-white sm:px-8 sm:pt-3 lg:px-12 lg:pb-0">
           <div className="pointer-events-none absolute inset-0">
             <motion.div
               className="absolute left-[8%] top-[-20%] h-72 w-72 rounded-full bg-white/10 blur-[120px]"
@@ -166,19 +153,19 @@ export function HeroSection() {
             ))}
           </div>
 
-          <header className="relative z-20 flex flex-wrap items-center justify-between gap-4">
+          <header className="relative z-20 flex flex-wrap items-center justify-between gap-5 sm:gap-6">
             <Link href="/" className="inline-flex shrink-0 items-center">
               <Image
                 src="/Primecore%20logo%20white%202.png"
                 alt="PrimeCore Bank Digital"
                 width={560}
                 height={250}
-                className="h-10 w-auto sm:h-13 lg:h-15"
+                className="h-11 w-auto sm:h-14 lg:h-16"
                 priority
               />
             </Link>
 
-            <nav className="hidden items-center gap-8 text-lg lg:flex">
+            <nav className="hidden items-center gap-8 text-lg lg:flex xl:text-xl">
               {navItems.map((item) => (
                 <Link key={item.title} href={item.href} className="text-white/90 transition-colors hover:text-white">
                   {item.title}
@@ -186,87 +173,125 @@ export function HeroSection() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 lg:flex">
               <Link
                 href="/login"
-                className="inline-flex h-9 items-center justify-center rounded-xl bg-white px-4 text-xs font-semibold text-[#123456] transition-colors hover:bg-white/90 sm:h-10 sm:px-5 sm:text-sm"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-[#123456] transition-colors hover:bg-white/90 sm:h-11 sm:px-6 sm:text-base"
               >
                 Login
               </Link>
               <Link
                 href="/register"
-                className="inline-flex h-9 items-center justify-center rounded-xl bg-[#3ca3e4] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#3198dc] sm:h-10 sm:px-5 sm:text-sm"
+                className="inline-flex h-10 items-center justify-center rounded-xl bg-[#3ca3e4] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#3198dc] sm:h-11 sm:px-6 sm:text-base"
               >
                 Sign Up
               </Link>
             </div>
+
+            <button
+              type="button"
+              aria-label="Open menu"
+              aria-expanded={isMobileMenuOpen}
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 transition-colors hover:bg-white/20 lg:hidden"
+            >
+              <Menu className="h-6 w-6" />
+            </button>
           </header>
 
-          <nav className="relative z-20 mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-white/85 lg:hidden">
-            {navItems.map((item) => (
-              <Link key={item.title} href={item.href} className="transition-colors hover:text-white">
-                {item.title}
-              </Link>
-            ))}
-          </nav>
+          <div
+            className={`fixed inset-0 z-[90] lg:hidden ${
+              isMobileMenuOpen ? "pointer-events-auto" : "pointer-events-none"
+            }`}
+          >
+            <button
+              type="button"
+              aria-label="Close menu overlay"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`absolute inset-0 bg-slate-950/60 transition-opacity duration-300 ${
+                isMobileMenuOpen ? "opacity-100" : "opacity-0"
+              }`}
+            />
 
-          <div className="relative z-10 mt-5 grid flex-1 items-end gap-6 lg:mt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-            <div className="max-w-2xl space-y-6 pb-2 sm:space-y-7 lg:flex lg:h-full lg:flex-col lg:justify-center lg:pb-0">
-              <p className="inline-flex rounded-lg border border-white/25 bg-white/10 px-4 py-2 text-xs text-white/90 sm:text-sm max-w-[40%]">
+            <aside
+              className={`absolute inset-y-0 left-0 w-[290px] max-w-[86vw] bg-[#08305a] p-5 shadow-2xl transition-transform duration-300 ease-out ${
+                isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-semibold text-white">Menu</p>
+                <button
+                  type="button"
+                  aria-label="Close menu"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white transition-colors hover:bg-white/20"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <nav className="mt-6 flex flex-col gap-2 text-base text-white/90">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.title}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="rounded-lg px-3 py-2 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    {item.title}
+                  </Link>
+                ))}
+              </nav>
+
+          <div className="relative z-10 mt-5 grid items-end gap-6 lg:mt-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+            <div className="max-w-2xl space-y-6 pb-2 sm:space-y-7 lg:-mt-4 lg:pb-6">
+              <p className="mt-8 inline-flex rounded-lg border border-white/25 bg-white/10 px-4 py-2 text-xs text-white/90 sm:text-sm">
                 100K+ Accounts Opened Globally.
               </p>
                     
-              <h1 className=" text-4xl font-semibold leading-[1.08] sm:text-5xl lg:text-[64px]">
+              <h1 className="text-[clamp(2.5rem,4.2vw,5.6rem)] font-semibold leading-[1.04] tracking-[-0.02em]">
                 Understand Your Credit. Predict Your Risk. Borrow Smarter.
               </h1>
 
-              <p className="max-w-xl text-base leading-relaxed text-white/78 sm:text-lg lg:text-xl">
+              <p className="max-w-2xl text-[clamp(1rem,1.15vw,1.5rem)] leading-relaxed text-white/80">
                 PrimeCore is a credit intelligence platform that evaluates financial behavior, predicts loan
                 eligibility, and helps individuals and banks make safer lending decisions.
               </p>
 
-              <div className="flex w-full max-w-sm items-center gap-2 rounded-2xl bg-white p-2">
+              <div className="flex w-full max-w-md items-center gap-2 rounded-2xl bg-white p-2.5 sm:p-3">
                 <Link
                   href="/login"
-                  className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-white text-lg font-semibold text-[#5b6470] transition-colors hover:bg-[#f2f7ff]"
+                  className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-white text-base font-semibold text-[#5b6470] transition-colors hover:bg-[#f2f7ff] sm:text-lg lg:h-14 lg:text-xl"
                 >
                   Get Started
                 </Link>
                 <Link
                   href="/register"
-                  className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-[#3ca3e4] text-lg font-semibold text-white transition-colors hover:bg-[#3198dc]"
+                  className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-[#3ca3e4] text-base font-semibold text-white transition-colors hover:bg-[#3198dc] sm:text-lg lg:h-14 lg:text-xl"
                 >
                   Sign Up
                 </Link>
               </div>
 
-              <div className="flex flex-wrap items-center gap-5 pt-1  text-lg font-semibold text-white/90 sm:gap-7">
+              <div className="flex flex-wrap items-center gap-6 pt-2 text-lg font-semibold text-white/90 sm:gap-8 sm:text-xl">
                 {trustedBrands.map((brand) => (
-                  <span key={brand} className="text-base sm:text-lg">
+                  <span key={brand} className="text-lg sm:text-xl">
                     {brand}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="relative h-full min-h-70 self-end overflow-hidden sm:min-h-100 lg:min-h-140">
-              <motion.div
-                className="absolute -bottom-px right-0 h-[86%] w-[82%] rounded-t-[60px] bg-[linear-gradient(160deg,#2d93d1_0%,#5fc1f5_100%)]/50"
-                animate={{ y: [0, -10, 0], scale: [1, 1.03, 1] }}
-                transition={{ duration: 7.5, repeat: Infinity, ease: "easeInOut" }}
-              />
+            <div className="relative min-h-[300px] self-end sm:min-h-[420px] lg:min-h-[560px]">
+              <div className="absolute bottom-0 right-0 h-[86%] w-[82%] rounded-t-[60px] bg-[linear-gradient(160deg,#2d93d1_0%,#5fc1f5_100%)]/50" />
               <Image
                 src="/hero-image.png"
                 alt="PrimeCore customer checking finance details on mobile"
                 fill
-                className="translate-y-px object-contain object-bottom"
+                className="object-contain object-bottom"
                 sizes="(min-width: 1280px) 38vw, (min-width: 768px) 48vw, 88vw"
                 priority
               />
-
-
-
-              
             </div>
           </div>
         </section>

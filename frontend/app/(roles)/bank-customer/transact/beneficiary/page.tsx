@@ -11,7 +11,7 @@ export default function Page() {
   const router = useRouter()
 
   return (
-    <div className="bg-white px-8 py-8">
+    <div className="bg-white px-8 py-6">
       <TransactHeader title="Account Detail" subtitle="Dineth dovindu" />
 
       <section className="max-w-6xl mx-auto mt-8">
@@ -48,19 +48,21 @@ export default function Page() {
                 className="w-full min-h-[150px] rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               />
             </div>
+              <div className="flex justify-end mt-10 max-w-6xl mx-auto pr-[1rem]">
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() => router.push("/bank-customer/transact/transfer")}
+                  className="bg-[#155E63] hover:bg-[#134e52] text-white px-9 py-6 rounded-xl"
+                >
+                  Save
+                </Button>
+              </div>
 
           </form>
         </Card>
 
-        <div className="flex justify-end mt-8">
-          <Button
-            size="lg"
-            onClick={() => router.push("/bank-customer/transact/transfer")}
-            className="bg-[#155E63] hover:bg-[#134e52] text-white px-10 py-6 rounded-xl"
-          >
-            Save
-          </Button>
-        </div>
+        
 
       </section>
     </div>

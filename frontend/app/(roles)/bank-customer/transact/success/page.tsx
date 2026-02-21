@@ -54,7 +54,7 @@ export default function Page() {
       {/* 🔹 BLUR WRAPPER */}
       <div className={showOtp ? "blur-sm pointer-events-none" : ""}>
 
-        <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="px-8 py-6 sm:px-6 lg:px-8">
           <TransactHeader title="Transfer" subtitle="Bank transfer" />
 
           <div className="flex justify-end mt-8 mb-8 max-w-6xl mx-auto">
