@@ -1,6 +1,7 @@
 import { Badge } from "@/src/components/ui";
 import CreditLensHeader from "@/src/components/ui/Creditlens-header";
 import TransactHeader from "@/src/components/ui/Transact-Header";
+import LoanSenseHeader from "@/src/components/ui/loansenseheader";
 import { Bell, Camera, Lock, Mail, ShieldCheck, User } from "lucide-react";
 
 type CustomerFeatureProfilePageProps = {
@@ -26,32 +27,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     }
 
     if (featureName === "LoanSense") {
-      return (
-        <header className="flex flex-col items-center justify-between gap-4 rounded-2xl bg-[#0d3b66] p-6 text-white shadow-lg md:flex-row">
-          <h1 className="w-full text-2xl font-bold tracking-wide md:w-auto">Profile</h1>
-          <div className="flex w-full items-center justify-end gap-6 md:w-auto">
-            <div className="flex gap-4">
-              <button className="relative rounded-full p-2 transition-colors hover:bg-white/10">
-                <Mail size={20} />
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full border border-[#0d3b66] bg-red-500" />
-              </button>
-              <button className="relative rounded-full p-2 transition-colors hover:bg-white/10">
-                <Bell size={20} />
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full border border-[#0d3b66] bg-red-500" />
-              </button>
-            </div>
-            <div className="flex items-center gap-3 border-l border-white/20 pl-6">
-              <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-white bg-slate-200">
-                <div className="h-full w-full bg-linear-to-br from-slate-400 to-slate-600" />
-              </div>
-              <div className="hidden text-right md:block">
-                <p className="text-sm font-bold leading-none">John Doe</p>
-                <p className="mt-1 text-xs text-white/70">{roleLabel}</p>
-              </div>
-            </div>
-          </div>
-        </header>
-      );
+      return <LoanSenseHeader title="Profile" name="John Doe" role={roleLabel} />;
     }
 
     return (
