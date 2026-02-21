@@ -6,6 +6,7 @@ import CreditRiskBarChart from "../components/CreditRiskBarChart";
 import TrendSummaryCard from "../components/TrendSummaryCard";
 import { Button } from "@/src/components/ui/button";
 import CreditLensHeader from "@/src/components/ui/Creditlens-header";
+import trendsDecreaseBg from "../image/creditlens-trends-decrease-bg.svg";
 
 export default function TrendsPage() {
   const router = useRouter();
@@ -44,8 +45,19 @@ export default function TrendsPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl bg-[linear-gradient(135deg,#0b3a5a,#0a6ea5)] p-4 text-white shadow-lg sm:p-5 md:rounded-[26px] md:p-6 lg:min-h-[165px]">
-            <div className="flex h-full min-w-0 flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="relative overflow-hidden rounded-2xl border border-[#66a8d0]/35 bg-[#14517c] p-4 text-white shadow-[0_24px_44px_-30px_rgba(2,18,33,0.82)] sm:p-5 md:rounded-[26px] md:p-6 lg:min-h-[165px]">
+            <div
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: `url("${trendsDecreaseBg.src}")`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
+            <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(14,56,87,0.18)_0%,rgba(14,56,87,0.28)_56%,rgba(14,56,87,0.4)_100%)]" />
+
+            <div className="relative flex h-full min-w-0 flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="min-w-0">
                 <div className="break-words text-xl font-semibold leading-tight sm:text-2xl md:text-3xl">
                   Decrease your Credit Score
