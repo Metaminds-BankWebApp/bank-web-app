@@ -11,18 +11,18 @@ export default function BankOfficerRolePage() {
       <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
           <BankOfficerHeader title="Dashboard" className="mb-5 shrink-0" />
 
-          <div className="flex-1 overflow-y-auto min-h-0">
-          <div className="grid gap-6 xl:grid-cols-[2fr_1fr] min-h-full">
+          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="grid gap-6 xl:grid-cols-[2fr_1fr] h-full">
             
             {/* Left Column */}
             <div className="flex flex-col gap-6 h-full">
               {/* Bank Target */}
-              <Card className="border-none shadow-sm flex flex-col justify-center h-[35%]">
-                <CardHeader className="flex flex-row items-center justify-between pb-2 shrink-0">
+              <Card className="border-none shadow-sm flex flex-col justify-center flex-shrink-0">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <h2 className="text-lg font-semibold">Bank Target</h2>
                   <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-semibold text-gray-500 cursor-pointer hover:bg-gray-50">Show All</span>
                 </CardHeader>
-                <CardContent className="flex flex-col justify-center flex-1">
+                <CardContent className="flex flex-col justify-center">
                   <div className="mb-4 flex items-end justify-between">
                     <div>
                       <p className="text-sm text-gray-500">In Progress</p>
@@ -42,7 +42,7 @@ export default function BankOfficerRolePage() {
               </Card>
 
               {/* Chart Section */}
-              <Card className="border-none shadow-sm flex-1 flex flex-col h-[65%]">
+              <Card className="border-none shadow-sm flex-1 flex flex-col min-h-[300px]">
                 <CardHeader className="flex flex-row items-center justify-between shrink-0">
                   <h2 className="text-lg font-semibold">Average credit score trend</h2>
                   <div className="flex items-center gap-4">
@@ -77,7 +77,7 @@ export default function BankOfficerRolePage() {
                       </div>
                       
                       {/* CSS Line Drawing (Approximation) */}
-                      <svg viewBox="0 0 100 40" className="h-full w-full overflow-visible fill-none stroke-2">
+                      <svg viewBox="0 0 100 40" className="h-full w-full overflow-none fill-none stroke-2">
                          <path d="M0 35 C 10 30, 20 38, 30 25 S 50 15, 60 20 S 80 10, 90 15" stroke="#3b82f6" strokeDasharray="4 2" />
                          <path d="M0 38 C 10 35, 20 32, 30 28 S 50 25, 60 22 S 80 15, 90 12" stroke="#a3e635" />
                       </svg>
@@ -87,10 +87,10 @@ export default function BankOfficerRolePage() {
             </div>
 
             {/* Right Column - Stats Grid */}
-            <div className="flex flex-col gap-5 h-full">
-               <div className="grid grid-cols-2 gap-4 h-[40%]">
+            <div className="flex flex-col gap-6 h-full min-h-0">
+               <div className="grid grid-cols-2 gap-4 shrink-0">
                   {/* Card 1 */}
-                  <Card className="col-span-1 border-none bg-[#3b82f6] text-[#0d3b66] shadow-sm flex flex-col justify-center">
+                  <Card className="col-span-1 border-none bg-[#3b82f6] text-[#0d3b66] shadow-sm flex flex-col justify-center min-h-[140px]">
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium opacity-90">Total Customers</p>
@@ -104,7 +104,7 @@ export default function BankOfficerRolePage() {
                   </Card>
 
                   {/* Card 2 */}
-                  <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center">
+                  <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-[140px]">
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">Low Risk</p>
@@ -118,7 +118,7 @@ export default function BankOfficerRolePage() {
                   </Card>
 
                    {/* Card 3 */}
-                   <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center">
+                   <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-[140px]">
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">Medium Risk</p>
@@ -132,7 +132,7 @@ export default function BankOfficerRolePage() {
                   </Card>
 
                   {/* Card 4 */}
-                  <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center">
+                  <Card className="col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-[140px]">
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">High Risk</p>
@@ -146,8 +146,8 @@ export default function BankOfficerRolePage() {
                   </Card>
                </div>
 
-               <div className="grid grid-rows-2 gap-5 flex-1">
-                  <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center">
+               <div className="flex flex-col gap-5 flex-1 min-h-[400px]">
+                  <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center flex-1">
                      <div className="relative z-10 flex flex-col justify-center h-full">
                         <h3 className="mb-3 text-2xl font-bold">Pending Verifications</h3>
                         <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">
@@ -161,7 +161,7 @@ export default function BankOfficerRolePage() {
                      <div className="absolute top-6 right-6 h-20 w-20 rounded-full bg-white/5 blur-xl"></div>
                   </div>
 
-                  <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center">
+                  <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center flex-1">
                      <div className="relative z-10 flex flex-col justify-center h-full">
                         <h3 className="mb-3 text-2xl font-bold">Loan Pipeline</h3>
                         <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">

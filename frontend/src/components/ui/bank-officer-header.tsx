@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Bell, Mail, Menu, X } from "lucide-react";
@@ -24,7 +25,10 @@ export function BankOfficerHeader({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
-    setIsMenuOpen(false);
+    if (isMenuOpen) {
+      setIsMenuOpen(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   return (
@@ -53,10 +57,13 @@ export function BankOfficerHeader({
             </span>
           </button>
           <div className="relative h-9 w-9 overflow-hidden rounded-full bg-white/10">
-            <img
+            <Image
               src="https://ui-avatars.com/api/?name=Kamal+E&background=random"
               alt="User"
-              className="h-full w-full object-cover"
+              fill
+              className="object-cover"
+              sizes="36px"
+              unoptimized
             />
           </div>
         </div>
@@ -109,10 +116,13 @@ export function BankOfficerHeader({
           <div className="h-8 w-px bg-white/20" />
           <div className="flex items-center gap-3">
             <div className="relative h-10 w-10 overflow-hidden rounded-full bg-white/10">
-              <img
+              <Image
                 src="https://ui-avatars.com/api/?name=Kamal+E&background=random"
                 alt="User"
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
+                sizes="40px"
+                unoptimized
               />
               <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0d3b66] bg-green-500" />
             </div>
