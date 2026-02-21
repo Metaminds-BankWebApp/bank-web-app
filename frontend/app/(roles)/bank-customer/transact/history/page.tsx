@@ -64,6 +64,61 @@ const mockData = [
 		date: '2026-02-10',
 		reference: 'REF-20260208',
 	},
+	{
+		id: '6',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '7',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '8',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '9',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '10',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
 ]
 
 export default function Page() {
@@ -72,7 +127,7 @@ export default function Page() {
 			<TransactHeader title="Transaction History" subtitle="Dineth dovindu" />
                   <div className="flex float-right mt-20 mb-8 max-w-6xl mx-auto pr-[7rem]">
                     </div>
-			<Card className="rounded-xl shadow-sm p-8 max-w-6xl mx-auto w-full mt-[8rem]">
+			<Card className="rounded-xl shadow-sm p-8 max-w-6xl mx-auto w-full mt-[6rem]">
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 					<div className="flex-1">
 						<div className="relative max-w-md">
