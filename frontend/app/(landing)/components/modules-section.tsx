@@ -46,7 +46,7 @@ export function ModulesSection() {
               />
               <span className="text-sm font-medium sm:text-lg">Banking for the Future</span>
             </div>
-            <h2 className="max-w-xl text-4xl font-semibold leading-tight text-[#0f2238] sm:text-5xl">
+            <h2 className="max-w-xl text-4xl font-semibold leading-tight text-[#0f2238] sm:text-5xl sm:pb-6 lg:pb-10">
               Digital Banking Built Around You
             </h2>
           </div>

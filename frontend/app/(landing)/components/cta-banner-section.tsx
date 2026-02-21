@@ -7,11 +7,11 @@ export function CtaBannerSection() {
   return (
     <Section className="pb-8 pt-8 sm:pt-10">
       <LandingPageShell>
-        <section className="relative overflow-hidden rounded-2xl border border-[#16537d] bg-[linear-gradient(125deg,#082f56_0%,#0a3f6b_57%,#1a79bb_100%)] px-6 py-8 text-white sm:px-10 sm:py-10">
+        <section className="relative overflow-hidden rounded-2xl border border-[#16537d] bg-[linear-gradient(125deg,#082f56_0%,#0a3f6b_57%,#1a79bb_100%)] px-6 pt-8 pb-0 text-white sm:px-10 sm:pt-8 pb-0">
           <div className="pointer-events-none absolute -right-10 top-[-20%] h-72 w-72 rounded-full bg-[#6bcfff]/20 blur-[110px]" />
 
           <div className="relative z-10 grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-            <div className="max-w-xl space-y-4 pb-1 sm:space-y-5">
+            <div className="max-w-xl space-y-4 pb-10 pt-6 sm:space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-white/90">
                 <Image
                   src="/primecore%20logo%20only%20white.png"
@@ -43,9 +43,9 @@ export function CtaBannerSection() {
               </div>
             </div>
 
-            <div className="relative min-h-[260px] sm:min-h-[300px] lg:min-h-[350px]">
+            <div className="relative min-h-[300px] overflow-visible sm:min-h-[360px] lg:-mt-10 lg:min-h-[430px]">
               <Image
-                src="/cta-banner%20landing%20page%20image%202.png"
+                src="/cta-banner%20landing%20page%20image.png"
                 alt="PrimeCore customer ready to start credit journey"
                 fill
                 className="object-contain object-bottom"
