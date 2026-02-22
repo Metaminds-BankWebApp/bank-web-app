@@ -209,7 +209,7 @@ export default function AllCustomersPage() {
     <AuthGuard requiredRole="BANK_OFFICER">
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
-      <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
+        <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
                <BankOfficerHeader title="All Customers" className="mb-6 shrink-0" />
 
           <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-slate-200">

@@ -2,7 +2,7 @@ import { Badge, Card, CardContent, CardHeader } from "@/src/components/ui";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { Bell, Mail, MoreHorizontal, Search, Settings, Eye, Pencil, Trash2 } from "lucide-react";
-import AdminHeader from "@/src/components/ui/adminheader";
+import { AdminHeader } from "@/src/components/ui/adminheader";
 import Image from "next/image";
 
 export default function AdminRolePage() {
