@@ -822,7 +822,8 @@ export default function PublicCustomerApplicationPage() {
               </div>
 
               <div className="flex justify-center pt-4">
-                 <Button onClick={submitApplication} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white px-12 py-6 rounded-lg font-bold text-lg shadow-xl shadow-blue-500/20">
+               
+                 <Button onClick={submitApplication}  className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white px-12 py-6 rounded-lg font-bold text-lg shadow-xl shadow-blue-500/20">
                     Submit Application
                  </Button>
               </div>
