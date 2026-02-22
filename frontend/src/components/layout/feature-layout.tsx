@@ -102,7 +102,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
             className={cn(
               "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none p-3 sm:p-4 lg:p-0",
               isCreditLens
-                ? "bg-[#e9eff7] lg:rounded-[32px]"
+                ? "bg-[#e9eff7] lg:rounded-l-[32px]"
                 : "bg-(--primecore-surface) lg:rounded-l-[28px]"
             )}
             style={

@@ -13,7 +13,7 @@ export default function TrendsPage() {
 
   return (
     <div className="w-full overflow-x-hidden px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
-      <div className="flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:h-[calc(100dvh-2rem)] lg:min-h-0 lg:overflow-hidden">
+      <div className="flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:h-[calc(100dvh-2rem)]">
         <CreditLensHeader title="Trends" subtitle="" name="John Doe" role="Public Customer" />
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 lg:px-2 xl:px-3">

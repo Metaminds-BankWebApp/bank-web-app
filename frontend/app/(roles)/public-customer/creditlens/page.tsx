@@ -21,11 +21,11 @@ export default function PublicCustomerCreditLensPage() {
 
   return (
     <div className="w-full overflow-x-hidden px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
-      <div className="flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:h-[calc(100dvh-2rem)] lg:min-h-0 lg:overflow-hidden">
+      <div className="flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:h-[calc(100dvh-2rem)]">
         <CreditLensHeader title="Dashboard" subtitle="" name="John Doe" role="Public Customer" />
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 lg:gap-5 lg:px-2 xl:px-3">
-          <section className="creditlens-card creditlens-card-hover creditlens-delay-1 relative overflow-hidden rounded-2xl border border-[#2e7eae]/35 bg-[#0b3252] px-4 pb-4 pt-3 text-white shadow-[0_24px_54px_-34px_rgba(2,18,33,0.88)] sm:px-6 sm:pb-8 sm:pt-4 md:rounded-[26px] lg:min-h-[440px] lg:flex-[1.55] lg:pb-0 xl:min-h-[500px]">
+          <section className="creditlens-card creditlens-card-hover creditlens-delay-1 relative overflow-hidden rounded-2xl border border-[#2e7eae]/35 bg-[#0b3252] px-4 pb-4 pt-3 text-white shadow-[0_24px_54px_-34px_rgba(2,18,33,0.88)] sm:px-6 sm:pb-8 sm:pt-4 md:rounded-[26px] lg:min-h-[420px] lg:flex-[1.38] lg:pb-0 xl:min-h-[480px]">
           <div
             className="pointer-events-none absolute inset-0"
             style={{
@@ -62,7 +62,7 @@ export default function PublicCustomerCreditLensPage() {
           </div>
           </section>
 
-          <section className="creditlens-stagger-2 grid min-w-0 gap-4 md:gap-6 lg:min-h-[240px] lg:flex-[0.58] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] xl:min-h-[270px] ">
+          <section className="creditlens-stagger-2 grid min-w-0 gap-4 md:gap-6 lg:min-h-[260px] lg:flex-[0.58] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] xl:min-h-[290px] ">
             <div className="creditlens-card creditlens-card-hover flex h-full min-w-0 flex-col rounded-2xl border border-[#2d78ab]/30 bg-[linear-gradient(135deg,#0d3555,#082741)] p-4 text-white shadow-[0_22px_46px_-32px_rgba(3,20,34,0.85)] md:rounded-[26px] sm:p-5">
             <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
               <h4 className="min-w-0 truncate text-lg font-semibold sm:text-xl">
