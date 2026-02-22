@@ -1,12 +1,12 @@
+"use client";
+
 import { Card, CardContent, CardHeader } from "@/src/components/ui";
+import { SpendIqHeader } from "@/src/components/SpendIqHeader";
 
 export default function PublicCustomerSpendIQPage() {
   return (
-    <>
-          <header className="space-y-1">
-            <h1 className="text-4xl font-bold text-(--primecore-foreground)">SpendIQ – Expense Overview</h1>
-            <p className="text-sm text-(--primecore-foreground)/65">Track and manage your personal spending.</p>
-          </header>
+    <div className="p-4 md:p-6 lg:p-8">
+      <SpendIqHeader title="SpendIQ – Expense Overview" />
 
           <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <Card><CardHeader><p className="text-sm text-(--primecore-foreground)/70">Total Expenses</p></CardHeader><CardContent><p className="text-4xl font-semibold">$621.75</p><p className="text-sm text-(--primecore-foreground)/65">This month</p></CardContent></Card>
@@ -16,7 +16,7 @@ export default function PublicCustomerSpendIQPage() {
           </section>
 
           <section className="mt-6 grid gap-4 xl:grid-cols-[1fr_1.1fr]">
-            <Card>
+            <Card> 
               <CardHeader><h2 className="text-2xl font-semibold">Expense by Category</h2></CardHeader>
               <CardContent><div className="h-72 rounded-2xl border border-(--primecore-border) bg-[radial-gradient(circle_at_center,_#60a5fa_0,_#60a5fa_18%,_#a855f7_18%,_#a855f7_36%,_#ec4899_36%,_#ec4899_50%,_#f59e0b_50%,_#f59e0b_69%,_#ef4444_69%,_#ef4444_84%,_#22c55e_84%,_#22c55e_100%)]" /></CardContent>
             </Card>
@@ -32,7 +32,7 @@ export default function PublicCustomerSpendIQPage() {
               </CardContent>
             </Card>
           </section>
-    </>
+    </div>
   );
 }
 
