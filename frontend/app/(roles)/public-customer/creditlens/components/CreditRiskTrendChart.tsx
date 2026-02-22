@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,28 +15,44 @@ import { Line } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
-export default function CreditRiskTrendChart() {
-  const labels = ["April", "May", "June", "July", "August", "September"];
+const labels = ["April", "May", "June", "July", "August", "September"];
+const realValues = [80, 50, 90, 70, 60, 55];
 
-  const data = {
-    labels,
-    datasets: [
-      {
-        label: "Credit Risk Score",
-        data: [80, 50, 92, 70, 60, 55],
-        borderColor: "#a3e635",
-        backgroundColor: "rgba(163,230,53,0.25)",
-        fill: "origin",
-        tension: 0.35,
-        pointRadius: 2.5,
-        pointHoverRadius: 4,
-      },
-    ],
-  };
+export default function CreditRiskTrendChart() {
+  const [chartValues, setChartValues] = useState<number[]>(() => realValues.map(() => 0));
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setChartValues(realValues));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const data = useMemo(
+    () => ({
+      labels,
+      datasets: [
+        {
+          label: "Credit Risk Score",
+          data: chartValues,
+          borderColor: "#a3e635",
+          backgroundColor: "rgba(163,230,53,0.25)",
+          fill: "origin",
+          tension: 0.35,
+          pointRadius: 2.5,
+          pointHoverRadius: 4,
+        },
+      ],
+    }),
+    [chartValues]
+  );
 
   const options: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: {
+      duration: 900,
+      easing: "easeOutQuart",
+      delay: (ctx) => (ctx.dataIndex ?? 0) * 80,
+    },
     plugins: {
       legend: { display: false },
       tooltip: { mode: "index", intersect: false },

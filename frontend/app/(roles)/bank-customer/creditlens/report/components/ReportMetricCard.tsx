@@ -28,7 +28,7 @@ export default function ReportMetricCard({
 
   return (
     <div
-      className={`rounded-2xl border ${t.ring} bg-white/80 p-5 shadow-[0_14px_45px_-35px_rgba(2,44,67,0.40)]`}
+      className={`creditlens-card creditlens-card-hover rounded-2xl border ${t.ring} bg-white/80 p-5 shadow-[0_14px_45px_-35px_rgba(2,44,67,0.40)]`}
     >
       <div className="flex items-start gap-3">
         <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${t.iconBg} ${t.icon}`}>

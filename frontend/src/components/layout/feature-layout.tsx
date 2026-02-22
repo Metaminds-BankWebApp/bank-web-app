@@ -5,6 +5,7 @@ import { FeatureSidebar, featureMeta } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { X } from "lucide-react";
 import { cn } from "@/src/lib/utils";
+import creditLensBackground from "@/app/(roles)/public-customer/creditlens/image/Credit lens background image opacity.png";
 
 type FeatureRole = "PUBLIC_CUSTOMER" | "BANK_CUSTOMER";
 type FeatureKey = "spendiq" | "creditlens" | "loansense" | "transact";
@@ -29,6 +30,7 @@ export function useFeatureLayout() {
 
 export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const isCreditLens = feature === "creditlens";
 
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
@@ -96,7 +98,24 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
             </div>
           </div>
 
-          <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none bg-(--primecore-surface) p-3 shadow-2xl sm:p-4 lg:rounded-l-[28px] lg:p-0">
+          <main
+            className={cn(
+              "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none p-3 sm:p-4 lg:p-0",
+              isCreditLens
+                ? "bg-[#e9eff7] lg:rounded-l-[32px]"
+                : "bg-(--primecore-surface) lg:rounded-l-[28px]"
+            )}
+            style={
+              isCreditLens
+                ? {
+                    backgroundImage: `url("${creditLensBackground.src}")`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center top",
+                    backgroundRepeat: "no-repeat",
+                  }
+                : undefined
+            }
+          >
             {children}
           </main>
         </div>

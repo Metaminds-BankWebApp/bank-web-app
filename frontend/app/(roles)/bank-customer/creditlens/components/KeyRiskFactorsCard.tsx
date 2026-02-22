@@ -5,7 +5,7 @@ import { AlertTriangle, CreditCard, CircleAlert } from "lucide-react";
 
 export default function KeyRiskFactorsCard() {
   return (
-    <div className="rounded-[26px] border border-slate-200/70 bg-white/90 pt-3 pr-5 pl-5 pb-3 shadow-[0_18px_50px_-35px_rgba(2,44,67,0.35)]">
+    <div className="creditlens-card creditlens-card-hover rounded-[26px] border border-slate-200/70 bg-white/90 pt-3 pr-5 pl-5 pb-3 shadow-[0_18px_50px_-35px_rgba(2,44,67,0.35)]">
       {/* Title */}
       <div className="flex items-center gap-3">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-50 text-orange-500">

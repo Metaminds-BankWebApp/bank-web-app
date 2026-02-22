@@ -70,7 +70,7 @@ const SelectValue = React.forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLS
         className={cn("block truncate", className)}
         {...props}
       >
-        {ctx?.value ? ctx.selectedLabel : placeholder}
+        {ctx?.value ? (ctx.selectedLabel ?? ctx.value) : placeholder}
       </span>
     )
   }
@@ -80,14 +80,13 @@ SelectValue.displayName = "SelectValue"
 const SelectContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
     const ctx = React.useContext(SelectContext)
-    
-    if (!ctx?.open) return null
 
     return (
       <div
         ref={ref}
         className={cn(
           "absolute top-full z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-200 bg-white text-slate-950 shadow-md animate-in fade-in-80 w-full mt-1",
+          ctx?.open ? "block" : "hidden",
           className
         )}
         {...props}

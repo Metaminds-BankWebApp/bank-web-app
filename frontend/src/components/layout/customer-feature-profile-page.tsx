@@ -10,12 +10,14 @@ type CustomerFeatureProfilePageProps = {
 };
 
 export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerFeatureProfilePageProps) {
+  const isCreditLens = featureName === "CreditLens";
+
   const renderFeatureHeader = () => {
     if (featureName === "CreditLens") {
       return (
         <CreditLensHeader
           title="Profile"
-          subtitle={`${featureName} • ${roleLabel}`}
+          subtitle=""
           name="John Doe"
           role={roleLabel}
         />
@@ -64,7 +66,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
       <div className=" mx-auto my-auto w-full max-h-full max-w-7xl space-y-6 sm:mt-20">
        
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_1.6fr]">
+        <div className={isCreditLens ? "grid gap-6 lg:px-2 xl:grid-cols-[1fr_1.6fr] xl:px-3" : "grid gap-6 xl:grid-cols-[1fr_1.6fr]"}>
           <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
             <div className="mb-6 flex items-center gap-4">
               <div className="relative grid h-20 w-20 place-items-center rounded-full bg-[#e2edf6] text-3xl font-bold text-[#0d3b66]">
