@@ -365,16 +365,24 @@ useEffect(() => {
       );
     })}
 
-          <button
-            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            &gt;
-          </button>
-        </div>
+    {/* Next */}
+    <button
+      onClick={() =>
+        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+      }
+      disabled={currentPage === totalPages}
+      className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+    >
+      &gt;
+    </button>
+
+  </div>
+</div>
+
+          </div>
+        </main>
       </div>
-    </main>
+    </AuthGuard>
   );
 }
 

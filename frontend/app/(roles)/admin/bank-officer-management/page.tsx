@@ -52,10 +52,44 @@ function SummaryCard({
 
 function StatusBadge({ status }: { status: StatusType }) {
   return (
-    <div>
-      
+    <span
+      className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+        status === "Active"
+          ? "bg-green-100 text-green-700"
+          : "bg-yellow-100 text-yellow-700"
+      }`}
+    >
+      {status}
+    </span>
+  );
+}
+
+function OfficerAvatars({ count }: { count: number }) {
+  const display = Math.min(3, count);
+  const extra = count > 3 ? count - 3 : 0;
+
+  
+
+
+  return (
+    <div className="flex items-center">
+      <div className="flex -space-x-2">
+        {Array.from({ length: display }).map((_, i) => (
+          <div
+            key={i}
+            className="w-8 h-8 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center border-2 border-white"
+          >
+            {String.fromCharCode(65 + i)}
+          </div>
+        ))}
+      </div>
+      {extra > 0 && (
+        <span className="ml-2 text-xs text-gray-500 font-medium">
+          +{extra}
+        </span>
+      )}
     </div>
-  )
+  );
 }
 
 // ==================== MOCK DATA ====================
