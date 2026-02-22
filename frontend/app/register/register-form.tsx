@@ -60,8 +60,8 @@ export function RegisterForm() {
       });
 
       login(response);
-      showToast({ type: "success", title: "Account created", description: "Redirecting to your dashboard." });
-      router.replace("/public-customer");
+      showToast({ type: "success", title: "Account created", description: "Redirecting to application form." });
+      router.replace("/public-customer/application");
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
       const message = apiError?.message ?? "Unable to register. Please try again.";

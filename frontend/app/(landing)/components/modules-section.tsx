@@ -32,11 +32,11 @@ const modules = [
 
 export function ModulesSection() {
   return (
-    <Section id="modules" className="pt-8 sm:pt-10">
+    <Section id="modules" className="pt-8 sm:pt-10 min-h-[72svh] lg:min-h-[78svh]">
       <LandingPageShell>
         <div className="mb-8 flex flex-wrap items-start justify-between gap-5">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-3 rounded-[32px] border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
+            <div className="inline-flex items-center gap-3 rounded-4xl border border-[#b9c3cd] bg-white px-5 py-2.5 text-[#74808d] sm:gap-4 sm:px-6 sm:py-3">
               <Image
                 src="/primecore%20logo%20only%20blue.png"
                 alt="PrimeCore icon"
@@ -46,11 +46,11 @@ export function ModulesSection() {
               />
               <span className="text-sm font-medium sm:text-lg">Banking for the Future</span>
             </div>
-            <h2 className="max-w-xl text-4xl font-semibold leading-tight text-[#0f2238] sm:text-5xl">
+            <h2 className="max-w-xl text-4xl font-semibold leading-tight text-[#0f2238] sm:text-5xl  md:pb-2 lg:pb-10">
               Digital Banking Built Around You
             </h2>
           </div>
-          <p className="max-w-sm text-sm leading-relaxed text-[#4f6379] sm:text-base">
+          <p className="max-w-sm text-sm leading-relaxed text-[#4f6379] sm:text-base pb-6 md:pb-8 sm:pb-5 lg:pb-0">
             Four powerful modules designed to improve financial awareness and risk-aware decision making.
           </p>
         </div>

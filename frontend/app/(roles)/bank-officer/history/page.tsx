@@ -1,22 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { 
-  Bell, 
-  Mail, 
   Search, 
-  Calendar, 
-  Filter, 
+   Download,
   ChevronLeft, 
   ChevronRight,
-  MoreHorizontal,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  FileText
 } from "lucide-react";
+import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
@@ -95,40 +88,81 @@ const historyData = [
 
 export default function HistoryPage() {
   const [selectedTab, setSelectedTab] = useState("evaluations");
+   const [searchTerm, setSearchTerm] = useState("");
+   const [dateRange, setDateRange] = useState<"30days" | "60days" | "90days" | "all">("30days");
+   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
+   const [sortBy, setSortBy] = useState<"date-desc" | "date-asc">("date-desc");
+
+   const visibleHistory = useMemo(() => {
+      const latestDate = new Date(Math.max(...historyData.map((item) => new Date(item.date).getTime())));
+
+      const filtered = historyData.filter((item) => {
+         const text = `${item.customer.name} ${item.customer.id} ${item.actionType} ${item.performedBy}`.toLowerCase();
+         const matchesSearch = searchTerm.trim().length === 0 ? true : text.includes(searchTerm.toLowerCase());
+
+         const matchesTab =
+            selectedTab === "evaluations"
+               ? /credit/i.test(item.actionType)
+               : selectedTab === "customer-updates"
+                  ? /registration|limit increase/i.test(item.actionType)
+                  : /refresh/i.test(item.actionType);
+
+         const matchesStatus = statusFilter === "all" ? true : item.status === statusFilter;
+
+         const rowDate = new Date(item.date);
+         const daysDifference = Math.floor((latestDate.getTime() - rowDate.getTime()) / (1000 * 60 * 60 * 24));
+         const matchesDate =
+            dateRange === "all"
+               ? true
+               : dateRange === "30days"
+                  ? daysDifference <= 30
+                  : dateRange === "60days"
+                     ? daysDifference <= 60
+                     : daysDifference <= 90;
+
+         return matchesSearch && matchesTab && matchesStatus && matchesDate;
+      });
+
+      return [...filtered].sort((left, right) => {
+         const leftDate = new Date(`${left.date} ${left.time}`).getTime();
+         const rightDate = new Date(`${right.date} ${right.time}`).getTime();
+         return sortBy === "date-desc" ? rightDate - leftDate : leftDate - rightDate;
+      });
+   }, [dateRange, searchTerm, selectedTab, sortBy, statusFilter]);
+
+   const handleExport = () => {
+      const header = ["Date", "Time", "Customer", "Customer ID", "Action Type", "Performed By", "Status"];
+      const rows = visibleHistory.map((item) => [
+         item.date,
+         item.time,
+         item.customer.name,
+         item.customer.id,
+         item.actionType,
+         item.performedBy,
+         item.status,
+      ]);
+
+      const csv = [header, ...rows]
+         .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
+         .join("\n");
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `bank-officer-history-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+   };
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
-      <div className="flex min-h-screen bg-[#f3f4f6]">
-        <Sidebar role="BANK_OFFICER" className="max-lg:hidden" />
-        <main className="flex-1 p-8 lg:p-10 overflow-y-auto w-full max-w-[1600px] mx-auto">
-          {/* Header */}
-          <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] p-4 text-white shadow-sm">
-            <h1 className="text-2xl font-semibold tracking-tight">History</h1>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
-                <button className="relative text-white/80 hover:text-white">
-                  <Mail size={20} />
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">2</span>
-                </button>
-                <button className="relative text-white/80 hover:text-white">
-                  <Bell size={20} />
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">8</span>
-                </button>
-              </div>
-              <div className="h-8 w-px bg-white/20" />
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-full bg-white/10">
-                  <img src="https://ui-avatars.com/api/?name=Kamal+E&background=random" alt="User" className="h-full w-full object-cover" />
-                  <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0d3b66] bg-green-500"></div>
-                </div>
-                <div className="hidden text-sm md:block">
-                  <p className="font-semibold leading-none">Kamal Edirisinghe</p>
-                  <p className="text-white/60">User</p>
-                </div>
-              </div>
-            </div>
-          </header>
+      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
+        <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
+      <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
+               <BankOfficerHeader title="History" className="mb-6 shrink-0" />
 
+          <div className="flex-1 overflow-y-auto min-h-0">
           <div className="mb-8 text-sm text-slate-500">
              Dashboard <span className="mx-2 text-slate-400">▶</span> <span className="text-[#3e9fd3] font-medium">Credit Status Analysis</span>
           </div>
@@ -136,22 +170,52 @@ export default function HistoryPage() {
           {/* Controls */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                <div className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-white min-w-[240px]">
-                   <Calendar size={16} className="text-slate-400" />
-                   <span className="text-xs text-slate-500 font-bold uppercase mr-2">Date Range</span>
-                   <span className="text-sm text-slate-700 font-medium">Oct 01, 2023 - Oct 31, 2023</span>
-                </div>
-                
-                <div className="flex items-center gap-2 border rounded-lg px-3 py-2 bg-white min-w-[200px]">
-                   <Filter size={16} className="text-slate-400" />
-                   <span className="text-xs text-slate-500 font-bold uppercase mr-2">Risk Category</span>
-                   <span className="text-sm text-slate-700 font-medium">All Categories</span>
-                </div>
+                        <Select value={dateRange} onValueChange={(value) => setDateRange(value as "30days" | "60days" | "90days" | "all") }>
+                           <SelectTrigger className="min-w-42.5 bg-white">
+                              <SelectValue placeholder="Date range" />
+                           </SelectTrigger>
+                           <SelectContent>
+                              <SelectItem value="30days">Last 30 Days</SelectItem>
+                              <SelectItem value="60days">Last 60 Days</SelectItem>
+                              <SelectItem value="90days">Last 90 Days</SelectItem>
+                              <SelectItem value="all">All Time</SelectItem>
+                           </SelectContent>
+                        </Select>
+
+                        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | "completed" | "pending" | "failed") }>
+                           <SelectTrigger className="min-w-42.5 bg-white">
+                              <SelectValue placeholder="Status" />
+                           </SelectTrigger>
+                           <SelectContent>
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="failed">Failed</SelectItem>
+                           </SelectContent>
+                        </Select>
+
+                        <Select value={sortBy} onValueChange={(value) => setSortBy(value as "date-desc" | "date-asc") }>
+                           <SelectTrigger className="min-w-42.5 bg-white">
+                              <SelectValue placeholder="Sort" />
+                           </SelectTrigger>
+                           <SelectContent>
+                              <SelectItem value="date-desc">Newest First</SelectItem>
+                              <SelectItem value="date-asc">Oldest First</SelectItem>
+                           </SelectContent>
+                        </Select>
              </div>
 
-             <div className="relative w-full md:w-[300px]">
+                   <div className="relative w-full md:w-105 flex gap-2">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <Input placeholder="Search activity..." className="pl-9 bg-slate-50 border-slate-200" />
+                        <Input
+                           placeholder="Search activity..."
+                           className="pl-9 bg-slate-50 border-slate-200"
+                           value={searchTerm}
+                           onChange={(event) => setSearchTerm(event.target.value)}
+                        />
+                        <Button variant="outline" className="shrink-0" onClick={handleExport}>
+                           <Download size={14} className="mr-2" /> Export
+                        </Button>
              </div>
           </div>
 
@@ -183,7 +247,7 @@ export default function HistoryPage() {
                 <Table>
                    <TableHeader className="bg-slate-50">
                       <TableRow>
-                         <TableHead className="w-[180px] text-xs font-bold uppercase text-slate-500">Timestamp</TableHead>
+                         <TableHead className="w-45 text-xs font-bold uppercase text-slate-500">Timestamp</TableHead>
                          <TableHead className="text-xs font-bold uppercase text-slate-500">Customer</TableHead>
                          <TableHead className="text-xs font-bold uppercase text-slate-500">Action Type</TableHead>
                          <TableHead className="text-xs font-bold uppercase text-slate-500">Performed By</TableHead>
@@ -192,7 +256,7 @@ export default function HistoryPage() {
                       </TableRow>
                    </TableHeader>
                    <TableBody>
-                      {historyData.map((item) => (
+                      {visibleHistory.map((item) => (
                          <TableRow key={item.id} className="hover:bg-slate-50/50">
                             <TableCell className="font-medium text-slate-700">
                                <div className="flex flex-col">
@@ -232,14 +296,24 @@ export default function HistoryPage() {
                                </Button>
                             </TableCell>
                          </TableRow>
-                      ))}
+                                 ))}
+
+                                 {visibleHistory.length === 0 && (
+                                    <TableRow>
+                                       <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
+                                          No activity found for the selected filters.
+                                       </TableCell>
+                                    </TableRow>
+                                 )}
                    </TableBody>
                 </Table>
              </div>
 
              {/* Footer / Pagination */}
              <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                <p className="text-sm text-slate-500">Showing <span className="font-medium text-slate-800">1-10</span> of <span className="font-medium text-slate-800">428</span> activities</p>
+                        <p className="text-sm text-slate-500">
+                           Showing <span className="font-medium text-slate-800">{visibleHistory.length === 0 ? 0 : 1}-{visibleHistory.length}</span> of <span className="font-medium text-slate-800">{visibleHistory.length}</span> activities
+                        </p>
                 <div className="flex items-center gap-2">
                    <Button variant="outline" size="icon" className="h-8 w-8 bg-white" disabled><ChevronLeft size={14} /></Button>
                    <Button size="icon" className="h-8 w-8 bg-[#3e9fd3] hover:bg-[#328ab8] text-white text-xs">1</Button>
@@ -250,6 +324,7 @@ export default function HistoryPage() {
                    <Button variant="outline" size="icon" className="h-8 w-8 bg-white"><ChevronRight size={14} /></Button>
                 </div>
              </div>
+          </div>
           </div>
         </main>
       </div>

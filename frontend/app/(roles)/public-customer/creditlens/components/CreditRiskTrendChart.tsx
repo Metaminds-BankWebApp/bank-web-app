@@ -55,7 +55,7 @@ export default function CreditRiskTrendChart() {
         },
         grid: {
           color: "rgba(255,255,255,0.12)",
-          borderDash: [4, 4],
+          tickBorderDash: [4, 4],
         },
       },
     },

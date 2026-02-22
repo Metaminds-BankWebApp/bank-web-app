@@ -21,7 +21,7 @@ const steps = [
 
 export function StepsSection() {
   return (
-    <Section id="how-it-works" className="pt-8  sm:pt-10  ">
+    <Section id="how-it-works" className="pt-8 sm:pt-10 min-h-[68svh] lg:min-h-[74svh]">
       <LandingPageShell>
         <section className="rounded-2xl border border-[#16537d] bg-[linear-gradient(125deg,#082f56_0%,#0b3f6b_58%,#1a79bb_100%)] p-6 text-white sm:p-9">
           <div className="mb-6 space-y-3">

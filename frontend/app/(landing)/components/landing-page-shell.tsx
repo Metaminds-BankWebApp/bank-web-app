@@ -6,7 +6,7 @@ export function LandingPageShell({
   className?: string;
 }) {
   return (
-    <div className={`mx-auto w-full max-w-screen-2xl px-2 sm:px-4 lg:px-6 ${className}`}>
+    <div className={`mx-auto w-full max-w-[1880px] px-3 sm:px-5 lg:px-7 ${className}`}>
       {children}
     </div>
   );

@@ -114,6 +114,7 @@ export const siteConfig = {
         { title: "History", href: "/bank-officer/history", icon: "history", section: "general" },
         { title: "Credit Analysis", href: "/bank-officer/credit-analysis", icon: "line-chart", section: "general" },
         { title: "Transactions", href: "/bank-officer/transactions", icon: "wallet", section: "general" },
+        { title: "Profile", href: "/bank-officer/profile", icon: "user", section: "general" },
         { title: "Help & Support", href: "/bank-officer/support", icon: "help-circle", section: "other" },
         { title: "Setting", href: "/bank-officer/settings", icon: "settings", section: "other" },
         { title: "Log Out", href: "/login", icon: "log-out", section: "account" }, 
@@ -121,14 +122,15 @@ export const siteConfig = {
     },
     ADMIN: {
       roleLabel: "Admin",
-      appName: "PrimeCore",
+      appName: "Admin Panel",
       colorClass: "bg-[#0d3b66]", // Matching screenshot dark theme
       items: [
         { title: "Dashboard", href: "/admin", icon: "layout-dashboard", section: "general" },
-        { title: "Add Customer", href: "/admin/add-customer", icon: "users", section: "general" },
-        { title: "History", href: "/admin/history", icon: "history", section: "general" },
-        { title: "Statistics", href: "/admin/statistics", icon: "line-chart", section: "general" },
-        { title: "Inbox", href: "/admin/inbox", icon: "inbox", section: "general" },
+        { title: "Branch Management", href: "/admin/branch-management", icon: "users", section: "general" },
+        { title: "Officer Management", href: "/admin/bank-officer-management", icon: "user", section: "general" },
+        { title: "User Management", href: "/admin/user-management", icon: "line-chart", section: "general" },
+        { title: "Policy Management", href: "/admin/policy-management", icon: "inbox", section: "general" },
+        { title: "Audit Logs", href: "/admin/audit-logs", icon: "inbox", section: "general" },
         { title: "Profile", href: "/admin/profile", icon: "user", section: "general" },
         { title: "Help & Support", href: "/admin/support", icon: "help-circle", section: "other" },
         { title: "Setting", href: "/admin/settings", icon: "settings", section: "other" },

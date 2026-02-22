@@ -136,11 +136,7 @@ export default function BankCustomerRolePage() {
                        Your financial ecosystem is evolving. Complete your profile to unlock high-yield instruments and AI-driven portfolio insights.
                     </p>
                     
-                    <div className="pt-2">
-                       <Button className="bg-[#2c9c86] hover:bg-[#258270] text-white rounded-full px-8 py-6 text-base font-semibold shadow-[0_10px_30px_-10px_rgba(44,156,134,0.5)] transition-all hover:scale-105 hover:shadow-[0_20px_40px_-10px_rgba(44,156,134,0.6)]">
-                          Update your details <ArrowRight className="ml-2 w-4 h-4" />
-                       </Button>
-                    </div>
+                  
 
                     {/* Placeholder for the illustration space */}
                     <div className="relative h-[250px] w-full mt-8 hidden lg:block opacity-50">

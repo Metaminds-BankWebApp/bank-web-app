@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
-import { Bell, Mail, Search, Filter, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Filter, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
@@ -17,6 +17,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/select";
 
 type RiskType = "low" | "medium" | "high";
 
@@ -48,48 +55,77 @@ const tabOptions: Array<{ key: "all" | RiskType; label: string }> = [
 export default function CreditAnalysisPage() {
   const [activeTab, setActiveTab] = useState<"all" | RiskType>("all");
   const [query, setQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [scoreFilter, setScoreFilter] = useState<"all" | "high" | "medium" | "low">("all");
+  const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "score-desc" | "score-asc" | "name-asc" | "name-desc">("date-desc");
   const router = useRouter();
 
   const filteredRows = useMemo(() => {
-    return customerRows.filter((item) => {
+    const filtered = customerRows.filter((item) => {
       const byTab = activeTab === "all" ? true : item.risk === activeTab;
       const byQuery = `${item.id} ${item.name}`.toLowerCase().includes(query.toLowerCase());
-      return byTab && byQuery;
+      const byScore =
+        scoreFilter === "all"
+          ? true
+          : scoreFilter === "high"
+            ? item.score >= 80
+            : scoreFilter === "medium"
+              ? item.score >= 60 && item.score < 80
+              : item.score < 60;
+      return byTab && byQuery && byScore;
     });
-  }, [activeTab, query]);
+
+    return [...filtered].sort((left, right) => {
+      switch (sortBy) {
+        case "date-asc":
+          return new Date(left.date).getTime() - new Date(right.date).getTime();
+        case "date-desc":
+          return new Date(right.date).getTime() - new Date(left.date).getTime();
+        case "score-asc":
+          return left.score - right.score;
+        case "score-desc":
+          return right.score - left.score;
+        case "name-asc":
+          return left.name.localeCompare(right.name);
+        case "name-desc":
+          return right.name.localeCompare(left.name);
+        default:
+          return 0;
+      }
+    });
+  }, [activeTab, query, scoreFilter, sortBy]);
+
+  const handleExport = () => {
+    const header = ["Customer ID", "Name", "Credit Score", "Risk", "Evaluation Date"];
+    const rows = filteredRows.map((customer) => [
+      customer.id,
+      customer.name,
+      customer.score.toString(),
+      customer.risk,
+      customer.date,
+    ]);
+
+    const csv = [header, ...rows]
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `bank-officer-credit-analysis-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
-      <div className="flex min-h-screen bg-[#f3f4f6]">
-        <Sidebar role="BANK_OFFICER" className="max-lg:hidden" />
-        <main className="flex-1 p-8 lg:p-10 overflow-y-auto w-full max-w-400 mx-auto">
-          <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between rounded-xl bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] p-4 text-white shadow-sm">
-            <h1 className="text-2xl font-semibold tracking-tight">Credit Analysis</h1>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-4">
-                <button className="relative text-white/80 hover:text-white">
-                  <Mail size={20} />
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">2</span>
-                </button>
-                <button className="relative text-white/80 hover:text-white">
-                  <Bell size={20} />
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold">8</span>
-                </button>
-              </div>
-              <div className="h-8 w-px bg-white/20" />
-              <div className="flex items-center gap-3">
-                <div className="relative h-10 w-10 overflow-hidden rounded-full bg-white/10">
-                  <Image src="https://ui-avatars.com/api/?name=Kamal+E&background=random" alt="User" fill sizes="40px" className="h-full w-full object-cover" />
-                  <div className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-[#0d3b66] bg-green-500"></div>
-                </div>
-                <div className="hidden text-sm md:block">
-                  <p className="font-semibold leading-none">Kamal Edirisinghe</p>
-                  <p className="text-white/60">User</p>
-                </div>
-              </div>
-            </div>
-          </header>
+      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
+        <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
+        <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
+          <BankOfficerHeader title="Credit Analysis" className="mb-6 shrink-0" />
 
+          <div className="flex-1 overflow-y-auto min-h-0">
           <div className="mb-8 text-sm text-slate-500">
             Dashboard <span className="mx-2 text-slate-400">▶</span> <span className="text-[#3e9fd3] font-medium">Credit Analysis</span>
           </div>
@@ -114,14 +150,60 @@ export default function CreditAnalysisPage() {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" className="h-10 gap-2 bg-white text-slate-600 border-slate-200">
+                <Button
+                  variant="outline"
+                  className="h-10 gap-2 bg-white text-slate-600 border-slate-200"
+                  onClick={() => setShowFilters((previous) => !previous)}
+                >
                   <Filter size={14} /> Filter
                 </Button>
-                <Button variant="outline" className="h-10 gap-2 bg-white text-slate-600 border-slate-200">
+                <Button variant="outline" className="h-10 gap-2 bg-white text-slate-600 border-slate-200" onClick={handleExport}>
                   <Download size={14} /> Export
                 </Button>
               </div>
             </div>
+
+            {showFilters && (
+              <div className="p-4 md:px-6 border-b border-slate-100 grid gap-3 md:grid-cols-3 bg-white">
+                <Select value={scoreFilter} onValueChange={(value) => setScoreFilter(value as "all" | "high" | "medium" | "low") }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Score range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Scores</SelectItem>
+                    <SelectItem value="high">High (80+)</SelectItem>
+                    <SelectItem value="medium">Medium (60-79)</SelectItem>
+                    <SelectItem value="low">Low (&lt;60)</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as "date-desc" | "date-asc" | "score-desc" | "score-asc" | "name-asc" | "name-desc") }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date-desc">Newest Date</SelectItem>
+                    <SelectItem value="date-asc">Oldest Date</SelectItem>
+                    <SelectItem value="score-desc">Score: High to Low</SelectItem>
+                    <SelectItem value="score-asc">Score: Low to High</SelectItem>
+                    <SelectItem value="name-asc">Name: A to Z</SelectItem>
+                    <SelectItem value="name-desc">Name: Z to A</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setQuery("");
+                    setActiveTab("all");
+                    setScoreFilter("all");
+                    setSortBy("date-desc");
+                  }}
+                >
+                  Reset Filters
+                </Button>
+              </div>
+            )}
 
             <div className="px-4 md:px-6 py-3 border-b border-slate-100 bg-sky-50/50">
               <div className="inline-flex p-1 rounded-lg bg-sky-100/70 gap-1">
@@ -212,12 +294,20 @@ export default function CreditAnalysisPage() {
                     </TableCell>
                   </TableRow>
                 ))}
+
+                {filteredRows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
+                      No customers found for the selected filters.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
 
             <div className="p-4 bg-sky-50/70 border-t border-slate-100 flex items-center justify-between">
               <p className="text-sm text-slate-500">
-                Showing <span className="font-semibold text-slate-800">1-10</span> of 2,450
+                Showing <span className="font-semibold text-slate-800">{filteredRows.length === 0 ? 0 : 1}-{filteredRows.length}</span> of {filteredRows.length}
               </p>
               <div className="flex items-center gap-2">
                 <Button size="icon" variant="outline" className="w-8 h-8" disabled>
@@ -232,6 +322,7 @@ export default function CreditAnalysisPage() {
                 </Button>
               </div>
             </div>
+          </div>
           </div>
         </main>
       </div>
