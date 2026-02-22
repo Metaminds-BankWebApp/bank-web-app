@@ -148,7 +148,8 @@ export default function Page() {
 	return (
 		<div className="bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
 			<TransactHeader title="Transaction History" subtitle="Dineth dovindu" />
-			<Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full mt-6 sm:mt-8">
+
+			<Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full mt-6 sm:mt-30">
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 					<div className="flex-1">
 						<div className="relative max-w-md">

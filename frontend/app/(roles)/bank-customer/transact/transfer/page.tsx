@@ -50,6 +50,19 @@ export default function Page() {
     }
   }
 
+  useEffect(() => {
+    if (!showOtp) return
+    if (otpValues.every((digit) => digit !== "")) {
+      handleVerify()
+    }
+  }, [otpValues, showOtp])
+
+  const handleResendOtp = () => {
+    setSeconds(59)
+    setOtpValues(Array(length).fill(""))
+    inputsRef.current[0]?.focus()
+  }
+
   return (
     <div className="relative min-h-full">
 
@@ -59,7 +72,7 @@ export default function Page() {
           <TransactHeader title="Transfer" subtitle="Dineth dovindu" />
 
           {/* Add Beneficiary Button */}
-          <div className="flex justify-start sm:justify-end mt-6 mb-6 sm:mt-8 sm:mb-8">
+          <div className="flex justify-end mt-8 mb-8 pr-[7rem] ">
             <Link
               href="/bank-customer/transact/beneficiary"
               className="inline-flex items-center gap-2 px-5 py-2.5 
@@ -72,7 +85,7 @@ export default function Page() {
           </div>
 
           {/* Transfer Form */}
-          <Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full mt-4 sm:mt-6">
+          <Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full mt-4 sm:mt-15">
             <form className="space-y-9">
               <div className="space-y-2">
                 <Label>Account Number</Label>
@@ -153,11 +166,21 @@ export default function Page() {
               </p>
 
               <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-                <Button variant="outline" className="w-full sm:w-auto" onClick={() => setShowOtp(false)}>
+                <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setShowOtp(false)}>
                   Cancel
                 </Button>
 
                 <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={handleResendOtp}
+                >
+                  Resend OTP
+                </Button>
+
+                <Button
+                  type="button"
                   onClick={handleVerify}
                   className="w-full sm:w-auto bg-[#0B3E5A] hover:bg-[#0B3E5A]/80 text-white rounded-xl px-9 py-5"
                 >
