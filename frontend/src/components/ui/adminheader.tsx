@@ -2,13 +2,13 @@
 
 import { Mail, Bell } from "lucide-react";
 
-type LoanSenseHeaderProps = {
+type AdminHeaderProps = {
   title: string;
 };
 
-export default function LoanSenseHeader({ title }: LoanSenseHeaderProps) {
+export default function AdminHeader({ title }: AdminHeaderProps) {
   return (
-    <header className="flex flex-col md:flex-row justify-between items-center bg-[#0d3b66] text-white p-6 rounded-2xl shadow-lg gap-4">
+    <header className="flex flex-col md:flex-row justify-between items-center bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] text-white p-6 rounded-2xl shadow-lg gap-4">
           <h1 className="text-2xl font-bold tracking-wide w-full md:w-auto"> {title}</h1>
           <div className="flex items-center gap-6 w-full md:w-auto justify-end">
             <div className="flex gap-4">
@@ -28,6 +28,9 @@ export default function LoanSenseHeader({ title }: LoanSenseHeaderProps) {
         </header>
   );
 }
+
+
+
 
 
 

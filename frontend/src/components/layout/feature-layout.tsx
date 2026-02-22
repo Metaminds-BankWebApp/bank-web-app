@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { FeatureSidebar } from "@/src/components/layout";
+import { FeatureSidebar, featureMeta } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { X } from "lucide-react";
 import { cn } from "@/src/lib/utils";
@@ -53,9 +53,10 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
   return (
     <AuthGuard requiredRole={role}>
       <FeatureLayoutContext.Provider value={contextValue}>
-        <div className="flex h-screen overflow-hidden">
+        <div className={cn("flex h-screen overflow-hidden", featureMeta[feature]?.colorClass)}>
           <FeatureSidebar role={role} feature={feature} className="hidden lg:flex" />
 
+          {/* This wrapper ensures the sidebar color bleeds behind the rounded corners of the main content */}
           <div
             className={cn(
               "fixed inset-0 z-[70] lg:hidden",
@@ -95,7 +96,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
             </div>
           </div>
 
-          <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none bg-(--primecore-surface) p-3 sm:p-4 lg:rounded-l-[28px] lg:p-0">
+          <main className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none bg-(--primecore-surface) p-3 shadow-2xl sm:p-4 lg:rounded-l-[28px] lg:p-0">
             {children}
           </main>
         </div>

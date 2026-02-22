@@ -27,7 +27,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     }
 
     if (featureName === "LoanSense") {
-      return <LoanSenseHeader title="Profile" name="John Doe" role={roleLabel} />;
+      return <LoanSenseHeader title="Profile" />;
     }
 
     return (
