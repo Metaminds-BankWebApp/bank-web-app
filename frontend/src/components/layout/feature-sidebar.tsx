@@ -19,6 +19,7 @@ import {
   User,
   UserPlus,
   Wallet,
+  Receipt,
   Grid
 } from "lucide-react";
 import Link from "next/link";
@@ -71,7 +72,7 @@ export const featureMeta: Record<FeatureKey, FeatureMeta> = {
     title: "PrimeCore",
     subtitle: "LoanSense",
     hrefByRole: {
-      PUBLIC_CUSTOMER: "/public-customer",
+      PUBLIC_CUSTOMER: "/public-customer/loansense",
       BANK_CUSTOMER: "/bank-customer/loansense",
     },
     colorClass: "bg-[#0d3b66]", // Strong Blue
@@ -80,7 +81,7 @@ export const featureMeta: Record<FeatureKey, FeatureMeta> = {
     title: "PrimeCore",
     subtitle: "Transact",
     hrefByRole: {
-      PUBLIC_CUSTOMER: "/public-customer",
+      PUBLIC_CUSTOMER: "/public-customer/transact",
       BANK_CUSTOMER: "/bank-customer/transact",
     },
     colorClass: "bg-[#0B3E5A]", 
@@ -97,10 +98,12 @@ const getFeatureLinks = (feature: FeatureKey, role: FeatureRole): SidebarSection
         label: "General",
         items: [
           { title: "Dashboard", href: base, icon: Home },
+          { title: "Add Expense", href: `${base}/add`, icon: Receipt },
           { title: "Expenses History", href: `${base}/history`, icon: FileText },
-          { title: "Category Analysis", href: `${base}/analysis`, icon: UserPlus }, // Following prompt, icon name might be placeholder
+          { title: "Category Analysis", href: `${base}/category`, icon: UserPlus }, // Following prompt, icon name might be placeholder
           { title: "Budget Management", href: `${base}/budget`, icon: Wallet },
           { title: "Profile", href: `${base}/profile`, icon: User },
+          { title: "Settings", href: `${base}/settings`, icon: Settings },
         ]
       }
     ];

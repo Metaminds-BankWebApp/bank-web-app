@@ -13,20 +13,28 @@ import { Bar } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-const labels = ["April", "May", "June", "July", "August", "September"];
-const realValues = [85, 50, 90, 70, 60, 55];
+type Props = {
+  labels?: string[];
+  values?: number[];
+};
 
-export default function CreditRiskBarChart() {
+const defaultLabels = ["April", "May", "June", "July", "August", "September"];
+const defaultValues = [80, 50, 90, 70, 60, 55];
+
+export default function CreditRiskBarChart({ labels = defaultLabels, values = defaultValues }: Props) {
   const PURPLE = "rgba(168,85,247,0.75)";
   const GREEN = "rgba(34,197,94,0.80)";
 
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const [chartValues, setChartValues] = useState<number[]>(() => realValues.map(() => 0));
+  const [chartValues, setChartValues] = useState<number[]>(() => values.map(() => 0));
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setChartValues(realValues));
+    setChartValues(values.map(() => 0));
+    const raf = requestAnimationFrame(() => setChartValues(values));
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [values]);
+
+  const barThickness = labels.length > 6 ? 24 : 50;
 
   const data = useMemo(
     () => ({
@@ -37,12 +45,12 @@ export default function CreditRiskBarChart() {
           data: chartValues,
           borderRadius: 12,
           borderSkipped: false as const,
-          barThickness: 50,
+          barThickness,
           backgroundColor: labels.map((_, index) => (hoverIndex === index ? GREEN : PURPLE)),
         },
       ],
     }),
-    [hoverIndex, chartValues]
+    [barThickness, chartValues, hoverIndex, labels]
   );
 
   const options: ChartOptions<"bar"> = {
@@ -51,7 +59,7 @@ export default function CreditRiskBarChart() {
     animation: {
       duration: 900,
       easing: "easeOutQuart",
-      delay: (ctx) => (ctx.dataIndex ?? 0) * 90,
+      delay: (ctx) => Math.min((ctx.dataIndex ?? 0) * 55, 450),
     },
     plugins: {
       legend: { display: false },

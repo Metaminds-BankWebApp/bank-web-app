@@ -11,6 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
+import {
+  ReportDownloadModal,
+  type ReportFileType,
+} from "@/src/components/ui/report-download-modal";
 import ReportMetricCard from "./components/ReportMetricCard";
 import CreditSummaryDonut from "./components/CreditSummaryDonut";
 import BehaviorExposureCard from "./components/BehaviorExposureCard";
@@ -39,6 +43,8 @@ type ReportSnapshot = {
 
 export default function ReportPage() {
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [reportFileType, setReportFileType] = useState<ReportFileType>("pdf");
 
   const snapshots: ReportSnapshot[] = useMemo(
     () => [
@@ -49,21 +55,21 @@ export default function ReportPage() {
         creditCardBalance: 180000,
         creditCardLimit: 250000,
         otherLiabilities: 10000,
-        score: 55,
-        riskLabel: "Medium",
+        score: 80,
+        riskLabel: "High",
         evaluationType: "Self Assessment",
         lastUpdated: "12 NOV 2025",
-        missedPayments: 2,
-        activeFacilities: 4,
-        dti: 39,
+        missedPayments: 4,
+        activeFacilities: 7,
+        dti: 67,
         utilization: 72,
         dtiLabel: "Medium",
         factors: [
-          { name: "Payment History", value: 18, max: 30, color: "#f59e0b" },
+          { name: "Payment History", value: 23, max: 30, color: "#f59e0b" },
           { name: "Debt-to-Income", value: 12, max: 25, color: "#22c55e" },
           { name: "Utilization", value: 20, max: 20, color: "#ef4444" },
-          { name: "Income Stability", value: 0, max: 15, color: "#22c55e" },
-          { name: "Active Facilities", value: 5, max: 10, color: "#22c55e" },
+          { name: "Income Stability", value: 15, max: 15, color: "#ef4444" },
+          { name: "Active Facilities", value: 10, max: 10, color: "#ef4444" },
         ],
       },
       {
@@ -73,7 +79,7 @@ export default function ReportPage() {
         creditCardBalance: 160000,
         creditCardLimit: 250000,
         otherLiabilities: 12000,
-        score: 58,
+        score: 50,
         riskLabel: "Medium",
         evaluationType: "Self Assessment",
         lastUpdated: "12 NOV 2025",
@@ -97,8 +103,8 @@ export default function ReportPage() {
         creditCardBalance: 190000,
         creditCardLimit: 250000,
         otherLiabilities: 9000,
-        score: 52,
-        riskLabel: "Medium",
+        score: 90,
+        riskLabel: "High",
         evaluationType: "Self Assessment",
         lastUpdated: "12 NOV 2025",
         missedPayments: 3,
@@ -121,8 +127,8 @@ export default function ReportPage() {
         creditCardBalance: 175000,
         creditCardLimit: 250000,
         otherLiabilities: 10000,
-        score: 56,
-        riskLabel: "Medium",
+        score: 70,
+        riskLabel: "High",
         evaluationType: "Self Assessment",
         lastUpdated: "12 NOV 2025",
         missedPayments: 2,
@@ -145,7 +151,7 @@ export default function ReportPage() {
         creditCardBalance: 180000,
         creditCardLimit: 250000,
         otherLiabilities: 10000,
-        score: 55,
+        score: 60,
         riskLabel: "Medium",
         evaluationType: "Self Assessment",
         lastUpdated: "12 NOV 2025",
@@ -169,20 +175,20 @@ export default function ReportPage() {
         creditCardBalance: 170000,
         creditCardLimit: 250000,
         otherLiabilities: 11000,
-        score: 57,
+        score: 55,
         riskLabel: "Medium",
         evaluationType: "Self Assessment",
         lastUpdated: "12 NOV 2025",
         missedPayments: 2,
         activeFacilities: 4,
-        dti: 38,
-        utilization: 69,
+        dti: 39,
+        utilization: 72,
         dtiLabel: "Medium",
         factors: [
           { name: "Payment History", value: 18, max: 30, color: "#f59e0b" },
           { name: "Debt-to-Income", value: 12, max: 25, color: "#22c55e" },
-          { name: "Utilization", value: 19, max: 20, color: "#ef4444" },
-          { name: "Income Stability", value: 1, max: 15, color: "#22c55e" },
+          { name: "Utilization", value: 20, max: 20, color: "#ef4444" },
+          { name: "Income Stability", value: 0, max: 15, color: "#22c55e" },
           { name: "Active Facilities", value: 5, max: 10, color: "#22c55e" },
         ],
       },
@@ -191,14 +197,25 @@ export default function ReportPage() {
   );
 
   const months = snapshots.map((s) => s.month);
+  const newestSnapshot = snapshots[snapshots.length - 1] ?? snapshots[0];
+  const newestMonth = newestSnapshot?.month;
 
   const current = useMemo(() => {
-    if (!selectedMonth) return snapshots[0];
-    return snapshots.find((s) => s.month === selectedMonth) ?? snapshots[0];
-  }, [selectedMonth, snapshots]);
+    if (!selectedMonth) return newestSnapshot;
+    return snapshots.find((s) => s.month === selectedMonth) ?? newestSnapshot;
+  }, [newestSnapshot, selectedMonth, snapshots]);
+
+  const reportDateStamp = useMemo(() => {
+    return new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  }, []);
+
+  const reportFileBaseName = useMemo(() => {
+    const monthName = (selectedMonth ?? current.month).toLowerCase();
+    return `creditlens-report-${monthName}-${reportDateStamp}`;
+  }, [current.month, reportDateStamp, selectedMonth]);
 
   const handleDownload = () => {
-    console.log("Download Full Report clicked:", selectedMonth);
+    setIsDownloadModalOpen(true);
   };
 
   return (
@@ -208,7 +225,7 @@ export default function ReportPage() {
       <div className="pb-6 pt-1 sm:pb-8 lg:px-2 xl:px-3">
         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="w-full sm:w-[190px]">
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <Select value={selectedMonth ?? newestMonth} onValueChange={setSelectedMonth}>
               <SelectTrigger className="h-10 rounded-xl bg-white/90">
                 <SelectValue placeholder="Select Month" />
               </SelectTrigger>
@@ -231,7 +248,7 @@ export default function ReportPage() {
           </Button>
         </div>
 
-        <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="creditlens-stagger-4 mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <ReportMetricCard
             title="Monthly Income"
             value={`LKR ${current.income.toLocaleString()}`}
@@ -262,8 +279,8 @@ export default function ReportPage() {
           />
         </div>
 
-        <div className="mt-6 grid min-w-0 grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[1.05fr_1.05fr_1fr]">
-          <div className="min-w-0 rounded-2xl bg-white/92 p-5 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)] sm:p-6 md:rounded-[26px] md:p-7">
+        <div className="creditlens-stagger-3 mt-6 grid min-w-0 grid-cols-1 gap-4 md:gap-6 lg:grid-cols-[1.05fr_1.05fr_1fr]">
+          <div className="creditlens-card creditlens-card-hover min-w-0 rounded-2xl bg-white/92 p-5 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)] sm:p-6 md:rounded-[26px] md:p-7">
             <h3 className="text-center text-lg font-semibold text-slate-900 sm:text-xl">Credit Summary</h3>
 
             <div className="mt-6 flex justify-center">
@@ -295,6 +312,17 @@ export default function ReportPage() {
           <div className="mt-1">© 2024 PrimeCore CreditLens. All rights reserved.</div>
         </div>
       </div>
+
+      <ReportDownloadModal
+        open={isDownloadModalOpen}
+        onOpenChange={setIsDownloadModalOpen}
+        fileBaseName={reportFileBaseName}
+        fileType={reportFileType}
+        onFileTypeChange={setReportFileType}
+        monthLabel={selectedMonth ?? current.month}
+        score={current.score}
+        riskLabel={current.riskLabel}
+      />
     </div>
   );
 }

@@ -19,7 +19,7 @@ export default function InsightPage() {
       />
 
       <div className="pb-0 pt-1 sm:pt-2 lg:px-2 xl:px-3">
-        <div className="grid min-w-0 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3 xl:gap-7">
+        <div className="creditlens-stagger-3 grid min-w-0 gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3 xl:gap-7">
           <KeyRiskFactorsCard />
           <PositiveBehaviorsCard />
           <FinancialTipsCard />
