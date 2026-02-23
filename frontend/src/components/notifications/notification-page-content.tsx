@@ -32,19 +32,41 @@ const KIND_DOT: Record<NotificationItem["kind"], string> = {
 
 export function NotificationPageContent({ roleSegment, featureSegment }: NotificationPageContentProps) {
   const context = buildNotificationRouteContext(roleSegment, featureSegment ?? null);
+  const isTransact = context.featureSegment === "transact";
+  const isLoanSense = context.featureSegment === "loansense";
   const notifications = getNotificationsForContext(context);
   const unreadCount = notifications.filter((item) => item.unread).length;
   const alertCount = notifications.filter((item) => item.kind === "alert").length;
+  const metricCardClass = isTransact
+    ? "transact-card transact-card-hover transact-creditlens-shade"
+    : isLoanSense
+    ? "loansense-card loansense-card-hover loansense-creditlens-shade"
+    : "border border-slate-200 bg-white shadow-sm";
+  const contentCardClass = isTransact
+    ? "transact-card transact-creditlens-shade"
+    : isLoanSense
+    ? "loansense-card loansense-creditlens-shade"
+    : "border border-slate-200 bg-white shadow-sm";
+  const rowCardClass = isTransact
+    ? "transact-card transact-card-hover transact-creditlens-shade"
+    : isLoanSense
+    ? "loansense-card loansense-card-hover loansense-creditlens-shade"
+    : "";
 
   return (
     <section className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-3">
-        <MetricCard label="Unread" value={String(unreadCount)} icon={<BellRing size={15} />} />
-        <MetricCard label="Total" value={String(notifications.length)} icon={<Info size={15} />} />
-        <MetricCard label="Action Needed" value={String(alertCount)} icon={<TriangleAlert size={15} />} />
+        <MetricCard cardClassName={metricCardClass} label="Unread" value={String(unreadCount)} icon={<BellRing size={15} />} />
+        <MetricCard cardClassName={metricCardClass} label="Total" value={String(notifications.length)} icon={<Info size={15} />} />
+        <MetricCard cardClassName={metricCardClass} label="Action Needed" value={String(alertCount)} icon={<TriangleAlert size={15} />} />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div
+        className={cn(
+          "rounded-2xl p-4 sm:p-6",
+          contentCardClass
+        )}
+      >
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
             <h3 className="text-lg font-semibold text-slate-900">{context.moduleLabel} Notifications</h3>
@@ -64,7 +86,14 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
               key={item.id}
               className={cn(
                 "rounded-xl border p-4 transition-colors hover:border-slate-300",
-                item.unread ? "border-slate-200 bg-slate-50/60" : "border-slate-100 bg-white"
+                rowCardClass,
+                isTransact || isLoanSense
+                  ? item.unread
+                    ? "border-slate-200/70"
+                    : "border-slate-100/70"
+                  : item.unread
+                  ? "border-slate-200 bg-slate-50/60"
+                  : "border-slate-100 bg-white"
               )}
             >
               <div className="mb-2 flex items-start gap-3">
@@ -113,9 +142,19 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
   );
 }
 
-function MetricCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+function MetricCard({
+  label,
+  value,
+  icon,
+  cardClassName,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  cardClassName: string;
+}) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <div className={cn("rounded-xl px-4 py-3", cardClassName)}>
       <div className="mb-1 flex items-center justify-between text-slate-500">
         <span className="text-xs font-semibold uppercase tracking-wide">{label}</span>
         {icon}
