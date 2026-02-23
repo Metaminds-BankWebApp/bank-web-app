@@ -8,13 +8,13 @@ import {
   Search, 
   Filter, 
   Download, 
-  Plus, 
-  MoreHorizontal 
+   Plus
 } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
+import { Dialog } from "@/src/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -115,6 +115,7 @@ const customers: Customer[] = [
 
 export default function AllCustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
+   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
    const [activeRisk, setActiveRisk] = useState<"all" | Customer["riskLevel"]>("all");
    const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
    const [sortBy, setSortBy] = useState<
@@ -205,12 +206,44 @@ export default function AllCustomersPage() {
       URL.revokeObjectURL(url);
    };
 
+   const customerDetails = useMemo(() => {
+      if (!selectedCustomer) {
+         return null;
+      }
+
+      const profileByRisk = {
+         LOW: {
+            employment: "Permanent",
+            monthlyIncome: "LKR 185,000",
+            debtToIncome: "22%",
+            address: "No. 84, Lake Road, Colombo 08",
+            onboardingSource: "Branch Walk-in",
+         },
+         MEDIUM: {
+            employment: "Contract",
+            monthlyIncome: "LKR 128,000",
+            debtToIncome: "41%",
+            address: "No. 17, Kandy Road, Kadawatha",
+            onboardingSource: "Digital Application",
+         },
+         HIGH: {
+            employment: "Self-employed",
+            monthlyIncome: "LKR 96,000",
+            debtToIncome: "63%",
+            address: "No. 06, Temple Street, Galle",
+            onboardingSource: "Referred Case",
+         },
+      };
+
+      return profileByRisk[selectedCustomer.riskLevel];
+   }, [selectedCustomer]);
+
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
-      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
-        <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
-        <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
-               <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="All Customers" className="mb-6 shrink-0" />
+         <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
+            <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
+            <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
+                      <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="All Customers" className="mb-6 shrink-0" />
 
           <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-slate-200">
              {/* Toolbar */}
@@ -331,7 +364,7 @@ export default function AllCustomersPage() {
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Credit Score</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Last Updated</TableHead>
-                      <TableHead className="w-12.5"></TableHead>
+                      <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</TableHead>
                    </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -372,8 +405,13 @@ export default function AllCustomersPage() {
                          </TableCell>
                          <TableCell className="text-xs text-slate-500">{customer.lastUpdated}</TableCell>
                          <TableCell>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
-                               <MoreHorizontal size={16} />
+                            <Button
+                               variant="outline"
+                               size="sm"
+                               className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                               onClick={() => setSelectedCustomer(customer)}
+                            >
+                               View
                             </Button>
                          </TableCell>
                       </TableRow>
@@ -407,6 +445,74 @@ export default function AllCustomersPage() {
                  </div>
              </div>
           </div>
+
+               <Dialog
+                  open={selectedCustomer !== null}
+                  onOpenChange={(open) => {
+                     if (!open) {
+                        setSelectedCustomer(null);
+                     }
+                  }}
+                  title={selectedCustomer ? `${selectedCustomer.name} — Customer Profile` : "Customer Profile"}
+                  description="Detailed customer summary for risk and credit review."
+                  footer={
+                     <>
+                        <Button variant="outline" onClick={() => setSelectedCustomer(null)}>
+                           Close
+                        </Button>
+                        <Button className="bg-[#0d3b66] text-white hover:bg-[#0a2e50]">Mark Reviewed</Button>
+                     </>
+                  }
+               >
+                  {selectedCustomer && customerDetails && (
+                     <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Customer ID</p>
+                           <p className="font-semibold text-slate-800">{selectedCustomer.id}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">NIC</p>
+                           <p className="font-semibold text-slate-800">{selectedCustomer.nic}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Risk Level</p>
+                           <p className="font-semibold text-slate-800">{selectedCustomer.riskLevel}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Credit Score</p>
+                           <p className="font-semibold text-slate-800">{selectedCustomer.creditScore}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Email</p>
+                           <p className="font-semibold text-slate-800">{selectedCustomer.email}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Phone</p>
+                           <p className="font-semibold text-slate-800">{selectedCustomer.phone}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Employment Type</p>
+                           <p className="font-semibold text-slate-800">{customerDetails.employment}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Monthly Income</p>
+                           <p className="font-semibold text-slate-800">{customerDetails.monthlyIncome}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Debt-to-Income</p>
+                           <p className="font-semibold text-slate-800">{customerDetails.debtToIncome}</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Onboarding Source</p>
+                           <p className="font-semibold text-slate-800">{customerDetails.onboardingSource}</p>
+                        </div>
+                        <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <p className="text-xs text-slate-500">Address</p>
+                           <p className="font-semibold text-slate-800">{customerDetails.address}</p>
+                        </div>
+                     </div>
+                  )}
+               </Dialog>
         </main>
       </div>
     </AuthGuard>
