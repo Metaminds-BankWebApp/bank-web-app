@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import CreditRiskGauge from "./components/CreditRiskGauge";
 import CreditRiskTrendChart from "./components/CreditRiskTrendChart";
 import RiskFactorBars from "./components/RiskFactorBars";
-import CreditLensHeader from "@/src/components/ui/Creditlens-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function BankCustomerCreditLensPage() {
   const router = useRouter();
@@ -22,7 +22,7 @@ export default function BankCustomerCreditLensPage() {
   return (
     <div className="w-full overflow-x-hidden px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
       <div className="flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:h-[calc(100dvh-2rem)] lg:min-h-0 lg:overflow-hidden">
-        <CreditLensHeader title="Dashboard" subtitle="" name="John Doe" role="Bank Customer" />
+        <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Dashboard" subtitle="" name="John Doe" role="Bank Customer" />
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 lg:gap-5 lg:px-2 xl:px-3">
           <section className="creditlens-card creditlens-card-hover creditlens-delay-1 relative overflow-hidden rounded-2xl border border-[#66a8d0]/35 bg-[#14517c] px-4 pb-4 pt-3 text-white shadow-[0_24px_44px_-30px_rgba(2,18,33,0.82)] sm:px-6 sm:pb-8 sm:pt-4 md:rounded-[26px] lg:min-h-[420px] lg:flex-[1.38] lg:pb-0 xl:min-h-[480px]">
@@ -126,4 +126,5 @@ export default function BankCustomerCreditLensPage() {
     </div>
   );
 }
+
 

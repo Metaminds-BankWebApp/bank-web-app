@@ -1,8 +1,5 @@
 import { Badge } from "@/src/components/ui";
-import CreditLensHeader from "@/src/components/ui/Creditlens-header";
-import TransactHeader from "@/src/components/ui/Transact-Header";
-import LoanSenseHeader from "@/src/components/ui/loansenseheader";
-import SpendIQHeader from "@/src/components/ui/spendiq-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { Camera, Lock, ShieldCheck, User } from "lucide-react";
 
 type CustomerRoleLabel = "Bank Customer" | "Public Customer";
@@ -86,22 +83,31 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
 
   const renderFeatureHeader = () => {
     if (featureName === "CreditLens") {
-      return <CreditLensHeader title="Profile" subtitle="" name="John Doe" role={roleLabel} />;
+      return <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Profile" subtitle="" name="John Doe" role={roleLabel} />;
     }
 
     if (featureName === "Transact") {
-      return <TransactHeader title="Profile" subtitle={`John Doe - ${roleLabel}`} />;
+      return (
+        <ModuleHeader
+          theme="transact"
+          menuMode="feature-layout"
+          role="Bank Customer"
+          title="Profile"
+          subtitle={`John Doe - ${roleLabel}`}
+          name={`John Doe - ${roleLabel}`}
+        />
+      );
     }
 
     if (featureName === "LoanSense") {
-      return <LoanSenseHeader title="Profile" />;
+      return <ModuleHeader theme="loansense" menuMode="feature-layout" title="Profile" />;
     }
 
     if (featureName === "SpendIQ") {
-      return <SpendIQHeader title="Profile" />;
+      return <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Profile" />;
     }
 
-    return <CreditLensHeader title="Profile" subtitle="" name="John Doe" role={roleLabel} />;
+    return <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Profile" subtitle="" name="John Doe" role={roleLabel} />;
   };
 
   return (
@@ -210,3 +216,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     </div>
   );
 }
+
+
+
+

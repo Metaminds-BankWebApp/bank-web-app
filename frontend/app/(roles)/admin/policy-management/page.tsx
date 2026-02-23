@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Sidebar } from "@/src/components/layout";
-import { AdminHeader } from "@/src/components/ui/adminheader";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 
 type LoanType = {
@@ -70,7 +70,7 @@ export default function LoanInterestPolicyPage() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="px-6 pt-4 pb-6">
-            <AdminHeader title="Loan Interest Policy Management" />
+            <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Admin" title="Loan Interest Policy Management" />
           </div>
 
           {/* Content */}

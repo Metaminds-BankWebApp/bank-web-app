@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import CreditLensHeader from "@/src/components/ui/Creditlens-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Download, Banknote, ReceiptText, CreditCard, Landmark } from "lucide-react";
 import {
@@ -220,7 +220,7 @@ export default function ReportPage() {
 
   return (
     <div className="w-full min-h-[calc(100dvh-1.25rem)] space-y-4 overflow-x-hidden px-1 pt-2 sm:space-y-5 sm:px-2 lg:min-h-[calc(100dvh-2rem)] lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
-      <CreditLensHeader title="Report" subtitle="" name="Kamal Edirisinghe" role="Bank Customer" />
+      <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Report" subtitle="" name="Kamal Edirisinghe" role="Bank Customer" />
 
       <div className="pb-6 pt-1 sm:pb-8 lg:px-2 xl:px-3">
         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -326,3 +326,4 @@ export default function ReportPage() {
     </div>
   );
 }
+

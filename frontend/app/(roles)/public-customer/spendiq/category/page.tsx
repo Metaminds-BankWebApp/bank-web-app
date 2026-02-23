@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { SpendIqHeader } from "@/src/components/SpendIqHeader";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function CategoryAnalysisPage() {
   const categories = [
@@ -57,7 +57,7 @@ export default function CategoryAnalysisPage() {
   return (
     <div className="p-8 space-y-8 bg-[#f4f6fb] min-h-screen">
       
-      <SpendIqHeader title="Category Analysis" />
+      <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Category Analysis" />
 
       {/* CHART SECTION */}
       <div className="bg-white rounded-2xl shadow-md p-8">

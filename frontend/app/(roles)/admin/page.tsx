@@ -2,7 +2,7 @@ import { Badge, Card, CardContent, CardHeader } from "@/src/components/ui";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { Bell, Mail, MoreHorizontal, Search, Settings, Eye, Pencil, Trash2 } from "lucide-react";
-import { AdminHeader } from "@/src/components/ui/adminheader";
+import ModuleHeader from "@/src/components/ui/module-header";
 import Image from "next/image";
 
 export default function AdminRolePage() {
@@ -13,7 +13,7 @@ export default function AdminRolePage() {
         <main className="flex-1 flex flex-col bg-[#f3f4f6] overflow-hidden lg:rounded-l-[28px] shadow-2xl">
            <div className="flex-1 overflow-y-auto p-8 lg:p-10">
              {/* Header */}
-             <AdminHeader title="Dashboard" />
+             <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Admin" title="Dashboard" />
                
 
           <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
@@ -216,3 +216,4 @@ export default function AdminRolePage() {
     </AuthGuard>
   );
 }
+

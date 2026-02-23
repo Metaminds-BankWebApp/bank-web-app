@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Sidebar } from "@/src/components/layout";
@@ -19,7 +19,7 @@ import { CRIBRequest } from "./components/step-6-crib-request";
 import { CRIBRetrieval } from "./components/step-7-crib-retrieval";
 import { Review } from "./components/step-8-review";
 import { SuccessView } from "./components/success-view";
-import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 const generateCustomerId = () => `PC-${Math.floor(100000 + Math.random() * 900000)}`;
 
@@ -92,7 +92,7 @@ export default function AddCustomerPage() {
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
       <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
-          <BankOfficerHeader title="Add Customer" className="mb-6 shrink-0" />
+          <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Add Customer" className="mb-6 shrink-0" />
 
           <div className="flex-1 overflow-y-auto min-h-0 pb-24">
           {isSuccess ? (
@@ -213,3 +213,5 @@ export default function AddCustomerPage() {
     </AuthGuard>
   );
 }
+
+

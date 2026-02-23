@@ -3,7 +3,7 @@
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import { Badge } from "@/src/components/ui";
-import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { Camera, Lock, ShieldCheck, User } from "lucide-react";
 import type { UserRole } from "@/config/site";
 
@@ -79,7 +79,20 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
       <div className="flex h-screen overflow-hidden bg-[#f3f4f6]">
         <Sidebar role={role} className="h-full max-lg:hidden" />
         <main className="flex h-full flex-1 flex-col overflow-hidden p-3 sm:p-5 lg:p-7">
-          <BankOfficerHeader title="Profile" className="mb-6 shrink-0" roleLabel={roleLabel} role={role} />
+          <ModuleHeader
+            theme="staff"
+            menuMode="sidebar-overlay"
+            sidebarRole={role}
+            sidebarHideCollapse
+            mailBadge={2}
+            notificationBadge={8}
+            avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random"
+            avatarStatusDot
+            name="Kamal Edirisinghe"
+            role={roleLabel}
+            title="Profile"
+            className="mb-6 shrink-0"
+          />
 
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="mb-8 text-sm text-slate-500">
@@ -199,3 +212,4 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     </AuthGuard>
   );
 }
+
