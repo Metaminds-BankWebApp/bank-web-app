@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Eye, Trash } from "lucide-react"
+import { Search, Eye, Trash, Filter, Download } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -64,15 +64,92 @@ const mockData = [
 		date: '2026-02-10',
 		reference: 'REF-20260208',
 	},
+	{
+		id: '6',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'failed',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '7',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '8',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '9',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'failed',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+
+	{
+		id: '10',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '11',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'success',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
+	{
+		id: '12',
+		receiverName: 'deny chewan',
+		receiverAcc: '1122334454',
+		senderName: 'John Smith',
+		senderAcc: '0987654324',
+		amount: 'LKR 15,500.00',
+		status: 'failed',
+		date: '2026-02-10',
+		reference: 'REF-20260208',
+	},
 ]
 
 export default function Page() {
 	return (
-		<div className="bg-white px-8 py-6 sm:px-6 lg:px-8">
+		<div className="bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
 			<TransactHeader title="Transaction History" subtitle="Dineth dovindu" />
-                  <div className="flex float-right mt-20 mb-8 max-w-6xl mx-auto pr-[7rem]">
-                    </div>
-			<Card className="rounded-xl shadow-sm p-8 max-w-6xl mx-auto w-full mt-[8rem]">
+
+			<Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full mt-6 sm:mt-30">
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 					<div className="flex-1">
 						<div className="relative max-w-md">
@@ -87,18 +164,21 @@ export default function Page() {
 						</div>
 					</div>
 
-					<div className="flex items-center space-x-3">
-						<Button variant="outline" size="md" className="!px-4">
+					<div className="flex w-full md:w-auto items-center gap-3">
+						<Button variant="outline" size="md" className="!px-4 flex-1 md:flex-none items-center">
+							<Filter className="w-4 h-4 mr-2" />
 							Filter
 						</Button>
-						<Button variant="outline" size="md" className="!px-4">
+						<Button variant="outline" size="md" className="!px-4 flex-1 md:flex-none items-center">
+							<Download className="w-4 h-4 mr-2" />
 							Export
 						</Button>
 					</div>
 				</div>
 
 				<div className="overflow-x-auto">
-					<table className="w-full text-sm min-w-[900px]">
+					<div className="overflow-y-auto max-h-[48vh]">
+						<table className="w-full text-sm min-w-[760px]">
 						<thead className="bg-(--primecore-surface-soft)">
 							<tr className="text-left text-xs text-(--primecore-foreground)/80">
 								<th className="px-4 py-3">Receiver’s name</th>
@@ -114,7 +194,7 @@ export default function Page() {
 						</thead>
 
 						<tbody>
-							{mockData.map((row) => (
+							{mockData.slice(0, 9).map((row) => (
 								<tr key={row.id} className="hover:bg-(--primecore-surface)/50 border-b border-(--primecore-border)">
 									<td className="px-4 py-3 align-middle">{row.receiverName}</td>
 									<td className="px-4 py-3 align-middle">{row.receiverAcc}</td>
@@ -151,8 +231,8 @@ export default function Page() {
 						</tbody>
 					</table>
 				</div>
-			</Card>
+			</div>
+		</Card>
 		</div>
 	)
 }
-
