@@ -104,7 +104,7 @@ const getFeatureLinks = (feature: FeatureKey, role: FeatureRole): SidebarSection
           { title: "Budget Management", href: `${base}/budget`, icon: Wallet },
           { title: "Reports", href: `${base}/report`, icon: FileText },
           { title: "Profile", href: `${base}/profile`, icon: User },
-          { title: "Settings", href: `${base}/settings`, icon: Settings },
+          
         ]
       }
     ];
