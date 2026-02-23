@@ -37,7 +37,7 @@ const FEATURE_CONFIG = {
   Transact: {
     theme: "transact",
     featureSegment: "transact",
-    outerClassName: "min-h-screen bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8",
+    outerClassName: "min-h-screen bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8",
     innerClassName: "space-y-6",
     contentWrapClassName: "",
   },

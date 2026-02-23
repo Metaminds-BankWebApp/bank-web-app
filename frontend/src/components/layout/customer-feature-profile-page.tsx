@@ -79,7 +79,11 @@ const ROLE_PROFILE_CONFIG: Record<CustomerRoleLabel, RoleProfileConfig> = {
 
 export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerFeatureProfilePageProps) {
   const isCreditLens = featureName === "CreditLens";
+  const isTransact = featureName === "Transact";
   const profileConfig = ROLE_PROFILE_CONFIG[roleLabel];
+  const sectionClassName = isTransact
+    ? "transact-card transact-card-hover transact-creditlens-shade rounded-2xl p-6"
+    : "rounded-2xl border border-slate-100 bg-white p-6 shadow-sm";
 
   const renderFeatureHeader = () => {
     if (featureName === "CreditLens") {
@@ -111,7 +115,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   };
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6] p-4 md:p-8">
+    <div className={`min-h-screen p-4 md:p-8 ${isTransact ? "bg-transparent" : "bg-[#f3f4f6]"}`}>
       {renderFeatureHeader()}
 
       <div className="mx-auto my-auto w-full max-h-full max-w-7xl space-y-6 sm:mt-20">
@@ -119,7 +123,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
 
         <div className={isCreditLens ? "grid gap-6 lg:px-2 xl:grid-cols-[1fr_1.6fr] xl:px-3" : "grid gap-6 xl:grid-cols-[1fr_1.6fr]"}>
           <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+            <section className={sectionClassName}>
               <div className="mb-6 flex items-center gap-4">
                 <div className="relative grid h-20 w-20 place-items-center rounded-full bg-[#e2edf6] text-3xl font-bold text-[#0d3b66]">
                   JD
@@ -143,7 +147,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+            <section className={sectionClassName}>
               <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
                 <ShieldCheck size={16} />
                 <h3 className="text-sm font-semibold uppercase tracking-wider">Security & Session</h3>
@@ -158,7 +162,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
           </div>
 
           <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+            <section className={sectionClassName}>
               <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
                 <User size={16} />
                 <h3 className="text-sm font-semibold uppercase tracking-wider">Personal Information</h3>
@@ -178,7 +182,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+            <section className={sectionClassName}>
               <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
                 <Lock size={16} />
                 <h3 className="text-sm font-semibold uppercase tracking-wider">Security Settings</h3>
@@ -213,7 +217,6 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     </div>
   );
 }
-
 
 
 

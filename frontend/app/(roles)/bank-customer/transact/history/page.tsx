@@ -160,10 +160,10 @@ const mockData: TransactionRecord[] = [
 
 export default function Page() {
 	return (
-		<div className="bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+		<div className="bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
 			<ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transaction History" name="John Deo" />
 
-			<Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full mt-6 sm:mt-30">
+			<Card className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 max-w-6xl mx-auto mt-6 w-full rounded-xl p-4 sm:mt-30 sm:p-6 lg:p-8">
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 					<div className="flex-1">
 						<div className="relative max-w-md">
