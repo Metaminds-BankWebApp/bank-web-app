@@ -33,7 +33,7 @@ export default function AdminSettingsPage() {
 
         <main className="flex-1 flex flex-col bg-[#f3f4f6] overflow-hidden lg:rounded-l-[28px] shadow-2xl p-3 sm:p-5 lg:p-7">
           <div className="shrink-0 mb-5">
-            <ModuleHeader title="Settings" />
+            <ModuleHeader title="Settings" menuMode="sidebar-overlay" sidebarRole="ADMIN" />
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto">

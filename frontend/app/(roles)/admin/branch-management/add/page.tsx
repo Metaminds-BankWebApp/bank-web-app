@@ -6,6 +6,8 @@ import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 import { Building2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 
 export default function AddBranchPage() {
   const [branchName, setBranchName] = useState("");
@@ -16,6 +18,8 @@ export default function AddBranchPage() {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [isActive, setIsActive] = useState(true);
+
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +33,8 @@ export default function AddBranchPage() {
       address,
       isActive,
     });
+    
+
 
     // Later connect to backend here
   };
@@ -205,21 +211,19 @@ export default function AddBranchPage() {
                     </div>
                 </div>
 
-                  <div className="flex justify-end gap-4 pt-4">
-                    <Link
-                      href="/admin/branch-management"
-                      className="text-sm text-gray-600 hover:text-gray-900"
-                    >
-                      Cancel
-                    </Link>
-
-                    <button
-                      type="submit"
-                      className="px-6 py-3 bg-[#0B3B66] text-white rounded-lg hover:bg-[#082d4a] transition text-sm font-medium"
-                    >
-                      Save Branch
-                    </button>
-                  </div>
+                  <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6">
+                  <button type="button"
+                    onClick={() =>
+                      router.push("/admin/branch-management")
+                    }
+                    className="px-6 py-3 rounded-lg bg-gray-200 hover:bg-gray-300 w-full sm:w-auto"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="px-6 py-3 rounded-lg bg-[#0B3B66] text-white hover:bg-[#082d4a] w-full sm:w-auto">
+                    Save Branch
+                  </button>
+                </div>
 
                 </div>
               </div>

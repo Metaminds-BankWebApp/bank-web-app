@@ -315,7 +315,7 @@ export default function ModuleHeader({
             className="absolute inset-0 bg-slate-950/55"
           />
           <div className="relative h-full w-72 max-w-[85vw]">
-            <Sidebar role={sidebarRole} className="h-full w-full md:w-full" hideCollapse={sidebarHideCollapse} />
+            <Sidebar role={sidebarRole} className="h-full w-full md:w-full" hideCollapse={sidebarHideCollapse || sidebarRole === "ADMIN"} />
             <button
               type="button"
               onClick={() => setIsMenuOpen(false)}

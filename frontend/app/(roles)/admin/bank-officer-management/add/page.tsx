@@ -185,7 +185,7 @@ export default function AddOfficerPage() {
                     Cancel
                   </button>
                   <button className="px-6 py-3 rounded-lg bg-[#0B3B66] text-white hover:bg-[#082d4a] w-full sm:w-auto">
-                    Save OFFICER
+                    Save Officer
                   </button>
                 </div>
               </div>

@@ -33,15 +33,18 @@ export function StaffNotificationsPage({ role, roleLabel }: StaffNotificationsPa
               theme="staff"
               menuMode="sidebar-overlay"
               sidebarRole={role}
-              sidebarHideCollapse={role === "BANK_OFFICER"}
+              sidebarHideCollapse={role === "BANK_OFFICER"|| role === "ADMIN"}
               notificationBadge={8}
               avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random"
               avatarStatusDot
               name="Kamal Edirisinghe"
               role={roleLabel}
               title="Notifications"
-              className={cn(!isAdmin && "mb-5 shrink-0")}
+              //className={cn(!isAdmin && "mb-5 shrink-0")}
+              className={cn("shrink-0", isAdmin ? "mb-6" : "mb-5")}
+
             />
+            
             <NotificationPageContent roleSegment={roleSegment} />
           </div>
         </main>
