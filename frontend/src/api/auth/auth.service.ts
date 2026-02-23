@@ -1,6 +1,14 @@
 import apiClient, { toApiError } from "@/src/api/client";
 import { AUTH_ENDPOINTS } from "@/src/api/endpoints";
-import type { LoginRequest, LoginResponse, RegisterRequest } from "@/src/types/dto/auth.dto";
+import type {
+  AuthActionResponse,
+  ForgotPasswordRequest,
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+  ResetPasswordRequest,
+  VerifyOtpRequest,
+} from "@/src/types/dto/auth.dto";
 
 export async function login(payload: LoginRequest): Promise<LoginResponse> {
   try {
@@ -40,8 +48,59 @@ export async function logout(): Promise<void> {
   }
 }
 
+export async function forgotPassword(payload: ForgotPasswordRequest): Promise<AuthActionResponse> {
+  try {
+    const { data } = await apiClient.post<AuthActionResponse>(AUTH_ENDPOINTS.forgotPassword, payload);
+    return data;
+  } catch (error) {
+    const apiError = toApiError(error);
+
+    if (["NETWORK_ERROR", "TIMEOUT", "NOT_FOUND"].includes(apiError.code)) {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      return { message: "Mock OTP sent." };
+    }
+
+    throw apiError;
+  }
+}
+
+export async function verifyOtp(payload: VerifyOtpRequest): Promise<AuthActionResponse> {
+  try {
+    const { data } = await apiClient.post<AuthActionResponse>(AUTH_ENDPOINTS.verifyOtp, payload);
+    return data;
+  } catch (error) {
+    const apiError = toApiError(error);
+
+    if (["NETWORK_ERROR", "TIMEOUT", "NOT_FOUND"].includes(apiError.code)) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return { message: "Mock OTP verified." };
+    }
+
+    throw apiError;
+  }
+}
+
+export async function resetPassword(payload: ResetPasswordRequest): Promise<AuthActionResponse> {
+  try {
+    const { data } = await apiClient.post<AuthActionResponse>(AUTH_ENDPOINTS.resetPassword, payload);
+    return data;
+  } catch (error) {
+    const apiError = toApiError(error);
+
+    if (["NETWORK_ERROR", "TIMEOUT", "NOT_FOUND"].includes(apiError.code)) {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      return { message: "Mock password reset complete." };
+    }
+
+    throw apiError;
+  }
+}
+
 export const authService = {
   login,
   register,
   logout,
+  forgotPassword,
+  verifyOtp,
+  resetPassword,
 };

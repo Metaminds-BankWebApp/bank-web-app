@@ -1,26 +1,25 @@
-import { LoginForm } from "./login-form";
 import LoginImage from "@/public/login.png";
 import { AuthShell } from "@/app/components/auth-shell";
+import { ForgotPasswordForm } from "./forgot-password-form";
 
-export default function LoginPage() {
+export default function ForgotPasswordPage() {
   return (
     <AuthShell
       panelTitle={
         <>
-          Smart Banking,
+          Recover Account
           <br />
-          Faster Decisions
+          Access Securely
           <br />
           <span className="text-[#4bb5f3]">with PrimeCore</span>
         </>
       }
-      panelDescription="Securely access your account, monitor your activity, and continue where you left off in seconds."
+      panelDescription="Enter your email and we will guide you through secure verification and password recovery."
       panelImage={LoginImage}
-      panelAlt="PrimeCore login visual"
+      panelAlt="Forgot password visual"
       modeTogglePosition="right"
-      contentSide="right"
     >
-      <LoginForm />
+      <ForgotPasswordForm />
     </AuthShell>
   );
 }
