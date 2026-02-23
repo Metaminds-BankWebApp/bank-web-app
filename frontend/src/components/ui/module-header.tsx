@@ -136,6 +136,7 @@ export default function ModuleHeader({
     return (
       <button
         type="button"
+        onClick={() => router.push("/public-customer/spendiq/add")}
         className="hidden items-center gap-2 rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 md:inline-flex"
       >
         <Plus size={16} />
