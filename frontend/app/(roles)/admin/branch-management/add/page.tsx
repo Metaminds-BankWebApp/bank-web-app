@@ -37,7 +37,7 @@ export default function AddBranchPage() {
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
         {/* Sidebar */}
-        <Sidebar role="ADMIN" className="hidden lg:block" />
+         <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
 
         {/* Main Content */}
         <main className="flex-1 flex flex-col overflow-hidden">
