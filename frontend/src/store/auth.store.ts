@@ -3,13 +3,14 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { LoginResponse, UserRole } from "@/src/types/dto/auth.dto";
 import { authPersistence } from "@/src/store/auth.storage";
 
+export const LOGOUT_INTENT_KEY = "logout_intent";
+
 type AuthUser = LoginResponse["user"];
 
-export type RoleRedirectPath = "/public-customer/application" | "/bank-customer" | "/bank-officer" | "/admin";
-export const LOGOUT_INTENT_KEY = "primecore-logout-intent";
+export type RoleRedirectPath = "/public-customer" | "/bank-customer" | "/bank-officer" | "/admin";
 
 const roleRedirectMap: Record<UserRole, RoleRedirectPath> = {
-  PUBLIC_CUSTOMER: "/public-customer/application",
+  PUBLIC_CUSTOMER: "/public-customer",
   BANK_CUSTOMER: "/bank-customer",
   BANK_OFFICER: "/bank-officer",
   ADMIN: "/admin",
