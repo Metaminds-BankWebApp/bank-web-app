@@ -142,19 +142,20 @@ export function LoginForm() {
   }
 
   return (
-    <section className="w-full max-w-xl space-y-8 text-(--primecore-foreground)">
-      <header className="space-y-2">
-        <h1 className="text-2xl text-center font-bold text-(--primecore-foreground)">Login</h1>
+    <section className="w-full space-y-6 text-(--primecore-foreground)">
+      <header className="space-y-2 text-center">
+        <h1 className="text-3xl font-bold text-(--primecore-foreground)">Welcome back</h1>
+        <p className="text-sm text-(--primecore-foreground)/70">Sign in to continue to your dashboard and account tools.</p>
       </header>
 
       <form onSubmit={onSubmit} className="space-y-5">
         <Input
-          label="Email"
+          label="Email Address"
           type="email"
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="Email"
+          placeholder="name@example.com"
           labelClassName="text-(--primecore-foreground)/70"
           className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
         />
@@ -165,10 +166,16 @@ export function LoginForm() {
           autoComplete="current-password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          placeholder="Password"
+          placeholder="Enter your password"
           labelClassName="text-(--primecore-foreground)/70"
           className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
         />
+
+        <div className="flex items-center justify-end text-sm">
+          <Link href="/forgot-password" className="font-medium text-[#0d3b66] underline-offset-4 hover:underline dark:text-[#7cc8ff]">
+            Forgot password?
+          </Link>
+        </div>
 
         <div className="space-y-1.5">
           <label htmlFor="login-role" className="text-sm font-medium text-(--primecore-foreground)/70">Role (demo fallback)</label>
@@ -188,15 +195,27 @@ export function LoginForm() {
 
         {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 
-        <Button type="submit" className="mt-3 h-12 w-full rounded-xl bg-primary text-xl font-semibold text-white hover:bg-primary/90" loading={isSubmitting}>
+        <Button type="submit" className="mt-3 h-12 w-full rounded-xl bg-primary text-base font-semibold text-white hover:bg-primary/90" loading={isSubmitting}>
           {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
 
-        <p className="text-center text-sm text-(--primecore-foreground)/70">
-          Back to{" "}
-          <Link href="/register" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
-            registration page
-          </Link>
+        <div className="space-y-2 pt-1 text-center text-sm text-(--primecore-foreground)/70">
+          <p>
+            Need to complete 2FA?{" "}
+            <Link href="/verify-otp" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
+              Verify OTP
+            </Link>
+          </p>
+          <p>
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
+              Create one
+            </Link>
+          </p>
+        </div>
+
+        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+          Demo mode: if backend is unavailable, login continues using the selected role.
         </p>
       </form>
     </section>
