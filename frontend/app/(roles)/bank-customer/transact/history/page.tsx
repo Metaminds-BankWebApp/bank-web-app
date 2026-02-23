@@ -17,7 +17,7 @@ import {
 import ModuleHeader from "@/src/components/ui/module-header";
 
 type TransactionStatus = "success" | "failed"
-type ReportFileType = "csv" | "json" | "txt"
+type ReportFileType = "csv" | "json" | "txt" | "pdf"
 type ReportRange = "last7" | "last30" | "yearToDate"
 type ReportStatusFilter = "all" | TransactionStatus
 
@@ -196,6 +196,7 @@ const reportFileTypeMeta: Record<ReportFileType, { label: string; extension: str
 	csv: { label: "CSV", extension: "csv", mimeType: "text/csv;charset=utf-8;" },
 	json: { label: "JSON", extension: "json", mimeType: "application/json;charset=utf-8;" },
 	txt: { label: "Text", extension: "txt", mimeType: "text/plain;charset=utf-8;" },
+	pdf: { label: "PDF", extension: "pdf", mimeType: "application/pdf" },
 }
 
 const parseDate = (value: string) => {
@@ -239,6 +240,154 @@ const buildText = (rows: TransactionRecord[]) => {
 	return lines.join("\n")
 }
 
+const normalizePdfText = (value: string) => value.replace(/[^\x20-\x7E]/g, "?")
+
+const escapePdfText = (value: string) => normalizePdfText(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)")
+
+const wrapPdfLine = (line: string, maxChars: number) => {
+	if (line.length <= maxChars) {
+		return [line]
+	}
+
+	const words = line.split(" ")
+	const wrapped: string[] = []
+	let current = ""
+
+	words.forEach((word) => {
+		const next = current ? `${current} ${word}` : word
+		if (next.length <= maxChars) {
+			current = next
+			return
+		}
+
+		if (current) {
+			wrapped.push(current)
+		}
+
+		if (word.length > maxChars) {
+			for (let index = 0; index < word.length; index += maxChars) {
+				wrapped.push(word.slice(index, index + maxChars))
+			}
+			current = ""
+			return
+		}
+
+		current = word
+	})
+
+	if (current) {
+		wrapped.push(current)
+	}
+
+	return wrapped
+}
+
+const buildPdf = (
+	rows: TransactionRecord[],
+	options: { rangeLabel: string; statusLabel: string; generatedOn: string }
+) => {
+	const headerLines = [
+		"Transaction History Report",
+		`Generated on: ${options.generatedOn}`,
+		`Range: ${options.rangeLabel}`,
+		`Status: ${options.statusLabel}`,
+		`Records: ${rows.length}`,
+		"",
+		"Date | Reference | Sender -> Receiver | Amount | Status",
+	]
+
+	const dataLines = rows.map((row, index) => {
+		return `${index + 1}. ${row.date} | ${row.reference} | ${row.senderName} -> ${row.receiverName} | ${row.amount} | ${row.status}`
+	})
+
+	const allLines = [...headerLines, ...dataLines]
+	const wrappedLines = allLines.flatMap((line) => wrapPdfLine(line, 96))
+
+	const pageHeight = 842
+	const startY = 800
+	const bottomPadding = 40
+	const lineHeight = 14
+	const maxLinesPerPage = Math.max(1, Math.floor((startY - bottomPadding) / lineHeight))
+
+	const pageChunks: string[][] = []
+	for (let index = 0; index < wrappedLines.length; index += maxLinesPerPage) {
+		pageChunks.push(wrappedLines.slice(index, index + maxLinesPerPage))
+	}
+
+	if (pageChunks.length === 0) {
+		pageChunks.push(["Transaction History Report", "No records available for the selected filters."])
+	}
+
+	const pageCount = pageChunks.length
+	const objects: Array<{ number: number; content: string }> = []
+	objects.push({
+		number: 1,
+		content: "<< /Type /Catalog /Pages 2 0 R >>",
+	})
+
+	const firstPageObject = 3
+	const fontObject = firstPageObject + pageCount * 2
+	const pageRefs = Array.from({ length: pageCount }, (_, index) => `${firstPageObject + index * 2} 0 R`).join(" ")
+
+	objects.push({
+		number: 2,
+		content: `<< /Type /Pages /Kids [${pageRefs}] /Count ${pageCount} >>`,
+	})
+
+	pageChunks.forEach((lines, index) => {
+		const pageObject = firstPageObject + index * 2
+		const contentObject = pageObject + 1
+		const safeLines = lines.map((line) => escapePdfText(line))
+		const streamLines = [
+			"BT",
+			"/F1 10 Tf",
+			"40 800 Td",
+			...safeLines.map((line, lineIndex) =>
+				lineIndex === 0 ? `(${line}) Tj` : `0 -${lineHeight} Td (${line}) Tj`
+			),
+			"ET",
+		]
+		const stream = streamLines.join("\n")
+		const streamLength = new TextEncoder().encode(stream).length
+
+		objects.push({
+			number: pageObject,
+			content: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 ${pageHeight}] /Resources << /Font << /F1 ${fontObject} 0 R >> >> /Contents ${contentObject} 0 R >>`,
+		})
+
+		objects.push({
+			number: contentObject,
+			content: `<< /Length ${streamLength} >>\nstream\n${stream}\nendstream`,
+		})
+	})
+
+	objects.push({
+		number: fontObject,
+		content: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+	})
+
+	let pdf = "%PDF-1.4\n"
+	const offsets: number[] = [0]
+
+	objects.forEach((object) => {
+		offsets[object.number] = pdf.length
+		pdf += `${object.number} 0 obj\n${object.content}\nendobj\n`
+	})
+
+	const xrefStart = pdf.length
+	pdf += `xref\n0 ${objects.length + 1}\n`
+	pdf += "0000000000 65535 f \n"
+
+	for (let objectNumber = 1; objectNumber <= objects.length; objectNumber += 1) {
+		const offset = String(offsets[objectNumber]).padStart(10, "0")
+		pdf += `${offset} 00000 n \n`
+	}
+
+	pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`
+
+	return pdf
+}
+
 export default function Page() {
 	const [isReportModalOpen, setIsReportModalOpen] = React.useState(false)
 	const [reportRange, setReportRange] = React.useState<ReportRange>("last30")
@@ -267,17 +416,29 @@ export default function Page() {
 
 	const handleDownloadReport = React.useCallback(() => {
 		const fileMeta = reportFileTypeMeta[reportFileType]
-		let content = ""
+		let blob: Blob
 
-		if (reportFileType === "csv") {
-			content = buildCsv(filteredRecords)
-		} else if (reportFileType === "json") {
-			content = JSON.stringify(filteredRecords, null, 2)
+		if (reportFileType === "pdf") {
+			const pdfContent = buildPdf(filteredRecords, {
+				rangeLabel: reportRangeLabels[reportRange],
+				statusLabel: reportStatusLabels[reportStatusFilter],
+				generatedOn: new Date().toLocaleString(),
+			})
+			blob = new Blob([pdfContent], { type: fileMeta.mimeType })
 		} else {
-			content = buildText(filteredRecords)
+			let content = ""
+
+			if (reportFileType === "csv") {
+				content = buildCsv(filteredRecords)
+			} else if (reportFileType === "json") {
+				content = JSON.stringify(filteredRecords, null, 2)
+			} else {
+				content = buildText(filteredRecords)
+			}
+
+			blob = new Blob([content], { type: fileMeta.mimeType })
 		}
 
-		const blob = new Blob([content], { type: fileMeta.mimeType })
 		const blobUrl = URL.createObjectURL(blob)
 		const anchor = document.createElement("a")
 		anchor.href = blobUrl
@@ -287,7 +448,7 @@ export default function Page() {
 		anchor.remove()
 		URL.revokeObjectURL(blobUrl)
 		setIsReportModalOpen(false)
-	}, [downloadFileName, filteredRecords, reportFileType])
+	}, [downloadFileName, filteredRecords, reportFileType, reportRange, reportStatusFilter])
 
 	return (
 		<div className="bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -316,7 +477,7 @@ export default function Page() {
 						<Button
 							variant="outline"
 							size="md"
-							className="!px-4 flex-1 md:flex-none items-center"
+							className="!px-4 flex-1 md:flex-none items-center border-[#0B3E5A] bg-[#0B3E5A] text-white hover:border-[#0e4f62] hover:bg-[#0e4f62] hover:text-white"
 							onClick={() => setIsReportModalOpen(true)}
 						>
 							<Download className="w-4 h-4 mr-2" />
@@ -393,7 +554,10 @@ export default function Page() {
 					<Button variant="outline" onClick={() => setIsReportModalOpen(false)}>
 						Cancel
 					</Button>
-					<Button onClick={handleDownloadReport}>
+					<Button
+						onClick={handleDownloadReport}
+						className="border-[#0B3E5A] bg-[#0B3E5A] text-white hover:border-[#0e4f62] hover:bg-[#0e4f62] hover:text-white"
+					>
 						<Download className="h-4 w-4" />
 						Download
 					</Button>
@@ -446,6 +610,7 @@ export default function Page() {
 							<SelectItem value="csv">{reportFileTypeMeta.csv.label}</SelectItem>
 							<SelectItem value="json">{reportFileTypeMeta.json.label}</SelectItem>
 							<SelectItem value="txt">{reportFileTypeMeta.txt.label}</SelectItem>
+							<SelectItem value="pdf">{reportFileTypeMeta.pdf.label}</SelectItem>
 						</SelectContent>
 					</Select>
 				</div>
