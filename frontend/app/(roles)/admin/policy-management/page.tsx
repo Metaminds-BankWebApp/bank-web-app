@@ -13,7 +13,50 @@ type LoanType = {
   dark?: boolean;
 };
 
-export default function page() {
+const initialLoans: LoanType[] = [
+  {
+    id: "personal",
+    title: "Personal Loan",
+    description: "Flexible personal financing for day-to-day needs.",
+    rate: 17,
+    dark: true,
+  },
+  {
+    id: "vehicle",
+    title: "Vehicle Loan",
+    description: "Auto financing with competitive repayment terms.",
+    rate: 15,
+  },
+  {
+    id: "education",
+    title: "Educational Loan",
+    description: "Loan support for tuition and educational expenses.",
+    rate: 12,
+  },
+  {
+    id: "housing",
+    title: "Housing Loan",
+    description: "Home ownership financing with long-term plans.",
+    rate: 10,
+  },
+];
+
+export default function PolicyManagementPage() {
+  const [loans, setLoans] = useState<LoanType[]>(initialLoans);
+
+  const handleRateChange = (id: string, value: string) => {
+    const parsed = Number(value);
+    const safeRate = Number.isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed));
+
+    setLoans((prev) =>
+      prev.map((loan) => (loan.id === id ? { ...loan, rate: safeRate } : loan))
+    );
+  };
+
+  const handleSave = () => {
+    // TODO: call your API here
+    console.log("Saving policy rates:", loans);
+  };
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
