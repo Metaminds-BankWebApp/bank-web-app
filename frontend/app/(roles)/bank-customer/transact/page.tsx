@@ -126,7 +126,7 @@ export default function TransactDashboard() {
   return (
     <AuthGuard requiredRole="BANK_CUSTOMER">
       <div className="bg-white px-4 sm:px-8 py-4 sm:py-6">
-        <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Dashboard" subtitle="Dineth dovindu" name="Dineth dovindu" />
+        <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Dashboard"  name="John Deo" />
 
         <section className=" max-w-full mx-auto mt-8">
 
