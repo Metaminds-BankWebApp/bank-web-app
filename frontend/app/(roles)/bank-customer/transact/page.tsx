@@ -18,7 +18,7 @@ import {
 import type { Chart } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
 import { ArrowUpRight } from "lucide-react";
-import TransactHeader from "@/src/components/ui/Transact-Header";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { Card } from "@/components/ui/card";
 
 ChartJS.register(
@@ -126,7 +126,7 @@ export default function TransactDashboard() {
   return (
     <AuthGuard requiredRole="BANK_CUSTOMER">
       <div className="bg-white px-4 sm:px-8 py-4 sm:py-6">
-        <TransactHeader title="Dashboard" subtitle="Dineth dovindu" />
+        <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Dashboard" subtitle="Dineth dovindu" name="Dineth dovindu" />
 
         <section className=" max-w-full mx-auto mt-8">
 
@@ -223,3 +223,5 @@ export default function TransactDashboard() {
     </AuthGuard>
   );
 }
+
+

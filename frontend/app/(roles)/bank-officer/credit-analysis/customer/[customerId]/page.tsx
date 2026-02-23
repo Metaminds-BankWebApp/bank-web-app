@@ -6,7 +6,7 @@ import { AuthGuard } from "@/src/components/auth";
 import { UserRound, Phone, Mail as MailIcon, Landmark, ArrowLeft } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function CreditAnalysisCustomerPage() {
   const params = useParams<{ customerId: string }>();
@@ -19,7 +19,20 @@ export default function CreditAnalysisCustomerPage() {
       <div className="flex min-h-screen bg-[#f3f4f6]">
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden" />
         <main className="flex-1 p-8 lg:p-10 overflow-y-auto w-full max-w-400 mx-auto">
-          <BankOfficerHeader title="Customer Profile" className="mb-6" />
+          <ModuleHeader
+            theme="staff"
+            menuMode="sidebar-overlay"
+            sidebarRole="BANK_OFFICER"
+            sidebarHideCollapse
+            mailBadge={2}
+            notificationBadge={8}
+            avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random"
+            avatarStatusDot
+            name="Kamal Edirisinghe"
+            role="User"
+            title="Customer Profile"
+            className="mb-6"
+          />
 
           <div className="mb-8 text-sm text-slate-500">
             Dashboard <span className="mx-2 text-slate-400">▶</span> Credit Analysis <span className="mx-2 text-slate-400">▶</span>{" "}

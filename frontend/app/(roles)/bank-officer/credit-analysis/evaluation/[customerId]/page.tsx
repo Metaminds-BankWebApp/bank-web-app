@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
-import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function CreditAnalysisEvaluationPage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -43,7 +43,20 @@ export default function CreditAnalysisEvaluationPage() {
       <div className="flex min-h-screen bg-[#f3f4f6]">
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden" />
         <main className="flex-1 p-8 lg:p-10 overflow-y-auto w-full max-w-400 mx-auto">
-          <BankOfficerHeader title="Credit Analysis" className="mb-6" />
+          <ModuleHeader
+            theme="staff"
+            menuMode="sidebar-overlay"
+            sidebarRole="BANK_OFFICER"
+            sidebarHideCollapse
+            mailBadge={2}
+            notificationBadge={8}
+            avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random"
+            avatarStatusDot
+            name="Kamal Edirisinghe"
+            role="User"
+            title="Credit Analysis"
+            className="mb-6"
+          />
 
           <div className="mb-2 text-sm text-slate-500">
             Dashboard <span className="mx-2 text-slate-400">▶</span> Credit Analysis <span className="mx-2 text-slate-400">▶</span>{" "}

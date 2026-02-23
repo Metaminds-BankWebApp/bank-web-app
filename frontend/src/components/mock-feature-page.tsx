@@ -1,17 +1,20 @@
-import { Card, CardContent, CardHeader } from "@/src/components/ui";
+import { Card, CardContent } from "@/src/components/ui";
 
 type MockFeaturePageProps = {
   title: string;
   description?: string;
+  hideHeader?: boolean;
 };
 
-export function MockFeaturePage({ title, description }: MockFeaturePageProps) {
+export function MockFeaturePage({ title, description, hideHeader = false }: MockFeaturePageProps) {
   return (
     <div className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-4xl font-bold text-(--primecore-foreground)">{title}</h1>
-        {description && <p className="text-sm text-(--primecore-foreground)/65">{description}</p>}
-      </header>
+      {hideHeader ? null : (
+        <header className="space-y-1">
+          <h1 className="text-4xl font-bold text-(--primecore-foreground)">{title}</h1>
+          {description && <p className="text-sm text-(--primecore-foreground)/65">{description}</p>}
+        </header>
+      )}
 
       <Card className="min-h-[400px] flex items-center justify-center border-dashed">
         <CardContent className="text-center space-y-2">

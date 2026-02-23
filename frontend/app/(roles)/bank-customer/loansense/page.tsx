@@ -15,7 +15,7 @@ import {
   TrendingUp,
   AlertCircle // For Partially Eligible
 } from "lucide-react";
-import LoanSenseHeader from "@/src/components/ui/loansenseheader";
+import ModuleHeader from "@/src/components/ui/module-header";
 import React from 'react';
 import Link from "next/link";
 
@@ -33,7 +33,7 @@ export default function LoanSenseDashboard() {
       <div className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
         
         {/* Header */}
-      <LoanSenseHeader title="LoanSense Dashboard" />
+      <ModuleHeader theme="loansense" menuMode="feature-layout" title="LoanSense Dashboard" />
       <div><p className="text-sm opacity-80 mt-2">Your personalized loan insights and recommendations</p></div>
 
         <div>
@@ -314,3 +314,4 @@ export default function LoanSenseDashboard() {
     </AuthGuard>
   );
 }
+

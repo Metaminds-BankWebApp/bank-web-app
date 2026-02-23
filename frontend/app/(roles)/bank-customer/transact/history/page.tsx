@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/src/components/ui/badge"
-import TransactHeader from "@/src/components/ui/Transact-Header"
+import ModuleHeader from "@/src/components/ui/module-header";
 
 const mockData = [
 	{
@@ -147,7 +147,7 @@ const mockData = [
 export default function Page() {
 	return (
 		<div className="bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-			<TransactHeader title="Transaction History" subtitle="Dineth dovindu" />
+			<ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transaction History" subtitle="Dineth dovindu" name="Dineth dovindu" />
 
 			<Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full mt-6 sm:mt-30">
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -236,3 +236,5 @@ export default function Page() {
 		</div>
 	)
 }
+
+

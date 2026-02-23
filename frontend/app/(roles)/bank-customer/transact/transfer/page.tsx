@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import TransactHeader from "@/src/components/ui/Transact-Header"
+import ModuleHeader from "@/src/components/ui/module-header";
 import { Check } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -69,7 +69,7 @@ export default function Page() {
       {/* 🔹 BLUR MAIN PAGE WHEN MODAL OPEN */}
       <div className={showOtp || showSuccess ? "blur-sm pointer-events-none" : ""}>
         <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-          <TransactHeader title="Transfer" subtitle="Dineth dovindu" />
+          <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transfer" subtitle="Dineth dovindu" name="Dineth dovindu" />
 
           {/* Add Beneficiary Button */}
           <div className="flex justify-end mt-16  pr-[7rem] ">
@@ -250,3 +250,5 @@ export default function Page() {
     </div>
   )
 }
+
+
