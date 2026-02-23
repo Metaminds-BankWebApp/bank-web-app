@@ -30,7 +30,7 @@ const FEATURE_CONFIG = {
   LoanSense: {
     theme: "loansense",
     featureSegment: "loansense",
-    outerClassName: "min-h-screen bg-white p-4 md:p-8",
+    outerClassName: "min-h-screen bg-transparent p-4 md:p-8",
     innerClassName: "space-y-6",
     contentWrapClassName: "",
   },
