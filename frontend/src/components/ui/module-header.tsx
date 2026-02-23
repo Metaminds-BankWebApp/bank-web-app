@@ -224,7 +224,7 @@ export default function ModuleHeader({
             </button>
 
             {isNotificationsOpen ? (
-              <div className="absolute right-0 top-12 z-50 w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-3 text-slate-900 shadow-2xl">
+              <div className="fixed left-2 right-2 top-16 z-50 rounded-2xl border border-slate-200 bg-white p-3 text-slate-900 shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[360px] sm:max-w-[92vw]">
                 <div className="mb-2 flex items-center justify-between px-1">
                   <div>
                     <p className="text-sm font-semibold">Notifications</p>

@@ -87,7 +87,7 @@ export const siteConfig = {
         { title: "Dashboard", href: "/public-customer", icon: "layout-dashboard", section: "general" },
         { title: "SpendIQ", href: "/public-customer/spendiq", icon: "line-chart", section: "general" },
         { title: "CreditLens", href: "/public-customer/creditlens", icon: "shield-check", section: "general" },
-        { title: "Log Out", href: "/login", icon: "log-out", section: "account" },
+        { title: "Log Out", href: "/", icon: "log-out", section: "account" },
       ],
     },
     BANK_CUSTOMER: {
@@ -100,7 +100,7 @@ export const siteConfig = {
         { title: "CreditLens", href: "/bank-customer/creditlens", icon: "shield-check", section: "general" },
         { title: "LoanSense", href: "/bank-customer/loansense", icon: "file-text", section: "general" },
         { title: "Transact", href: "/bank-customer/transact", icon: "send", section: "general" },
-        { title: "Log Out", href: "/login", icon: "log-out", section: "account" },
+        { title: "Log Out", href: "/", icon: "log-out", section: "account" },
       ],
     },
     BANK_OFFICER: {
@@ -117,7 +117,7 @@ export const siteConfig = {
         { title: "Profile", href: "/bank-officer/profile", icon: "user", section: "general" },
         { title: "Help & Support", href: "/bank-officer/support", icon: "help-circle", section: "other" },
         { title: "Setting", href: "/bank-officer/settings", icon: "settings", section: "other" },
-        { title: "Log Out", href: "/login", icon: "log-out", section: "account" }, 
+        { title: "Log Out", href: "/", icon: "log-out", section: "account" }, 
       ],
     },
     ADMIN: {
@@ -134,7 +134,7 @@ export const siteConfig = {
         { title: "Profile", href: "/admin/profile", icon: "user", section: "general" },
         { title: "Help & Support", href: "/admin/support", icon: "help-circle", section: "other" },
         { title: "Setting", href: "/admin/settings", icon: "settings", section: "other" },
-        { title: "Log Out", href: "/login", icon: "log-out", section: "account" },
+        { title: "Log Out", href: "/", icon: "log-out", section: "account" },
       ],
     },
   } as Record<UserRole, SidebarRoleConfig>,
