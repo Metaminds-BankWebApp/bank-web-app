@@ -13,7 +13,55 @@ type LoanType = {
   dark?: boolean;
 };
 
-export default function page() {
+export default function LoanInterestPolicyPage() {
+  const [loans, setLoans] = useState<LoanType[]>([
+    {
+      id: "personal",
+      title: "Personal Loan",
+      description:
+        "A loan borrowed for personal needs such as medical bills, travel, weddings, or other expenses. It can be used for almost any purpose.",
+      rate: 17,
+    },
+    {
+      id: "vehicle",
+      title: "Vehicle Loan",
+      description:
+        "A loan taken to purchase a car, bike, or other vehicle. The borrower repays the amount in monthly instalments.",
+      rate: 15,
+      dark: true,
+    },
+    {
+      id: "education",
+      title: "Educational Loan",
+      description:
+        "A loan provided to help students pay for tuition fees and other education-related expenses.",
+      rate: 12,
+    },
+    {
+      id: "housing",
+      title: "Housing Loan",
+      description:
+        "A loan used to buy, build, or renovate a house, which is repaid over a long period in instalments.",
+      rate: 10,
+      dark: true,
+    },
+  ]);
+
+  const handleRateChange = (id: string, value: string) => {
+    setLoans((prev) =>
+      prev.map((loan) =>
+        loan.id === id
+          ? { ...loan, rate: Number(value) }
+          : loan
+      )
+    );
+  };
+
+  const handleSave = () => {
+    console.log("Updated Rates:", loans);
+    alert("Interest rates saved successfully!");
+  };
+
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
