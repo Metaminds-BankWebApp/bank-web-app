@@ -34,10 +34,7 @@ export default function CreditAnalysisCustomerPage() {
             className="mb-6"
           />
 
-          <div className="mb-8 text-sm text-slate-500">
-            Dashboard <span className="mx-2 text-slate-400">▶</span> Credit Analysis <span className="mx-2 text-slate-400">▶</span>{" "}
-            <span className="text-[#3e9fd3] font-medium">Customer Details</span>
-          </div>
+          
 
           <div className="mb-6">
             <Button variant="outline" className="gap-2" onClick={() => history.back()}>

@@ -143,7 +143,7 @@ export default function ModuleHeader({
         <span>Add Entry</span>
       </button>
     );
-  }, [rightContent, theme]);
+  }, [rightContent, theme, router]);
 
   const handleOpenMenu = () => {
     if (menuMode === "feature-layout") {

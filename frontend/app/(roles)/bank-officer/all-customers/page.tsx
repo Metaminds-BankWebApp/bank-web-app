@@ -14,7 +14,7 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
-import { Dialog } from "@/src/components/ui/dialog";
+import PopupModal from "@/src/components/ui/popup-modal";
 import {
   Table,
   TableBody,
@@ -245,9 +245,9 @@ export default function AllCustomersPage() {
             <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
                       <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="All Customers" className="mb-6 shrink-0" />
 
-          <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-slate-200">
+          <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
              {/* Toolbar */}
-             <div className="p-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between gap-4">
+             <div className="p-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between gap-4 bg-slate-50/40">
                 <div className="relative max-w-sm flex-1">
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                    <Input 
@@ -353,7 +353,7 @@ export default function AllCustomersPage() {
              {/* Table Container */}
              <div className="flex-1 overflow-auto min-h-0">
              <Table>
-                <TableHeader className="bg-slate-50/50 sticky top-0 z-10">
+                <TableHeader className="bg-sky-50/70 sticky top-0 z-10">
                    <TableRow>
                       <TableHead className="w-12.5 pl-6"><Checkbox /></TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Customer ID</TableHead>
@@ -446,7 +446,7 @@ export default function AllCustomersPage() {
              </div>
           </div>
 
-               <Dialog
+               <PopupModal
                   open={selectedCustomer !== null}
                   onOpenChange={(open) => {
                      if (!open) {
@@ -512,7 +512,7 @@ export default function AllCustomersPage() {
                         </div>
                      </div>
                   )}
-               </Dialog>
+               </PopupModal>
         </main>
       </div>
     </AuthGuard>

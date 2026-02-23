@@ -36,16 +36,15 @@ export default function BankOfficerSettingsPage() {
             subtitle="Bank Officer Preferences"
             name="Kamal Edirisinghe"
             role="Bank Officer"
-            theme="loansense"
+            theme="staff"
             className="mb-5 shrink-0"
+            menuMode="sidebar-overlay"
             sidebarRole="BANK_OFFICER"
+            sidebarHideCollapse={true}
           />
 
           <div className="flex-1 min-h-0 overflow-y-auto">
-            <div className="mb-6 text-sm text-slate-500">
-              Dashboard <span className="mx-2 text-slate-400">▶</span>
-              <span className="text-[#3e9fd3] font-medium">Settings</span>
-            </div>
+            
 
             <div className="grid gap-6 xl:grid-cols-[2fr_1fr]">
               <div className="space-y-6">
@@ -55,14 +54,14 @@ export default function BankOfficerSettingsPage() {
                     <p className="text-sm text-slate-500">Update operational defaults used during customer verification and loan review.</p>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <Input label="Display Name" defaultValue="Kamal Edirisinghe" className="bg-white" />
-                      <Input label="Branch Code" defaultValue="BR-014" className="bg-white" />
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <Input label="Approval Limit (LKR)" defaultValue="500000" className="bg-white" />
-                      <Input label="Daily Review Target" defaultValue="25" className="bg-white" />
-                    </div>
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <Input label="Display Name" defaultValue="Kamal Edirisinghe" className="bg-white w-full" />
+                              <Input label="Branch Code" defaultValue="BR-014" className="bg-white w-full" />
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-2">
+                              <Input label="Approval Limit (LKR)" defaultValue="500000" className="bg-white w-full" />
+                              <Input label="Daily Review Target" defaultValue="25" className="bg-white w-full" />
+                            </div>
                     <div className="flex justify-end gap-2 pt-1">
                       <Button variant="outline">Discard</Button>
                       <Button className="bg-[#0d3b66] text-white hover:bg-[#0a2f52]">Save Preferences</Button>
