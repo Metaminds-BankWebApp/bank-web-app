@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
-import CreditLensHeader from "@/src/components/ui/Creditlens-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 import trendsDecreaseBg from "../image/creditlens-trends-decrease-bg.svg";
 
 type TrendRange = "6m" | "12m";
@@ -81,7 +81,7 @@ export default function TrendsPage() {
   return (
     <div className="w-full overflow-x-hidden px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
       <div className="flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:h-[calc(100dvh-2rem)] lg:min-h-0 lg:overflow-hidden">
-        <CreditLensHeader title="Trends" subtitle="" name="John Doe" role="Bank Customer" />
+        <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Trends" subtitle="" name="John Doe" role="Bank Customer" />
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 lg:px-2 xl:px-3">
           <div className="creditlens-stagger-2 grid min-w-0 items-stretch gap-4 md:gap-6 lg:min-h-0 lg:flex-[1.15] xl:grid-cols-[1.85fr_1fr] xl:gap-7">
@@ -166,3 +166,4 @@ export default function TrendsPage() {
     </div>
   );
 }
+

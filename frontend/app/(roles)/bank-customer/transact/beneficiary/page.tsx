@@ -5,14 +5,14 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import TransactHeader from "@/src/components/ui/Transact-Header"
+import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function Page() {
   const router = useRouter()
 
   return (
     <div className="bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-      <TransactHeader title="Account Detail" subtitle="Dineth dovindu" />
+      <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Account Detail" subtitle="Dineth dovindu" name="Dineth dovindu" />
 
       <section className="max-w-6xl mx-auto mt-6 sm:mt-8">
 
@@ -68,3 +68,4 @@ export default function Page() {
     </div>
   )
 }
+

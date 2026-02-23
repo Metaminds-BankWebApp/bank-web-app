@@ -22,8 +22,15 @@ export default function CreditRiskTrendChart() {
   const [chartValues, setChartValues] = useState<number[]>(() => realValues.map(() => 0));
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setChartValues(realValues));
-    return () => cancelAnimationFrame(raf);
+    let raf = 0;
+    const timer = window.setTimeout(() => {
+      raf = requestAnimationFrame(() => setChartValues([...realValues]));
+    }, 120);
+
+    return () => {
+      window.clearTimeout(timer);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
 
   const data = useMemo(

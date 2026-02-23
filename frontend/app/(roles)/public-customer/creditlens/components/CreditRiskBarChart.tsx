@@ -24,8 +24,10 @@ const defaultValues = [80, 50, 90, 70, 60, 55];
 export default function CreditRiskBarChart({ labels = defaultLabels, values = defaultValues }: Props) {
   const PURPLE = "rgba(168,85,247,0.75)";
   const GREEN = "rgba(34,197,94,0.80)";
+  const MOBILE_BREAKPOINT = 640;
 
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const [chartValues, setChartValues] = useState<number[]>(() => values.map(() => 0));
 
   useEffect(() => {
@@ -34,7 +36,14 @@ export default function CreditRiskBarChart({ labels = defaultLabels, values = de
     return () => cancelAnimationFrame(raf);
   }, [values]);
 
-  const barThickness = labels.length > 6 ? 26 : 60;
+  useEffect(() => {
+    const updateViewport = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
+
+  const barThickness = isMobile ? (labels.length > 6 ? 10 : 18) : labels.length > 6 ? 26 : 60;
 
   const data = useMemo(
     () => ({

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
@@ -9,7 +9,7 @@ import {
   ChevronLeft, 
   ChevronRight,
 } from "lucide-react";
-import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
@@ -203,14 +203,14 @@ export default function HistoryPage() {
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
-      <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
-        <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full z-10 relative" />
-      <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
-               <BankOfficerHeader title="History" className="mb-6 shrink-0" />
+      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
+        <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
+      <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
+               <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="History" className="mb-6 shrink-0" />
 
           <div className="flex-1 overflow-y-auto min-h-0">
           <div className="mb-8 text-sm text-slate-500">
-             Dashboard <span className="mx-2 text-slate-400">▶</span> <span className="text-[#3e9fd3] font-medium">Credit Status Analysis</span>
+             Dashboard <span className="mx-2 text-slate-400">â–¶</span> <span className="text-[#3e9fd3] font-medium">Credit Status Analysis</span>
           </div>
 
           {/* Controls */}
@@ -432,3 +432,5 @@ export default function HistoryPage() {
     </AuthGuard>
   );
 }
+
+

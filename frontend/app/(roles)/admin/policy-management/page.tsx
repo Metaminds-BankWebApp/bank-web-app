@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Sidebar } from "@/src/components/layout";
-import { AdminHeader } from "@/src/components/ui/adminheader";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 
 type LoanType = {
@@ -15,8 +15,88 @@ type LoanType = {
 
 export default function page() {
   return (
-    <div>
-      
-    </div>
-  )
+    <AuthGuard requiredRole="ADMIN">
+      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
+        <Sidebar role="ADMIN" className="hidden lg:block" />
+
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <div className="px-6 pt-4 pb-6">
+            <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Admin" title="Loan Interest Policy Management" />
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-8">
+
+            <h2 className="text-2xl font-bold text-[#1e1b4b]">
+              LOAN TYPE AND INTEREST RATE
+            </h2>
+
+            {loans.map((loan) => (
+              <div
+                key={loan.id}
+                className={`flex flex-col lg:flex-row justify-between items-center rounded-2xl px-8 py-8 transition ${
+                  loan.dark
+                    ? "bg-[#0B3B66] text-white"
+                    : "bg-[#5f879e] text-white"
+                }`}
+              >
+                {/* Left Section */}
+                <div className="flex-1 pr-8">
+                  <h3 className="text-xl font-semibold mb-3">
+                    {loan.title}
+                  </h3>
+                  <p className="text-sm opacity-90 max-w-2xl">
+                    {loan.description}
+                  </p>
+                </div>
+
+                {/* Divider */}
+                <div className="hidden lg:block w-px h-20 bg-white/30 mx-6"></div>
+
+                {/* Right Section */}
+                <div className="flex flex-col items-center gap-3 mt-6 lg:mt-0">
+                  <span className="text-xs tracking-widest opacity-80">
+                    INTEREST RATE
+                  </span>
+
+                  <div className="bg-white rounded-2xl px-6 py-4 flex items-center gap-2 shadow-md">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={loan.rate}
+                      onChange={(e) =>
+                        handleRateChange(loan.id, e.target.value)
+                      }
+                      className="w-16 text-center text-lg font-bold text-[#0B3B66] focus:outline-none"
+                    />
+                    <span className="text-lg font-bold text-[#0B3B66]">
+                      %
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Buttons */}
+           <div className="flex justify-end gap-6 pt-4">
+  <button
+    onClick={handleSave}
+    className="min-w-[160px] px-8 py-3 rounded-full bg-[#0B3B66] text-white font-semibold text-sm hover:bg-[#082d4a] transition"
+  >
+    SAVE
+  </button>
+
+  <button
+    className="min-w-[160px] px-8 py-3 rounded-full border border-[#0B3B66] text-[#0B3B66] font-semibold text-sm hover:bg-gray-100 transition"
+  >
+    CANCEL
+  </button>
+</div>
+          </div>
+        </main>
+      </div>
+    </AuthGuard>
+  );
 }

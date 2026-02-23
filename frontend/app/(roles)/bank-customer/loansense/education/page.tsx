@@ -1,5 +1,5 @@
 import React from "react";
-import LoanSenseHeader from "@/src/components/ui/loansenseheader";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 type SummaryCardProps = {
 	label: string;
@@ -56,7 +56,7 @@ export default function Page() {
 			  
 
 			{/* Header */}
-			<LoanSenseHeader title="Education Loan" />
+			<ModuleHeader theme="loansense" menuMode="feature-layout" title="Education Loan" />
 			<div><p className="text-sm opacity-80 mt-2">Explore your education loan eligibility and affordability insights</p></div>
 
 			{/* Eligibility Summary */}
@@ -147,3 +147,4 @@ export default function Page() {
 		</main>
 	);
 }
+

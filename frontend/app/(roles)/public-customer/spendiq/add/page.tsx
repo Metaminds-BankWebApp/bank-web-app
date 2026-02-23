@@ -1,17 +1,14 @@
-"use client";
+﻿"use client";
 
 import { AuthGuard } from "@/src/components/auth";
 import { 
-  Bell, 
-  Mail, 
   CreditCard,
   Banknote,
   Trash2,
   Edit2
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
-import { SpendIqHeader } from "@/src/components/SpendIqHeader";
-import { Input } from "@/src/components/ui/input";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { 
   Select, 
   SelectContent, 
@@ -37,7 +34,7 @@ export default function SpendIQDashboard() {
     <AuthGuard requiredRole="PUBLIC_CUSTOMER">
       <div className="flex flex-col gap-8 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
         
-           <SpendIqHeader title="Add New Income / expenses" />
+           <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Add New Income / expenses" />
 
         {/* Add New Section */}
         <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
@@ -164,3 +161,4 @@ export default function SpendIQDashboard() {
     </AuthGuard>
   );
 }
+
