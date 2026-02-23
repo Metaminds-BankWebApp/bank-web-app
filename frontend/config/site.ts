@@ -129,7 +129,7 @@ export const siteConfig = {
         { title: "Branch Management", href: "/admin/branch-management", icon: "users", section: "general" },
         { title: "Officer Management", href: "/admin/bank-officer-management", icon: "user", section: "general" },
         { title: "User Management", href: "/admin/user-management", icon: "line-chart", section: "general" },
-        { title: "Policy Management", href: "/admin/policy-management", icon: "inbox", section: "general" },
+        { title: "Loan Policy", href: "/admin/policy-management", icon: "inbox", section: "general" },
         { title: "Audit Logs", href: "/admin/audit-logs", icon: "inbox", section: "general" },
         { title: "Profile", href: "/admin/profile", icon: "user", section: "general" },
         { title: "Help & Support", href: "/admin/support", icon: "help-circle", section: "other" },
