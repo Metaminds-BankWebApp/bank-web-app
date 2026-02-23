@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
-import AdminHeader from "@/src/components/ui/adminheader";
+import { AdminHeader } from "@/src/components/ui/adminheader";
 import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Switch } from "@/src/components/ui";
 
 export default function AdminSettingsPage() {

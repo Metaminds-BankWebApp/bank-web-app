@@ -13,6 +13,7 @@ import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
+import { Dialog } from "@/src/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -88,6 +89,7 @@ const historyData = [
 
 export default function HistoryPage() {
   const [selectedTab, setSelectedTab] = useState("evaluations");
+   const [selectedHistoryItem, setSelectedHistoryItem] = useState<(typeof historyData)[number] | null>(null);
    const [searchTerm, setSearchTerm] = useState("");
    const [dateRange, setDateRange] = useState<"30days" | "60days" | "90days" | "all">("30days");
    const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
@@ -153,6 +155,50 @@ export default function HistoryPage() {
       link.download = `bank-officer-history-${new Date().toISOString().slice(0, 10)}.csv`;
       link.click();
       URL.revokeObjectURL(url);
+   };
+
+   const getActivityDetails = (actionType: string) => {
+      if (/Credit Re-evaluation/i.test(actionType)) {
+         return {
+            changes: [
+               "Credit score recalculated using latest transaction behavior",
+               "Risk level updated after debt-to-income re-check",
+               "Officer note saved to profile timeline",
+            ],
+            trigger: "Quarterly risk review",
+         };
+      }
+
+      if (/Registration/i.test(actionType)) {
+         return {
+            changes: [
+               "Customer profile created with base identity details",
+               "KYC document package submitted",
+               "Initial eligibility checks queued",
+            ],
+            trigger: "New customer onboarding",
+         };
+      }
+
+      if (/Limit Increase/i.test(actionType)) {
+         return {
+            changes: [
+               "Customer requested higher credit limit",
+               "Income proof re-validation requested",
+               "Decision flagged for manual officer approval",
+            ],
+            trigger: "Limit adjustment workflow",
+         };
+      }
+
+      return {
+         changes: [
+            "Financial data synchronized from latest statements",
+            "Model confidence check completed",
+            "Customer timeline refreshed",
+         ],
+         trigger: "Automated system update",
+      };
    };
 
   return (
@@ -291,7 +337,12 @@ export default function HistoryPage() {
                                </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                               <Button variant="ghost" size="sm" className="bg-slate-100 hover:bg-slate-200 text-slate-700 h-8 text-xs font-medium">
+                               <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 h-8 text-xs font-medium"
+                                  onClick={() => setSelectedHistoryItem(item)}
+                               >
                                   View Details
                                </Button>
                             </TableCell>
@@ -325,6 +376,56 @@ export default function HistoryPage() {
                 </div>
              </div>
           </div>
+
+               <Dialog
+                  open={selectedHistoryItem !== null}
+                  onOpenChange={(open) => {
+                     if (!open) {
+                        setSelectedHistoryItem(null);
+                     }
+                  }}
+                  title={selectedHistoryItem ? `${selectedHistoryItem.customer.name} — Activity Details` : "Activity Details"}
+                  description="Expanded history information for this customer action."
+                  footer={<Button variant="outline" onClick={() => setSelectedHistoryItem(null)}>Close</Button>}
+               >
+                  {selectedHistoryItem && (
+                     <div className="space-y-4">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Timestamp</p>
+                              <p className="font-semibold text-slate-800">{selectedHistoryItem.date} · {selectedHistoryItem.time}</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Status</p>
+                              <p className="font-semibold uppercase text-slate-800">{selectedHistoryItem.status}</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Customer</p>
+                              <p className="font-semibold text-slate-800">{selectedHistoryItem.customer.name} ({selectedHistoryItem.customer.id})</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Performed By</p>
+                              <p className="font-semibold text-slate-800">{selectedHistoryItem.performedBy}</p>
+                           </div>
+                        </div>
+
+                        <div className="rounded-lg border border-slate-200 bg-white p-4">
+                           <p className="mb-2 text-xs text-slate-500">Action Type</p>
+                           <p className="mb-3 font-semibold text-slate-800">{selectedHistoryItem.actionType}</p>
+
+                           <p className="mb-2 text-xs text-slate-500">What was done</p>
+                           <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+                              {getActivityDetails(selectedHistoryItem.actionType).changes.map((detail) => (
+                                 <li key={detail}>{detail}</li>
+                              ))}
+                           </ul>
+
+                           <p className="mt-3 text-xs text-slate-500">Triggered By</p>
+                           <p className="font-medium text-slate-800">{getActivityDetails(selectedHistoryItem.actionType).trigger}</p>
+                        </div>
+                     </div>
+                  )}
+               </Dialog>
           </div>
         </main>
       </div>

@@ -9,13 +9,13 @@ import {
   Filter,
   TrendingUp,
   Clock,
-  AlertTriangle,
-  MoreVertical
+   AlertTriangle
 } from "lucide-react";
 import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
+import { Dialog } from "@/src/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -102,6 +102,7 @@ const transactions = [
 
 export default function TransactionsPage() {
    const [searchTerm, setSearchTerm] = useState("");
+   const [selectedTransaction, setSelectedTransaction] = useState<(typeof transactions)[number] | null>(null);
    const [dateRange, setDateRange] = useState<"30days" | "60days" | "90days" | "all">("30days");
    const [typeFilter, setTypeFilter] = useState<"all" | "transfer" | "payment" | "withdrawal">("all");
    const [amountFilter, setAmountFilter] = useState<"any" | "low" | "high">("any");
@@ -183,6 +184,29 @@ export default function TransactionsPage() {
       link.download = `bank-officer-transactions-${new Date().toISOString().slice(0, 10)}.csv`;
       link.click();
       URL.revokeObjectURL(url);
+   };
+
+   const getTransactionDetails = (transaction: (typeof transactions)[number]) => {
+      const channel =
+         transaction.category === "Transfer"
+            ? "Mobile Banking"
+            : transaction.category === "Payment"
+               ? "Card Network"
+               : "ATM Network";
+
+      const referenceNote =
+         transaction.status === "flagged"
+            ? "Transaction flagged by risk rules due to unusual recipient/location pattern."
+            : transaction.status === "pending"
+               ? "Awaiting final settlement confirmation from processing network."
+               : "Transaction successfully completed and posted to account ledger.";
+
+      return {
+         channel,
+         referenceNote,
+         fee: transaction.category === "Transfer" ? "LKR 120.00" : "LKR 0.00",
+         approvedBy: transaction.status === "flagged" ? "Pending Officer Review" : "Auto-approved",
+      };
    };
 
   return (
@@ -381,15 +405,14 @@ export default function TransactionsPage() {
                         )}
                      </TableCell>
                      <TableCell className="text-right">
-                        {txn.status === "flagged" ? (
-                           <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white h-7 text-xs font-bold shadow-sm shadow-amber-200">
-                              Review
-                           </Button>
-                        ) : (
-                           <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
-                              <MoreVertical size={16} />
-                           </Button>
-                        )}
+                        <Button
+                           variant="outline"
+                           size="sm"
+                           className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                           onClick={() => setSelectedTransaction(txn)}
+                        >
+                           View
+                        </Button>
                      </TableCell>
                    </TableRow>
                          ))}
@@ -405,6 +428,64 @@ export default function TransactionsPage() {
              </Table>
              </div>
           </div>
+
+               <Dialog
+                  open={selectedTransaction !== null}
+                  onOpenChange={(open) => {
+                     if (!open) {
+                        setSelectedTransaction(null);
+                     }
+                  }}
+                  title={selectedTransaction ? `${selectedTransaction.id} — Transaction Details` : "Transaction Details"}
+                  description="Detailed transaction metadata for officer review."
+                  footer={<Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>}
+               >
+                  {selectedTransaction && (
+                     <div className="space-y-4">
+                        <div className="grid gap-3 sm:grid-cols-2">
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Date & Time</p>
+                              <p className="font-semibold text-slate-800">{selectedTransaction.date} · {selectedTransaction.time}</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Status</p>
+                              <p className="font-semibold uppercase text-slate-800">{selectedTransaction.status}</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Recipient/Sender</p>
+                              <p className="font-semibold text-slate-800">
+                                 {selectedTransaction.recipientSender.name} {selectedTransaction.recipientSender.detail}
+                              </p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Amount</p>
+                              <p className="font-semibold text-slate-800">LKR {selectedTransaction.amount}</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Category</p>
+                              <p className="font-semibold text-slate-800">{selectedTransaction.category}</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Channel</p>
+                              <p className="font-semibold text-slate-800">{getTransactionDetails(selectedTransaction).channel}</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Processing Fee</p>
+                              <p className="font-semibold text-slate-800">{getTransactionDetails(selectedTransaction).fee}</p>
+                           </div>
+                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs text-slate-500">Approval</p>
+                              <p className="font-semibold text-slate-800">{getTransactionDetails(selectedTransaction).approvedBy}</p>
+                           </div>
+                        </div>
+
+                        <div className="rounded-lg border border-slate-200 bg-white p-4">
+                           <p className="text-xs text-slate-500">Risk & Processing Notes</p>
+                           <p className="mt-1 text-sm text-slate-700">{getTransactionDetails(selectedTransaction).referenceNote}</p>
+                        </div>
+                     </div>
+                  )}
+               </Dialog>
         </div>
         </main>
       </div>
