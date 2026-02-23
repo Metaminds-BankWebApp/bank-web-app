@@ -40,9 +40,9 @@ export default function CreditAnalysisEvaluationPage() {
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
-      <div className="flex min-h-screen bg-[#f3f4f6]">
+      <div className="flex min-h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)]">
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden" />
-        <main className="flex-1 p-8 lg:p-10 overflow-y-auto w-full max-w-400 mx-auto">
+        <main className="flex-1 flex flex-col bg-[#f3f4f6] p-8 lg:p-10 overflow-y-auto w-full max-w-400 mx-auto shadow-2xl lg:rounded-l-[28px] h-full">
           <ModuleHeader
             theme="staff"
             menuMode="sidebar-overlay"
@@ -89,9 +89,10 @@ export default function CreditAnalysisEvaluationPage() {
             {activeTab === "credit-insights" && <CreditInsightsTab />}
             {activeTab === "reports" && <ReportsTab />}
           </div>
+           </main>
           </div>
-        </main>
-      </div>
+       
+
     </AuthGuard>
   );
 }

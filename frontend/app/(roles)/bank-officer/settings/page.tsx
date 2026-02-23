@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
-import { BankOfficerHeader, Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Switch } from "@/src/components/ui";
+import { Button, Card, CardContent, CardHeader, CardTitle, Checkbox, Input, Switch } from "@/src/components/ui";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function BankOfficerSettingsPage() {
   const [alertsEnabled, setAlertsEnabled] = useState(true);
@@ -30,7 +31,15 @@ export default function BankOfficerSettingsPage() {
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
 
         <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
-          <BankOfficerHeader title="Settings" className="mb-5 shrink-0" roleLabel="Bank Officer" />
+          <ModuleHeader
+            title="Settings"
+            subtitle="Bank Officer Preferences"
+            name="Kamal Edirisinghe"
+            role="Bank Officer"
+            theme="loansense"
+            className="mb-5 shrink-0"
+            sidebarRole="BANK_OFFICER"
+          />
 
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="mb-6 text-sm text-slate-500">
