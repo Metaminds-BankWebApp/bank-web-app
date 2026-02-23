@@ -15,6 +15,13 @@ import { useRouter } from "next/navigation"
 export default function Page() {
   const [showOtp, setShowOtp] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [accountNumber, setAccountNumber] = useState("")
+  const [amount, setAmount] = useState("")
+  const balance = 81000.0
+  const [formErrors, setFormErrors] = useState({
+    accountNumber: "",
+    amount: "",
+  })
 
   const length = 6
   const [otpValues, setOtpValues] = useState<string[]>(Array(length).fill(""))
@@ -63,13 +70,66 @@ export default function Page() {
     inputsRef.current[0]?.focus()
   }
 
+  const handleAccountNumberChange = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "")
+    setAccountNumber(digitsOnly)
+    if (formErrors.accountNumber) {
+      setFormErrors((prev) => ({ ...prev, accountNumber: "" }))
+    }
+  }
+
+  const handleAmountChange = (value: string) => {
+    const sanitizedValue = value.replace(/[^0-9.]/g, "")
+    if (!/^\d*\.?\d{0,2}$/.test(sanitizedValue)) return
+
+    setAmount(sanitizedValue)
+    if (formErrors.amount) {
+      setFormErrors((prev) => ({ ...prev, amount: "" }))
+    }
+  }
+
+  const validateTransferForm = () => {
+    const nextErrors = {
+      accountNumber: "",
+      amount: "",
+    }
+
+    if (!accountNumber) {
+      nextErrors.accountNumber = "Account number is required."
+    }
+
+    const parsedAmount = Number.parseFloat(amount)
+
+    if (!amount) {
+      nextErrors.amount = "Amount is required."
+    } else if (Number.isNaN(parsedAmount)) {
+      nextErrors.amount = "Amount must be a valid number."
+    } else if (parsedAmount <= 0) {
+      nextErrors.amount = "Amount must be greater than 0."
+    } else if (parsedAmount > balance) {
+      nextErrors.amount = "Amount exceeds available balance."
+    }
+
+    setFormErrors(nextErrors)
+    return !nextErrors.accountNumber && !nextErrors.amount
+  }
+
+  const handleTransfer = () => {
+    const isValid = validateTransferForm()
+    if (!isValid) return
+
+    setSeconds(59)
+    setOtpValues(Array(length).fill(""))
+    setShowOtp(true)
+  }
+
   return (
     <div className="relative min-h-full">
 
       {/* 🔹 BLUR MAIN PAGE WHEN MODAL OPEN */}
       <div className={showOtp || showSuccess ? "blur-sm pointer-events-none" : ""}>
         <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-          <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transfer" subtitle="Dineth dovindu" name="Dineth dovindu" />
+          <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transfer" name="John Deo" />
 
           {/* Add Beneficiary Button */}
           <div className="flex justify-end mt-16  pr-[7rem] ">
@@ -89,7 +149,18 @@ export default function Page() {
             <form className="space-y-9">
               <div className="space-y-2">
                 <Label>Account Number</Label>
-                <Input placeholder="Enter account number" />
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="Enter account number"
+                  value={accountNumber}
+                  onChange={(e) => handleAccountNumberChange(e.target.value)}
+                  aria-invalid={Boolean(formErrors.accountNumber)}
+                />
+                {formErrors.accountNumber && (
+                  <p className="text-sm text-red-500">{formErrors.accountNumber}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -99,7 +170,21 @@ export default function Page() {
 
               <div className="space-y-2">
                 <Label>Amount</Label>
-                <Input type="number" placeholder="0.00" />
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  pattern="[0-9]*[.]?[0-9]*"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => handleAmountChange(e.target.value)}
+                  aria-invalid={Boolean(formErrors.amount)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  Available Balance: LKR {balance.toFixed(2)}
+                </p>
+                {formErrors.amount && (
+                  <p className="text-sm text-red-500">{formErrors.amount}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -117,11 +202,7 @@ export default function Page() {
               <div className="flex justify-end">
                 <Button
                   type="button"
-                  onClick={() => {
-                    setSeconds(59)
-                    setOtpValues(Array(length).fill(""))
-                    setShowOtp(true)
-                  }}
+                  onClick={handleTransfer}
                   className="w-full sm:w-auto bg-[#155E63] hover:bg-[#134e52] text-white px-8 py-5 rounded-xl"
                 >
                   Transfer Amount
@@ -250,5 +331,3 @@ export default function Page() {
     </div>
   )
 }
-
-
