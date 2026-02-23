@@ -61,21 +61,10 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   };
 
   return (
-    <div
-      className={
-        isCreditLens
-          ? "w-full overflow-x-hidden px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10"
-          : "min-h-screen bg-[#f3f4f6] p-4 md:p-8"
-      }
-    >
-      <div
-        className={
-          isCreditLens
-            ? "flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:min-h-[calc(100dvh-2rem)]"
-            : "mx-auto w-full max-w-7xl space-y-6"
-        }
-      >
-        {renderFeatureHeader()}
+    <div className="min-h-screen bg-[#f3f4f6] p-4 md:p-8">
+       {renderFeatureHeader()}
+      <div className=" mx-auto my-auto w-full max-h-full max-w-7xl space-y-6 sm:mt-20">
+       
 
         <div className={isCreditLens ? "grid gap-6 lg:px-2 xl:grid-cols-[1fr_1.6fr] xl:px-3" : "grid gap-6 xl:grid-cols-[1fr_1.6fr]"}>
           <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
