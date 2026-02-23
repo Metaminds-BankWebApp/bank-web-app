@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store";
 
@@ -173,7 +173,6 @@ type FeatureSidebarProps = {
 
 export function FeatureSidebar({ role, feature, className, onNavigate }: FeatureSidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -339,7 +338,7 @@ export function FeatureSidebar({ role, feature, className, onNavigate }: Feature
           onClick={() => {
             onNavigate?.();
             logout();
-            router.replace("/login?force=true");
+            window.location.replace("/");
           }}
           className={cn(
             "flex w-full items-center gap-3 text-left text-sm font-medium text-white/70 transition-colors hover:text-white hover:bg-white/5 px-4 py-3 rounded-lg",

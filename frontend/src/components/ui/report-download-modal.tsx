@@ -192,7 +192,7 @@ export function ReportDownloadModal({
             className="bg-sky-300 text-[#05233a] hover:bg-sky-200"
           >
             <Download className="h-4 w-4" />
-            Prepare File
+            Download file
           </Button>
         </div>
       </div>

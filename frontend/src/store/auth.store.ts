@@ -3,6 +3,8 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { LoginResponse, UserRole } from "@/src/types/dto/auth.dto";
 import { authPersistence } from "@/src/store/auth.storage";
 
+export const LOGOUT_INTENT_KEY = "logout_intent";
+
 type AuthUser = LoginResponse["user"];
 
 export type RoleRedirectPath = "/public-customer" | "/bank-customer" | "/bank-officer" | "/admin";
@@ -44,6 +46,10 @@ export const useAuthStore = create<AuthState>()(
         return getRoleRedirectPath(nextRole);
       },
       logout: () => {
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(LOGOUT_INTENT_KEY, "1");
+        }
+
         set({
           token: null,
           role: null,
