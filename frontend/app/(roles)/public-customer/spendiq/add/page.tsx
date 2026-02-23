@@ -34,7 +34,7 @@ export default function SpendIQDashboard() {
   ];
 
   return (
-    <AuthGuard requiredRole="BANK_CUSTOMER">
+    <AuthGuard requiredRole="PUBLIC_CUSTOMER">
       <div className="flex flex-col gap-8 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
         
            <SpendIqHeader title="Add New Income / expenses" />
