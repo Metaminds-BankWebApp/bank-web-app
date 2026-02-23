@@ -160,11 +160,11 @@ const actionToneClass: Record<ActionTone, string> = {
 export default function DashboardPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex h-screen overflow-hidden bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)]">
-        <Sidebar role="ADMIN" className="hidden h-full lg:block" />
+      <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
+         <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
 
-        <main className="flex-1 flex flex-col overflow-hidden bg-[#f3f4f7] lg:rounded-l-[28px]">
-          <div className="shrink-0 p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 flex flex-col bg-[#f3f4f6] overflow-hidden lg:rounded-l-[28px] shadow-2xl p-3 sm:p-5 lg:p-7">
+          <div className="shrink-0 mb-5">
             <ModuleHeader
               title="Dashboard"
               theme="staff"
@@ -350,7 +350,7 @@ export default function DashboardPage() {
                         <div className="flex items-start gap-3">
                           <Icon size={19} className="mt-1 text-[#111111]" />
                           <div>
-                            <p className="text-lg font-medium leading-tight text-[#24486f]">{item.title}</p>
+                            <p className="text-sm font-medium leading-tight text-[#1e4169]">{item.title}</p>
                             <p className="text-sm text-[#a4afbe]">Since 16th of September 2025</p>
                           </div>
                         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { AlertTriangle, CreditCard, CircleAlert } from "lucide-react";
+import { AlertTriangle, CreditCard, CircleAlert, TrendingDown } from "lucide-react";
 
 export default function KeyRiskFactorsCard() {
   return (
@@ -59,7 +59,7 @@ export default function KeyRiskFactorsCard() {
         <div className="rounded-2xl border border-slate-200/60 bg-slate-50/60 p-4 sm:p-5">
           <div className="flex items-start gap-3">
             <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-              <div className="h-5 w-5 rounded-sm border border-amber-300/70 bg-amber-200/40" />
+              <TrendingDown className="h-5 w-5" />
             </div>
 
             <div className="flex-1">

@@ -64,6 +64,7 @@ type Liability = {
 export default function PublicCustomerApplicationPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [skippedSteps, setSkippedSteps] = useState<number[]>([]);
   const [formData, setFormData] = useState({
     incomes: [] as Income[],
     loans: [] as Loan[],
@@ -165,7 +166,16 @@ export default function PublicCustomerApplicationPage() {
     return `LKR ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  const nextStep = () => setStep(prev => Math.min(prev + 1, 5));
+  const nextStep = () => {
+    setSkippedSteps(prev => prev.filter((skippedStep) => skippedStep !== step));
+    setStep(prev => Math.min(prev + 1, 5));
+  };
+
+  const skipStep = () => {
+    setSkippedSteps(prev => (prev.includes(step) ? prev : [...prev, step]));
+    setStep(prev => Math.min(prev + 1, 5));
+  };
+
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
   const { showToast } = useToast();
 
@@ -210,28 +220,34 @@ export default function PublicCustomerApplicationPage() {
                 { id: 2, label: "LOANS" },
                 { id: 3, label: "CARDS" },
                 { id: 4, label: "LIABILITIES" }
-              ].map((s) => (
-                <div key={s.id} className="flex flex-col items-center gap-2 bg-slate-50 px-2">
-                   <div 
-                     className={cn(
-                       "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-2",
-                       step > s.id 
-                         ? "bg-[#3e9fd3] border-[#3e9fd3] text-white" 
-                         : step === s.id 
-                           ? "bg-[#3e9fd3] border-[#3e9fd3] text-white shadow-[0_0_0_4px_rgba(62,159,211,0.2)]" 
-                           : "bg-white border-slate-200 text-slate-400"
-                     )}
-                   >
-                      {step > s.id ? <Check size={18} /> : s.id}
-                   </div>
-                   <span className={cn(
-                     "text-[10px] font-bold tracking-widest uppercase transition-colors duration-300",
-                     step >= s.id ? "text-[#3e9fd3]" : "text-slate-400"
-                   )}>
-                     {s.label}
-                   </span>
-                </div>
-              ))}
+              ].map((s) => {
+                const isSkipped = skippedSteps.includes(s.id);
+                const isCurrent = step === s.id;
+                const isCompleted = step > s.id && !isSkipped;
+
+                return (
+                  <div key={s.id} className="flex flex-col items-center gap-2 bg-slate-50 px-2">
+                     <div 
+                       className={cn(
+                         "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-2",
+                         isCompleted
+                           ? "bg-[#3e9fd3] border-[#3e9fd3] text-white"
+                           : isCurrent
+                             ? "bg-[#3e9fd3] border-[#3e9fd3] text-white shadow-[0_0_0_4px_rgba(62,159,211,0.2)]"
+                             : "bg-white border-slate-200 text-slate-400"
+                       )}
+                     >
+                        {isCompleted ? <Check size={18} /> : s.id}
+                     </div>
+                     <span className={cn(
+                       "text-[10px] font-bold tracking-widest uppercase transition-colors duration-300",
+                       isCurrent || isCompleted ? "text-[#3e9fd3]" : "text-slate-400"
+                     )}>
+                       {s.label}
+                     </span>
+                  </div>
+                );
+              })}
            </div>
         </div>
 
@@ -845,6 +861,9 @@ export default function PublicCustomerApplicationPage() {
                            {step === 1 ? "Loans" : step === 2 ? "Credit Cards" : step === 3 ? "Liabilities" : "Review"}
                         </span>
                      </div>
+                     <Button variant="ghost" onClick={skipStep} className="h-10 px-4 text-slate-500 hover:text-slate-900 hover:bg-slate-100">
+                        Skip
+                     </Button>
                      <Button onClick={nextStep} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white gap-2 px-8 h-10 rounded-lg shadow-lg shadow-blue-400/20">
                            Next <span className="hidden sm:inline">Section</span> <ArrowRight size={16} />
                      </Button>

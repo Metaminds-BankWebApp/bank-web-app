@@ -133,12 +133,12 @@ export default function Page() {
     : historyData.filter((row) => row.loanType === activeLoanFilter);
 
   return (
-    <main className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
+    <main className="flex min-h-screen flex-col gap-6 bg-transparent p-4 font-sans text-slate-800 md:p-8">
       {/* Header */}
           <ModuleHeader theme="loansense" menuMode="feature-layout" title="Loan Eligibility History" />
         <div><p className="text-sm opacity-80 mt-2">Track changes in your loan eligibility over time</p></div>
       {/* Positive Trend Banner */}
-      <div className="rounded-xl bg-blue-50 border border-blue-200 p-6 shadow-md flex items-start gap-4">
+      <div className="loansense-card loansense-card-hover loansense-creditlens-shade rounded-xl bg-blue-50 p-6 flex items-start gap-4">
         <div className="text-blue-600 text-3xl flex-shrink-0">
           ↑
         </div>
@@ -151,7 +151,7 @@ export default function Page() {
       </div>
 
       {/* Filter Section */}
-<div className="rounded-xl bg-white p-4 shadow-md">
+<div className="loansense-card loansense-card-hover loansense-creditlens-shade rounded-xl p-4">
   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 
     {/* Left Side: Filter Label + Chips */}
@@ -191,7 +191,7 @@ export default function Page() {
 
 
       {/* History Table Section */}
-      <div className="rounded-xl bg-white shadow-md overflow-hidden">
+      <div className="loansense-card loansense-card-hover loansense-creditlens-shade rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -231,4 +231,3 @@ export default function Page() {
     </main>
   );
 }
-

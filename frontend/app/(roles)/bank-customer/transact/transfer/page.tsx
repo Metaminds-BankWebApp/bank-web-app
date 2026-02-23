@@ -145,7 +145,7 @@ export default function Page() {
           </div>
 
           {/* Transfer Form */}
-          <Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto w-full mt-4 sm:mt-10">
+          <Card className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 mt-4 max-w-6xl mx-auto w-full rounded-xl p-4 sm:mt-10 sm:p-6 lg:p-8">
             <form className="space-y-9">
               <div className="space-y-2">
                 <Label>Account Number</Label>
@@ -216,7 +216,7 @@ export default function Page() {
       {/* 🔹 OTP MODAL */}
       {showOtp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <Card className="bg-white rounded-3xl shadow-2xl border p-4 sm:p-8 max-w-2xl w-full">
+          <Card className="transact-card transact-creditlens-shade max-w-2xl w-full rounded-3xl p-4 shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-8">
 
             <h2 className="text-xl sm:text-2xl font-semibold text-center text-[#155E63] mb-6 sm:mb-8">
               OTP Authentication
@@ -277,7 +277,7 @@ export default function Page() {
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
 
-          <Card className="bg-white rounded-3xl shadow-2xl border p-6 sm:p-10 max-w-2xl w-full text-center">
+          <Card className="transact-card transact-creditlens-shade max-w-2xl w-full rounded-3xl p-6 text-center shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-10">
 
             <div className="flex justify-center mb-6 sm:mb-10">
               <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full bg-[#0B3E5A]/40 flex items-center justify-center">

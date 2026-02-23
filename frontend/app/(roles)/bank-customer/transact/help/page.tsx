@@ -12,19 +12,58 @@ export default function TransactCustomerHelp(){
   const [openFraud,setOpenFraud]=useState(false);
 
   return (
-    <div className="min-h-screen bg-[#063154]">
-      <ModuleHeader theme="transact" menuMode="feature-layout" title="Help & Support 👋" name="You" role="Bank Customer" className="mb-6" />
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-8 mb-6">
-          <h1 className="text-2xl font-semibold text-[#063154]">Help & Support 👋</h1>
-          <p className="mt-1 text-sm text-[#063154]/80">Get answers fast, track your requests, or contact your assigned officer.</p>
-          <div className="mt-6"><Input placeholder="Search help articles… (e.g., OTP not received, loan eligibility, transaction failed)" value={search} onChange={(e)=>setSearch(e.target.value)} className="h-12 bg-white rounded-[12px]" /></div>
+    <div className="min-h-screen bg-transparent px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
+      <ModuleHeader theme="transact" menuMode="feature-layout" title="Transact Help" name="You" role="Customer" className="mb-6" />
+      <main className="max-w-5xl mx-auto p-6">
+        <div className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 mb-6 rounded-[20px] p-6">
+          <h2 className="text-xl font-semibold text-[#063154]">Transact Help</h2>
+          <p className="text-sm text-[#063154]/80 mt-2">Transfers, OTP issues and troubleshooting for transactions.</p>
         </div>
 
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {["OTP not received","Transfer failed","Pending transfer","Wrong beneficiary","Dispute transfer","Contact officer"].map((t)=> (
-            <div key={t} className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-4 hover:shadow-md transition-shadow flex flex-col justify-between"><div><h4 className="font-semibold text-[#063154]">{t}</h4><p className="text-sm text-[#063154]/80 mt-1">Quick action</p></div><div className="mt-4"><Button className="bg-[#2F9D94]" onClick={()=> setOpenTicket(true)}>Go Now</Button></div></div>
-          ))}
+        <section className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-6">
+          <h3 className="font-semibold text-[#063154]">Top FAQs</h3>
+          <div className="mt-3 space-y-2">
+            {["OTP not received","Transfer failed","Pending transfer","Wrong beneficiary","Limits and fees"].map(q=> (
+              <details key={q} className="bg-white p-3 rounded-md border border-[#E8E8E8]">
+                <summary className="cursor-pointer font-medium text-[#063154]">{q}</summary>
+                <p className="mt-2 text-sm text-[#063154]/80">Answer for: {q}</p>
+              </details>
+            ))}
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="col-span-2 bg-white p-4 rounded-md border border-[#E8E8E8]">
+              <h4 className="font-semibold text-[#063154]">Troubleshooter</h4>
+              <p className="text-sm text-[#063154]/80 mt-1">Select the issue</p>
+              <div className="mt-3 flex gap-2">
+                <button onClick={()=>setChoice('otp')} className={`px-3 py-2 rounded-md border ${choice==='otp' ? 'bg-[#2F9D94] text-white' : 'bg-white'}`}>OTP not received</button>
+                <button onClick={()=>setChoice('failed')} className={`px-3 py-2 rounded-md border ${choice==='failed' ? 'bg-[#2F9D94] text-white' : 'bg-white'}`}>Transfer failed</button>
+                <button onClick={()=>setChoice('pending')} className={`px-3 py-2 rounded-md border ${choice==='pending' ? 'bg-[#2F9D94] text-white' : 'bg-white'}`}>Pending transfer</button>
+              </div>
+
+              {choice && (
+                <div className="mt-4 bg-[#063154]/5 p-3 rounded-md">
+                  <ol className="list-decimal list-inside text-sm text-[#063154]/80">
+                    <li>Verify your network and try resending OTP.</li>
+                    <li>Check beneficiary details and sufficient balance.</li>
+                    <li>Wait a few minutes for processing or contact support with TX ID.</li>
+                  </ol>
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <Input placeholder="Transaction ID (optional)" value={txId} onChange={(e:any)=>setTxId(e.target.value)} className="bg-white" />
+                    <div className="sm:col-span-2 flex gap-2">
+                      <Button className="bg-[#2F9D94]" onClick={()=>setOpen(true)}>Report with Transaction ID</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="bg-white p-4 rounded-md border border-[#E8E8E8]">
+              <h4 className="font-semibold text-[#063154]">Need urgent help?</h4>
+              <p className="text-sm text-[#063154]/80 mt-2">Report fraud or failed transfers immediately.</p>
+              <div className="mt-3"><Button className="bg-[#2F9D94]" onClick={()=>setOpen(true)}>Create Ticket</Button></div>
+            </div>
+          </div>
         </section>
 
         <FeatureHelp title="Transact Help" description="Resolve transfer issues, OTPs, and beneficiary problems." faqs={["Why didn't I get OTP?","Why did transfer fail?","What is pending transfer?","How to update beneficiary?","How long do transfers take?"]} troubleshooterOptions={[{key:'otp',label:'OTP not received'},{key:'failed',label:'Transfer failed'},{key:'pending',label:'Pending transfer'},{key:'benef',label:'Wrong beneficiary'}]} openTicket={()=> setOpenTicket(true)} includeTxInput />

@@ -125,17 +125,17 @@ const doughnutOptions: ChartOptions<"doughnut"> = {
 export default function TransactDashboard() {
   return (
     <AuthGuard requiredRole="BANK_CUSTOMER">
-      <div className="bg-white px-4 sm:px-8 py-4 sm:py-6">
+      <div className="bg-transparent px-4 py-4 sm:px-8 sm:py-6">
         <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Dashboard"  name="John Deo" />
 
         <section className=" max-w-full mx-auto mt-8">
 
-          <Card className="rounded-xl shadow-sm p-6 sm:p-8 w-full border min-h-[600px] md:min-h-[700px] lg:min-h-[800px]">
+          <Card className="transact-card transact-creditlens-shade creditlens-delay-1 w-full rounded-xl p-6 sm:p-8 min-h-[600px] md:min-h-[700px] lg:min-h-[800px]">
 
             {/* =======================
                 Stats Section
             ======================= */}
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            <div className="creditlens-stagger-4 mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 lg:gap-8 xl:grid-cols-4">
 
               {[
                 { title: "Current Balance", amount: "81,000", dark: true },
@@ -145,10 +145,10 @@ export default function TransactDashboard() {
               ].map((item, index) => (
                 <div
                   key={index}
-                  className={`rounded-2xl shadow-sm p-4 sm:p-6 min-h-[120px] sm:min-h-[150px] flex flex-col justify-between ${
+                  className={`transact-card transact-card-hover rounded-2xl p-4 sm:p-6 min-h-[120px] sm:min-h-[150px] flex flex-col justify-between ${
                     item.dark
-                      ? "bg-[#0B3E5A] text-white"
-                      : "bg-[#e0f7fa] text-[#0e4f62]"
+                      ? "border border-[#0B3E5A]/25 bg-[linear-gradient(150deg,#0B3E5A_0%,#0a3046_100%)] text-white shadow-[0_20px_44px_-32px_rgba(2,18,33,0.78)]"
+                      : "transact-creditlens-shade bg-[#e0f7fa] text-[#0e4f62]"
                   }`}
                 >
                   <div className="flex justify-between items-start">
@@ -171,10 +171,10 @@ export default function TransactDashboard() {
             {/* =======================
                 Charts Section
             ======================= */}
-            <div className="mt-12 md:mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 lg:gap-10">
+            <div className="creditlens-stagger-2 mt-12 grid grid-cols-1 gap-6 md:mt-16 md:grid-cols-2 md:gap-8 lg:grid-cols-3 lg:gap-10">
 
               {/* Line Chart */}
-              <div className="md:col-span-2 lg:col-span-2 bg-white rounded-3xl p-5 sm:p-8 shadow-sm">
+              <div className="transact-card transact-card-hover transact-creditlens-shade md:col-span-2 lg:col-span-2 rounded-3xl p-5 sm:p-8">
                 <h2 className="text-lg font-bold text-[#0e4f62] mb-6">
                   Transaction Timeline
                 </h2>
@@ -185,7 +185,7 @@ export default function TransactDashboard() {
               </div>
 
               {/* Doughnut Chart */}
-              <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-sm flex flex-col items-center">
+              <div className="transact-card transact-card-hover transact-creditlens-shade flex flex-col items-center rounded-3xl p-5 sm:p-8">
                 <h2 className="w-full text-left text-lg font-bold text-[#0e4f62] mb-6">
                   Transaction Status
                 </h2>
@@ -223,5 +223,3 @@ export default function TransactDashboard() {
     </AuthGuard>
   );
 }
-
-

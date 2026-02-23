@@ -59,17 +59,17 @@ export default function PolicyManagementPage() {
   };
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
-        <Sidebar role="ADMIN" className="hidden lg:block" />
+      <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
+        <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
 
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col bg-[#f3f4f6] overflow-hidden lg:rounded-l-[28px] shadow-2xl p-3 sm:p-5 lg:p-7">
           {/* Header */}
-          <div className="px-6 pt-4 pb-6">
+          <div className="shrink-0 mb-5">
             <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Admin" title="Loan Interest Policy Management" />
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-8">
+          <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-5">
 
             <h2 className="text-2xl font-bold text-[#1e1b4b]">
               LOAN TYPE AND INTEREST RATE
@@ -78,7 +78,7 @@ export default function PolicyManagementPage() {
             {loans.map((loan) => (
               <div
                 key={loan.id}
-                className={`flex flex-col lg:flex-row justify-between items-center rounded-2xl px-8 py-8 transition ${
+                className={`flex flex-col lg:flex-row justify-between items-center rounded-xl px-6 py-5 transition ${
                   loan.dark
                     ? "bg-[#0B3B66] text-white"
                     : "bg-[#5f879e] text-white"

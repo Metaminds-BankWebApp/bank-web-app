@@ -212,16 +212,16 @@ useEffect(() => {
 
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
+      <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
         
         {/* Sidebar */}
-        <Sidebar role="ADMIN" className="hidden lg:block" />
+         <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col bg-[#f3f4f6] overflow-hidden lg:rounded-l-[28px] shadow-2xl p-3 sm:p-5 lg:p-7">
 
           {/* Header */}
-          <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6">
+          <div className="shrink-0 mb-5">
             <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Admin" title="Branch Management" />
           </div>
 
