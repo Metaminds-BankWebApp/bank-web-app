@@ -1,12 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useMemo, useState } from "react";
-import { usePathname } from "next/navigation";
-import { Bell, Mail, Menu, Plus, X } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bell, CheckCircle2, Info, Menu, Plus, TriangleAlert, X } from "lucide-react";
 import { Sidebar, useFeatureLayout } from "@/src/components/layout";
 import { cn } from "@/src/lib/utils";
 import type { UserRole } from "@/config/site";
+import {
+  type NotificationItem,
+  getNotificationsForContext,
+  resolveNotificationRouteContext,
+} from "@/src/components/notifications/notification-data";
 
 type ModuleHeaderTheme = "creditlens" | "transact" | "loansense" | "spendiq" | "staff";
 type ModuleHeaderMenuMode = "none" | "feature-layout" | "sidebar-overlay";
@@ -38,6 +43,13 @@ const THEME_BG: Record<ModuleHeaderTheme, string> = {
   staff: "bg-[linear-gradient(90deg,#0b1a3a,#0a234c)]",
 };
 
+const NOTIFICATION_KIND_ICON: Record<NotificationItem["kind"], React.ReactNode> = {
+  info: <Info size={14} className="text-sky-400" />,
+  success: <CheckCircle2 size={14} className="text-emerald-400" />,
+  warning: <TriangleAlert size={14} className="text-amber-400" />,
+  alert: <TriangleAlert size={14} className="text-rose-400" />,
+};
+
 function NotificationBadge({ show, value }: { show: boolean; value: BadgeValue }) {
   if (!show) return null;
 
@@ -64,7 +76,6 @@ export default function ModuleHeader({
   theme = "creditlens",
   className,
   showBadges = true,
-  mailBadge,
   notificationBadge,
   rightContent,
   avatarSrc,
@@ -74,14 +85,43 @@ export default function ModuleHeader({
   sidebarHideCollapse = false,
 }: ModuleHeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const featureLayout = useFeatureLayout();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const notificationsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!isMenuOpen) return;
-    const raf = requestAnimationFrame(() => setIsMenuOpen(false));
+    const raf = requestAnimationFrame(() => {
+      setIsMenuOpen(false);
+      setIsNotificationsOpen(false);
+    });
     return () => cancelAnimationFrame(raf);
-  }, [isMenuOpen, pathname]);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isNotificationsOpen) return;
+
+    const handleMouseDown = (event: MouseEvent) => {
+      if (!notificationsRef.current?.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleMouseDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleMouseDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isNotificationsOpen]);
 
   const canOpenMenu = useMemo(() => {
     if (menuMode === "sidebar-overlay") return true;
@@ -115,6 +155,32 @@ export default function ModuleHeader({
     }
   };
 
+  const routeContext = useMemo(() => resolveNotificationRouteContext(pathname), [pathname]);
+  const notifications = useMemo(() => getNotificationsForContext(routeContext), [routeContext]);
+  const previewNotifications = useMemo(() => notifications.slice(0, 4), [notifications]);
+  const unreadCount = useMemo(() => notifications.filter((item) => item.unread).length, [notifications]);
+  const profilePath = routeContext.profilePath;
+  const notificationsPath = routeContext.notificationsPath;
+
+  const profileContent = (
+    <>
+      <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/20">
+        {avatarSrc ? (
+          <Image src={avatarSrc} alt="User" fill className="object-cover" sizes="32px" unoptimized />
+        ) : (
+          <div className="h-full w-full bg-gradient-to-br from-slate-400 to-slate-600" />
+        )}
+        {avatarStatusDot ? (
+          <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-[#0d3b66] bg-green-500" />
+        ) : null}
+      </div>
+      <div className="hidden min-w-0 text-sm leading-tight sm:block">
+        <p className="truncate text-base font-medium">{name}</p>
+        <p className="truncate text-xs text-white/60">{role}</p>
+      </div>
+    </>
+  );
+
   return (
     <>
       <header
@@ -143,42 +209,91 @@ export default function ModuleHeader({
         </div>
 
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            aria-label="Messages"
-            className="relative rounded-md bg-white/10 p-2 transition hover:bg-white/15"
-          >
-            <Mail size={18} />
-            <NotificationBadge show={showBadges} value={mailBadge} />
-          </button>
+          <div className="relative" ref={notificationsRef}>
+            <button
+              type="button"
+              aria-label="Notifications"
+              onClick={() => setIsNotificationsOpen((current) => !current)}
+              className="relative rounded-md bg-white/10 p-2 transition hover:bg-white/15"
+            >
+              <Bell size={18} />
+              <NotificationBadge
+                show={showBadges}
+                value={typeof notificationBadge === "number" ? notificationBadge : unreadCount || notificationBadge}
+              />
+            </button>
 
-          <button
-            type="button"
-            aria-label="Notifications"
-            className="relative rounded-md bg-white/10 p-2 transition hover:bg-white/15"
-          >
-            <Bell size={18} />
-            <NotificationBadge show={showBadges} value={notificationBadge} />
-          </button>
+            {isNotificationsOpen ? (
+              <div className="absolute right-0 top-12 z-50 w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-3 text-slate-900 shadow-2xl">
+                <div className="mb-2 flex items-center justify-between px-1">
+                  <div>
+                    <p className="text-sm font-semibold">Notifications</p>
+                    <p className="text-xs text-slate-500">{unreadCount} unread updates</p>
+                  </div>
+                  {notificationsPath ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsNotificationsOpen(false);
+                        router.push(notificationsPath);
+                      }}
+                      className="rounded-md bg-[#0d3b66] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-[#0a2e50]"
+                    >
+                      View All
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+                  {previewNotifications.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setIsNotificationsOpen(false);
+                        if (item.ctaHref) {
+                          router.push(item.ctaHref);
+                          return;
+                        }
+                        if (notificationsPath) {
+                          router.push(notificationsPath);
+                        }
+                      }}
+                      className={cn(
+                        "w-full rounded-xl border px-3 py-2.5 text-left transition-colors",
+                        item.unread ? "border-slate-200 bg-slate-50 hover:bg-slate-100" : "border-slate-100 hover:bg-slate-50"
+                      )}
+                    >
+                      <div className="mb-1 flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          {NOTIFICATION_KIND_ICON[item.kind]}
+                          <p className="text-xs font-semibold text-slate-900">{item.title}</p>
+                        </div>
+                        {item.unread ? <span className="mt-1 h-2 w-2 rounded-full bg-sky-500" /> : null}
+                      </div>
+                      <p className="line-clamp-2 text-xs text-slate-600">{item.message}</p>
+                      <p className="mt-1 text-[11px] text-slate-500">{item.time}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
 
           {resolvedRightContent}
 
-          <div className="flex min-w-0 items-center gap-2 rounded-full bg-white/10 px-2 py-1 sm:px-3">
-            <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/20">
-              {avatarSrc ? (
-                <Image src={avatarSrc} alt="User" fill className="object-cover" sizes="32px" unoptimized />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-br from-slate-400 to-slate-600" />
-              )}
-              {avatarStatusDot ? (
-                <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border border-[#0d3b66] bg-green-500" />
-              ) : null}
-            </div>
-            <div className="hidden min-w-0 text-sm leading-tight sm:block">
-              <p className="truncate text-base font-medium">{name}</p>
-              <p className="truncate text-xs text-white/60">{role}</p>
-            </div>
-          </div>
+          {profilePath ? (
+            <button
+              type="button"
+              onClick={() => router.push(profilePath)}
+              className="flex min-w-0 items-center gap-2 rounded-full bg-white/10 px-2 py-1 transition hover:bg-white/20 sm:px-3"
+              aria-label="Go to profile page"
+            >
+              {profileContent}
+            </button>
+          ) : (
+            <div className="flex min-w-0 items-center gap-2 rounded-full bg-white/10 px-2 py-1 sm:px-3">{profileContent}</div>
+          )}
         </div>
       </header>
 
