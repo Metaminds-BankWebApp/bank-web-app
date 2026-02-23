@@ -4,7 +4,7 @@ import { useState } from "react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
-import { Dialog } from "@/src/components/ui/dialog";
+import PopupModal from "@/src/components/ui/popup-modal";
 
 export default function SpendIQHelpPage() {
   const [search, setSearch] = useState("");
@@ -12,12 +12,12 @@ export default function SpendIQHelpPage() {
   const [openSupport, setOpenSupport] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#ffff]">
-      <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Help & Support 👋" name="Guest" role="Public" className="mb-6" />
+    <div className="min-h-screen bg-[#ffff] p-4 md:p-8">
+      <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Help & Support" name="Guest" role="Public" className="mb-6" />
 
-      <main className="max-w-6xl mx-auto p-6">
+      <main className="max-w-6xl mx-auto p-6 ">
         <div className="rounded-[20px] bg-[#a2b9cc86] border border-[#BCC5CC] shadow-md p-8 mb-6">
-          <h1 className="text-2xl font-semibold text-[#063154]">Help & Support 👋</h1>
+          <h1 className="text-2xl font-semibold text-[#063154]">Help & Support</h1>
           <p className="mt-1 text-sm text-[#063154]/80">Find answers, fix issues, or contact our support team.</p>
 
           <div className="mt-6">
@@ -134,9 +134,9 @@ export default function SpendIQHelpPage() {
           </div>
         </section>
 
-        <Dialog open={openSupport} onOpenChange={setOpenSupport} title="Create Support Request">
+        <PopupModal open={openSupport} onOpenChange={setOpenSupport} title="Create Support Request">
           <SupportForm onClose={() => setOpenSupport(false)} onCreate={() => { setOpenSupport(false); }} />
-        </Dialog>
+        </PopupModal>
       </main>
     </div>
   );

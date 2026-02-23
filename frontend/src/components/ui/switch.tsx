@@ -45,7 +45,7 @@ export function Switch({
           checked ? "translate-x-7" : "translate-x-1",
         )}
       >
-        {checked ? "PM" : "AM"}
+       
       </span>
     </button>
   );

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent, MouseEvent } from "react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
-import { Dialog } from "@/src/components/ui/dialog";
+import PopupModal from "@/src/components/ui/popup-modal";
 
 type Ticket = {
   id: string;
@@ -70,24 +70,24 @@ export default function SupportConsolePage() {
             {/* Ticket Management Split */}
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
               <div className="lg:col-span-7">
-                <div className="rounded-[16px] bg-[#3e9fd31f] border border-[#BCC5CC] shadow-sm p-4">
+                <div className="rounded-[16px] bg-[#bdd8e71f] border border-[#BCC5CC] shadow-sm p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
-                      <Input placeholder="Search by Ticket ID or Customer ID" value={filters.query} onChange={(e:any)=> setFilters({ ...filters, query: e.target.value })} className="w-full sm:w-[320px] bg-white" />
-                      <select value={filters.status} onChange={(e)=> setFilters({ ...filters, status: e.target.value })} className="rounded-md p-2 border w-full sm:w-auto">
+                      <Input placeholder="Search by Ticket ID or Customer ID" value={filters.query} onChange={(e: ChangeEvent<HTMLInputElement>)=> setFilters({ ...filters, query: e.target.value })} className="w-full sm:w-[320px] bg-white" />
+                      <select value={filters.status} onChange={(e: ChangeEvent<HTMLSelectElement>)=> setFilters({ ...filters, status: e.target.value })} className="rounded-md p-2 border w-full sm:w-auto">
                         <option>All</option>
                         <option>Open</option>
                         <option>In Progress</option>
                         <option>Escalated</option>
                         <option>Resolved</option>
                       </select>
-                      <select value={filters.priority} onChange={(e)=> setFilters({ ...filters, priority: e.target.value })} className="rounded-md p-2 border w-full sm:w-auto">
+                      <select value={filters.priority} onChange={(e: ChangeEvent<HTMLSelectElement>)=> setFilters({ ...filters, priority: e.target.value })} className="rounded-md p-2 border w-full sm:w-auto">
                         <option>All</option>
                         <option>Low</option>
                         <option>Medium</option>
                         <option>High</option>
                       </select>
-                      <select value={filters.feature} onChange={(e)=> setFilters({ ...filters, feature: e.target.value })} className="rounded-md p-2 border w-full sm:w-auto">
+                      <select value={filters.feature} onChange={(e: ChangeEvent<HTMLSelectElement>)=> setFilters({ ...filters, feature: e.target.value })} className="rounded-md p-2 border w-full sm:w-auto">
                         <option>All</option>
                         <option>CreditLens</option>
                         <option>SpendIQ</option>
@@ -123,7 +123,7 @@ export default function SupportConsolePage() {
                             <td><StatusBadge status={t.status} /></td>
                             <td>{t.slaHours}h</td>
                             <td>{t.created}</td>
-                            <td className="whitespace-nowrap"><Button variant="outline" size="sm" onClick={(e:any) => { e.stopPropagation(); setSelected(t); const el = document.getElementById('ticket-preview'); el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>View</Button></td>
+                            <td className="whitespace-nowrap"><Button variant="outline" size="sm" onClick={(e: MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); setSelected(t); const el = document.getElementById('ticket-preview'); el?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>View</Button></td>
                           </tr>
                         ))}
                       </tbody>
@@ -183,13 +183,13 @@ export default function SupportConsolePage() {
             </div>
           </div>
 
-          <Dialog open={openEscalate} onOpenChange={setOpenEscalate} title="Escalate Ticket to Admin">
+          <PopupModal open={openEscalate} onOpenChange={setOpenEscalate} title="Escalate Ticket to Admin">
             <EscalateForm onClose={() => setOpenEscalate(false)} />
-          </Dialog>
+          </PopupModal>
 
-          <Dialog open={openCase} onOpenChange={setOpenCase} title="Create Internal Case">
+          <PopupModal open={openCase} onOpenChange={setOpenCase} title="Create Internal Case">
             <InternalCaseForm onClose={() => setOpenCase(false)} />
-          </Dialog>
+          </PopupModal>
         </main>
       </div>
     </AuthGuard>
@@ -216,7 +216,7 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${bg}`}>{status}</span>;
 }
 
-function TicketPreview({ ticket, onEscalate, onCreateCase }: any) {
+function TicketPreview({ ticket, onEscalate, onCreateCase }: { ticket: Ticket; onEscalate: () => void; onCreateCase: () => void }) {
   return (
     <div id="ticket-preview" className="flex-1 flex flex-col">
       <div className="bg-white rounded-md p-3 border border-[#E8E8E8]">
@@ -249,41 +249,41 @@ function TicketPreview({ ticket, onEscalate, onCreateCase }: any) {
         </div>
         <div className="mt-3">
           <Input placeholder="Write a reply..." className="bg-white" />
-          <div className="mt-2 flex gap-2 justify-end"><Button onClick={()=>{}}>Reply</Button><Button className="bg-[#2F9D94]" onClick={onCreateCase}>Escalate to Admin</Button><Button variant="outline" onClick={onEscalate}>Create Case</Button></div>
+          <div className="mt-2 flex gap-2 justify-end"><Button onClick={() => {}}>Reply</Button><Button className="bg-[#2F9D94]" onClick={onCreateCase}>Escalate to Admin</Button><Button variant="outline" onClick={onEscalate}>Create Case</Button></div>
         </div>
       </div>
     </div>
   );
 }
 
-function EscalateForm({ onClose }: any) {
+function EscalateForm({ onClose }: { onClose: () => void }) {
   const [reason, setReason] = useState('');
   return (
     <div className="space-y-3">
       <label className="text-sm">Escalation Reason</label>
-      <textarea className="w-full rounded-md p-2 border" rows={4} value={reason} onChange={(e)=> setReason(e.target.value)} />
+      <textarea className="w-full rounded-md p-2 border" rows={4} value={reason} onChange={(e: ChangeEvent<HTMLTextAreaElement>)=> setReason(e.target.value)} />
       <div className="flex items-center justify-end gap-2"><Button variant="outline" onClick={onClose}>Cancel</Button><Button className="bg-[#2F9D94]" onClick={() => { onClose(); }}>Escalate</Button></div>
     </div>
   );
 }
 
-function InternalCaseForm({ onClose }: any) {
+function InternalCaseForm({ onClose }: { onClose: () => void }) {
   const [type, setType] = useState('Fraud');
   const [linked, setLinked] = useState('');
   const [desc, setDesc] = useState('');
   return (
     <div className="space-y-3">
       <label className="text-sm">Case Type</label>
-      <select className="w-full rounded-md p-2 border" value={type} onChange={(e)=> setType(e.target.value)}>
+      <select className="w-full rounded-md p-2 border" value={type} onChange={(e: ChangeEvent<HTMLSelectElement>)=> setType(e.target.value)}>
         <option>Fraud</option>
         <option>Data Error</option>
         <option>System Issue</option>
         <option>Policy Clarification</option>
       </select>
-      <Input placeholder="Linked Ticket ID" value={linked} onChange={(e:any)=> setLinked(e.target.value)} />
+      <Input placeholder="Linked Ticket ID" value={linked} onChange={(e: ChangeEvent<HTMLInputElement>)=> setLinked(e.target.value)} />
       <div>
         <label className="text-sm">Description</label>
-        <textarea className="w-full rounded-md p-2 border" rows={4} value={desc} onChange={(e)=> setDesc(e.target.value)} />
+        <textarea className="w-full rounded-md p-2 border" rows={4} value={desc} onChange={(e: ChangeEvent<HTMLTextAreaElement>)=> setDesc(e.target.value)} />
       </div>
       <div className="flex items-center justify-end gap-2"><Button variant="outline" onClick={onClose}>Cancel</Button><Button className="bg-[#2F9D94]" onClick={()=> { onClose(); }}>Escalate to Admin</Button></div>
     </div>

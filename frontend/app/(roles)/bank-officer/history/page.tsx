@@ -13,7 +13,7 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
-import { Dialog } from "@/src/components/ui/dialog";
+import PopupModal from "@/src/components/ui/popup-modal";
 import {
   Select,
   SelectContent,
@@ -375,7 +375,7 @@ export default function HistoryPage() {
              </div>
           </div>
 
-               <Dialog
+               <PopupModal
                   open={selectedHistoryItem !== null}
                   onOpenChange={(open) => {
                      if (!open) {
@@ -423,7 +423,7 @@ export default function HistoryPage() {
                         </div>
                      </div>
                   )}
-               </Dialog>
+               </PopupModal>
           </div>
         </main>
       </div>

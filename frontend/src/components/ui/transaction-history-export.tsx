@@ -4,7 +4,7 @@ import * as React from "react"
 import { Download } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { Dialog } from "@/src/components/ui/dialog"
+import PopupModal from "@/src/components/ui/popup-modal"
 import {
 	Select,
 	SelectContent,
@@ -327,7 +327,7 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 				Export
 			</Button>
 
-			<Dialog
+			<PopupModal
 				open={isReportModalOpen}
 				onOpenChange={setIsReportModalOpen}
 				title="Download Transaction Report"
@@ -424,7 +424,7 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 						</div>
 					</div>
 				</div>
-			</Dialog>
+			</PopupModal>
 		</>
 	)
 }
