@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ComponentType } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   ArrowLeftFromLine,
   ArrowRightFromLine,
@@ -49,7 +49,6 @@ type SidebarProps = {
 
 export function Sidebar({ role, className, hideCollapse }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const logout = useAuthStore((state) => state.logout);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -91,7 +90,7 @@ export function Sidebar({ role, className, hideCollapse }: SidebarProps) {
           type="button"
           onClick={() => {
             logout();
-            router.replace("/login?force=true");
+            window.location.replace("/");
           }}
           className={cn(
             "relative flex w-full items-center gap-3 rounded-lg px-6 py-3 text-left text-sm font-semibold text-white/90 transition-colors hover:bg-white/12",

@@ -8,7 +8,6 @@ import {
   LineChart, 
   ArrowRight,
   CheckCircle2,
-  Lock,
   Wallet,
   GraduationCap
 } from "lucide-react";
@@ -26,7 +25,7 @@ export default function PublicCustomerRolePage() {
       progressLabel: "ACCESS LEVEL",
       progressValue: 100,
       progressColor: "bg-amber-500",
-      progressText: "Demo Mode",
+      progressText: "100%",
       iconColor: "text-amber-600",
       iconBg: "bg-amber-100",
       locked: false
@@ -39,9 +38,9 @@ export default function PublicCustomerRolePage() {
       status: "PREVIEW",
       statusColor: "text-purple-500 bg-purple-500/10",
       progressLabel: "ACCESS LEVEL",
-      progressValue: 100,
+      progressValue: 80,
       progressColor: "bg-purple-500",
-      progressText: "Demo Mode",
+      progressText: "80%",
       iconColor: "text-purple-600",
       iconBg: "bg-purple-100",
       locked: false
@@ -52,11 +51,11 @@ export default function PublicCustomerRolePage() {
       href: "/public-customer/loansense",
       icon: GraduationCap,
       status: "LOCKED",
-      statusColor: "text-slate-500 bg-slate-500/10",
+      statusColor: "text-slate-400 bg-slate-200/50",
       progressLabel: "ACCESS LEVEL",
       progressValue: 0,
-      progressColor: "bg-slate-300",
-      progressText: "Locked",
+      progressColor: "bg-slate-200",
+      progressText: "Incomplete",
       iconColor: "text-slate-400",
       iconBg: "bg-slate-100",
       locked: true
@@ -67,11 +66,11 @@ export default function PublicCustomerRolePage() {
       href: "/public-customer/transact",
       icon: Wallet,
       status: "LOCKED",
-      statusColor: "text-slate-500 bg-slate-500/10",
+      statusColor: "text-slate-400 bg-slate-200/50",
       progressLabel: "ACCESS LEVEL",
       progressValue: 0,
-      progressColor: "bg-slate-300",
-      progressText: "Locked",
+      progressColor: "bg-slate-200",
+      progressText: "Incomplete",
       iconColor: "text-slate-400",
       iconBg: "bg-slate-100",
       locked: true
@@ -112,11 +111,11 @@ export default function PublicCustomerRolePage() {
              {/* Profile Completion Widget */}
              <div className="hidden md:flex flex-col items-end">
                 <div className="flex justify-between w-64 mb-1.5">
-                    <span className="text-xs text-white/90 font-medium">15% Profile Completion</span>
+                    <span className="text-xs text-white/90 font-medium">80% Profile Completion</span>
                     <span className="text-xs text-blue-400 font-bold tracking-wider">Getting Started</span>
                 </div>
                 <div className="w-64 h-2 bg-blue-900/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
-                   <div className="h-full w-[15%] bg-blue-400 rounded-full shadow-[0_0_15px_rgba(96,165,250,0.6)]"></div>
+                   <div className="h-full w-[80%] bg-blue-400 rounded-full shadow-[0_0_15px_rgba(96,165,250,0.6)]"></div>
                 </div>
              </div>
              
@@ -158,23 +157,14 @@ export default function PublicCustomerRolePage() {
                    {features.map((item, i) => (
                       <div key={i} className={`group h-full ${item.locked ? 'cursor-not-allowed' : ''}`}>
                          <Link href={item.locked ? "#" : item.href} className={`block h-full ${item.locked ? 'pointer-events-none' : ''}`}>
-                            <div className={`bg-white rounded-[2rem] p-8 h-full min-h-[220px] flex flex-col justify-between shadow-xl transition-all duration-300 relative overflow-hidden ${!item.locked ? 'hover:-translate-y-2 hover:shadow-2xl group-hover:ring-2 ring-white/20' : 'opacity-80 grayscale-[0.8]'}`}>
-                                
-                                {item.locked && (
-                                    <div className="absolute top-4 right-4 z-20">
-                                        <div className="bg-slate-800/80 text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-semibold backdrop-blur-sm shadow-md">
-                                            <Lock className="w-3 h-3" /> Locked
-                                        </div>
-                                    </div>
-                                )}
-
+                            <div className={`bg-white rounded-[2rem] p-8 h-full min-h-[220px] flex flex-col justify-between shadow-xl transition-all duration-300 relative overflow-hidden ${!item.locked ? 'hover:-translate-y-2 hover:shadow-2xl group-hover:ring-2 ring-white/20' : 'opacity-80'}`}>
                                 <div className="flex justify-between items-start mb-6">
-                                {/* <div className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center ${item.iconColor} transition-transform ${!item.locked && 'group-hover:scale-110'} duration-300`}>
+                                <div className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center ${item.iconColor} transition-transform ${!item.locked && 'group-hover:scale-110'} duration-300`}>
                                     <item.icon className="w-6 h-6" />
-                                </div> */}
-                                {/* <span className={`px-3 py-1 text-[10px] uppercase ${item.statusColor} rounded-full font-bold tracking-wider`}>
+                                </div>
+                                <span className={`px-3 py-1 text-[10px] uppercase ${item.statusColor} rounded-full font-bold tracking-wider`}>
                                     {item.status}
-                                </span> */}
+                                </span>
                                 </div>
 
                                 <div className="mb-8">

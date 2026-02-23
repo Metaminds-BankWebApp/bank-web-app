@@ -6,6 +6,7 @@ import { authPersistence } from "@/src/store/auth.storage";
 type AuthUser = LoginResponse["user"];
 
 export type RoleRedirectPath = "/public-customer/application" | "/bank-customer" | "/bank-officer" | "/admin";
+export const LOGOUT_INTENT_KEY = "primecore-logout-intent";
 
 const roleRedirectMap: Record<UserRole, RoleRedirectPath> = {
   PUBLIC_CUSTOMER: "/public-customer/application",
@@ -44,6 +45,10 @@ export const useAuthStore = create<AuthState>()(
         return getRoleRedirectPath(nextRole);
       },
       logout: () => {
+        if (typeof window !== "undefined") {
+          window.sessionStorage.setItem(LOGOUT_INTENT_KEY, "1");
+        }
+
         set({
           token: null,
           role: null,

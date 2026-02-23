@@ -8,12 +8,8 @@ import {
   CreditCard, 
   LineChart, 
   Wallet, 
-  ArrowRight,
-  CheckCircle2,
-  Circle,
-  AlertCircle
+  CheckCircle2
 } from "lucide-react";
-import { Button } from "@/src/components/ui/button";
 
 export default function BankCustomerRolePage() {
   const features = [
@@ -25,9 +21,9 @@ export default function BankCustomerRolePage() {
       status: "ACTIVE",
       statusColor: "text-emerald-500 bg-emerald-500/10",
       progressLabel: "INTEGRITY SCORE",
-      progressValue: 85,
+      progressValue: 100,
       progressColor: "bg-emerald-500",
-      progressText: "85%",
+      progressText: "100%",
       iconColor: "text-emerald-600",
       iconBg: "bg-emerald-100"
     },
@@ -36,12 +32,12 @@ export default function BankCustomerRolePage() {
       description: "Real-time cashflow categorization and waste detection.",
       href: "/bank-customer/spendiq",
       icon: LineChart,
-      status: "PARTIAL",
-      statusColor: "text-amber-500 bg-amber-500/10",
+      status: "ACTIVE",
+      statusColor: "text-emerald-500 bg-emerald-500/10",
       progressLabel: "ANALYSIS LEVEL",
-      progressValue: 45,
+      progressValue: 100,
       progressColor: "bg-amber-500",
-      progressText: "45%",
+      progressText: "100%",
       iconColor: "text-amber-600",
       iconBg: "bg-amber-100"
     },
@@ -50,14 +46,14 @@ export default function BankCustomerRolePage() {
       description: "Optimized lending rates based on verified income data.",
       href: "/bank-customer/loansense",
       icon: Wallet,
-      status: "LOCKED",
-      statusColor: "text-slate-400 bg-slate-200/50",
+      status: "ACTIVE",
+      statusColor: "text-emerald-500 bg-emerald-500/10",
       progressLabel: "ELIGIBILITY",
-      progressValue: 0,
-      progressColor: "bg-slate-200",
-      progressText: "Incomplete",
-      iconColor: "text-slate-400",
-      iconBg: "bg-slate-100"
+      progressValue: 100,
+      progressColor: "bg-emerald-500",
+      progressText: "100%",
+      iconColor: "text-emerald-600",
+      iconBg: "bg-emerald-100"
     },
     { 
       title: "Transact", 
@@ -69,7 +65,7 @@ export default function BankCustomerRolePage() {
       progressLabel: "PROCESSING SPEED",
       progressValue: 100,
       progressColor: "bg-blue-500",
-      progressText: "Ultra",
+      progressText: "100%",
       iconColor: "text-blue-600",
       iconBg: "bg-blue-100"
     },
@@ -109,11 +105,11 @@ export default function BankCustomerRolePage() {
              {/* Profile Completion Widget */}
              <div className="hidden md:flex flex-col items-end">
                 <div className="flex justify-between w-64 mb-1.5">
-                    <span className="text-xs text-white/90 font-medium">72% Profile Completion</span>
-                    <span className="text-xs text-emerald-400 font-bold tracking-wider">High Readiness</span>
+                    <span className="text-xs text-white/90 font-medium">100% Profile Completion</span>
+                    <span className="text-xs text-emerald-400 font-bold tracking-wider">Complete</span>
                 </div>
                 <div className="w-64 h-2 bg-blue-900/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
-                   <div className="h-full w-[72%] bg-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.6)]"></div>
+                   <div className="h-full w-full bg-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.6)]"></div>
                 </div>
              </div>
              
