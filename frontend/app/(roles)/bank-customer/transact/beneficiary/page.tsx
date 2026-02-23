@@ -18,12 +18,12 @@ export default function Page() {
   }
 
   return (
-    <div className="bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+    <div className="bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Account Detail" name="John deo" />
 
       <section className="max-w-6xl mx-auto mt-6 sm:mt-8">
 
-        <Card className="rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 w-full border min-h-[700px] sm:min-h-[600px] mt-6 sm:mt-28">
+        <Card className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 mt-6 w-full rounded-xl p-4 sm:mt-28 sm:min-h-[600px] sm:p-6 lg:p-8 min-h-[700px]">
           <form className="space-y-8 sm:space-y-8">
 
             <div className="space-y-4">

@@ -31,6 +31,7 @@ export function useFeatureLayout() {
 export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const isCreditLens = feature === "creditlens";
+  const isTransact = feature === "transact";
 
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
@@ -103,6 +104,8 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
               "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none p-3 sm:p-4 lg:p-0",
               isCreditLens
                 ? "bg-[#e9eff7] lg:rounded-l-[32px]"
+                : isTransact
+                ? "transact-surface-shade bg-[#f8fcff] lg:rounded-l-[28px]"
                 : "bg-(--primecore-surface) lg:rounded-l-[28px]"
             )}
             style={
