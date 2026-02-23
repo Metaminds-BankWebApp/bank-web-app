@@ -136,6 +136,15 @@ export default function ModuleHeader({
     return (
       <button
         type="button"
+        onClick={() => {
+          const base = pathname?.startsWith("/bank-customer")
+            ? "/bank-customer"
+            : pathname?.startsWith("/public-customer")
+            ? "/public-customer"
+            : "";
+          const target = base ? `${base}/spendiq/add` : "/public-customer/spendiq/add";
+          router.push(target);
+        }}
         className="hidden items-center gap-2 rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 md:inline-flex"
       >
         <Plus size={16} />
