@@ -86,6 +86,7 @@ export const siteConfig = {
       items: [
         { title: "Dashboard", href: "/public-customer", icon: "layout-dashboard", section: "general" },
         { title: "SpendIQ", href: "/public-customer/spendiq", icon: "line-chart", section: "general" },
+        { title: "Download Report", href: "/public-customer/spendiq/report", icon: "file-text", section: "other" },
         { title: "CreditLens", href: "/public-customer/creditlens", icon: "shield-check", section: "general" },
         { title: "Log Out", href: "/", icon: "log-out", section: "account" },
       ],
@@ -97,6 +98,7 @@ export const siteConfig = {
       items: [
         { title: "Dashboard", href: "/bank-customer", icon: "layout-dashboard", section: "general" },
         { title: "SpendIQ", href: "/bank-customer/spendiq", icon: "line-chart", section: "general" },
+        { title: "Download Report", href: "/bank-customer/spendiq/report", icon: "file-text", section: "other" },
         { title: "CreditLens", href: "/bank-customer/creditlens", icon: "shield-check", section: "general" },
         { title: "LoanSense", href: "/bank-customer/loansense", icon: "file-text", section: "general" },
         { title: "Transact", href: "/bank-customer/transact", icon: "send", section: "general" },
