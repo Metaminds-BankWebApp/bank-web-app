@@ -115,7 +115,7 @@ export default function UserManagementPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
-        <Sidebar role="ADMIN" className="hidden lg:block" />
+        <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6">
