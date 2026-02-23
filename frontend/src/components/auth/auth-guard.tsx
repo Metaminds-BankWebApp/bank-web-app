@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getRoleRedirectPath, useAuthStore } from "@/src/store";
+import { LOGOUT_INTENT_KEY, getRoleRedirectPath, useAuthStore } from "@/src/store";
 import type { UserRole } from "@/src/types/dto/auth.dto";
 
 type AuthGuardProps = {
@@ -39,6 +39,14 @@ export function AuthGuard({ requiredRole, children, fallback }: AuthGuardProps) 
     }
 
     if (!token || !role) {
+      const hasLogoutIntent =
+        typeof window !== "undefined" && window.sessionStorage.getItem(LOGOUT_INTENT_KEY) === "1";
+
+      if (hasLogoutIntent) {
+        router.replace("/");
+        return;
+      }
+
       router.replace("/login");
       return;
     }

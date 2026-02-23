@@ -24,3 +24,22 @@ export interface LoginResponse {
     role: UserRole;
   };
 }
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface VerifyOtpRequest {
+  email: string;
+  otp: string;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface AuthActionResponse {
+  message?: string;
+}

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -9,10 +10,16 @@ import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function Page() {
   const router = useRouter()
+  const [accountNumber, setAccountNumber] = useState("")
+
+  const handleAccountNumberChange = (value: string) => {
+    const digitsOnly = value.replace(/\D/g, "")
+    setAccountNumber(digitsOnly)
+  }
 
   return (
     <div className="bg-white px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
-      <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Account Detail" subtitle="Dineth dovindu" name="Dineth dovindu" />
+      <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Account Detail" name="John deo" />
 
       <section className="max-w-6xl mx-auto mt-6 sm:mt-8">
 
@@ -25,7 +32,11 @@ export default function Page() {
                 id="accountNumber"
                 name="accountNumber"
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="948765"
+                value={accountNumber}
+                onChange={(e) => handleAccountNumberChange(e.target.value)}
               />
             </div>
 
@@ -68,4 +79,3 @@ export default function Page() {
     </div>
   )
 }
-
