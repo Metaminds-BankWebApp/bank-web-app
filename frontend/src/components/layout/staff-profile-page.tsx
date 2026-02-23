@@ -77,7 +77,8 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
   return (
     <AuthGuard requiredRole={role}>
       <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
-        <Sidebar role={role} className="h-full max-lg:hidden" />
+        <Sidebar role={role} className="max-lg:hidden h-full z-10 relative" />
+        
         <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
           <ModuleHeader
             theme="staff"
