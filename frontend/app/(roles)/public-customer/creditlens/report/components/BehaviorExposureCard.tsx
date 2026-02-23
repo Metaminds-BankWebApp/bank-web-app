@@ -15,7 +15,7 @@ export default function BehaviorExposureCard({
   };
 }) {
   return (
-    <div className="min-w-0 rounded-2xl bg-white/92 p-5 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)] sm:p-6 md:rounded-[26px] md:p-7">
+    <div className="creditlens-card creditlens-card-hover min-w-0 rounded-2xl bg-white/92 p-5 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)] sm:p-6 md:rounded-[26px] md:p-7">
       <h3 className="text-center text-lg font-semibold text-slate-900 sm:text-xl">
         Credit Behavior &amp; Exposure
       </h3>

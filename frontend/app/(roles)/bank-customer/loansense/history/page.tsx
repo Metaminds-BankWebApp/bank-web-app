@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Mail, Bell } from "lucide-react";
-import LoanSenseHeader from "@/src/components/ui/loansenseheader";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 type StatusBadgeProps = {
   status: 'Eligible' | 'Partially Eligible' | 'Not Eligible';
@@ -135,7 +135,7 @@ export default function Page() {
   return (
     <main className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
       {/* Header */}
-          <LoanSenseHeader title="Loan Eligibility History" />
+          <ModuleHeader theme="loansense" menuMode="feature-layout" title="Loan Eligibility History" />
         <div><p className="text-sm opacity-80 mt-2">Track changes in your loan eligibility over time</p></div>
       {/* Positive Trend Banner */}
       <div className="rounded-xl bg-blue-50 border border-blue-200 p-6 shadow-md flex items-start gap-4">
@@ -231,3 +231,4 @@ export default function Page() {
     </main>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   Chart as ChartJS,
@@ -7,7 +7,7 @@ import {
   Legend,
 } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
-import { SpendIqHeader } from "@/src/components/SpendIqHeader";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -87,7 +87,7 @@ export default function SpendIQDashboard() {
   return (
     <div className="p-6 space-y-8 bg-gradient-to-br from-[#f0f4ff] to-[#e6ecf9] min-h-screen">
 
-      <SpendIqHeader title="SpendIQ – Expense Overview" />
+      <ModuleHeader theme="spendiq" menuMode="feature-layout" title="SpendIQ - Expense Overview" />
       
 
       {/* -------- GLASS SUMMARY CARDS -------- */}
@@ -233,3 +233,4 @@ function GlassCard({
     </div>
   );
 }
+

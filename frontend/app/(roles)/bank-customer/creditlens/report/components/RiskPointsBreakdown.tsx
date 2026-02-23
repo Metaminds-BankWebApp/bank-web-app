@@ -13,7 +13,7 @@ export default function RiskPointsBreakdown({
   score: number;
 }) {
   return (
-    <div className="rounded-[26px] bg-white/92 p-7 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)]">
+    <div className="creditlens-card creditlens-card-hover rounded-[26px] bg-white/92 p-7 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.45)]">
       <h3 className="text-lg font-semibold text-slate-900">Risk Points Breakdown</h3>
 
       <div className="mt-6 space-y-5">

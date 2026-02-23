@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { SpendIqHeader } from "@/src/components/SpendIqHeader";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { Pencil } from "lucide-react";
 
 export default function BudgetManagementPage() {
@@ -20,7 +20,7 @@ export default function BudgetManagementPage() {
 
   return (
     <div className="p-8 space-y-8 bg-[#f4f6fb] min-h-screen">
-      <SpendIqHeader title="Budget Management" />
+      <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Budget Management" />
 
       <p className="text-sm text-gray-500">
         Set and monitor spending limits by category

@@ -1,6 +1,5 @@
 export * from "./badge";
 export * from "./button";
-export * from "./bank-officer-header";
 export * from "./card";
 export * from "./checkbox";
 export * from "./dialog";
@@ -11,4 +10,4 @@ export * from "./skeleton";
 export * from "./switch";
 export * from "./table";
 export * from "./toast";
-export * from "./loansenseheader";
+export { default as ModuleHeader } from "./module-header";
