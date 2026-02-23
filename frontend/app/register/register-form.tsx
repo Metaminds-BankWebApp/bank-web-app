@@ -73,15 +73,14 @@ export function RegisterForm() {
   }
 
   return (
-    <section className="w-full space-y-6 text-(--primecore-foreground)">
-      <header className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold text-(--primecore-foreground)">Create your account</h1>
-        <p className="text-sm text-(--primecore-foreground)/70">Set up your profile to access the PrimeCore dashboard and services.</p>
+    <section className="w-full max-w-2xl space-y-6 text-(--primecore-foreground)">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold text-(--primecore-foreground)">Get started</h1>
       </header>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <Input label="Full Name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="John Doe" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
-        <Input label="Email Address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+        <Input label="Full Name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Email or username" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+        <Input label="Email Address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Email Address" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="Phone Number" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Phone Number" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
@@ -104,24 +103,12 @@ export function RegisterForm() {
           {isSubmitting ? "Creating account..." : "Create account"}
         </Button>
 
-        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-          After sign up, you will be redirected to complete the public customer application form.
+        <p className="text-center text-sm text-(--primecore-foreground)/70">
+          Already have an account?{" "}
+          <Link href="/login" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
+            Sign in
+          </Link>
         </p>
-
-        <div className="space-y-2 text-center text-sm text-(--primecore-foreground)/70">
-          <p>
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
-              Sign in
-            </Link>
-          </p>
-          <p>
-            Need help accessing your account?{" "}
-            <Link href="/forgot-password" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
-              Reset password
-            </Link>
-          </p>
-        </div>
       </form>
     </section>
   );
