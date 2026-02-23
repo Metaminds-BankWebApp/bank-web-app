@@ -221,6 +221,16 @@ export function FeatureSidebar({ role, feature, className, onNavigate }: Feature
             </div>
           )}
 
+          {!isCollapsed && (
+             <button
+               onClick={toggleCollapse}
+               className="p-2 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+               title="Collapse Sidebar"
+             >
+               <ArrowLeftFromLine size={20} />
+             </button>
+          )}
+
 
           {isCollapsed && (
              <h1 className="text-xl font-bold leading-tight tracking-tight text-white">
