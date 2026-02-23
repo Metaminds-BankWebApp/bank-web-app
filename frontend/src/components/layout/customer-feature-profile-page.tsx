@@ -80,9 +80,12 @@ const ROLE_PROFILE_CONFIG: Record<CustomerRoleLabel, RoleProfileConfig> = {
 export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerFeatureProfilePageProps) {
   const isCreditLens = featureName === "CreditLens";
   const isTransact = featureName === "Transact";
+  const isLoanSense = featureName === "LoanSense";
   const profileConfig = ROLE_PROFILE_CONFIG[roleLabel];
   const sectionClassName = isTransact
     ? "transact-card transact-card-hover transact-creditlens-shade rounded-2xl p-6"
+    : isLoanSense
+    ? "loansense-card loansense-card-hover loansense-creditlens-shade rounded-2xl p-6"
     : "rounded-2xl border border-slate-100 bg-white p-6 shadow-sm";
 
   const renderFeatureHeader = () => {
@@ -115,7 +118,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   };
 
   return (
-    <div className={`min-h-screen p-4 md:p-8 ${isTransact ? "bg-transparent" : "bg-[#f3f4f6]"}`}>
+    <div className={`min-h-screen p-4 md:p-8 ${isTransact || isLoanSense ? "bg-transparent" : "bg-[#f3f4f6]"}`}>
       {renderFeatureHeader()}
 
       <div className="mx-auto my-auto w-full max-h-full max-w-7xl space-y-6 sm:mt-20">
@@ -217,6 +220,5 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     </div>
   );
 }
-
 
 

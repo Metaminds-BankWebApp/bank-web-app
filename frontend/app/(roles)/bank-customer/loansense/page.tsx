@@ -30,7 +30,7 @@ export default function LoanSenseDashboard() {
 
   return (
     <AuthGuard requiredRole="BANK_CUSTOMER">
-      <div className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
+      <div className="flex min-h-screen flex-col gap-6 bg-transparent p-4 font-sans text-slate-800 md:p-8">
         
         {/* Header */}
       <ModuleHeader theme="loansense" menuMode="feature-layout" title="LoanSense Dashboard" />
@@ -45,7 +45,7 @@ export default function LoanSenseDashboard() {
             {/* Overview Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {/* Card 1 */}
-                <div className="bg-[#0e4f62] text-white p-6 rounded-2xl shadow-md h-32 flex flex-col justify-between relative overflow-hidden">
+                <div className="loansense-card loansense-card-hover rounded-2xl border border-[#0B3B66]/30 bg-[linear-gradient(150deg,#0B3B66_0%,#0a2f51_100%)] p-6 text-white shadow-[0_20px_44px_-32px_rgba(3,16,36,0.8)] h-32 flex flex-col justify-between relative overflow-hidden">
                     <div className="flex justify-between items-start z-10">
                         <span className="text-sm font-medium opacity-90">Overall Eligibility</span>
                         <CheckCircle2 size={18} className="text-emerald-400" />
@@ -58,7 +58,7 @@ export default function LoanSenseDashboard() {
                 </div>
 
                 {/* Card 2 */}
-                <div className="bg-[#2f5c8f] text-white p-6 rounded-2xl shadow-md h-32 flex flex-col justify-between relative overflow-hidden">
+                <div className="loansense-card loansense-card-hover rounded-2xl border border-[#2f5c8f]/35 bg-[linear-gradient(150deg,#2f5c8f_0%,#21486f_100%)] p-6 text-white shadow-[0_20px_44px_-32px_rgba(3,16,36,0.7)] h-32 flex flex-col justify-between relative overflow-hidden">
                     <div className="flex justify-between items-start z-10">
                         <span className="text-sm font-medium opacity-90">Credit Risk Level</span>
                         <TrendingUp size={18} className="text-white/60" />
@@ -71,7 +71,7 @@ export default function LoanSenseDashboard() {
                 </div>
 
                 {/* Card 3 */}
-                <div className="bg-[#e0f7fa] text-[#0d3b66] p-6 rounded-2xl shadow-sm h-32 flex flex-col justify-between border border-slate-100">
+                <div className="loansense-card loansense-card-hover loansense-creditlens-shade bg-[#e0f7fa] text-[#0d3b66] p-6 rounded-2xl h-32 flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <span className="text-sm font-medium opacity-80">Max Affordable EMI</span>
                         <TrendingUp size={18} className="text-[#0d3b66]/40" />
@@ -83,7 +83,7 @@ export default function LoanSenseDashboard() {
                 </div>
 
                 {/* Card 4 */}
-                <div className="bg-[#eef2ff] text-[#0d3b66] p-6 rounded-2xl shadow-sm h-32 flex flex-col justify-between border border-slate-100">
+                <div className="loansense-card loansense-card-hover loansense-creditlens-shade bg-[#eef2ff] text-[#0d3b66] p-6 rounded-2xl h-32 flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <span className="text-sm font-medium opacity-80">Last Evaluation</span>
                         <Calendar size={18} className="text-[#0d3b66]/40" />
@@ -104,7 +104,7 @@ export default function LoanSenseDashboard() {
                     
                     {loans.map((loan, idx) => (
                         <Link key={idx} href={loan.path} className="block">
-                          <div className="bg-white border border-slate-100 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center hover:shadow-md transition-shadow cursor-pointer group">
+                          <div className="loansense-card loansense-card-hover loansense-creditlens-shade rounded-xl p-6 flex flex-col md:flex-row justify-between items-center transition-shadow cursor-pointer group">
                                <div className="w-full md:w-auto mb-4 md:mb-0">
                                    <h4 className="font-bold text-slate-800 text-lg mb-1 group-hover:text-[#0d3b66] transition-colors">{loan.title}</h4>
                                    <p className="text-sm text-slate-500 mb-3">{loan.subtitle}</p>
@@ -129,7 +129,7 @@ export default function LoanSenseDashboard() {
                 </div>
 
                 {/* Affordability Indicators */}
-                <div className="bg-white border border-slate-100 rounded-2xl p-6 h-fit shadow-sm">
+                <div className="loansense-card loansense-card-hover loansense-creditlens-shade rounded-2xl p-6 h-fit">
                     <h3 className="text-lg font-bold text-slate-800 mb-8">Affordability Indicators</h3>
                     
                     <div className="space-y-8">
@@ -199,7 +199,7 @@ export default function LoanSenseDashboard() {
     <div
       role="dialog"
       aria-modal="true"
-      className="relative bg-white w-[92%] max-w-2xl rounded-2xl shadow-2xl p-8 z-10"
+      className="relative loansense-creditlens-shade w-[92%] max-w-2xl rounded-2xl p-8 z-10"
     >
 
       {/* Header */}
@@ -314,4 +314,3 @@ export default function LoanSenseDashboard() {
     </AuthGuard>
   );
 }
-

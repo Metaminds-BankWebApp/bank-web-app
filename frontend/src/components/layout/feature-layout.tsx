@@ -32,6 +32,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const isCreditLens = feature === "creditlens";
   const isTransact = feature === "transact";
+  const isLoanSense = feature === "loansense";
 
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
@@ -106,6 +107,8 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
                 ? "bg-[#e9eff7] lg:rounded-l-[32px]"
                 : isTransact
                 ? "transact-surface-shade bg-[#f8fcff] lg:rounded-l-[28px]"
+                : isLoanSense
+                ? "loansense-surface-shade bg-[#f7f9ff] lg:rounded-l-[28px]"
                 : "bg-(--primecore-surface) lg:rounded-l-[28px]"
             )}
             style={

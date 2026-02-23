@@ -12,15 +12,15 @@ export default function LoanSenseCustomerHelp(){
   const [loanId, setLoanId] = useState('');
 
   return (
-    <div className="min-h-screen bg-[#ffff] px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
+    <div className="min-h-screen bg-transparent px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
       <ModuleHeader theme="loansense" menuMode="feature-layout" title="LoanSense Help" name="You" role="Customer" className="mb-6" />
       <main className="max-w-5xl mx-auto p-6">
-        <div className="rounded-[20px] bg-[#a2b9cc86] border border-[#BCC5CC] shadow-md p-6 mb-6">
+        <div className="loansense-card loansense-card-hover loansense-creditlens-shade mb-6 rounded-[20px] bg-[#a2b9cc86] p-6">
           <h2 className="text-xl font-semibold text-[#063154]">LoanSense Help</h2>
           <p className="text-sm text-[#063154]/80 mt-2">Eligibility, application status and EMI guidance.</p>
         </div>
 
-        <section className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-6">
+        <section className="loansense-card loansense-card-hover loansense-creditlens-shade mb-6 rounded-[20px] bg-[#F7F6F2] p-6">
           <h3 className="font-semibold text-[#063154]">FAQs</h3>
           <div className="mt-3 space-y-2">
             {["How is eligibility calculated?","What documents are required?","How to recalculate EMI?","How to check application status?","Can I request officer review?"].map(q=> (
@@ -32,7 +32,7 @@ export default function LoanSenseCustomerHelp(){
           </div>
 
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="col-span-2 bg-white p-4 rounded-md border border-[#E8E8E8]">
+            <div className="loansense-card loansense-card-hover loansense-creditlens-shade col-span-2 rounded-md p-4">
               <h4 className="font-semibold text-[#063154]">Troubleshooter</h4>
               <p className="text-sm text-[#063154]/80 mt-1">Select the loan issue</p>
               <div className="mt-3 flex gap-2">
@@ -49,14 +49,14 @@ export default function LoanSenseCustomerHelp(){
                     <li>Contact officer if your score or income is borderline.</li>
                   </ol>
                   <div className="mt-3 flex gap-2">
-                    <Input placeholder="Loan/Application ID (optional)" value={loanId} onChange={(e:any)=>setLoanId(e.target.value)} className="bg-white" />
+                    <Input placeholder="Loan/Application ID (optional)" value={loanId} onChange={(e) => setLoanId(e.target.value)} className="bg-white" />
                     <Button className="bg-[#2F9D94]" onClick={()=>setOpen(true)}>Request Officer Review</Button>
                   </div>
                 </div>
               )}
             </div>
 
-            <div className="bg-white p-4 rounded-md border border-[#E8E8E8]">
+            <div className="loansense-card loansense-card-hover loansense-creditlens-shade rounded-md p-4">
               <h4 className="font-semibold text-[#063154]">Need help now?</h4>
               <div className="mt-3"><Button className="bg-[#2F9D94]" onClick={()=>setOpen(true)}>Create Ticket</Button></div>
             </div>
@@ -65,7 +65,7 @@ export default function LoanSenseCustomerHelp(){
 
         <Dialog open={open} onOpenChange={setOpen} title="Request Officer Review / Ticket">
           <div className="space-y-3">
-            <Input placeholder="Loan/Application ID" value={loanId} onChange={(e:any)=>setLoanId(e.target.value)} />
+            <Input placeholder="Loan/Application ID" value={loanId} onChange={(e) => setLoanId(e.target.value)} />
             <Input placeholder="Short subject" />
             <div>
               <label className="text-sm">Description</label>

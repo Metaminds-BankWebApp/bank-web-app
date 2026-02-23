@@ -9,8 +9,10 @@ type SummaryCardProps = {
 function SummaryCard({ label, value, variant = "light" }: SummaryCardProps) {
 	return (
 		<div
-			className={`rounded-xl shadow-md p-6 flex flex-col justify-between h-full ${
-				variant === "dark" ? "bg-[#0B3B66] text-white" : "bg-white text-gray-800"
+			className={`rounded-xl p-6 flex flex-col justify-between h-full ${
+				variant === "dark"
+					? "loansense-card loansense-card-hover border border-[#0B3B66]/30 bg-[linear-gradient(150deg,#0B3B66_0%,#0a2f51_100%)] text-white shadow-[0_20px_44px_-32px_rgba(3,16,36,0.8)]"
+					: "loansense-card loansense-card-hover loansense-creditlens-shade text-gray-800"
 			}`}
 		>
 			<div className="text-sm font-medium opacity-90">{label}</div>
@@ -51,13 +53,13 @@ export default function Page() {
 	const progress = Math.min(100, (dbR / policyLimit) * 100);
 
 	return (
-		<main className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
+		<main className="flex min-h-screen flex-col gap-6 bg-transparent p-4 font-sans text-slate-800 md:p-8">
 			 {/* Header */}
         <ModuleHeader theme="loansense" menuMode="feature-layout" title="Vehicle Loan" />
     <div><p className="text-sm opacity-80 mt-2">Discover your vehicle loan eligibility and affordability insights</p></div>
 
 			{/* Eligibility Summary */}
-			<section className="rounded-xl bg-white p-6 shadow-md">
+			<section className="loansense-card loansense-creditlens-shade rounded-xl p-6">
 				<div className="flex items-center justify-between mb-4">
 					<h2 className="text-lg font-semibold">Eligibility Summary</h2>
 					<div>
@@ -76,7 +78,7 @@ export default function Page() {
 			{/* Main two-column layout */}
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				{/* Left: Affordability Breakdown (span 2 cols on lg) */}
-				<div className="lg:col-span-2 rounded-xl bg-white p-6 shadow-md">
+				<div className="loansense-card loansense-card-hover loansense-creditlens-shade lg:col-span-2 rounded-xl p-6">
 					<h3 className="text-lg font-semibold mb-4">Affordability Breakdown</h3>
 
 					<div className="space-y-1">
@@ -119,7 +121,7 @@ export default function Page() {
 				</div>
 
 				{/* Right: Risk Adjustment */}
-				<div className="rounded-xl bg-white p-6 shadow-md">
+				<div className="loansense-card loansense-card-hover loansense-creditlens-shade rounded-xl p-6">
 					<h3 className="text-lg font-semibold mb-4">Risk Adjustment</h3>
 
 					<div className="space-y-4">
@@ -142,4 +144,3 @@ export default function Page() {
 		</main>
 	);
 }
-
