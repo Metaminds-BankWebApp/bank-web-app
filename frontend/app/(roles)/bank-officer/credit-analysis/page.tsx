@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { Search, Filter, Download, ChevronLeft, ChevronRight } from "lucide-react";
-import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
@@ -123,11 +123,11 @@ export default function CreditAnalysisPage() {
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
         <main className="flex-1 flex flex-col p-3 sm:p-5 lg:p-7 h-full overflow-hidden">
-          <BankOfficerHeader title="Credit Analysis" className="mb-6 shrink-0" />
+          <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Credit Analysis" className="mb-6 shrink-0" />
 
           <div className="flex-1 overflow-y-auto min-h-0">
           <div className="mb-8 text-sm text-slate-500">
-            Dashboard <span className="mx-2 text-slate-400">▶</span> <span className="text-[#3e9fd3] font-medium">Credit Analysis</span>
+            Dashboard <span className="mx-2 text-slate-400">â–¶</span> <span className="text-[#3e9fd3] font-medium">Credit Analysis</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -353,3 +353,5 @@ function StatCard({
     </div>
   );
 }
+
+

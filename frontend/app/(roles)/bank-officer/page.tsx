@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader } from "@/src/components/ui";
+﻿import { Card, CardContent, CardHeader } from "@/src/components/ui";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
-import { BankOfficerHeader } from "@/src/components/ui/bank-officer-header";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function BankOfficerRolePage() {
   return (
@@ -9,7 +9,7 @@ export default function BankOfficerRolePage() {
       <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
         <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
       <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
-          <BankOfficerHeader title="Dashboard" className="mb-5 shrink-0" />
+          <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Dashboard" className="mb-5 shrink-0" />
 
           <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="grid gap-6 xl:grid-cols-[2fr_1fr] h-full">
@@ -54,7 +54,7 @@ export default function BankOfficerRolePage() {
                         <span className="block h-2 w-2 rounded-full bg-[#3b82f6]"></span>
                         <span className="text-gray-500">Average item persale</span>
                      </div>
-                     <button className="text-xs font-semibold text-gray-500 hover:text-gray-900">Show All ↗</button>
+                     <button className="text-xs font-semibold text-gray-500 hover:text-gray-900">Show All â†—</button>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col">
@@ -94,11 +94,11 @@ export default function BankOfficerRolePage() {
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium opacity-90">Total Customers</p>
-                           <span className="text-xs">↗</span>
+                           <span className="text-xs">â†—</span>
                         </div>
                         <div>
                            <p className="text-2xl font-bold mb-1">81.000</p>
-                           <p className="text-[10px] text-[#0d3b66]/80">↗ 10.6% <span className="opacity-60">From last week</span></p>
+                           <p className="text-[10px] text-[#0d3b66]/80">â†— 10.6% <span className="opacity-60">From last week</span></p>
                         </div>
                      </CardContent>
                   </Card>
@@ -108,11 +108,11 @@ export default function BankOfficerRolePage() {
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">Low Risk</p>
-                           <span className="text-xs text-gray-400">↗</span>
+                           <span className="text-xs text-gray-400">â†—</span>
                         </div>
                         <div>
                            <p className="text-2xl font-bold text-[#0d3b66] mb-1">5.000</p>
-                           <p className="text-[10px] text-green-500">↗ 1.5% <span className="text-gray-400">From last week</span></p>
+                           <p className="text-[10px] text-green-500">â†— 1.5% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>
                   </Card>
@@ -122,11 +122,11 @@ export default function BankOfficerRolePage() {
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">Medium Risk</p>
-                           <span className="text-xs text-gray-400">↗</span>
+                           <span className="text-xs text-gray-400">â†—</span>
                         </div>
                         <div>
                            <p className="text-2xl font-bold text-[#0d3b66] mb-1">12.000</p>
-                           <p className="text-[10px] text-green-500">↗ 3.6% <span className="text-gray-400">From last week</span></p>
+                           <p className="text-[10px] text-green-500">â†— 3.6% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>
                   </Card>
@@ -136,11 +136,11 @@ export default function BankOfficerRolePage() {
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">High Risk</p>
-                           <span className="text-xs text-gray-400">↗</span>
+                           <span className="text-xs text-gray-400">â†—</span>
                         </div>
                         <div>
                            <p className="text-2xl font-bold text-[#0d3b66] mb-1">5.000</p>
-                           <p className="text-[10px] text-red-500">↘ 1.5% <span className="text-gray-400">From last week</span></p>
+                           <p className="text-[10px] text-red-500">â†˜ 1.5% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>
                   </Card>
@@ -237,3 +237,5 @@ export default function BankOfficerRolePage() {
     </AuthGuard>
   );
 }
+
+

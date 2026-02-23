@@ -1,0 +1,31 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E4167" />
+      <stop offset="0.58" stop-color="#0B2F4E" />
+      <stop offset="1" stop-color="#08263D" />
+    </linearGradient>
+    <radialGradient id="glow1" cx="0" cy="0" r="1" gradientTransform="translate(410 170) rotate(90) scale(320 420)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#26D5C8" stop-opacity="0.34" />
+      <stop offset="1" stop-color="#26D5C8" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glow2" cx="0" cy="0" r="1" gradientTransform="translate(1170 530) rotate(90) scale(350 470)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E74FF" stop-opacity="0.4" />
+      <stop offset="1" stop-color="#1E74FF" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#BDE5FF" stop-opacity="0.55" />
+      <stop offset="1" stop-color="#BDE5FF" stop-opacity="0.1" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#base)" />
+  <rect width="1600" height="900" fill="url(#glow1)" />
+  <rect width="1600" height="900" fill="url(#glow2)" />
+
+  <g opacity="0.55">
+    <path d="M1250 110L1330 220L1280 355L1135 375L1035 270L1085 140L1250 110Z" stroke="url(#line)" stroke-width="4" fill="none" />
+    <path d="M370 640L450 760L395 900L250 920L155 815L205 680L370 640Z" stroke="url(#line)" stroke-width="4" fill="none" />
+    <path d="M1430 530L1480 610L1440 700L1335 715L1265 635L1300 550L1430 530Z" stroke="url(#line)" stroke-width="3.5" fill="none" />
+  </g>
+</svg>

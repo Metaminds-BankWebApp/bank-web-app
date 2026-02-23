@@ -1,6 +1,6 @@
 import React from "react";
 
-import LoanSenseHeader from "@/src/components/ui/loansenseheader";
+import ModuleHeader from "@/src/components/ui/module-header";
 type SummaryCardProps = {
   label: string;
   value: React.ReactNode;
@@ -54,7 +54,7 @@ export default function Page() {
     <main className="flex flex-col gap-6 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
       
        {/* Header */}
-        <LoanSenseHeader title="Personal Loan" />
+        <ModuleHeader theme="loansense" menuMode="feature-layout" title="Personal Loan" />
         <div><p className="text-sm opacity-80 mt-2">Discover your personal loan eligibility and affordability insights</p></div>
 
       {/* Eligibility Summary */}
@@ -143,3 +143,4 @@ export default function Page() {
     </main>
   );
 }
+
