@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { Download, Eye } from "lucide-react";
-import { SpendIqHeader } from "@/src/components/SpendIqHeader";
+import ModuleHeader from "@/src/components/ui/module-header";
 
 export default function ExpenseHistoryPage() {
   const expenses = [
@@ -45,7 +45,7 @@ export default function ExpenseHistoryPage() {
   return (
     <div className="p-8 space-y-8 bg-[#f4f6fb] min-h-screen">
 
-      <SpendIqHeader title="Expense History" />
+      <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Expense History" />
 
       {/* Subtitle */}
       <div className="mt-4">

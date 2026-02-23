@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Sidebar } from "@/src/components/layout";
-import { AdminHeader } from "@/src/components/ui/adminheader";
+import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 import { Pencil, Trash2, Search } from "lucide-react";
 
@@ -119,7 +119,7 @@ export default function UserManagementPage() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
           <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6">
-            <AdminHeader title="User Management" />
+            <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Admin" title="User Management" />
           </div>
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-6 space-y-6">
             {/* Filter Bar */}
@@ -259,3 +259,4 @@ export default function UserManagementPage() {
     </AuthGuard>
   );
 }
+
