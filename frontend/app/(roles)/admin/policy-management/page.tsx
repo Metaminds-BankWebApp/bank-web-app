@@ -60,7 +60,7 @@ export default function PolicyManagementPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
-        <Sidebar role="ADMIN" className="hidden lg:block" />
+        <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
 
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Header */}
@@ -69,7 +69,7 @@ export default function PolicyManagementPage() {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-8">
+          <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-5">
 
             <h2 className="text-2xl font-bold text-[#1e1b4b]">
               LOAN TYPE AND INTEREST RATE
@@ -78,7 +78,7 @@ export default function PolicyManagementPage() {
             {loans.map((loan) => (
               <div
                 key={loan.id}
-                className={`flex flex-col lg:flex-row justify-between items-center rounded-2xl px-8 py-8 transition ${
+                className={`flex flex-col lg:flex-row justify-between items-center rounded-xl px-6 py-5 transition ${
                   loan.dark
                     ? "bg-[#0B3B66] text-white"
                     : "bg-[#5f879e] text-white"

@@ -130,7 +130,7 @@ export default function AuditLogsPage() {
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[#f3f4f6] overflow-hidden">
-        <Sidebar role="ADMIN" className="hidden lg:block" />
+         <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
 
         <main className="flex-1 flex flex-col overflow-hidden">
           <div className="px-6 pt-4 pb-6">
