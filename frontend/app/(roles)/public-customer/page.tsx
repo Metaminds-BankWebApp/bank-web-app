@@ -78,12 +78,12 @@ export default function PublicCustomerRolePage() {
   ];
 
   const checklistItems = [
-    { label: "Account Registration", checked: true },
-    { label: "Email Verification", checked: true },
-    { label: "Complete Application", checked: false },
-    { label: "Identity Verification", checked: false },
-    { label: "Bank Officer Approval", checked: false },
-    { label: "Account Activation", checked: false },
+    { label: "Income Details", checked: true },
+    { label: "Loan Details", checked: true },
+    { label: "Credit Card Details", checked: false },
+    { label: "Liability Details", checked: true },
+    { label: "Review Details", checked: true },
+    
   ];
 
   return (

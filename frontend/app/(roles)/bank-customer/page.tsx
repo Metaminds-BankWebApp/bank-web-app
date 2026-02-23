@@ -72,12 +72,12 @@ export default function BankCustomerRolePage() {
   ];
 
   const checklistItems = [
-    { label: "Verified Email Address", checked: true },
-    { label: "Add income details", checked: true },
-    { label: "Verify mobile number", checked: false },
-    { label: "Connect primary bank account", checked: false },
-    { label: "Upload proof of residence", checked: false },
-    { label: "Setup Biometric Auth", checked: false },
+    { label: "Income Details", checked: true },
+    { label: "Loan Details", checked: true },
+    { label: "Credit Card Details", checked: true },
+    { label: "Liability Details", checked: true },
+    { label: "Review Details", checked: true },
+    
   ];
 
   return (
