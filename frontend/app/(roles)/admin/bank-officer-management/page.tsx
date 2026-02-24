@@ -22,7 +22,7 @@ type OfficerData = {
 };
 
 // ==================== COMPONENTS ====================
-function SummaryCard({
+/*function SummaryCard({
   label,
   value,
   variant = "light",
@@ -48,7 +48,37 @@ function SummaryCard({
       <span className="text-2xl font-bold mt-3">{value}</span>
     </div>
   );
+}*/
+
+function SummaryCard({
+  label,
+  value,
+  variant = "light",
+}: {
+  label: string;
+  value: string | number;
+  variant?: "dark" | "medium" | "soft" | "light";
+}) {
+  const classes =
+    variant === "dark"
+      ? "bg-[#0d3b66] text-white"
+      : variant === "medium"
+      ? "bg-[#446892] text-white"
+      : variant === "soft"
+      ? "bg-[#6f8fb6] text-[#13365f]"
+      : "bg-[#9fb1c9] text-[#15375f]";
+
+  const titleClass =
+    variant === "dark" || variant === "medium" ? "text-white/75" : "text-[#15375f]/80";
+
+  return (
+    <div className={`rounded-2xl p-6 shadow-[0_16px_26px_-20px_rgba(11,43,89,0.85)] flex flex-col justify-between ${classes}`}>
+      <span className={`text-xs font-semibold tracking-wide ${titleClass}`}>{label}</span>
+      <span className="mt-3 text-2xl font-bold leading-none">{value}</span>
+    </div>
+  );
 }
+
 
 function StatusBadge({ status }: { status: StatusType }) {
   return (

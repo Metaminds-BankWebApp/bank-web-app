@@ -20,8 +20,12 @@ export default function AdminHelpPage() {
             title="Admin Support Center"
             subtitle="Governance, escalations & system oversight"
             className="mb-6"
-          />
-
+            role="Admin"
+            avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" 
+            avatarStatusDot 
+            name="Kamal Edirisinghe"
+          />        
+          
           <div className="flex-1 overflow-y-auto space-y-6">
 
             {/* Overview Summary */}
