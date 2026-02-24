@@ -79,32 +79,42 @@ export default function AddOfficerPage() {
                   <label className="text-xs font-semibold text-gray-600 uppercase">
                     User Name
                   </label>
-                  <div className="flex flex-col sm:flex-row mt-2">
-                    <input
-                      type="text"
-                      placeholder="KamalOFF001"
-                      className="flex-1 px-4 py-3 rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none bg-white border border-gray-300 border-b-0 sm:border-b sm:border-r-0"
-                    />
-                    <button className="px-5 bg-gray-300 rounded-b-lg sm:rounded-r-lg sm:rounded-bl-none border border-t-0 sm:border-t sm:border-l-0 border-gray-300">
-                      Create
-                    </button>
-                  </div>
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto]">
+  <input
+    type="text"
+    placeholder="KamalOFF001"
+    className="w-full min-w-0 px-4 py-3 rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none bg-white border border-gray-300 sm:border-r-0"
+  />
+  <button
+    type="button"
+    className="w-full sm:w-auto shrink-0 whitespace-nowrap px-5 bg-gray-300 rounded-b-lg sm:rounded-r-lg sm:rounded-bl-none border border-t-0 sm:border-t sm:border-l-0 border-gray-300"
+  >
+    Create
+  </button>
+</div>
+
                 </div>
                 {/* Password */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 uppercase">
                     Password
                   </label>
-                  <div className="flex flex-col sm:flex-row mt-2">
-                    <input
-                      type="text"
-                      placeholder="8uW00Is#F"
-                      className="flex-1 px-4 py-3 rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none bg-white border border-gray-300 border-b-0 sm:border-b sm:border-r-0"
-                    />
-                    <button className="px-5 bg-gray-300 rounded-b-lg sm:rounded-r-lg sm:rounded-bl-none border border-t-0 sm:border-t sm:border-l-0 border-gray-300">
-                      Create
-                    </button>
-                  </div>
+                <div className="mt-2 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto]">
+  <input
+    type="text"
+    placeholder="8uW00Is#F"
+    className="w-full min-w-0 px-4 py-3 rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none bg-white border border-gray-300 sm:border-r-0"
+  />
+  <button
+    type="button"
+    className="w-full sm:w-auto shrink-0 whitespace-nowrap px-5 bg-gray-300 rounded-b-lg sm:rounded-r-lg sm:rounded-bl-none border border-t-0 sm:border-t sm:border-l-0 border-gray-300"
+  >
+    Create
+  </button>
+</div>
+
+
+
                 </div>
                 {/* Status Toggle */}
                 <div>
