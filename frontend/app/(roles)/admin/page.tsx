@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
   AlertTriangle,
@@ -43,7 +43,9 @@ type GrowthBar = {
 type QuickAction = {
   label: string;
   icon: LucideIcon;
+  href: string;
 };
+
 
 type ActionTone = "success" | "warning" | "info";
 
@@ -117,10 +119,10 @@ const growthData: GrowthBar[] = [
 ];
 
 const quickActions: QuickAction[] = [
-  { label: "NEW BRANCH", icon: Building2 },
-  { label: "NEW OFFICER", icon: UserPlus },
-  { label: "AUDIT LOG", icon: FileText },
-  { label: "POLICY", icon: ShieldCheck },
+  { label: "NEW BRANCH", icon: Building2, href: "/admin/branch-management/add" },
+  { label: "NEW OFFICER", icon: UserPlus, href: "/admin/bank-officer-management/add" },
+  { label: "AUDIT LOG", icon: FileText, href: "/admin/audit-logs" },
+  { label: "POLICY", icon: ShieldCheck, href: "/admin/policy-management" },
 ];
 
 const adminActions: AdminAction[] = [
@@ -297,13 +299,15 @@ export default function DashboardPage() {
                     const Icon = action.icon;
 
                     return (
-                      <button
-                        key={action.label}
-                        className="rounded-xl bg-[#1a4a77]/80 p-3 text-center transition hover:bg-[#205486]"
-                      >
-                        <Icon size={18} className="mx-auto text-[#3cd1c4]" />
-                        <p className="mt-3 text-xs font-semibold tracking-wide">{action.label}</p>
-                      </button>
+                      <Link
+  key={action.label}
+  href={action.href}
+  className="rounded-xl bg-[#1a4a77]/80 p-3 text-center transition hover:bg-[#205486]"
+>
+  <Icon size={18} className="mx-auto text-[#3cd1c4]" />
+  <p className="mt-3 text-xs font-semibold tracking-wide">{action.label}</p>
+</Link>
+
                     );
                   })}
                 </div>
