@@ -61,10 +61,7 @@ export default function CreditAnalysisEvaluationPage() {
             className="mb-6"
           />
 
-          <div className="mb-2 text-sm text-slate-500">
-            Dashboard <span className="mx-2 text-slate-400">▶</span> Credit Analysis <span className="mx-2 text-slate-400">▶</span>{" "}
-            <span className="text-[#3e9fd3] font-medium">{customerName}</span>
-          </div>
+          
           <div className="mb-8 text-xs text-slate-500">Customer ID: {customerId}</div>
 
           <div className="mb-8 grid grid-cols-4 rounded-xl border border-white/10 bg-[#173f6d]/80 p-1">

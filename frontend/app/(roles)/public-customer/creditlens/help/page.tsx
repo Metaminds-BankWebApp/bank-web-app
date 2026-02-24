@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, ChangeEvent } from "react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
-import { Dialog } from "@/src/components/ui/dialog";
+import PopupModal from "@/src/components/ui/popup-modal";
+
+export type Ticket = { id: string; summary: string; status: string; updated: string };
 
 export default function CreditLensHelpPage() {
   const [search, setSearch] = useState("");
   const [troubleshooter, setTroubleshooter] = useState<string | null>(null);
   const [openSupport, setOpenSupport] = useState(false);
-  const [tickets, setTickets] = useState(() => [
+  const [tickets, setTickets] = useState<Ticket[]>(() => [
     { id: "T-1001", summary: "Unable to generate score", status: "Open", updated: "2026-02-20" },
   ]);
 
@@ -29,9 +31,9 @@ export default function CreditLensHelpPage() {
             <Input
               label={undefined}
               placeholder="Search help articles… (e.g., Why is my CreditLens locked?)"
-              className="rounded-[12px] h-12 bg-white"
+              className="rounded-xl h-12 bg-white"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)}
             />
             <div className="mt-4 flex gap-3">
               {[
@@ -193,15 +195,15 @@ export default function CreditLensHelpPage() {
         </section>
 
         {/* Support Request Dialog */}
-        <Dialog open={openSupport} onOpenChange={setOpenSupport} title="Create Support Request">
+        <PopupModal open={openSupport} onOpenChange={setOpenSupport} title="Create Support Request">
           <SupportForm onClose={() => setOpenSupport(false)} onCreate={(t) => setTickets((prev) => [t, ...prev])} />
-        </Dialog>
+        </PopupModal>
       </main>
     </div>
   );
 }
 
-function SupportForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t: any) => void }) {
+function SupportForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t: Ticket) => void }) {
   const [type, setType] = useState("CreditLens");
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
@@ -215,7 +217,7 @@ function SupportForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t:
   return (
     <div className="space-y-3">
       <label className="text-sm">Issue Type</label>
-      <select className="w-full rounded-md p-2 border" value={type} onChange={(e) => setType(e.target.value)}>
+      <select className="w-full rounded-md p-2 border" value={type} onChange={(e: ChangeEvent<HTMLSelectElement>) => setType(e.target.value)}>
         <option>Profile Issue</option>
         <option>CreditLens</option>
         <option>SpendIQ</option>
@@ -223,10 +225,10 @@ function SupportForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t:
         <option>Other</option>
       </select>
 
-      <Input placeholder="Short title" value={title} onChange={(e) => setTitle(e.target.value)} />
+      <Input placeholder="Short title" value={title} onChange={(e: ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} />
       <div>
         <label className="text-sm">Description</label>
-        <textarea className="w-full rounded-md p-2 border" rows={4} value={desc} onChange={(e) => setDesc(e.target.value)} />
+        <textarea className="w-full rounded-md p-2 border" rows={4} value={desc} onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDesc(e.target.value)} />
       </div>
 
       <div className="flex items-center justify-between">

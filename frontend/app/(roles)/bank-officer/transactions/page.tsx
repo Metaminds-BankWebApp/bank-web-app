@@ -15,7 +15,7 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
-import { Dialog } from "@/src/components/ui/dialog";
+import PopupModal from "@/src/components/ui/popup-modal";
 import {
   Table,
   TableBody,
@@ -217,15 +217,9 @@ export default function TransactionsPage() {
              <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Transactions" className="mb-6 shrink-0" />
 
              <div className="flex-1 overflow-y-auto min-h-0">
-          <div className="mb-8 text-sm text-slate-500">
-             Dashboard <span className="mx-2 text-slate-400">â–¶</span> <span className="text-[#3e9fd3] font-medium">Transactions</span>
-          </div>
 
-          <div className="flex items-center justify-end mb-6">
-             <Button className="bg-[#0d3b66] hover:bg-[#0a2e50] text-white" onClick={handleExport}>
-                <Download size={16} className="mr-2" /> Export Statement
-             </Button>
-          </div>
+
+          
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8 shrink-0">
@@ -260,6 +254,12 @@ export default function TransactionsPage() {
                    <Clock size={12} /> Based on last 6 months
                 </div>
              </div>
+          </div>
+
+          <div className="flex items-center justify-end mb-6">
+             <Button className="bg-[#0d3b66] hover:bg-[#0a2e50] text-white" onClick={handleExport}>
+                <Download size={16} className="mr-2" /> Export Statement
+             </Button>
           </div>
 
           {/* Filters */}
@@ -354,9 +354,9 @@ export default function TransactionsPage() {
 
           {/* Transactions Table */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex-1 flex flex-col min-h-0">
-             <div className="flex-1 overflow-auto">
-             <Table>
-               <TableHeader className="bg-slate-50/80 sticky top-0 z-10">
+                   <div className="flex-1 overflow-auto">
+                   <Table>
+                      <TableHeader className="bg-sky-50/70 sticky top-0 z-10">
                  <TableRow className="hover:bg-transparent border-b border-slate-100">
                    <TableHead className="w-37.5 text-xs font-bold uppercase text-slate-500 tracking-wider">Date/Time</TableHead>
                    <TableHead className="text-xs font-bold uppercase text-slate-500 tracking-wider">Transaction ID</TableHead>
@@ -429,7 +429,7 @@ export default function TransactionsPage() {
              </div>
           </div>
 
-               <Dialog
+               <PopupModal
                   open={selectedTransaction !== null}
                   onOpenChange={(open) => {
                      if (!open) {
@@ -485,7 +485,7 @@ export default function TransactionsPage() {
                         </div>
                      </div>
                   )}
-               </Dialog>
+               </PopupModal>
         </div>
         </main>
       </div>

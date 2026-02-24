@@ -1,17 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  CartesianGrid,
-} from "recharts";
+// Recharts removed for build-time safety; render lightweight placeholders instead.
 
 
 import ModuleHeader from "@/src/components/ui/module-header";
@@ -72,20 +62,9 @@ export default function SpendIQDashboard() {
           <h2 className="font-semibold text-lg mb-6">
             Monthly Spend Trend
           </h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={monthlyData}>
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <CartesianGrid strokeDasharray="3 3" />
-              <Line
-                type="monotone"
-                dataKey="spend"
-                stroke="#0b1a3a"
-                strokeWidth={3}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-[250px] flex items-center justify-center text-sm text-gray-500 bg-white/40 rounded-md">
+            Simple chart placeholder (install `recharts` to enable charts)
+          </div>
         </div>
       </div>
 
@@ -96,14 +75,9 @@ export default function SpendIQDashboard() {
           <h2 className="font-semibold text-lg mb-6">
             Category Breakdown
           </h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={categoryData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#2563eb" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="h-[250px] flex items-center justify-center text-sm text-gray-500 bg-white/40 rounded-md">
+            Simple chart placeholder (install `recharts` to enable charts)
+          </div>
         </div>
 
         {/* Behavior Panel */}

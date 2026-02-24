@@ -105,12 +105,8 @@ export default function AddCustomerPage() {
              </div>
           ) : (
             <>
-              {/* Breadcrumb / Page Title */}
-              <div className="mb-6 flex items-center gap-2 text-sm text-slate-500">
-                 <span>Dashboard</span>
-                 <ChevronRight size={14} />
-                 <span className="font-semibold text-[#3e9fd3]">Add Customer</span>
-              </div>
+              {/* Page Title */}
+              
 
               <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-8">
                  {/* Left Column: Form Steps */}

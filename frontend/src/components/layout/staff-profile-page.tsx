@@ -96,10 +96,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
           />
 
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mb-8 text-sm text-slate-500">
-              Dashboard <span className="mx-2 text-slate-400">&gt;</span>
-              <span className="font-medium text-[#3e9fd3]">Profile</span>
-            </div>
+          
 
             <div className="grid gap-6 xl:grid-cols-[1fr_1.8fr]">
               <div className="space-y-6">
