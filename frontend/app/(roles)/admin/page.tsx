@@ -16,6 +16,18 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import { useState } from "react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
@@ -160,6 +172,65 @@ const actionToneClass: Record<ActionTone, string> = {
 };
 
 export default function DashboardPage() {
+   const [customerType, setCustomerType] = useState<"ALL" | "BANK" | "PUBLIC">(
+  "ALL"
+);
+
+const chartValues = {
+  ALL: [30, 48, 62, 100, 72, 52],
+  BANK: [20, 35, 50, 80, 60, 40],
+  PUBLIC: [10, 25, 40, 60, 50, 30],
+};
+
+const chartData = {
+  labels: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"],
+  datasets: [
+    {
+      label: "Users",
+      data: chartValues[customerType],
+      backgroundColor: [
+        "#8fa3b7",
+        "#8fa3b7",
+        "#8fa3b7",
+        "#0d3b66", // Active month highlight (APR)
+        "#8fa3b7",
+        "#8fa3b7",
+      ],
+      borderRadius: 6,
+      barThickness: 30,
+    },
+  ],
+};
+
+const chartOptions = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: "#0d3b66",
+      titleColor: "#fff",
+      bodyColor: "#fff",
+      padding: 10,
+      displayColors: false,
+      callbacks: {
+        label: function (context: any) {
+          return `Users: ${context.raw}`;
+        },
+      },
+    },
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { color: "#95a4b8" },
+    },
+    y: {
+      grid: { color: "#e7ebf2" },
+      ticks: { display: false },
+    },
+  },
+};
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
@@ -178,8 +249,9 @@ export default function DashboardPage() {
               name="Kamal Edirisinghe"
               role="Admin"
               avatarStatusDot
-              avatarSrc="https://ui-avatars.com/api/?name=Kamal+Edirisinghe&background=0D3B66&color=fff"
+              avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random"
             />
+             
             </div>
             <div className="flex-1 overflow-y-auto px-4 pb-8 sm:px-6 lg:px-8">
             <section className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -236,57 +308,30 @@ export default function DashboardPage() {
                       </button>
                     </div>
 
-                    <div className="relative mt-5 h-[220px] rounded-2xl border border-[#edf1f6] bg-[#f9fbff] px-2 pb-9 pt-5">
-                      <div className="pointer-events-none absolute inset-x-2 bottom-9 top-5 flex flex-col justify-between">
-                        {Array.from({ length: 4 }).map((_, idx) => (
-                          <div key={idx} className="border-t border-[#e7ebf2]" />
-                        ))}
-                      </div>
-
-                      <div className="relative z-10 flex h-full items-end gap-2">
-                        {growthData.map((bar) => (
-                          <div key={bar.month} className="flex h-full flex-1 flex-col items-center justify-end">
-                            <div className="relative h-[160px] w-full">
-                              <div
-                                className="absolute bottom-0 left-0 right-0 rounded-t-lg bg-[#dce2ea]"
-                                style={{ height: `${bar.back}%` }}
-                              />
-                              <div
-                                className={cn(
-                                  "absolute bottom-0 left-0 right-0 rounded-t-lg",
-                                  bar.active ? "bg-[#0d3b66]" : "bg-[#8fa3b7]"
-                                )}
-                                style={{ height: `${bar.front}%` }}
-                              />
-                            </div>
-                            <p
-                              className={cn(
-                                "mt-2 text-xs font-semibold tracking-wide",
-                                bar.active ? "text-[#0d3b66]" : "text-[#95a4b8]"
-                              )}
-                            >
-                              {bar.month}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                   <div className="relative mt-5 h-[220px] rounded-2xl border border-[#edf1f6] bg-[#f9fbff] p-4">
+  <Bar data={chartData} options={chartOptions} />
+</div>
                   </div>
 
                   <div className="xl:border-l xl:border-[#edf1f6] xl:pl-6">
                     <h4 className="text-xl font-semibold leading-tight text-[#111111]">Customer Type</h4>
 
                     <div className="mt-12 space-y-4">
-                      <button className="w-full rounded-full bg-[#0d3b66] py-2 text-sm font-semibold text-white">
-                        ALL
-                      </button>
-                      <button className="w-full rounded-full border border-[#5f7fa3] bg-white py-2 text-sm font-semibold text-[#1a2c40]">
-                        BANK
-                      </button>
-                      <button className="w-full rounded-full border border-[#5f7fa3] bg-white py-2 text-sm font-semibold text-[#1a2c40]">
-                        PUBLIC
-                      </button>
-                    </div>
+  {["ALL", "BANK", "PUBLIC"].map((type) => (
+    <button
+      key={type}
+      onClick={() => setCustomerType(type as any)}
+      className={cn(
+        "w-full rounded-full py-2 text-sm font-semibold transition",
+        customerType === type
+          ? "bg-[#0d3b66] text-white"
+          : "border border-[#5f7fa3] bg-white text-[#1a2c40]"
+      )}
+    >
+      {type}
+    </button>
+  ))}
+</div>
                   </div>
                 </div>
               </div>

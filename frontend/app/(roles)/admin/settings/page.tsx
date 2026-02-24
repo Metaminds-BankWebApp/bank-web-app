@@ -42,8 +42,8 @@ export default function AdminSettingsPage() {
 
         <main className="flex-1 flex flex-col bg-[#f4f6f9] overflow-hidden lg:rounded-l-[28px] p-4 sm:p-6 lg:p-8">
 
-          <ModuleHeader title="System Settings" className="mb-6 shrink-0" theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" sidebarHideCollapse={true} />
-
+          <ModuleHeader title="System Settings" className="mb-6 shrink-0" theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" sidebarHideCollapse={true} role="Admin" avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe"/>
+           
           <div className="flex-1 overflow-y-auto space-y-6">
 
             {/* System Overview Strip */}
