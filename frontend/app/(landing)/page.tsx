@@ -1,13 +1,13 @@
 import {
   CtaBannerSection,
-  FadeInSection,
-  HeroSection,
   LandingFooter,
-  LandingBackground,
   MetricsSection,
   ModulesSection,
   StepsSection,
 } from "./components";
+import { HeroSection } from "./components/hero-section";
+import { LandingBackground } from "./components/landing-background";
+import { FadeInSection } from "./components/fade-in-section";
 import { WhyChooseSection } from "./components/why-choose-section";
 import { LogoutIntentReset } from "./components/logout-intent-reset";
 
