@@ -151,7 +151,7 @@ export default function ModuleHeader({
         <span>Add Entry</span>
       </button>
     );
-  }, [rightContent, theme, router, pathname]);
+  }, [rightContent, theme]);
 
   const handleOpenMenu = () => {
     if (menuMode === "feature-layout") {
@@ -315,7 +315,7 @@ export default function ModuleHeader({
             className="absolute inset-0 bg-slate-950/55"
           />
           <div className="relative h-full w-72 max-w-[85vw]">
-            <Sidebar role={sidebarRole} className="h-full w-full md:w-full" hideCollapse={sidebarHideCollapse || sidebarRole === "ADMIN"} />
+            <Sidebar role={sidebarRole} className="h-full w-full md:w-full" hideCollapse={sidebarHideCollapse} />
             <button
               type="button"
               onClick={() => setIsMenuOpen(false)}
