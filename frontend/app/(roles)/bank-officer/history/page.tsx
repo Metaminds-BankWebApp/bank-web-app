@@ -13,7 +13,7 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
-import { Dialog } from "@/src/components/ui/dialog";
+import PopupModal from "@/src/components/ui/popup-modal";
 import {
   Select,
   SelectContent,
@@ -209,9 +209,7 @@ export default function HistoryPage() {
                <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="History" className="mb-6 shrink-0" />
 
           <div className="flex-1 overflow-y-auto min-h-0">
-          <div className="mb-8 text-sm text-slate-500">
-             Dashboard <span className="mx-2 text-slate-400">â–¶</span> <span className="text-[#3e9fd3] font-medium">Credit Status Analysis</span>
-          </div>
+      
 
           {/* Controls */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -291,7 +289,7 @@ export default function HistoryPage() {
              {/* Table */}
              <div className="overflow-x-auto">
                 <Table>
-                   <TableHeader className="bg-slate-50">
+                   <TableHeader className="bg-sky-50/70">
                       <TableRow>
                          <TableHead className="w-45 text-xs font-bold uppercase text-slate-500">Timestamp</TableHead>
                          <TableHead className="text-xs font-bold uppercase text-slate-500">Customer</TableHead>
@@ -377,7 +375,7 @@ export default function HistoryPage() {
              </div>
           </div>
 
-               <Dialog
+               <PopupModal
                   open={selectedHistoryItem !== null}
                   onOpenChange={(open) => {
                      if (!open) {
@@ -425,7 +423,7 @@ export default function HistoryPage() {
                         </div>
                      </div>
                   )}
-               </Dialog>
+               </PopupModal>
           </div>
         </main>
       </div>

@@ -84,8 +84,8 @@ export default function CreditRiskGauge({ value }: Props) {
         const arcs = meta?.data;
         if (!arcs || arcs.length === 0) return;
 
-        const first = arcs[0];
-        const last = arcs[arcs.length - 1];
+        const first = arcs[0] as any;
+        const last = arcs[arcs.length - 1] as any;
 
         const cx = first.x;
         const cy = first.y;

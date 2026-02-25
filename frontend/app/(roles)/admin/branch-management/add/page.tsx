@@ -2,35 +2,65 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Building2 } from "lucide-react";
+import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
-import { AuthGuard } from "@/src/components/auth";
-import { Building2 } from "lucide-react";
+import type { BranchFormData, BranchFormErrors } from "./types";
+import { generateBranchId } from "./utils";
+import { isBranchFormComplete, validateBranchForm } from "./validation";
+
+const getInitialFormData = (): BranchFormData => ({
+  branchName: "",
+  branchId: generateBranchId(),
+  customers: "0",
+  officers: "0",
+  contact: "",
+  email: "",
+  address: "",
+  isActive: true,
+});
 
 export default function AddBranchPage() {
-  const [branchName, setBranchName] = useState("");
-  const [branchId, setBranchId] = useState("");
-  const[customers, setCustomers] = useState("");
-  const[officers, setOfficers] = useState("");
-  const [contact, setContact] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [isActive, setIsActive] = useState(true);
+  const [formData, setFormData] = useState<BranchFormData>(getInitialFormData);
+  const [errors, setErrors] = useState<BranchFormErrors>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const router = useRouter();
+  const canSubmit = isBranchFormComplete(formData) && !isSaving;
+
+  const handleRequiredFieldChange = (
+    field: keyof Pick<BranchFormData, "branchName" | "contact" | "email" | "address">,
+    value: string
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const nextErrors = validateBranchForm(formData);
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    setIsSaving(true);
+
     console.log({
-      branchName,
-      branchId,
-      customers,
-      officers,
-      contact,
-      email,
-      address,
-      isActive,
+      ...formData,
+      branchName: formData.branchName.trim(),
+      contact: formData.contact.trim(),
+      email: formData.email.trim(),
+      address: formData.address.trim(),
     });
 
     // Later connect to backend here
+    router.push("/admin/branch-management");
   };
 
   return (
@@ -87,11 +117,17 @@ export default function AddBranchPage() {
                     </label>
                     <input
                       type="text"
-                      value={branchName}
-                      onChange={(e) => setBranchName(e.target.value)}
+                      value={formData.branchName}
+                      onChange={(e) => handleRequiredFieldChange("branchName", e.target.value)}
                       placeholder="Colombo Branch"
-                      className="w-full px-4 py-3 rounded-lg border text-sm"
+                      aria-invalid={Boolean(errors.branchName)}
+                      className={`w-full px-4 py-3 rounded-lg border text-sm ${
+                        errors.branchName ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
+                    {errors.branchName ? (
+                      <p className="mt-1 text-xs text-red-600">{errors.branchName}</p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -100,10 +136,10 @@ export default function AddBranchPage() {
                     </label>
                     <input
                       type="text"
-                      value={branchId}
-                      onChange={(e) => setBranchId(e.target.value)}
+                      value={formData.branchId}
                       placeholder="BR-001"
-                      className="w-full px-4 py-3 rounded-lg border text-sm"
+                      readOnly
+                      className="w-full px-4 py-3 rounded-lg border text-sm bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                     />
                   </div>
 
@@ -113,10 +149,10 @@ export default function AddBranchPage() {
                     </label>
                     <input
                       type="text"
-                      value={customers}
-                      onChange={(e) => setCustomers(e.target.value)}
+                      value={formData.customers}
                       placeholder="200"
-                      className="w-full px-4 py-3 rounded-lg border text-sm"
+                      readOnly
+                      className="w-full px-4 py-3 rounded-lg border text-sm bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                     />
                   </div>
 
@@ -126,10 +162,10 @@ export default function AddBranchPage() {
                     </label>
                     <input
                       type="text"
-                      value={officers}
-                      onChange={(e) => setOfficers(e.target.value)}
+                      value={formData.officers}
                       placeholder="15"
-                      className="w-full px-4 py-3 rounded-lg border text-sm"
+                      readOnly
+                      className="w-full px-4 py-3 rounded-lg border text-sm bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
                     />
                   </div>
 
@@ -146,11 +182,17 @@ export default function AddBranchPage() {
                     </label>
                     <input
                       type="text"
-                      value={contact}
-                      onChange={(e) => setContact(e.target.value)}
+                      value={formData.contact}
+                      onChange={(e) => handleRequiredFieldChange("contact", e.target.value)}
                       placeholder="+94 XX XXX XXXX"
-                      className="w-full px-4 py-3 rounded-lg border text-sm"
+                      aria-invalid={Boolean(errors.contact)}
+                      className={`w-full px-4 py-3 rounded-lg border text-sm ${
+                        errors.contact ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
+                    {errors.contact ? (
+                      <p className="mt-1 text-xs text-red-600">{errors.contact}</p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -159,11 +201,17 @@ export default function AddBranchPage() {
                     </label>
                     <input
                       type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={formData.email}
+                      onChange={(e) => handleRequiredFieldChange("email", e.target.value)}
                       placeholder="branch@primecore.com"
-                      className="w-full px-4 py-3 rounded-lg border text-sm"
+                      aria-invalid={Boolean(errors.email)}
+                      className={`w-full px-4 py-3 rounded-lg border text-sm ${
+                        errors.email ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
+                    {errors.email ? (
+                      <p className="mt-1 text-xs text-red-600">{errors.email}</p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -171,12 +219,18 @@ export default function AddBranchPage() {
                       FULL ADDRESS
                     </label>
                     <textarea
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
+                      value={formData.address}
+                      onChange={(e) => handleRequiredFieldChange("address", e.target.value)}
                       placeholder="Enter the complete street address and landmarks..."
                       rows={4}
-                      className="w-full px-4 py-3 rounded-lg border text-sm resize-none"
+                      aria-invalid={Boolean(errors.address)}
+                      className={`w-full px-4 py-3 rounded-lg border text-sm resize-none ${
+                        errors.address ? "border-red-500" : "border-gray-300"
+                      }`}
                     />
+                    {errors.address ? (
+                      <p className="mt-1 text-xs text-red-600">{errors.address}</p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -186,40 +240,48 @@ export default function AddBranchPage() {
 
                     <div className="flex items-center justify-between px-4 py-3 border rounded-lg">
                       <span className="text-sm">
-                        {isActive ? "Active" : "Maintenance"}
+                        {formData.isActive ? "Active" : "Maintenance"}
                       </span>
 
                       <button
                         type="button"
-                        onClick={() => setIsActive(!isActive)}
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, isActive: !prev.isActive }))
+                        }
                         className={`w-12 h-6 flex items-center rounded-full p-1 transition ${
-                          isActive ? "bg-blue-600" : "bg-gray-300"
+                          formData.isActive ? "bg-[#0B3B66]" : "bg-gray-400"
                         }`}
                       >
                         <div
                           className={`bg-white w-4 h-4 rounded-full shadow-md transform transition ${
-                            isActive ? "translate-x-6" : ""
+                            formData.isActive ? "translate-x-6" : ""
                           }`}
                         />
                       </button>
                     </div>
                 </div>
 
-                  <div className="flex justify-end gap-4 pt-4">
-                    <Link
-                      href="/admin/branch-management"
-                      className="text-sm text-gray-600 hover:text-gray-900"
-                    >
-                      Cancel
-                    </Link>
-
-                    <button
-                      type="submit"
-                      className="px-6 py-3 bg-[#0B3B66] text-white rounded-lg hover:bg-[#082d4a] transition text-sm font-medium"
-                    >
-                      Save Branch
-                    </button>
-                  </div>
+                  <div className="flex flex-col sm:flex-row justify-end gap-4 pt-6">
+                  <button type="button"
+                    onClick={() =>
+                      router.push("/admin/branch-management")
+                    }
+                    className="px-6 py-3 rounded-lg bg-gray-200 hover:bg-gray-300 w-full sm:w-auto"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!canSubmit}
+                    className={`px-6 py-3 rounded-lg w-full sm:w-auto ${
+                      canSubmit
+                        ? "bg-[#0B3B66] text-white hover:bg-[#082d4a]"
+                        : "bg-[#0B3B66]/50 text-white cursor-not-allowed"
+                    }`}
+                  >
+                    Save Branch
+                  </button>
+                </div>
 
                 </div>
               </div>

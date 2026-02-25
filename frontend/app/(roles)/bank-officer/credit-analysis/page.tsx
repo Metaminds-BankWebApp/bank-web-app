@@ -126,9 +126,7 @@ export default function CreditAnalysisPage() {
           <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Credit Analysis" className="mb-6 shrink-0" />
 
           <div className="flex-1 overflow-y-auto min-h-0">
-          <div className="mb-8 text-sm text-slate-500">
-            Dashboard <span className="mx-2 text-slate-400">â–¶</span> <span className="text-[#3e9fd3] font-medium">Credit Analysis</span>
-          </div>
+          
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <StatCard title="TOTAL CUSTOMERS" value="2,450" trend="+2.5%" highlight />
@@ -278,18 +276,7 @@ export default function CreditAnalysisPage() {
                         >
                           View Evaluation
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-8 text-xs bg-white text-slate-600 border-slate-200"
-                          onClick={() =>
-                            router.push(
-                              `/bank-officer/credit-analysis/customer/${customer.id}?name=${encodeURIComponent(customer.name)}`,
-                            )
-                          }
-                        >
-                          View Customer
-                        </Button>
+                      
                       </div>
                     </TableCell>
                   </TableRow>
