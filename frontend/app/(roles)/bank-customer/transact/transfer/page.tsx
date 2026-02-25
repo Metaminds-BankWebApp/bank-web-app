@@ -17,10 +17,15 @@ export default function Page() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [accountNumber, setAccountNumber] = useState("")
   const [amount, setAmount] = useState("")
+  const [beneficiary, setBeneficiary] = useState("")
+  const [remark, setRemark] = useState("")
+  const [expenseTrack, setExpenseTrack] = useState(false)
   const balance = 81000.0
   const [formErrors, setFormErrors] = useState({
     accountNumber: "",
     amount: "",
+    beneficiary: "",
+  remark: "",
   })
 
   const length = 6
@@ -71,8 +76,9 @@ export default function Page() {
   }
 
   const handleAccountNumberChange = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, "")
-    setAccountNumber(digitsOnly)
+  // accept only digits and limit to 10 characters
+  const digitsOnly = value.replace(/\D/g, "").slice(0, 10)
+  setAccountNumber(digitsOnly)
     if (formErrors.accountNumber) {
       setFormErrors((prev) => ({ ...prev, accountNumber: "" }))
     }
@@ -88,14 +94,38 @@ export default function Page() {
     }
   }
 
+  const handleBeneficiaryChange = (value: string) => {
+    setBeneficiary(value)
+    if (formErrors.beneficiary) {
+      setFormErrors((prev) => ({ ...prev, beneficiary: "" }))
+    }
+  }
+
+  const handleRemarkChange = (value: string) => {
+    setRemark(value)
+    if (formErrors.remark) {
+      setFormErrors((prev) => ({ ...prev, remark: "" }))
+    }
+  }
+
   const validateTransferForm = () => {
     const nextErrors = {
       accountNumber: "",
       amount: "",
+      beneficiary: "",
+      remark: "",
     }
 
     if (!accountNumber) {
       nextErrors.accountNumber = "Account number is required."
+    }
+
+    if (!beneficiary || beneficiary.trim().length < 2) {
+      nextErrors.beneficiary = "Beneficiary name is required."
+    }
+
+    if (!remark) {
+      nextErrors.remark = "Remark is required."
     }
 
     const parsedAmount = Number.parseFloat(amount)
@@ -104,15 +134,17 @@ export default function Page() {
       nextErrors.amount = "Amount is required."
     } else if (Number.isNaN(parsedAmount)) {
       nextErrors.amount = "Amount must be a valid number."
-    } else if (parsedAmount <= 0) {
-      nextErrors.amount = "Amount must be greater than 0."
+    } else if (parsedAmount < 1000) {
+      nextErrors.amount = "Minimum transfer amount is LKR 1,000."
     } else if (parsedAmount > balance) {
       nextErrors.amount = "Amount exceeds available balance."
     }
 
-    setFormErrors(nextErrors)
-    return !nextErrors.accountNumber && !nextErrors.amount
+  setFormErrors(nextErrors)
+  return !nextErrors.accountNumber && !nextErrors.amount && !nextErrors.beneficiary && !nextErrors.remark
   }
+
+  // (removed silent validator; button will be clickable and validation runs on submit)
 
   const handleTransfer = () => {
     const isValid = validateTransferForm()
@@ -153,7 +185,8 @@ export default function Page() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  placeholder="Enter account number"
+                  placeholder="Enter 10-digit account number"
+                  maxLength={10}
                   value={accountNumber}
                   onChange={(e) => handleAccountNumberChange(e.target.value)}
                   aria-invalid={Boolean(formErrors.accountNumber)}
@@ -165,7 +198,15 @@ export default function Page() {
 
               <div className="space-y-2">
                 <Label>Beneficiary Name</Label>
-                <Input placeholder="Beneficiary full name" />
+                <Input
+                  placeholder="Beneficiary full name"
+                  value={beneficiary}
+                  onChange={(e) => handleBeneficiaryChange(e.target.value)}
+                  aria-invalid={Boolean(formErrors.beneficiary)}
+                />
+                {formErrors.beneficiary && (
+                  <p className="text-sm text-red-500">{formErrors.beneficiary}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -189,14 +230,26 @@ export default function Page() {
 
               <div className="space-y-2">
                 <Label>Remark</Label>
-                <Input placeholder="Add a note (optional)" />
+                <textarea
+                id="remark"
+                name="remark"
+                placeholder="Add a note"
+                value={remark}
+                required
+                onChange={(e) => setRemark(e.target.value)}
+                className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
+              />
+                {formErrors.remark && (
+                  <p className="text-sm text-red-500">{formErrors.remark}</p>
+                )}
               </div>
 
               <div className="pt-2">
                 <label className="inline-flex items-center space-x-2">
-                  <Checkbox />
+                  <Checkbox checked={expenseTrack} onChange={(e) => setExpenseTrack(Boolean((e.target as HTMLInputElement).checked))} />
                   <span>Expenses track</span>
                 </label>
+                
               </div>
 
               <div className="flex justify-end">
