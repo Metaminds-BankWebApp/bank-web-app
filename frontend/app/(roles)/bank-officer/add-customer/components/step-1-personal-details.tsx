@@ -5,18 +5,14 @@ import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
-import { StepProps } from "./types";
+import { CustomerFormData, StepProps } from "./types";
+import { PersonalDetailsErrors, validatePersonalDetailsStep } from "./validation";
 
 export function PersonalDetails({ formData, updateFormData, onNext, onBack }: StepProps) {
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<PersonalDetailsErrors>({});
 
   const validate = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.fullName) newErrors.fullName = "Full Name is required";
-    if (!formData.nic) newErrors.nic = "NIC Number is required";
-    if (!formData.email) newErrors.email = "Email is required";
-    if (!formData.mobile) newErrors.mobile = "Mobile Number is required";
-    
+    const newErrors = validatePersonalDetailsStep(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -28,10 +24,10 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    updateFormData({ [id]: value });
-    if (errors[id]) {
-      setErrors({ ...errors, [id]: "" });
+    const { id, value } = e.target as HTMLInputElement & { id: keyof CustomerFormData };
+    updateFormData({ [id]: value } as Partial<CustomerFormData>);
+    if (id in errors && errors[id as keyof PersonalDetailsErrors]) {
+      setErrors((prev) => ({ ...prev, [id]: undefined }));
     }
   };
 
@@ -74,8 +70,9 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
               type="date" 
               value={formData.dob} 
               onChange={handleChange}
-              className="bg-slate-50 border-slate-200 h-11" 
+              className={`bg-slate-50 border-slate-200 h-11 ${errors.dob ? "border-red-500" : ""}`} 
             />
+            {errors.dob && <p className="text-red-500 text-xs">{errors.dob}</p>}
           </div>
         </div>
 
@@ -116,18 +113,33 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
                 value={formData.username} 
                 onChange={handleChange}
                 placeholder="johndoe_95" 
-                className="bg-slate-50 border-slate-200 h-11" 
+                className={`bg-slate-50 border-slate-200 h-11 ${errors.username ? "border-red-500" : ""}`} 
               />
+              {errors.username && <p className="text-red-500 text-xs">{errors.username}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
                   <Label htmlFor="password" className="text-slate-700 font-medium">Password</Label>
-                  <Input id="password" type="password" className="bg-slate-50 border-slate-200 h-11" />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`bg-slate-50 border-slate-200 h-11 ${errors.password ? "border-red-500" : ""}`}
+                  />
+                  {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
               </div>
               <div className="space-y-3">
                   <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">Confirm Password</Label>
-                  <Input id="confirmPassword" type="password" className="bg-slate-50 border-slate-200 h-11" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={`bg-slate-50 border-slate-200 h-11 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                  />
+                  {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
               </div>
             </div>
         </div>

@@ -2,6 +2,7 @@
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import ModuleHeader from "@/src/components/ui/module-header";
+import Link from "next/link";
 
 export default function BankOfficerRolePage() {
   return (
@@ -48,13 +49,13 @@ export default function BankOfficerRolePage() {
                   <div className="flex items-center gap-4">
                      <div className="flex items-center gap-2 text-xs">
                         <span className="block h-2 w-2 rounded-full bg-[#a3e635]"></span>
-                        <span className="text-gray-500">Average Sale Value</span>
+                        <span className="text-gray-500">Average Credit Value</span>
                      </div>
                      <div className="flex items-center gap-2 text-xs">
                         <span className="block h-2 w-2 rounded-full bg-[#3b82f6]"></span>
-                        <span className="text-gray-500">Average item persale</span>
+                        <span className="text-gray-500">Normal Credit value</span>
                      </div>
-                     <button className="text-xs font-semibold text-gray-500 hover:text-gray-900">Show All â†—</button>
+                     <button className="text-xs font-semibold text-gray-500 hover:text-gray-900">Show All</button>
                   </div>
                 </CardHeader>
                 <CardContent className="flex-1 flex flex-col">
@@ -67,12 +68,12 @@ export default function BankOfficerRolePage() {
                    <div className="relative flex-1 w-full border-l border-b border-gray-100 bg-[url('/chart-placeholder.svg')] bg-cover bg-no-repeat">
                       <div className="absolute left-1/4 top-1/2 rounded-lg bg-white p-2 shadow-lg border border-gray-100">
                         <div className="flex items-center justify-between gap-4 mb-1">
-                           <span className="text-[10px] text-gray-400">Average item persale</span>
-                           <span className="text-xs font-bold text-[#0d3b66]">$ 211,411,223</span>
+                           <span className="text-[10px] text-gray-400">Nomral Credit Score Value</span>
+                           <span className="text-xs font-bold text-[#0d3b66]">LKR 411,411,223</span>
                         </div>
                         <div className="flex items-center justify-between gap-4 bg-[#a3e635] px-2 py-1 rounded">
-                           <span className="text-[10px] text-[#0d3b66]">Average year value</span>
-                           <span className="text-xs font-bold text-[#0d3b66]">$ 339,091,888</span>
+                           <span className="text-[10px] text-[#0d3b66]">Average month value</span>
+                           <span className="text-xs font-bold text-[#0d3b66]">LKR 339,091,888</span>
                         </div>
                       </div>
                       
@@ -94,11 +95,11 @@ export default function BankOfficerRolePage() {
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium opacity-90">Total Customers</p>
-                           <span className="text-xs">â†—</span>
+                           <span className="text-xs"></span>
                         </div>
                         <div>
                            <p className="text-2xl font-bold mb-1">81.000</p>
-                           <p className="text-[10px] text-[#0d3b66]/80">â†— 10.6% <span className="opacity-60">From last week</span></p>
+                           <p className="text-[10px] text-[#0d3b66]/80">— 10.6% <span className="opacity-60">From last week</span></p>
                         </div>
                      </CardContent>
                   </Card>
@@ -108,11 +109,11 @@ export default function BankOfficerRolePage() {
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">Low Risk</p>
-                           <span className="text-xs text-gray-400">â†—</span>
+                           <span className="text-xs text-gray-400"></span>
                         </div>
                         <div>
                            <p className="text-2xl font-bold text-[#0d3b66] mb-1">5.000</p>
-                           <p className="text-[10px] text-green-500">â†— 1.5% <span className="text-gray-400">From last week</span></p>
+                           <p className="text-[10px] text-green-500">— 1.5% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>
                   </Card>
@@ -122,11 +123,11 @@ export default function BankOfficerRolePage() {
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">Medium Risk</p>
-                           <span className="text-xs text-gray-400">â†—</span>
+                           <span className="text-xs text-gray-400"></span>
                         </div>
                         <div>
                            <p className="text-2xl font-bold text-[#0d3b66] mb-1">12.000</p>
-                           <p className="text-[10px] text-green-500">â†— 3.6% <span className="text-gray-400">From last week</span></p>
+                           <p className="text-[10px] text-green-500">— 3.6% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>
                   </Card>
@@ -136,11 +137,11 @@ export default function BankOfficerRolePage() {
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">High Risk</p>
-                           <span className="text-xs text-gray-400">â†—</span>
+                           <span className="text-xs text-gray-400"></span>
                         </div>
                         <div>
                            <p className="text-2xl font-bold text-[#0d3b66] mb-1">5.000</p>
-                           <p className="text-[10px] text-red-500">â†˜ 1.5% <span className="text-gray-400">From last week</span></p>
+                           <p className="text-[10px] text-red-500">— 1.5% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>
                   </Card>
@@ -151,7 +152,7 @@ export default function BankOfficerRolePage() {
                      <div className="relative z-10 flex flex-col justify-center h-full">
                         <h3 className="mb-3 text-2xl font-bold">Pending Verifications</h3>
                         <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">
-                           18 customer profiles are waiting for KYC and income document validation.
+                           18 customer profiles are waiting for Personal and income document validation.
                         </p>
                         <div>
                            <button className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">Review Queue</button>
@@ -163,13 +164,13 @@ export default function BankOfficerRolePage() {
 
                   <div className="relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center flex-1">
                      <div className="relative z-10 flex flex-col justify-center h-full">
-                        <h3 className="mb-3 text-2xl font-bold">Loan Pipeline</h3>
+                        <h3 className="mb-3 text-2xl font-bold">Help Requests</h3>
                         <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">
-                           27 loan applications are in progress, with 6 requiring officer decision today.
+                           27 Help Requests are in progress, with 6 requiring officer decision today.
                         </p>
-                        <div>
-                           <button className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">View Applications</button>
-                        </div>
+                                        <div>
+                                           <Link href="/bank-officer/support" className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">View Requests</Link>
+                                        </div>
                      </div>
                      <div className="absolute -bottom-4 -right-4 h-40 w-40 rounded-full border-20 border-white/10"></div>
                      <div className="absolute top-6 right-6 h-20 w-20 rounded-full bg-white/5 blur-xl"></div>

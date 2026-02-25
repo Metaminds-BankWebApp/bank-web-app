@@ -6,8 +6,7 @@ import { AuthGuard } from "@/src/components/auth";
 import { 
   CheckCircle2, 
   User, 
-  ShieldCheck,
-  ChevronRight
+  ShieldCheck
 } from "lucide-react";
 import { initialFormData, CustomerFormData } from "./components/types";
 import { PersonalDetails } from "./components/step-1-personal-details";
@@ -20,6 +19,7 @@ import { CRIBRetrieval } from "./components/step-7-crib-retrieval";
 import { Review } from "./components/step-8-review";
 import { SuccessView } from "./components/success-view";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { validateCustomerSubmission } from "./components/validation";
 
 const generateCustomerId = () => `PC-${Math.floor(100000 + Math.random() * 900000)}`;
 
@@ -28,6 +28,7 @@ export default function AddCustomerPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [generatedId, setGeneratedId] = useState("");
+  const [submitError, setSubmitError] = useState("");
   
   const steps = [
     { id: 1, label: "Personal Details" },
@@ -42,21 +43,39 @@ export default function AddCustomerPage() {
 
   const updateFormData = (data: Partial<CustomerFormData>) => {
     setFormData(prev => ({ ...prev, ...data }));
+    if (submitError) {
+      setSubmitError("");
+    }
   };
 
   const handleNext = () => {
     if (step < steps.length) {
       setStep(step + 1);
+      if (submitError) {
+        setSubmitError("");
+      }
     } else {
-      // Submit form
+      const validation = validateCustomerSubmission(formData);
+      if (!validation.isValid) {
+        setSubmitError(validation.message || "Please fix validation errors before submitting.");
+        if (validation.firstInvalidStep && validation.firstInvalidStep !== step) {
+          setStep(validation.firstInvalidStep);
+        }
+        return;
+      }
+
       setGeneratedId(generateCustomerId());
       setIsSuccess(true);
+      setSubmitError("");
     }
   };
 
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
+      if (submitError) {
+        setSubmitError("");
+      }
     }
   };
 
@@ -64,6 +83,7 @@ export default function AddCustomerPage() {
     setFormData(initialFormData);
     setStep(1);
     setIsSuccess(false);
+    setSubmitError("");
   };
 
   const renderStep = () => {
@@ -106,7 +126,11 @@ export default function AddCustomerPage() {
           ) : (
             <>
               {/* Page Title */}
-              
+              {submitError && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                  {submitError}
+                </div>
+              )}
 
               <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-8">
                  {/* Left Column: Form Steps */}

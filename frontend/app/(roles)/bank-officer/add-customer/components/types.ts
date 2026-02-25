@@ -6,6 +6,8 @@ export interface CustomerFormData {
   email: string;
   mobile: string;
   username: string;
+  password: string;
+  confirmPassword: string;
   
   // Financial Data
   employmentType: string;
@@ -46,6 +48,8 @@ export const initialFormData: CustomerFormData = {
   email: "",
   mobile: "",
   username: "",
+  password: "",
+  confirmPassword: "",
   employmentType: "Permanent",
   monthlySalary: "",
   businessIncome: "",
