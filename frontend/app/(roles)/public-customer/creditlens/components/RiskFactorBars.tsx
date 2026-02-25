@@ -1,8 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { Info } from "lucide-react";
 
-type Factor = { name: string; value: number; max: number; color?: string };
+type Factor = {
+  name: string;
+  value: number;
+  max: number;
+  color?: string;
+  infoTooltip?: {
+    title: string;
+    description: string;
+    formula: string;
+  };
+};
 
 export default function RiskFactorBars({ factors }: { factors: Factor[] }) {
   const [displayValues, setDisplayValues] = useState<Record<string, number>>({});
@@ -50,8 +61,27 @@ export default function RiskFactorBars({ factors }: { factors: Factor[] }) {
 
         return (
           <div key={factor.name} className="flex min-w-0 items-start gap-2 sm:items-center sm:gap-4 lg:gap-5">
-            <div className="w-28 shrink-0 break-words text-sm text-white/80 sm:w-40 sm:text-base lg:w-48 lg:text-lg">
-              {factor.name}
+            <div className="w-28 shrink-0 text-sm text-white/80 sm:w-40 sm:text-base lg:w-48 lg:text-lg">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="break-words">{factor.name}</span>
+                {factor.infoTooltip ? (
+                  <button
+                    type="button"
+                    className="group relative inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-white/75 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                    aria-label={`${factor.infoTooltip.title} details`}
+                  >
+                    <Info size={12} />
+                    <span
+                      role="tooltip"
+                      className="pointer-events-none invisible absolute left-1/2 top-[calc(100%+0.45rem)] z-20 w-56 -translate-x-1/2 rounded-lg border border-white/20 bg-[#0b2447] p-2 text-left text-xs leading-relaxed text-white opacity-0 shadow-xl transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-visible:visible group-focus-visible:opacity-100"
+                    >
+                      <span className="block font-semibold text-white">{factor.infoTooltip.title}</span>
+                      <span className="mt-1 block text-white/85">{factor.infoTooltip.description}</span>
+                      <span className="mt-1 block text-sky-100">{factor.infoTooltip.formula}</span>
+                    </span>
+                  </button>
+                ) : null}
+              </div>
             </div>
 
             <div className="relative min-w-0 flex-1">

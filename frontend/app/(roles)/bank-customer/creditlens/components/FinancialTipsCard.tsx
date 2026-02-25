@@ -29,6 +29,10 @@ export default function FinancialTipsCard() {
               (Best target, below 40% to drop by{" "}
               <span className="font-semibold text-slate-700">~20 points</span>)
             </div>
+            <div className="mt-2 text-xs text-slate-500">
+              How to reduce it: pay card balances before statement date, keep each card usage
+              under 30%, and pause new card spending until balances come down.
+            </div>
           </div>
         </div>
 
@@ -52,6 +56,10 @@ export default function FinancialTipsCard() {
           <div>
             Try to reduce DTI below{" "}
             <span className="font-semibold text-slate-900">30%</span>
+            <div className="mt-2 text-xs text-slate-500">
+              How to reduce it: pay down monthly debt obligations, avoid new EMIs/loans, and
+              increase stable monthly income where possible.
+            </div>
           </div>
         </div>
 

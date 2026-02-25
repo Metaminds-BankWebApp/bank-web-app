@@ -13,8 +13,28 @@ export default function PublicCustomerCreditLensPage() {
 
   const factors = [
     { name: "Payment history", value: 18, max: 30, color: "#fbbf24" },
-    { name: "DTI", value: 12, max: 25, color: "#34d399" },
-    { name: "Credit utilization", value: 20, max: 20, color: "#ef4444" },
+    {
+      name: "DTI",
+      value: 12,
+      max: 25,
+      color: "#34d399",
+      infoTooltip: {
+        title: "Debt-to-Income (DTI)",
+        description: "Shows how much of your monthly income goes toward debt payments.",
+        formula: "DTI = (Total monthly debt payments / Gross monthly income) x 100",
+      },
+    },
+    {
+      name: "Credit utilization",
+      value: 20,
+      max: 20,
+      color: "#ef4444",
+      infoTooltip: {
+        title: "Credit Utilization",
+        description: "Shows how much of your available revolving credit you are currently using.",
+        formula: "Utilization = (Total card balances / Total credit limits) x 100",
+      },
+    },
     { name: "Income stability", value: 0, max: 15, color: "#e5e7eb" },
     { name: "Active Facilities", value: 5, max: 10, color: "#34d399" },
   ];
