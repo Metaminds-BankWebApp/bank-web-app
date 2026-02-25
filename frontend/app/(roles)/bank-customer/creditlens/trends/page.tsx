@@ -26,7 +26,7 @@ type TrendView = {
     riskDelta: number;
     trendText: string;
     biggestDriver: string;
-    stabilityText: string;
+    momentumText: string;
     nextTarget: string;
   };
 };
@@ -41,7 +41,7 @@ const trendViews: Record<TrendRange, TrendView> = {
       riskDelta: -25,
       trendText: "Improved since April",
       biggestDriver: "Reduced DTI pressure",
-      stabilityText: "No sudden risk spikes",
+      momentumText: "Avg decrease: 5 risk pts/month",
       nextTarget: "Below 40 to Low Risk",
     },
   },
@@ -67,7 +67,7 @@ const trendViews: Record<TrendRange, TrendView> = {
       riskDelta: -37,
       trendText: "Improved over last 12 months",
       biggestDriver: "Lower utilization over time",
-      stabilityText: "Gradual downward risk trend",
+      momentumText: "Avg decrease: 3.4 risk pts/month",
       nextTarget: "Reach below 45 in next quarter",
     },
   },
@@ -123,7 +123,7 @@ export default function TrendsPage() {
                 riskDelta={activeTrend.summary.riskDelta}
                 trendText={activeTrend.summary.trendText}
                 biggestDriver={activeTrend.summary.biggestDriver}
-                stabilityText={activeTrend.summary.stabilityText}
+                momentumText={activeTrend.summary.momentumText}
                 nextTarget={activeTrend.summary.nextTarget}
               />
             </div>

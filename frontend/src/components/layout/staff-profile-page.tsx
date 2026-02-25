@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import { Badge } from "@/src/components/ui";
 import ModuleHeader from "@/src/components/ui/module-header";
-import { Camera, Lock, ShieldCheck, User } from "lucide-react";
+import { Camera, Eye, EyeOff, Lock, ShieldCheck, User } from "lucide-react";
 import type { UserRole } from "@/config/site";
 
 type StaffRoleLabel = "Bank Officer" | "Admin";
@@ -20,11 +21,13 @@ type SummaryItem = {
 };
 
 type FieldItem = {
+  key: string;
   label: string;
   value?: string;
   placeholder?: string;
   readOnly?: boolean;
   fullWidth?: boolean;
+  type?: "text" | "email" | "tel" | "password";
 };
 
 type StaffProfileConfig = {
@@ -33,6 +36,7 @@ type StaffProfileConfig = {
   badgeText: string;
   summary: SummaryItem[];
   personalInfo: FieldItem[];
+  security: FieldItem[];
   lastLogin: string;
 };
 
@@ -47,10 +51,18 @@ const STAFF_PROFILE_CONFIG: Record<StaffRoleLabel, StaffProfileConfig> = {
       { label: "Joined Date", value: "Jan 12, 2021" },
     ],
     personalInfo: [
-      { label: "Full Name", value: "John Doe" },
-      { label: "Email Address", value: "john.doe@primecore.bank" },
-      { label: "Phone Number", value: "+94 77 123 4567" },
-      { label: "Branch (Read-Only)", value: "Colombo Central Branch", readOnly: true },
+      { key: "fullName", label: "Full Name", value: "John Doe" },
+      { key: "email", label: "Email Address", value: "john.doe@primecore.bank", type: "email" },
+      { key: "phone", label: "Phone Number", value: "+94 77 123 4567", type: "tel" },
+      { key: "branch", label: "Branch (Read-Only)", value: "Colombo Central Branch", readOnly: true },
+      { key: "nic", label: "NIC", value: "972346682V", readOnly: true },
+    ],
+    security: [
+      { key: "currentUsername", label: "Current Username", value: "JohnDoeBO1", readOnly: true, fullWidth: true },
+      { key: "newUsername", label: "New Username", placeholder: "Enter new username", fullWidth: true },
+      { key: "currentPassword", label: "Current Password", placeholder: "Enter current password", fullWidth: true, type: "password" },
+      { key: "newPassword", label: "New Password", placeholder: "Enter new password", type: "password" },
+      { key: "confirmPassword", label: "Confirm Password", placeholder: "Repeat new password", type: "password" },
     ],
     lastLogin: "October 25, 2023 - 10:45 AM",
   },
@@ -63,23 +75,205 @@ const STAFF_PROFILE_CONFIG: Record<StaffRoleLabel, StaffProfileConfig> = {
       { label: "Joined Date", value: "Jan 12, 2021" },
     ],
     personalInfo: [
-      { label: "Full Name", value: "John Doe" },
-      { label: "Email Address", value: "john.doe@primecore.bank" },
-      { label: "Phone Number", value: "+94 77 123 4567" },
+      { key: "fullName", label: "Full Name", value: "John Doe" },
+      { key: "email", label: "Email Address", value: "john.doe@primecore.bank" },
+      { key: "phone", label: "Phone Number", value: "+94 77 123 4567" },
+    ],
+    security: [
+      { key: "currentPassword", label: "Current Password", value: "************", fullWidth: true },
+      { key: "newPassword", label: "New Password", placeholder: "Enter new password" },
+      { key: "confirmPassword", label: "Confirm Password", placeholder: "Repeat new password" },
     ],
     lastLogin: "October 25, 2023 - 10:45 AM",
   },
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+const PHONE_ALLOWED_REGEX = /^\+?[0-9()\s-]+$/;
+const FULL_NAME_REGEX = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+
+function buildInitialFieldValues(fields: FieldItem[]): Record<string, string> {
+  return fields.reduce<Record<string, string>>((acc, field) => {
+    acc[field.key] = field.value ?? "";
+    return acc;
+  }, {});
+}
+
+function validateStaffScalarField(key: string, rawValue: string): string | undefined {
+  const value = rawValue.trim();
+
+  if (key === "fullName") {
+    if (!value) return "Full name is required.";
+    if (!FULL_NAME_REGEX.test(value)) return "Full name can contain letters and spaces only.";
+  }
+
+  if (key === "email") {
+    if (!value) return "Email address is required.";
+    if (!EMAIL_REGEX.test(value)) return "Enter a valid email address.";
+  }
+
+  if (key === "phone") {
+    const digitsOnly = value.replace(/\D/g, "");
+    if (!value) return "Phone number is required.";
+    if (!PHONE_ALLOWED_REGEX.test(value)) return "Use only digits, spaces, +, -, or parentheses.";
+    if (digitsOnly.length < 10 || digitsOnly.length > 15) return "Phone number must be 10 to 15 digits.";
+  }
+
+  return undefined;
+}
+
+function validateNewUsername(currentUsername: string, newUsername: string): string | undefined {
+  const current = currentUsername.trim();
+  const next = newUsername.trim();
+
+  if (!next) return undefined;
+  if (next.toLowerCase() === current.toLowerCase()) {
+    return "New username must be different from current username.";
+  }
+
+  return undefined;
+}
+
+function validatePasswordGroup(values: Record<string, string>): Record<string, string> {
+  const currentPassword = values.currentPassword?.trim() ?? "";
+  const newPassword = values.newPassword?.trim() ?? "";
+  const confirmPassword = values.confirmPassword?.trim() ?? "";
+
+  const hasPasswordIntent = Boolean(currentPassword || newPassword || confirmPassword);
+  if (!hasPasswordIntent) return {};
+
+  const errors: Record<string, string> = {};
+
+  if (!currentPassword) {
+    errors.currentPassword = "Current password is required to change password.";
+  }
+
+  if (!newPassword) {
+    errors.newPassword = "New password is required.";
+  } else if (!PASSWORD_REGEX.test(newPassword)) {
+    errors.newPassword = "Use 10+ chars with uppercase, lowercase, and number.";
+  }
+
+  if (!confirmPassword) {
+    errors.confirmPassword = "Please confirm your new password.";
+  } else if (newPassword && confirmPassword !== newPassword) {
+    errors.confirmPassword = "Confirm password does not match.";
+  }
+
+  return errors;
+}
+
 export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
   const config = STAFF_PROFILE_CONFIG[roleLabel];
+  const isBankOfficer = roleLabel === "Bank Officer";
+  const [personalValues, setPersonalValues] = useState<Record<string, string>>(() =>
+    buildInitialFieldValues(config.personalInfo)
+  );
+  const [securityValues, setSecurityValues] = useState<Record<string, string>>(() =>
+    buildInitialFieldValues(config.security)
+  );
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+
+  const updateFieldError = (fieldKey: string, errorMessage?: string) => {
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (errorMessage) next[fieldKey] = errorMessage;
+      else delete next[fieldKey];
+      return next;
+    });
+  };
+
+  const applyPasswordErrors = (nextSecurityValues: Record<string, string>) => {
+    if (!isBankOfficer) return;
+
+    const passwordErrors = validatePasswordGroup(nextSecurityValues);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.currentPassword;
+      delete next.newPassword;
+      delete next.confirmPassword;
+      return { ...next, ...passwordErrors };
+    });
+  };
+
+  const handlePersonalChange = (field: FieldItem, value: string) => {
+    if (field.readOnly) return;
+
+    setPersonalValues((prev) => ({ ...prev, [field.key]: value }));
+
+    if (field.key === "fullName") {
+      updateFieldError(field.key, validateStaffScalarField(field.key, value));
+      return;
+    }
+
+    if (!isBankOfficer) return;
+
+    if (field.key === "email" || field.key === "phone") {
+      updateFieldError(field.key, validateStaffScalarField(field.key, value));
+    }
+  };
+
+  const handleSecurityChange = (field: FieldItem, value: string) => {
+    if (field.readOnly) return;
+
+    const nextSecurityValues = { ...securityValues, [field.key]: value };
+    setSecurityValues(nextSecurityValues);
+    if (!isBankOfficer) return;
+
+    if (field.key === "newUsername") {
+      updateFieldError(field.key, validateNewUsername(nextSecurityValues.currentUsername ?? "", value));
+    }
+
+    if (field.key === "currentPassword" || field.key === "newPassword" || field.key === "confirmPassword") {
+      applyPasswordErrors(nextSecurityValues);
+    }
+  };
+
+  const handleCancel = () => {
+    setPersonalValues(buildInitialFieldValues(config.personalInfo));
+    setSecurityValues(buildInitialFieldValues(config.security));
+    setFieldErrors({});
+    setShowPassword({});
+  };
+
+  const handleSave = () => {
+    const nextErrors: Record<string, string> = {};
+
+    const fullNameError = validateStaffScalarField("fullName", personalValues.fullName ?? "");
+    if (fullNameError) nextErrors.fullName = fullNameError;
+
+    if (!isBankOfficer) {
+      setFieldErrors(nextErrors);
+      return;
+    }
+
+    const emailError = validateStaffScalarField("email", personalValues.email ?? "");
+    if (emailError) nextErrors.email = emailError;
+    const phoneError = validateStaffScalarField("phone", personalValues.phone ?? "");
+    if (phoneError) nextErrors.phone = phoneError;
+
+    const usernameError = validateNewUsername(
+      securityValues.currentUsername ?? "",
+      securityValues.newUsername ?? ""
+    );
+    if (usernameError) nextErrors.newUsername = usernameError;
+
+    Object.assign(nextErrors, validatePasswordGroup(securityValues));
+    setFieldErrors(nextErrors);
+  };
+
+  const togglePasswordVisibility = (fieldKey: string) => {
+    setShowPassword((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
+  };
 
   return (
     <AuthGuard requiredRole={role}>
-      <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
-        <Sidebar role={role} className="max-lg:hidden h-full z-10 relative" />
-        
-        <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
+      <div className="flex h-screen overflow-hidden bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)]">
+        <Sidebar role={role} className="relative z-10 h-full max-lg:hidden" />
+
+        <main className="flex h-full flex-1 flex-col overflow-hidden bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:rounded-l-[28px] lg:p-7">
           <ModuleHeader
             theme="staff"
             menuMode="sidebar-overlay"
@@ -96,8 +290,6 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
           />
 
           <div className="min-h-0 flex-1 overflow-y-auto">
-          
-
             <div className="grid gap-6 xl:grid-cols-[1fr_1.8fr]">
               <div className="space-y-6">
                 <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -146,14 +338,31 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     {config.personalInfo.map((field) => (
-                      <div key={field.label} className={field.fullWidth ? "md:col-span-2" : undefined}>
+                      <div key={field.key} className={field.fullWidth ? "md:col-span-2" : undefined}>
                         <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
                         <input
-                          defaultValue={field.value}
+                          value={personalValues[field.key] ?? ""}
+                          type={field.type ?? "text"}
                           placeholder={field.placeholder}
                           readOnly={field.readOnly}
-                          className={`h-11 w-full rounded-lg border border-slate-200 px-3 text-sm outline-none ${field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"}`}
+                          onChange={(event) => handlePersonalChange(field, event.target.value)}
+                          onBlur={(event) => {
+                            if (field.key === "fullName") {
+                              updateFieldError(field.key, validateStaffScalarField(field.key, event.target.value));
+                              return;
+                            }
+                            if (isBankOfficer && (field.key === "email" || field.key === "phone")) {
+                              updateFieldError(field.key, validateStaffScalarField(field.key, event.target.value));
+                            }
+                          }}
+                          aria-invalid={Boolean(fieldErrors[field.key])}
+                          className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
+                            field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
+                          } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"}`}
                         />
+                        {fieldErrors[field.key] ? (
+                          <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -165,39 +374,78 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
                     <h3 className="text-sm font-semibold uppercase tracking-wider">Security Settings</h3>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
-                    <div className="md:col-span-2">
-                      <p className="mb-1 text-xs font-semibold uppercase text-slate-400">Current Password</p>
-                      <input
-                        defaultValue="************"
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <p className="mb-1 text-xs font-semibold uppercase text-slate-400">New Password</p>
-                      <input
-                        placeholder="Enter new password"
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none"
-                      />
-                    </div>
-                    <div>
-                      <p className="mb-1 text-xs font-semibold uppercase text-slate-400">Confirm Password</p>
-                      <input
-                        placeholder="Repeat new password"
-                        className="h-11 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700 outline-none"
-                      />
-                    </div>
+                    {config.security.map((field) => (
+                      <div key={field.key} className={field.fullWidth ? "md:col-span-2" : undefined}>
+                        <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
+                        <div className="relative">
+                          <input
+                            value={securityValues[field.key] ?? ""}
+                            type={
+                              isBankOfficer && field.type === "password"
+                                ? showPassword[field.key]
+                                  ? "text"
+                                  : "password"
+                                : (field.type ?? "text")
+                            }
+                            placeholder={field.placeholder}
+                            readOnly={field.readOnly}
+                            onChange={(event) => handleSecurityChange(field, event.target.value)}
+                            onBlur={(event) => {
+                              if (!isBankOfficer) return;
+                              if (field.key === "newUsername") {
+                                updateFieldError(
+                                  field.key,
+                                  validateNewUsername(securityValues.currentUsername ?? "", event.target.value)
+                                );
+                              }
+                            }}
+                            aria-invalid={Boolean(fieldErrors[field.key])}
+                            className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
+                              field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
+                            } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"} ${
+                              isBankOfficer && field.type === "password" && !field.readOnly ? "pr-10" : ""
+                            }`}
+                          />
+                          {isBankOfficer && field.type === "password" && !field.readOnly ? (
+                            <button
+                              type="button"
+                              onClick={() => togglePasswordVisibility(field.key)}
+                              className="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
+                              aria-label={showPassword[field.key] ? "Hide password" : "Show password"}
+                            >
+                              {showPassword[field.key] ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          ) : null}
+                        </div>
+                        {fieldErrors[field.key] ? (
+                          <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
+                        ) : null}
+                      </div>
+                    ))}
                   </div>
 
                   <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
                     <ShieldCheck size={14} className="mt-0.5" />
-                    <p>Use a strong password with uppercase, lowercase, numbers, and symbols.</p>
+                    <p>
+                      {isBankOfficer
+                        ? "Password must be at least 10 characters and include uppercase, lowercase, and numbers."
+                        : "Use a strong password with uppercase, lowercase, numbers, and symbols."}
+                    </p>
                   </div>
 
                   <div className="mt-6 flex justify-end gap-3">
-                    <button className="rounded-full border border-slate-200 px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="rounded-full border border-slate-200 px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                    >
                       Cancel
                     </button>
-                    <button className="rounded-full bg-[#0d3b66] px-6 py-2 text-sm font-semibold text-white hover:bg-[#0a2e50]">
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      className="rounded-full bg-[#0d3b66] px-6 py-2 text-sm font-semibold text-white hover:bg-[#0a2e50]"
+                    >
                       Save Changes
                     </button>
                   </div>
@@ -210,4 +458,3 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     </AuthGuard>
   );
 }
-

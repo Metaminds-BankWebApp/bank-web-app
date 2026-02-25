@@ -129,9 +129,7 @@ export function ReportDownloadModal({
               <p className="mt-2 text-xs text-sky-100/75">{selectedMeta.note}</p>
             </div>
 
-            <div className="rounded-xl border border-white/20 bg-slate-950/20 px-3 py-2 text-xs text-sky-100/85">
-              Frontend preview only. Real file generation can be connected later.
-            </div>
+            
           </div>
 
           <div className="rounded-2xl border border-white/20 bg-white/10 p-4">
