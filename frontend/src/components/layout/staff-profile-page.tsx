@@ -37,7 +37,6 @@ type StaffProfileConfig = {
   summary: SummaryItem[];
   personalInfo: FieldItem[];
   security: FieldItem[];
-  lastLogin: string;
 };
 
 const STAFF_PROFILE_CONFIG: Record<StaffRoleLabel, StaffProfileConfig> = {
@@ -64,7 +63,6 @@ const STAFF_PROFILE_CONFIG: Record<StaffRoleLabel, StaffProfileConfig> = {
       { key: "newPassword", label: "New Password", placeholder: "Enter new password", type: "password" },
       { key: "confirmPassword", label: "Confirm Password", placeholder: "Repeat new password", type: "password" },
     ],
-    lastLogin: "October 25, 2023 - 10:45 AM",
   },
   Admin: {
     displayName: "John Doe",
@@ -76,15 +74,16 @@ const STAFF_PROFILE_CONFIG: Record<StaffRoleLabel, StaffProfileConfig> = {
     ],
     personalInfo: [
       { key: "fullName", label: "Full Name", value: "John Doe" },
-      { key: "email", label: "Email Address", value: "john.doe@primecore.bank" },
-      { key: "phone", label: "Phone Number", value: "+94 77 123 4567" },
+      { key: "email", label: "Email Address", value: "john.doe@primecore.bank", type: "email" },
+      { key: "phone", label: "Phone Number", value: "+94 77 123 4567", type: "tel" },
     ],
     security: [
-      { key: "currentPassword", label: "Current Password", value: "************", fullWidth: true },
-      { key: "newPassword", label: "New Password", placeholder: "Enter new password" },
-      { key: "confirmPassword", label: "Confirm Password", placeholder: "Repeat new password" },
+      { key: "currentUsername", label: "Current Username", value: "JohnDoeAD1", readOnly: true, fullWidth: true },
+      { key: "newUsername", label: "New Username", placeholder: "Enter new username", fullWidth: true },
+      { key: "currentPassword", label: "Current Password", placeholder: "Enter current password", fullWidth: true, type: "password" },
+      { key: "newPassword", label: "New Password", placeholder: "Enter new password", type: "password" },
+      { key: "confirmPassword", label: "Confirm Password", placeholder: "Repeat new password", type: "password" },
     ],
-    lastLogin: "October 25, 2023 - 10:45 AM",
   },
 };
 
@@ -166,7 +165,7 @@ function validatePasswordGroup(values: Record<string, string>): Record<string, s
 
 export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
   const config = STAFF_PROFILE_CONFIG[roleLabel];
-  const isBankOfficer = roleLabel === "Bank Officer";
+  const enableStaffValidation = roleLabel === "Bank Officer" || roleLabel === "Admin";
   const [personalValues, setPersonalValues] = useState<Record<string, string>>(() =>
     buildInitialFieldValues(config.personalInfo)
   );
@@ -186,7 +185,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
   };
 
   const applyPasswordErrors = (nextSecurityValues: Record<string, string>) => {
-    if (!isBankOfficer) return;
+    if (!enableStaffValidation) return;
 
     const passwordErrors = validatePasswordGroup(nextSecurityValues);
     setFieldErrors((prev) => {
@@ -208,7 +207,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
       return;
     }
 
-    if (!isBankOfficer) return;
+    if (!enableStaffValidation) return;
 
     if (field.key === "email" || field.key === "phone") {
       updateFieldError(field.key, validateStaffScalarField(field.key, value));
@@ -220,7 +219,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
 
     const nextSecurityValues = { ...securityValues, [field.key]: value };
     setSecurityValues(nextSecurityValues);
-    if (!isBankOfficer) return;
+    if (!enableStaffValidation) return;
 
     if (field.key === "newUsername") {
       updateFieldError(field.key, validateNewUsername(nextSecurityValues.currentUsername ?? "", value));
@@ -244,7 +243,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     const fullNameError = validateStaffScalarField("fullName", personalValues.fullName ?? "");
     if (fullNameError) nextErrors.fullName = fullNameError;
 
-    if (!isBankOfficer) {
+    if (!enableStaffValidation) {
       setFieldErrors(nextErrors);
       return;
     }
@@ -317,120 +316,109 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
                     ))}
                   </div>
                 </section>
-
-                <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                  <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
-                    <ShieldCheck size={16} />
-                    <h3 className="text-sm font-semibold uppercase tracking-wider">Security & Session</h3>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <p className="text-xs font-semibold uppercase text-slate-400">Last Login</p>
-                    <p className="font-semibold text-[#0d3b66]">{config.lastLogin}</p>
-                  </div>
-                </section>
               </div>
 
               <div className="space-y-6">
                 <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                  <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
-                    <User size={16} />
-                    <h3 className="text-sm font-semibold uppercase tracking-wider">Personal Information</h3>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {config.personalInfo.map((field) => (
-                      <div key={field.key} className={field.fullWidth ? "md:col-span-2" : undefined}>
-                        <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
-                        <input
-                          value={personalValues[field.key] ?? ""}
-                          type={field.type ?? "text"}
-                          placeholder={field.placeholder}
-                          readOnly={field.readOnly}
-                          onChange={(event) => handlePersonalChange(field, event.target.value)}
-                          onBlur={(event) => {
-                            if (field.key === "fullName") {
-                              updateFieldError(field.key, validateStaffScalarField(field.key, event.target.value));
-                              return;
-                            }
-                            if (isBankOfficer && (field.key === "email" || field.key === "phone")) {
-                              updateFieldError(field.key, validateStaffScalarField(field.key, event.target.value));
-                            }
-                          }}
-                          aria-invalid={Boolean(fieldErrors[field.key])}
-                          className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
-                            field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
-                          } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"}`}
-                        />
-                        {fieldErrors[field.key] ? (
-                          <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
-                        ) : null}
+                  <div className="space-y-5">
+                    <section className="rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5">
+                      <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
+                        <User size={16} />
+                        <h3 className="text-sm font-semibold uppercase tracking-wider">Personal Information</h3>
                       </div>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                  <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
-                    <Lock size={16} />
-                    <h3 className="text-sm font-semibold uppercase tracking-wider">Security Settings</h3>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {config.security.map((field) => (
-                      <div key={field.key} className={field.fullWidth ? "md:col-span-2" : undefined}>
-                        <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
-                        <div className="relative">
-                          <input
-                            value={securityValues[field.key] ?? ""}
-                            type={
-                              isBankOfficer && field.type === "password"
-                                ? showPassword[field.key]
-                                  ? "text"
-                                  : "password"
-                                : (field.type ?? "text")
-                            }
-                            placeholder={field.placeholder}
-                            readOnly={field.readOnly}
-                            onChange={(event) => handleSecurityChange(field, event.target.value)}
-                            onBlur={(event) => {
-                              if (!isBankOfficer) return;
-                              if (field.key === "newUsername") {
-                                updateFieldError(
-                                  field.key,
-                                  validateNewUsername(securityValues.currentUsername ?? "", event.target.value)
-                                );
-                              }
-                            }}
-                            aria-invalid={Boolean(fieldErrors[field.key])}
-                            className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
-                              field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
-                            } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"} ${
-                              isBankOfficer && field.type === "password" && !field.readOnly ? "pr-10" : ""
-                            }`}
-                          />
-                          {isBankOfficer && field.type === "password" && !field.readOnly ? (
-                            <button
-                              type="button"
-                              onClick={() => togglePasswordVisibility(field.key)}
-                              className="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
-                              aria-label={showPassword[field.key] ? "Hide password" : "Show password"}
-                            >
-                              {showPassword[field.key] ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
-                          ) : null}
-                        </div>
-                        {fieldErrors[field.key] ? (
-                          <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
-                        ) : null}
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {config.personalInfo.map((field) => (
+                          <div key={field.key} className={field.fullWidth ? "md:col-span-2" : undefined}>
+                            <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
+                            <input
+                              value={personalValues[field.key] ?? ""}
+                              type={field.type ?? "text"}
+                              placeholder={field.placeholder}
+                              readOnly={field.readOnly}
+                              onChange={(event) => handlePersonalChange(field, event.target.value)}
+                              onBlur={(event) => {
+                                if (field.key === "fullName") {
+                                  updateFieldError(field.key, validateStaffScalarField(field.key, event.target.value));
+                                  return;
+                                }
+                                if (enableStaffValidation && (field.key === "email" || field.key === "phone")) {
+                                  updateFieldError(field.key, validateStaffScalarField(field.key, event.target.value));
+                                }
+                              }}
+                              aria-invalid={Boolean(fieldErrors[field.key])}
+                              className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
+                                field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
+                              } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"}`}
+                            />
+                            {fieldErrors[field.key] ? (
+                              <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
+                            ) : null}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </section>
 
-                  <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
-                    <ShieldCheck size={14} className="mt-0.5" />
-                    <p>
-                      {isBankOfficer
-                        ? "Password must be at least 10 characters and include uppercase, lowercase, and numbers."
-                        : "Use a strong password with uppercase, lowercase, numbers, and symbols."}
-                    </p>
+                    <section className="rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5">
+                      <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
+                        <Lock size={16} />
+                        <h3 className="text-sm font-semibold uppercase tracking-wider">Security Settings</h3>
+                      </div>
+                      <div className="grid gap-4 md:grid-cols-2">
+                        {config.security.map((field) => (
+                          <div key={field.key} className={field.fullWidth ? "md:col-span-2" : undefined}>
+                            <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
+                            <div className="relative">
+                              <input
+                                value={securityValues[field.key] ?? ""}
+                                type={
+                                  enableStaffValidation && field.type === "password"
+                                    ? showPassword[field.key]
+                                      ? "text"
+                                      : "password"
+                                    : (field.type ?? "text")
+                                }
+                                placeholder={field.placeholder}
+                                readOnly={field.readOnly}
+                                onChange={(event) => handleSecurityChange(field, event.target.value)}
+                                onBlur={(event) => {
+                                  if (!enableStaffValidation) return;
+                                  if (field.key === "newUsername") {
+                                    updateFieldError(
+                                      field.key,
+                                      validateNewUsername(securityValues.currentUsername ?? "", event.target.value)
+                                    );
+                                  }
+                                }}
+                                aria-invalid={Boolean(fieldErrors[field.key])}
+                                className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
+                                  field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
+                                } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"} ${
+                                  enableStaffValidation && field.type === "password" && !field.readOnly ? "pr-10" : ""
+                                }`}
+                              />
+                              {enableStaffValidation && field.type === "password" && !field.readOnly ? (
+                                <button
+                                  type="button"
+                                  onClick={() => togglePasswordVisibility(field.key)}
+                                  className="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
+                                  aria-label={showPassword[field.key] ? "Hide password" : "Show password"}
+                                >
+                                  {showPassword[field.key] ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                              ) : null}
+                            </div>
+                            {fieldErrors[field.key] ? (
+                              <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+                        <ShieldCheck size={14} className="mt-0.5" />
+                        <p>Password must be at least 10 characters and include uppercase, lowercase, and numbers.</p>
+                      </div>
+                    </section>
                   </div>
 
                   <div className="mt-6 flex justify-end gap-3">

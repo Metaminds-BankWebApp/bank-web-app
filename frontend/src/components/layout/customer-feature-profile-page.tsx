@@ -356,6 +356,127 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     setShowPassword((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
   };
 
+  const renderPersonalInformationSection = (wrapperClassName: string) => (
+    <section className={wrapperClassName}>
+      <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
+        <User size={16} />
+        <h3 className="text-sm font-semibold uppercase tracking-wider">Personal Information</h3>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {profileConfig.personalInfo.map((field) => (
+          <div key={field.label} className={field.fullWidth ? "md:col-span-2" : undefined}>
+            <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
+            <input
+              value={personalValues[field.key] ?? ""}
+              type={field.type ?? "text"}
+              placeholder={field.placeholder}
+              readOnly={field.readOnly}
+              onChange={(event) => handlePersonalChange(field, event.target.value)}
+              onBlur={(event) => {
+                if (
+                  enableCustomerValidation &&
+                  (field.key === "fullName" || field.key === "email" || field.key === "phone")
+                ) {
+                  updateFieldError(field.key, validatePublicScalarField(field.key, event.target.value));
+                }
+              }}
+              aria-invalid={Boolean(fieldErrors[field.key])}
+              className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
+                field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
+              } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"}`}
+            />
+            {fieldErrors[field.key] ? (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+
+  const renderSecuritySettingsSection = (wrapperClassName: string, showActions: boolean) => (
+    <section className={wrapperClassName}>
+      <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
+        <Lock size={16} />
+        <h3 className="text-sm font-semibold uppercase tracking-wider">Security Settings</h3>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        {profileConfig.security.map((field) => (
+          <div key={field.label} className={field.fullWidth ? "md:col-span-2" : undefined}>
+            <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
+            <div className="relative">
+              <input
+                value={securityValues[field.key] ?? ""}
+                type={
+                  enableCustomerValidation && field.type === "password"
+                    ? showPassword[field.key]
+                      ? "text"
+                      : "password"
+                    : (field.type ?? "text")
+                }
+                placeholder={field.placeholder}
+                readOnly={field.readOnly}
+                onChange={(event) => handleSecurityChange(field, event.target.value)}
+                onBlur={(event) => {
+                  if (!enableCustomerValidation) return;
+                  if (field.key === "newUsername") {
+                    updateFieldError(
+                      field.key,
+                      validateNewUsername(securityValues.currentUsername ?? "", event.target.value)
+                    );
+                  }
+                }}
+                aria-invalid={Boolean(fieldErrors[field.key])}
+                className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
+                  field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
+                } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"} ${
+                  enableCustomerValidation && field.type === "password" && !field.readOnly ? "pr-10" : ""
+                }`}
+              />
+              {enableCustomerValidation && field.type === "password" && !field.readOnly ? (
+                <button
+                  type="button"
+                  onClick={() => togglePasswordVisibility(field.key)}
+                  className="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
+                  aria-label={showPassword[field.key] ? "Hide password" : "Show password"}
+                >
+                  {showPassword[field.key] ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              ) : null}
+            </div>
+            {fieldErrors[field.key] ? (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
+        <ShieldCheck size={14} className="mt-0.5" />
+        <p>Password must be at least 10 characters and include uppercase, lowercase, and numbers.</p>
+      </div>
+
+      {showActions ? (
+        <div className="mt-6 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="rounded-full border border-slate-200 px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="rounded-full bg-[#0d3b66] px-6 py-2 text-sm font-semibold text-white hover:bg-[#0a2e50]"
+          >
+            Save Changes
+          </button>
+        </div>
+      ) : null}
+    </section>
+  );
+
   const renderFeatureHeader = () => {
     if (featureName === "CreditLens") {
       return <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Profile" subtitle="" name="John Doe" role={roleLabel} />;
@@ -417,117 +538,13 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
                 ))}
               </div>
             </section>
-
-            <section className={sectionClassName}>
-              <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
-                <ShieldCheck size={16} />
-                <h3 className="text-sm font-semibold uppercase tracking-wider">Security & Session</h3>
-              </div>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                  <span className="text-slate-500">Last Login</span>
-                  <span className="font-semibold text-[#0d3b66]">October 25, 2023 - 10:45 AM</span>
-                </div>
-              </div>
-            </section>
           </div>
 
           <div className="space-y-6">
             <section className={sectionClassName}>
-              <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
-                <User size={16} />
-                <h3 className="text-sm font-semibold uppercase tracking-wider">Personal Information</h3>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {profileConfig.personalInfo.map((field) => (
-                  <div key={field.label} className={field.fullWidth ? "md:col-span-2" : undefined}>
-                    <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
-                    <input
-                      value={personalValues[field.key] ?? ""}
-                      type={field.type ?? "text"}
-                      placeholder={field.placeholder}
-                      readOnly={field.readOnly}
-                      onChange={(event) => handlePersonalChange(field, event.target.value)}
-                      onBlur={(event) => {
-                        if (
-                          enableCustomerValidation &&
-                          (field.key === "fullName" || field.key === "email" || field.key === "phone")
-                        ) {
-                          updateFieldError(field.key, validatePublicScalarField(field.key, event.target.value));
-                        }
-                      }}
-                      aria-invalid={Boolean(fieldErrors[field.key])}
-                      className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
-                        field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
-                      } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"}`}
-                    />
-                    {fieldErrors[field.key] ? (
-                      <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className={sectionClassName}>
-              <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
-                <Lock size={16} />
-                <h3 className="text-sm font-semibold uppercase tracking-wider">Security Settings</h3>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {profileConfig.security.map((field) => (
-                  <div key={field.label} className={field.fullWidth ? "md:col-span-2" : undefined}>
-                    <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
-                    <div className="relative">
-                      <input
-                        value={securityValues[field.key] ?? ""}
-                        type={
-                          enableCustomerValidation && field.type === "password"
-                            ? showPassword[field.key]
-                              ? "text"
-                              : "password"
-                            : (field.type ?? "text")
-                        }
-                        placeholder={field.placeholder}
-                        readOnly={field.readOnly}
-                        onChange={(event) => handleSecurityChange(field, event.target.value)}
-                        onBlur={(event) => {
-                          if (!enableCustomerValidation) return;
-                          if (field.key === "newUsername") {
-                            updateFieldError(
-                              field.key,
-                              validateNewUsername(securityValues.currentUsername ?? "", event.target.value)
-                            );
-                          }
-                        }}
-                        aria-invalid={Boolean(fieldErrors[field.key])}
-                        className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
-                          field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
-                        } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"} ${
-                          enableCustomerValidation && field.type === "password" && !field.readOnly ? "pr-10" : ""
-                        }`}
-                      />
-                      {enableCustomerValidation && field.type === "password" && !field.readOnly ? (
-                        <button
-                          type="button"
-                          onClick={() => togglePasswordVisibility(field.key)}
-                          className="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center text-slate-500 hover:text-slate-700"
-                          aria-label={showPassword[field.key] ? "Hide password" : "Show password"}
-                        >
-                          {showPassword[field.key] ? <EyeOff size={16} /> : <Eye size={16} />}
-                        </button>
-                      ) : null}
-                    </div>
-                    {fieldErrors[field.key] ? (
-                      <p className="mt-1 text-xs text-red-600">{fieldErrors[field.key]}</p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-700">
-                <ShieldCheck size={14} className="mt-0.5" />
-                <p>Password must be at least 10 characters and include uppercase, lowercase, and numbers.</p>
+              <div className="space-y-5">
+                {renderPersonalInformationSection("rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5")}
+                {renderSecuritySettingsSection("rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5", false)}
               </div>
 
               <div className="mt-6 flex justify-end gap-3">
