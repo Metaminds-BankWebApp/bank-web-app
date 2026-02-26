@@ -81,18 +81,16 @@ export default function Page() {
         <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="accountNumber">Account number</Label>
                 <Input
-                  id="accountNumber"
-                  name="accountNumber"
-                  type="text"
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  placeholder="948765"
-                  value={accountNumber}
-                  aria-invalid={!!errors.accountNumber}
-                  required
-          onChange={(e) => handleAccountNumberChange(e.target.value)}
-          className="w-full"
-                />
+                                  id="accountNumber"
+                                  type="text"
+                                  inputMode="numeric"
+                                  pattern="[0-9]*"
+                                  placeholder="Enter 10-digit account number"
+                                  maxLength={10}
+                                  value={accountNumber}
+                                  onChange={(e) => handleAccountNumberChange((e as React.ChangeEvent<HTMLInputElement>).target.value)}
+                                  aria-invalid={!!errors.accountNumber}
+                                />
                 {errors.accountNumber && (
                   <p className="text-xs text-red-600 mt-1" role="alert">{errors.accountNumber}</p>
                 )}

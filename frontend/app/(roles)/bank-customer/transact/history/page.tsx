@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Eye, Trash, Filter } from "lucide-react"
+import { Search, Eye, Filter } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -233,7 +233,6 @@ export default function Page() {
 													className="p-1 rounded-md text-(--primecore-foreground)/70 hover:text-destructive transition"
 													aria-label="Delete"
 												>
-													<Trash className="w-4 h-4" />
 												</button>
 											</div>
 										</td>
