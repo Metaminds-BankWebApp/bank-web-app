@@ -3,13 +3,14 @@
 import React from "react";
 import { Badge } from "@/src/components/ui/badge";
 import { Card, CardContent } from "@/src/components/ui/card";
-import { BarChart3, ShieldCheck, Target, TrendingUp } from "lucide-react";
+import { Activity, BarChart3, Target, TrendingUp } from "lucide-react";
 
 type Props = {
   riskLabel?: string;
   riskDelta?: number;
   trendText?: string;
   biggestDriver?: string;
+  momentumText?: string;
   stabilityText?: string;
   nextTarget?: string;
 };
@@ -19,12 +20,15 @@ export default function TrendSummaryCard({
   riskDelta = -25,
   trendText = "Improved since April",
   biggestDriver = "Reduced DTI pressure",
-  stabilityText = "No sudden risk spikes",
+  momentumText,
+  stabilityText,
   nextTarget = "Below 40 to Low Risk",
 }: Props) {
   const deltaColor = riskDelta <= 0 ? "text-emerald-600" : "text-rose-600";
   const deltaSign = riskDelta > 0 ? "+" : "";
   const trendColor = riskDelta <= 0 ? "text-emerald-700" : "text-rose-700";
+  const resolvedMomentumText =
+    momentumText ?? stabilityText ?? "Average drop of 5 risk pts per month";
 
   return (
     <Card className="creditlens-card creditlens-card-hover h-full min-w-0 rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_18px_50px_-35px_rgba(2,44,67,0.35)] md:rounded-[26px]">
@@ -60,11 +64,11 @@ export default function TrendSummaryCard({
 
           <div className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-slate-100 sm:p-4">
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-100 text-blue-700">
-              <ShieldCheck size={18} />
+              <Activity size={18} />
             </div>
             <div>
-              <div className="text-base font-semibold text-slate-900">Risk Stability</div>
-              <div className="text-sm text-slate-500">{stabilityText}</div>
+              <div className="text-base font-semibold text-slate-900">Monthly Momentum</div>
+              <div className="text-sm text-slate-500">{resolvedMomentumText}</div>
             </div>
           </div>
 

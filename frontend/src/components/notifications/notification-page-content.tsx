@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, BellRing, Info, TriangleAlert } from "lucide-react";
+import { BellRing, Info, TriangleAlert, X } from "lucide-react";
 import { cn } from "@/src/lib/utils";
 import {
   type FeatureSegment,
@@ -31,10 +32,21 @@ const KIND_DOT: Record<NotificationItem["kind"], string> = {
 };
 
 export function NotificationPageContent({ roleSegment, featureSegment }: NotificationPageContentProps) {
-  const context = buildNotificationRouteContext(roleSegment, featureSegment ?? null);
+  const context = useMemo(
+    () => buildNotificationRouteContext(roleSegment, featureSegment ?? null),
+    [featureSegment, roleSegment]
+  );
+  const contextKey = `${roleSegment}:${featureSegment ?? "all"}`;
   const isTransact = context.featureSegment === "transact";
   const isLoanSense = context.featureSegment === "loansense";
-  const notifications = getNotificationsForContext(context);
+  const sourceNotifications = useMemo(() => getNotificationsForContext(context), [context]);
+  const [dismissedByContext, setDismissedByContext] = useState<Record<string, string[]>>({});
+  const dismissedIds = useMemo(() => dismissedByContext[contextKey] ?? [], [contextKey, dismissedByContext]);
+  const notifications = useMemo(
+    () => sourceNotifications.filter((item) => !dismissedIds.includes(item.id)),
+    [dismissedIds, sourceNotifications]
+  );
+
   const unreadCount = notifications.filter((item) => item.unread).length;
   const alertCount = notifications.filter((item) => item.kind === "alert").length;
   const metricCardClass = isTransact
@@ -52,6 +64,17 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
     : isLoanSense
     ? "loansense-card loansense-card-hover loansense-creditlens-shade"
     : "";
+
+  const handleDeleteNotification = (id: string) => {
+    setDismissedByContext((prev) => {
+      const existing = prev[contextKey] ?? [];
+      if (existing.includes(id)) return prev;
+      return {
+        ...prev,
+        [contextKey]: [...existing, id],
+      };
+    });
+  };
 
   return (
     <section className="space-y-6">
@@ -85,7 +108,7 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
             <article
               key={item.id}
               className={cn(
-                "rounded-xl border p-4 transition-colors hover:border-slate-300",
+                "relative rounded-xl border p-4 transition-colors hover:border-slate-300",
                 rowCardClass,
                 isTransact || isLoanSense
                   ? item.unread
@@ -96,6 +119,14 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
                   : "border-slate-100 bg-white"
               )}
             >
+              <button
+                type="button"
+                onClick={() => handleDeleteNotification(item.id)}
+                className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-700"
+                aria-label="Remove notification"
+              >
+                <X size={14} />
+              </button>
               <div className="mb-2 flex items-start gap-3">
                 <span className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full", KIND_DOT[item.kind])} />
                 <div className="min-w-0 flex-1">
@@ -130,13 +161,7 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
           ))}
         </div>
 
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
-          <span>Need urgent support for an alert?</span>
-          <div className="inline-flex items-center gap-2 font-semibold text-slate-800">
-            <AlertTriangle size={14} />
-            Contact support desk
-          </div>
-        </div>
+
       </div>
     </section>
   );

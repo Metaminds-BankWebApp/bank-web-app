@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle, FileText, Download, Printer, User, Building, CreditCard, Ban } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, AlertTriangle, FileText, Download, Printer, Building, CreditCard, Ban } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { StepProps } from "./types";
 import { Badge } from "@/src/components/ui/badge";
+import { CRIBRetrievalErrors, validateCRIBRetrievalStep } from "./validation";
 
 export function CRIBRetrieval({ formData, updateFormData, onNext, onBack }: StepProps) {
   const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState<CRIBRetrievalErrors>({});
 
   useEffect(() => {
     // Simulate data parsing
@@ -25,6 +27,14 @@ export function CRIBRetrieval({ formData, updateFormData, onNext, onBack }: Step
     }, 2000);
     return () => clearTimeout(timer);
   }, [formData.creditScore, updateFormData]);
+
+  const handleNext = () => {
+    const validationErrors = validateCRIBRetrievalStep(formData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length === 0) {
+      onNext();
+    }
+  };
 
   if (loading) {
     return (
@@ -126,14 +136,20 @@ export function CRIBRetrieval({ formData, updateFormData, onNext, onBack }: Step
                    <p className="text-xs text-slate-400">Last 12 Months</p>
                 </div>
              </div>
-          </div>
-       </div>
+         </div>
+      </div>
+
+      {errors.creditScore && (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          {errors.creditScore}
+        </div>
+      )}
 
        <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-slate-200 px-8 py-4 flex items-center justify-between z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <Button variant="ghost" onClick={onBack} className="text-slate-500 hover:text-slate-800 hover:bg-slate-100">
              <ArrowLeft size={16} className="mr-2" /> Back
           </Button>
-          <Button onClick={onNext} className="bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
+          <Button onClick={handleNext} className="bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
              Proceed to Final Review <ArrowRight size={16} className="ml-2" />
           </Button>
        </div>

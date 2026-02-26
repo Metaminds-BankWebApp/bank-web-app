@@ -1,14 +1,23 @@
 "use client";
 
 import React from "react";
+import type { RiskFactor } from "@/src/types/creditlens-report";
 
-type Factor = { name: string; value: number; max: number; color: string };
+function getRiskBarColor(value: number, max: number): string {
+  const safeMax = Math.max(1, max);
+  const firstBandUpper = safeMax / 3;
+  const secondBandUpper = (safeMax * 2) / 3;
+
+  if (value <= firstBandUpper) return "#22c55e";
+  if (value <= secondBandUpper) return "#f59e0b";
+  return "#ef4444";
+}
 
 export default function RiskPointsBreakdown({
   factors,
   score,
 }: {
-  factors: Factor[];
+  factors: RiskFactor[];
   score: number;
 }) {
   return (
@@ -18,6 +27,7 @@ export default function RiskPointsBreakdown({
       <div className="mt-6 space-y-5">
         {factors.map((factor) => {
           const pct = Math.max(0, Math.min(100, (factor.value / Math.max(1, factor.max)) * 100));
+          const barColor = getRiskBarColor(factor.value, factor.max);
           return (
             <div key={factor.name}>
               <div className="flex items-center justify-between gap-3 text-sm">
@@ -30,7 +40,7 @@ export default function RiskPointsBreakdown({
               <div className="mt-2 h-2.5 w-full rounded-full bg-slate-100">
                 <div
                   className="h-2.5 rounded-full"
-                  style={{ width: `${pct}%`, backgroundColor: factor.color }}
+                  style={{ width: `${pct}%`, backgroundColor: barColor }}
                 />
               </div>
             </div>
@@ -46,3 +56,4 @@ export default function RiskPointsBreakdown({
     </div>
   );
 }
+
