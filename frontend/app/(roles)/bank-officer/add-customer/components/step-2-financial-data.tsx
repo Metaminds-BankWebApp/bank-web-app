@@ -1,15 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, ArrowLeft, Briefcase, DollarSign } from "lucide-react";
+import { ArrowRight, ArrowLeft, DollarSign } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
 import { StepProps } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
+import { FinancialDataErrors, validateFinancialDataStep } from "./validation";
 
 export function FinancialData({ formData, updateFormData, onNext, onBack }: StepProps) {
   const [activeTab, setActiveTab] = useState<"salary" | "business">("salary");
+  const [errors, setErrors] = useState<FinancialDataErrors>({});
+
+  const handleNext = () => {
+    const validationErrors = validateFinancialDataStep(formData);
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length === 0) {
+      onNext();
+    }
+  };
+
+  const clearFieldError = (field: keyof FinancialDataErrors) => {
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -66,12 +82,17 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                       <Input 
                         id="monthlySalary" 
                         value={formData.monthlySalary}
-                        onChange={(e) => updateFormData({ monthlySalary: e.target.value })}
+                        onChange={(e) => {
+                          updateFormData({ monthlySalary: e.target.value });
+                          clearFieldError("monthlySalary");
+                          clearFieldError("income");
+                        }}
                         placeholder="0.00" 
-                        className="bg-slate-50 border-slate-200 h-11 pl-10" 
+                        className={`bg-slate-50 border-slate-200 h-11 pl-10 ${errors.monthlySalary ? "border-red-500" : ""}`} 
                       />
                       <DollarSign className="absolute left-3 top-3 text-slate-400" size={16} />
                    </div>
+                   {errors.monthlySalary && <p className="text-red-500 text-xs">{errors.monthlySalary}</p>}
                 </div>
              </div>
 
@@ -81,7 +102,10 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                    {["Permanent", "Contract", "Freelance"].map((type) => (
                       <div 
                         key={type}
-                        onClick={() => updateFormData({ employmentType: type })}
+                        onClick={() => {
+                          updateFormData({ employmentType: type });
+                          clearFieldError("employmentType");
+                        }}
                         className={`flex-1 border rounded-xl p-4 cursor-pointer transition-all hover:border-[#3e9fd3] flex items-center justify-center text-sm font-medium
                         ${formData.employmentType === type 
                           ? "border-[#3e9fd3] bg-blue-50 text-[#0d3b66]" 
@@ -91,6 +115,7 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                       </div>
                    ))}
                 </div>
+                {errors.employmentType && <p className="text-red-500 text-xs">{errors.employmentType}</p>}
              </div>
           </div>
         )}
@@ -102,11 +127,22 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                 <Input 
                   id="businessIncome" 
                   value={formData.businessIncome}
-                  onChange={(e) => updateFormData({ businessIncome: e.target.value })}
+                  onChange={(e) => {
+                    updateFormData({ businessIncome: e.target.value });
+                    clearFieldError("businessIncome");
+                    clearFieldError("income");
+                  }}
                   placeholder="0.00" 
-                  className="bg-slate-50 border-slate-200 h-11" 
+                  className={`bg-slate-50 border-slate-200 h-11 ${errors.businessIncome ? "border-red-500" : ""}`} 
                 />
+                {errors.businessIncome && <p className="text-red-500 text-xs">{errors.businessIncome}</p>}
              </div>
+          </div>
+        )}
+
+        {errors.income && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+            {errors.income}
           </div>
         )}
         
@@ -129,7 +165,7 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
         <div className="flex items-center gap-4">
             <span className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600">Save Draft</span>
             <Button 
-              onClick={onNext}
+              onClick={handleNext}
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
             >
                 Continue <ArrowRight size={16} />
