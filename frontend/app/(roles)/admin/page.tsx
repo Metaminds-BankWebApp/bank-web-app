@@ -233,10 +233,11 @@ const chartOptions = {
 };
   return (
     <AuthGuard requiredRole="ADMIN">
-      <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
-         <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
+      <div className="flex flex-col lg:flex-row h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
+        {/* Sidebar: hidden on mobile, visible on lg+ */}
+        <Sidebar role="ADMIN" className="max-lg:hidden  h-full z-10 relative" />
 
-        <main className="flex-1 flex flex-col bg-[#f3f4f6] overflow-hidden lg:rounded-l-[28px] shadow-2xl p-3 sm:p-5 lg:p-7">
+        <main className="flex-1 flex flex-col bg-[#f3f4f6] overflow-hidden lg:rounded-l-[28px] shadow-2xl p-2 sm:p-4 md:p-6 lg:p-7">
           <div className="shrink-0 mb-5">
             <ModuleHeader
               title="Dashboard"
@@ -251,13 +252,12 @@ const chartOptions = {
               avatarStatusDot
               avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random"
             />
-             
-            </div>
-            <div className="flex-1 overflow-y-auto px-4 pb-8 sm:px-6 lg:px-8">
-            <section className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          </div>
+          <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6 lg:px-8 pb-8">
+            {/* Metric Cards: responsive grid */}
+            <section className="mt-6 grid gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
               {metricCards.map((card) => {
                 const Icon = card.icon;
-
                 return (
                   <div
                     key={card.title}
@@ -277,11 +277,9 @@ const chartOptions = {
                       </span>
                       <ArrowUpRight size={16} className="text-white/45" />
                     </div>
-
                     <p className={cn("mt-8 text-xs font-semibold tracking-wide", card.titleClassName)}>
                       {card.title}
                     </p>
-
                     <div className="mt-2 flex items-center justify-between gap-3">
                       <p className={cn("text-2xl font-bold leading-none", card.valueClassName)}>{card.value}</p>
                       <span className={cn("rounded-full px-2.5 py-1 text-xs font-semibold", card.deltaClassName)}>
@@ -292,118 +290,107 @@ const chartOptions = {
                 );
               })}
             </section>
-            
-            <div className="flex-1 overflow-y-auto px-4 pb-8 sm:px-6 lg:px-8" />
-            <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-              <div className="rounded-3xl border border-[#e3e7ee] bg-white p-5">
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_220px]">
+
+            {/* Monthly User Growth & Quick Management: responsive grid */}
+            <section className="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]">
+              <div className="rounded-3xl border border-[#e3e7ee] bg-white p-4 sm:p-5">
+                <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_220px]">
                   <div>
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div>
-                        <h3 className="text-xl font-semibold leading-tight text-[#102f52]">Monthly User Growth</h3>
-                        <p className="text-sm text-[#a3afbf]">User onboarding and retention across 6 months</p>
+                        <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#102f52]">Monthly User Growth</h3>
+                        <p className="text-xs sm:text-sm text-[#a3afbf]">User onboarding and retention across 6 months</p>
                       </div>
-                      <button className="rounded-xl bg-[#f3f4f6] px-4 py-2 text-sm font-semibold text-[#223f5f]">
+                      <button className="rounded-xl bg-[#f3f4f6] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#223f5f]">
                         6 Months
                       </button>
                     </div>
-
-                   <div className="relative mt-5 h-[220px] rounded-2xl border border-[#edf1f6] bg-[#f9fbff] p-4">
-  <Bar data={chartData} options={chartOptions} />
-</div>
+                    <div className="relative mt-5 h-[180px] sm:h-[220px] rounded-2xl border border-[#edf1f6] bg-[#f9fbff] p-2 sm:p-4 overflow-x-auto">
+                      <Bar data={chartData} options={chartOptions} />
+                    </div>
                   </div>
-
                   <div className="xl:border-l xl:border-[#edf1f6] xl:pl-6">
-                    <h4 className="text-xl font-semibold leading-tight text-[#111111]">Customer Type</h4>
-
-                    <div className="mt-12 space-y-4">
-  {["ALL", "BANK", "PUBLIC"].map((type) => (
-    <button
-      key={type}
-      onClick={() => setCustomerType(type as any)}
-      className={cn(
-        "w-full rounded-full py-2 text-sm font-semibold transition",
-        customerType === type
-          ? "bg-[#0d3b66] text-white"
-          : "border border-[#5f7fa3] bg-white text-[#1a2c40]"
-      )}
-    >
-      {type}
-    </button>
-  ))}
-</div>
+                    <h4 className="text-lg sm:text-xl font-semibold leading-tight text-[#111111]">Customer Type</h4>
+                    <div className="mt-8 sm:mt-12 space-y-3 sm:space-y-4">
+                      {["ALL", "BANK", "PUBLIC"].map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => setCustomerType(type as any)}
+                          className={cn(
+                            "w-full rounded-full py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition",
+                            customerType === type
+                              ? "bg-[#0d3b66] text-white"
+                              : "border border-[#5f7fa3] bg-white text-[#1a2c40]"
+                          )}
+                        >
+                          {type}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-
-              <div className="rounded-3xl bg-[linear-gradient(180deg,#0b3a63_0%,#0a3157_70%,#0a4b67_100%)] p-6 text-white shadow-lg">
-                <h3 className="text-xl font-semibold leading-tight">Quick Management</h3>
-
-                <div className="mt-8 grid grid-cols-2 gap-4">
+              <div className="rounded-3xl bg-[linear-gradient(180deg,#0b3a63_0%,#0a3157_70%,#0a4b67_100%)] p-4 sm:p-6 text-white shadow-lg">
+                <h3 className="text-lg sm:text-xl font-semibold leading-tight">Quick Management</h3>
+                <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {quickActions.map((action) => {
                     const Icon = action.icon;
-
                     return (
                       <Link
-  key={action.label}
-  href={action.href}
-  className="rounded-xl bg-[#1a4a77]/80 p-3 text-center transition hover:bg-[#205486]"
->
-  <Icon size={18} className="mx-auto text-[#3cd1c4]" />
-  <p className="mt-3 text-xs font-semibold tracking-wide">{action.label}</p>
-</Link>
-
+                        key={action.label}
+                        href={action.href}
+                        className="rounded-xl bg-[#1a4a77]/80 p-2 sm:p-3 text-center transition hover:bg-[#205486]"
+                      >
+                        <Icon size={18} className="mx-auto text-[#3cd1c4]" />
+                        <p className="mt-2 sm:mt-3 text-xs font-semibold tracking-wide">{action.label}</p>
+                      </Link>
                     );
                   })}
                 </div>
               </div>
             </section>
 
-            <section className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-              <div className="rounded-3xl border border-[#e3e7ee] bg-white p-6">
-                <h3 className="text-xl font-semibold leading-tight text-[#0f2f52]">Recent Admin Actions</h3>
-
-                <div className="mt-6 space-y-5">
+            {/* Recent Admin Actions & Loan Rates: responsive grid */}
+            <section className="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px]">
+              <div className="rounded-3xl border border-[#e3e7ee] bg-white p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#0f2f52]">Recent Admin Actions - within 6 hours</h3>
+                <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-5">
                   {adminActions.map((action) => {
                     const Icon = action.icon;
-
                     return (
-                      <div key={action.title} className="flex items-start gap-4">
+                      <div key={action.title} className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                         <span
                           className={cn(
-                            "mt-1 inline-flex h-9 w-9 items-center justify-center rounded-lg",
+                            "mt-1 inline-flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg",
                             actionToneClass[action.tone]
                           )}
                         >
                           <Icon size={16} />
                         </span>
                         <div>
-                          <p className="text-sm font-medium leading-tight text-[#1e4169]">{action.title}</p>
-                          <p className="mt-1 text-sm text-[#a0adbd]">{action.meta}</p>
+                          <p className="text-xs sm:text-sm font-medium leading-tight text-[#1e4169]">{action.title}</p>
+                          <p className="mt-1 text-xs sm:text-sm text-[#a0adbd]">{action.meta}</p>
                         </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
-
-              <div className="rounded-3xl border border-[#e3e7ee] bg-white p-6">
-                <h3 className="text-xl font-semibold leading-tight text-[#0f2f52]">Current Loan Interest Rate</h3>
-
-                <div className="mt-6 space-y-5">
+              <div className="rounded-3xl border border-[#e3e7ee] bg-white p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#0f2f52]">Current Loan Interest Rate</h3>
+                <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-5">
                   {loanRates.map((item) => {
                     const Icon = item.icon;
-
                     return (
-                      <div key={item.title} className="flex items-center justify-between gap-4">
-                        <div className="flex items-start gap-3">
+                      <div key={item.title} className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4">
+                        <div className="flex items-start gap-2 sm:gap-3">
                           <Icon size={19} className="mt-1 text-[#111111]" />
                           <div>
-                            <p className="text-sm font-medium leading-tight text-[#1e4169]">{item.title}</p>
-                            <p className="text-sm text-[#a4afbe]">Since 16th of September 2025</p>
+                            <p className="text-xs sm:text-sm font-medium leading-tight text-[#1e4169]">{item.title}</p>
+                            <p className="text-xs sm:text-sm text-[#a4afbe]">Since 16th of September 2025</p>
                           </div>
                         </div>
-                        <p className="text-xl font-semibold text-[#24486f]">{item.rate}</p>
+                        <p className="text-lg sm:text-xl font-semibold text-[#24486f]">{item.rate}</p>
                       </div>
                     );
                   })}
@@ -411,8 +398,7 @@ const chartOptions = {
               </div>
             </section>
           </div>
-          
-       </main>  
+        </main>
       </div>
     </AuthGuard>
   );
