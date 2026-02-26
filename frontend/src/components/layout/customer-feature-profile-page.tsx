@@ -129,6 +129,7 @@ const ROLE_PROFILE_CONFIG: Record<CustomerRoleLabel, RoleProfileConfig> = {
       { key: "accountNumber", label: "Account Number", value: "012345678901", readOnly: true },
       { key: "branch", label: "Branch (Read-Only)", value: "Colombo Central Branch", readOnly: true },
       { key: "nic", label: "NIC", value: "972346682V", readOnly: true },
+      { key: "dob", label: "DOB", value: "11-09-1997", readOnly: true },
     ],
     security: [
       {
