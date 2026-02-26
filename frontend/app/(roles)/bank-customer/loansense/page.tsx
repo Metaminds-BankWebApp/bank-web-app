@@ -21,13 +21,14 @@ import Link from "next/link";
 
 export default function LoanSenseDashboard() {
     const [isModalOpen, setIsModalOpen] = React.useState(false);
+    const [isRecommendationOpen, setIsRecommendationOpen] = React.useState(false);
   const loans = [
     { title: "Personal Loan", subtitle: "Flexible personal financing for your needs", status: "Eligible", statusColor: "text-emerald-500 bg-emerald-50", amount: "2,150,000", path: "/bank-customer/loansense/personal" },
     { title: "Vehicle Loan", subtitle: "Finance your dream vehicle", status: "Eligible", statusColor: "text-emerald-500 bg-emerald-50", amount: "3,450,000", path: "/bank-customer/loansense/vehicle" },
     { title: "Education Loan", subtitle: "Invest in your education and future", status: "Partially Eligible", statusColor: "text-amber-500 bg-amber-50", amount: "5,900,000", path: "/bank-customer/loansense/education" },
     { title: "Housing Loan", subtitle: "Finance your dream home", status: "Partially Eligible", statusColor: "text-amber-500 bg-amber-50", amount: "10,400,000", path: "/bank-customer/loansense/housing" },
   ];
-
+const overallStatus = "Eligible"; 
   return (
     <AuthGuard requiredRole="BANK_CUSTOMER">
       <div className="flex min-h-screen flex-col gap-6 bg-transparent p-4 font-sans text-slate-800 md:p-8">
@@ -178,6 +179,9 @@ export default function LoanSenseDashboard() {
                          <button onClick={() => setIsModalOpen(true)} className="w-full mt-6 bg-[#2c5282] hover:bg-[#1e3a5f] text-white text-sm font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-blue-900/10">
                               How is this calculated?
                          </button>
+                        <button onClick={() => setIsRecommendationOpen(true)} className="w-full mt-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-3 rounded-lg transition-colors shadow-lg shadow-emerald-900/10">
+                              How Can I Improve My Eligibility?
+                        </button>
 
 
                     </div>
@@ -185,11 +189,11 @@ export default function LoanSenseDashboard() {
 
             </div>
         </div>
-{/* Calculation Modal */}
-{isModalOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center">
+                      {/* Calculation Modal */}
+                    {isModalOpen && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center">
 
-    {/* Overlay */}
+               {/* Overlay */}
     <div
       className="absolute inset-0 bg-black/40 backdrop-blur-sm"
       onClick={() => setIsModalOpen(false)}
@@ -308,9 +312,104 @@ export default function LoanSenseDashboard() {
     </div>
   </div>
 )}
+       
 
+     {isRecommendationOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center">
+
+    {/* Overlay */}
+    <div
+      className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+      onClick={() => setIsRecommendationOpen(false)}
+    />
+
+    {/* Modal Content */}
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="relative loansense-creditlens-shade w-[92%] max-w-2xl rounded-2xl p-8 z-10"
+    >
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 className="text-xl font-semibold text-[#0d3b66]">
+          Personalized Eligibility Improvement Plan
+        </h2>
+        <button
+          onClick={() => setIsRecommendationOpen(false)}
+          className="text-slate-400 hover:text-slate-700 transition text-lg"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="space-y-6 text-sm text-slate-700 leading-relaxed max-h-[65vh] overflow-y-auto pr-2">
+
+        {/* Overall */}
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+          <p className="font-semibold text-emerald-700 mb-2">
+            ✔ Overall Status: You are currently eligible!
+          </p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Maintain timely repayments on all existing loans.</li>
+            <li>Avoid increasing new debt commitments.</li>
+            <li>Keep your DBR below 40%.</li>
+            <li>Maintain a stable income record.</li>
+          </ul>
+        </div>
+
+        {/* Not Eligible */}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="font-semibold text-red-700 mb-2">
+            ✖ If you become Not Eligible:
+          </p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Reduce total monthly debt obligations below policy limits.</li>
+            <li>Improve your credit score above minimum requirement.</li>
+            <li>Ensure stable income for 3–6 months.</li>
+            <li>Avoid late or missed repayments.</li>
+          </ul>
+        </div>
+
+        {/* Partially Eligible */}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <p className="font-semibold text-amber-700 mb-2">
+            ⚠ If you are Partially Eligible:
+          </p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Reduce existing loan commitments to lower your DBR.</li>
+            <li>Improve your credit score for higher approval probability.</li>
+            <li>Increase savings or provide additional documentation.</li>
+            <li>Consider adding a guarantor to strengthen your profile.</li>
+          </ul>
+        </div>
+
+        {/* Final Message */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-blue-900 font-medium">
+            💡 Improving these areas can increase your eligibility score
+            and unlock higher loan amounts in future evaluations.
+          </p>
+        </div>
 
       </div>
+
+      {/* Footer */}
+      <div className="mt-8 flex justify-end border-t pt-4">
+        <button
+          onClick={() => setIsRecommendationOpen(false)}
+          className="bg-[#0d3b66] hover:bg-[#082d4a] text-white px-6 py-2 rounded-lg text-sm font-semibold transition"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+
+      </div> {/* closes main wrapper */}
     </AuthGuard>
   );
 }
