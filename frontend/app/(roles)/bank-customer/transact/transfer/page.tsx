@@ -155,6 +155,17 @@ export default function Page() {
     setShowOtp(true)
   }
 
+  const isFormValid = React.useMemo(() => {
+    const parsedAmount = Number.parseFloat(amount || "0")
+    if (!accountNumber) return false
+    if (!beneficiary || beneficiary.trim().length < 2) return false
+    if (!remark) return false
+    if (!amount || Number.isNaN(parsedAmount)) return false
+    if (parsedAmount < 1000) return false
+    if (parsedAmount > balance) return false
+    return true
+  }, [accountNumber, beneficiary, remark, amount, balance])
+
   return (
     <div className="relative min-h-full">
 
@@ -215,13 +226,13 @@ export default function Page() {
                   type="text"
                   inputMode="decimal"
                   pattern="[0-9]*[.]?[0-9]*"
-                  placeholder="0.00"
+                  placeholder="LKR 0.00"
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
                   aria-invalid={Boolean(formErrors.amount)}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Available Balance: LKR {balance.toFixed(2)}
+                  Available balance: LKR {balance.toFixed(2)}
                 </p>
                 {formErrors.amount && (
                   <p className="text-sm text-red-500">{formErrors.amount}</p>
@@ -233,7 +244,7 @@ export default function Page() {
                 <textarea
                 id="remark"
                 name="remark"
-                placeholder="Add a note"
+                placeholder="Add a note or invoice reference"
                 value={remark}
                 required
                 onChange={(e) => setRemark(e.target.value)}
@@ -247,20 +258,18 @@ export default function Page() {
               <div className="pt-1">
                 <label className="inline-flex items-center space-x-2">
                   <Checkbox checked={expenseTrack} onChange={(e) => setExpenseTrack(Boolean((e.target as HTMLInputElement).checked))} />
-                  <span>Expenses track</span>
+                  <span>Expense tracking</span>
                 </label>
                 {/* Note explaining expense tracking behavior */}
-                <ul className="mt-2 ml-5 list-disc text-ash text-muted-foreground text-sm">
-                  <ul>(If selected, the transaction is stored in the expense tracker; otherwise, it is treated as a standard payment.)
-               </ul>
-                </ul>
+                <p className="mt-2 ml-1 text-sm text-muted-foreground">If selected, this transaction will be saved to your expense tracker for reporting.</p>
               </div>
 
               <div className="flex justify-end">
                 <Button
                   type="button"
                   onClick={handleTransfer}
-                  className="w-full sm:w-auto bg-[#155E63] hover:bg-[#134e52] text-white px-8 py-5 rounded-xl"
+                  disabled={!isFormValid}
+                  className={`w-full sm:w-auto ${!isFormValid ? 'bg-[#155E63]/60 cursor-not-allowed opacity-70' : 'bg-[#155E63] hover:bg-[#134e52]'} text-white px-8 py-5 rounded-xl`}
                 >
                   Transfer Amount
                 </Button>
