@@ -95,6 +95,16 @@ export default function PublicCustomerApplicationPage() {
   const [liabilityDesc, setLiabilityDesc] = useState("");
   const [liabilityAmount, setLiabilityAmount] = useState("");
 
+   // --- Account creation state & validation ---
+   const [email, setEmail] = useState("");
+   const [phone, setPhone] = useState("");
+   const [password, setPassword] = useState("");
+   const [confirmPassword, setConfirmPassword] = useState("");
+      const [address, setAddress] = useState("");
+      const [city, setCity] = useState("");
+      const [province, setProvince] = useState("");
+   const [accountErrors, setAccountErrors] = useState<Record<string, string>>({});
+
   // --- Handlers ---
   const handleAddIncome = () => {
     if (!salaryAmount) return;
@@ -180,18 +190,17 @@ export default function PublicCustomerApplicationPage() {
   const { showToast } = useToast();
 
   const submitApplication = () => {
-    // Logic to submit data would go here
-    // In a real app, you would send formData to the backend
-    
-    showToast({ 
-      title: "Application Submitted", 
-      description: "Your application has been received. Redirecting to dashboard...",
-      type: "success"
-    });
-    
-    setTimeout(() => {
-      router.replace("/public-customer"); // Redirect to dashboard
-    }, 1500);
+      // Submission without client-side validation per current request
+      // Logic to submit data would go here (send formData + account info to backend)
+      showToast({ 
+         title: "Application Submitted", 
+         description: "Your application has been received. Redirecting to dashboard...",
+         type: "success"
+      });
+
+      setTimeout(() => {
+         router.replace("/public-customer"); // Redirect to dashboard
+      }, 1500);
   };
 
   return (
@@ -830,12 +839,15 @@ export default function PublicCustomerApplicationPage() {
               </div>
 
               {/* Terms Warning */}
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-                 <Info className="flex-shrink-0 text-blue-600 w-5 h-5 mt-0.5" />
-                 <p className="text-xs text-blue-800 leading-relaxed">
-                    By clicking &quot;Submit Application&quot;, you confirm that all the information provided is accurate and you agree to our Terms of Service and Privacy Policy.
-                 </p>
-              </div>
+                
+
+                     {/* Terms Warning */}
+                     <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+                         <Info className="flex-shrink-0 text-blue-600 w-5 h-5 mt-0.5" />
+                         <p className="text-xs text-blue-800 leading-relaxed">
+                              By clicking &quot;Submit Application&quot;, you confirm that all the information provided is accurate and you agree to our Terms of Service and Privacy Policy.
+                         </p>
+                     </div>
 
               <div className="flex justify-center pt-4">
                
@@ -874,5 +886,5 @@ export default function PublicCustomerApplicationPage() {
 
       </div>
     </AuthGuard>
-  );
+   );
 }
