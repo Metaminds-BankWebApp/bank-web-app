@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import { 
+  CheckCircle2, 
+  ArrowRight, 
+  ArrowLeft 
+} from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
@@ -142,6 +146,42 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
                   {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
               </div>
             </div>
+        </div>
+
+        <div className="pt-4 border-t border-slate-100">
+           <h3 className="text-lg font-bold text-[#0d3b66] mb-4">Banking & Authorization</h3>
+           <p className="text-sm text-slate-500 mb-6">Link existing bank accounts.</p>
+           
+           <div className="space-y-3 mb-6">
+              <Label htmlFor="bankAccount" className="text-slate-700 font-medium">Bank Account Number</Label>
+              <div className="flex gap-3">
+                 <Input 
+                   id="bankAccount" 
+                   value={formData.bankAccount} 
+                   onChange={handleChange}
+                   placeholder="1000 2345 6789" 
+                   className={`bg-slate-50 border-slate-200 h-11 flex-1 ${errors.bankAccount ? "border-red-500" : ""}`} 
+                   disabled={formData.isAccountVerified}
+                 />
+                 <Button 
+                   type="button"
+                   variant={formData.isAccountVerified ? "outline" : "primary"}
+                   className={`h-11 px-6 whitespace-nowrap min-w-[120px] ${formData.isAccountVerified ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" : "bg-[#0d3b66] hover:bg-[#1a4a7a] text-white"}`}
+                   onClick={(e) => {
+                      e.preventDefault();
+                      if (formData.bankAccount && formData.bankAccount.length > 5) {
+                         updateFormData({ isAccountVerified: true });
+                      }
+                   }}
+                   disabled={formData.isAccountVerified || !formData.bankAccount}
+                 >
+                   {formData.isAccountVerified ? (
+                      <><CheckCircle2 size={16} className="mr-2" /> Verified</>
+                   ) : "Verify Account"}
+                 </Button>
+              </div>
+              {errors.bankAccount && <p className="text-red-500 text-xs">{errors.bankAccount}</p>}
+           </div>
         </div>
       </div>
 

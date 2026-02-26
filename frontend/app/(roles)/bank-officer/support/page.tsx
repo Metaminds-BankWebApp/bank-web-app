@@ -59,18 +59,18 @@ export default function SupportConsolePage() {
 
           <div className="space-y-4 overflow-y-auto">
             {/* KPI Row */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <StatCard label="Open Tickets" value={stats.open} color="teal" />
-              <StatCard label="High Priority" value={stats.high} color="red" />
-              <StatCard label="Escalated to Admin" value={stats.escalated} color="red" />
-              <StatCard label="Resolved Today" value={stats.resolvedToday} color="teal" />
-              <StatCard label="SLA Breaches" value={stats.slaBreaches} color="red" />
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 creditlens-stagger-4">
+              <StatCard label="Open Tickets" value={stats.open} color="teal" delayClass="creditlens-delay-1" />
+              <StatCard label="High Priority" value={stats.high} color="red" delayClass="creditlens-delay-2" />
+              <StatCard label="Escalated to Admin" value={stats.escalated} color="red" delayClass="creditlens-delay-3" />
+              <StatCard label="Resolved Today" value={stats.resolvedToday} color="teal" delayClass="creditlens-delay-4" />
+              <StatCard label="SLA Breaches" value={stats.slaBreaches} color="red" delayClass="creditlens-delay-1" />
             </div>
 
             {/* Ticket Management Split */}
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
               <div className="lg:col-span-7">
-                <div className="rounded-[16px] bg-[#bdd8e71f] border border-[#BCC5CC] shadow-sm p-4">
+                <div className="creditlens-card creditlens-card-hover creditlens-delay-2 rounded-[16px] bg-[#bdd8e71f] border border-[#BCC5CC] shadow-sm p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
                       <Input placeholder="Search by Ticket ID or Customer ID" value={filters.query} onChange={(e: ChangeEvent<HTMLInputElement>)=> setFilters({ ...filters, query: e.target.value })} className="w-full sm:w-[320px] bg-white" />
@@ -133,7 +133,7 @@ export default function SupportConsolePage() {
               </div>
 
               <div className="lg:col-span-3">
-                <div className="rounded-[16px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-4 h-full flex flex-col">
+                <div className="creditlens-card creditlens-card-hover creditlens-delay-3 rounded-[16px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-4 h-full flex flex-col">
                   {selected ? (
                     <TicketPreview ticket={selected} onEscalate={() => setOpenEscalate(true)} onCreateCase={() => setOpenCase(true)} />
                   ) : (
@@ -144,7 +144,7 @@ export default function SupportConsolePage() {
             </div>
 
             {/* Escalations */}
-            <div className="rounded-[16px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-4">
+            <div className="creditlens-card creditlens-card-hover creditlens-delay-4 rounded-[16px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-4">
               <h3 className="font-semibold text-[#063154]">Escalated Cases</h3>
               <p className="text-sm text-[#063154]/80 mt-1">Tickets escalated to admin for review.</p>
               <div className="mt-3 space-y-2">
@@ -162,7 +162,7 @@ export default function SupportConsolePage() {
             </div>
 
             {/* Knowledge Base */}
-            <div className="rounded-[16px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-4">
+            <div className="creditlens-card creditlens-card-hover creditlens-delay-1 rounded-[16px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-4">
               <h3 className="font-semibold text-[#063154]">Knowledge Base</h3>
               <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
                 {[
@@ -196,10 +196,10 @@ export default function SupportConsolePage() {
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
+function StatCard({ label, value, color, delayClass }: { label: string; value: number; color: string; delayClass?: string; }) {
   const colorClass = color === 'red' ? 'text-red-600' : 'text-[#2F9D94]';
   return (
-    <div className="rounded-[16px] bg-white p-4 shadow-sm border border-[#E8E8E8]">
+    <div className={`creditlens-card creditlens-card-hover ${delayClass || ''} rounded-[16px] bg-white p-4 shadow-sm border border-[#E8E8E8]`}>
       <div className="text-sm text-[#063154]/80">{label}</div>
       <div className={`text-2xl font-bold ${colorClass}`}>{value}</div>
     </div>

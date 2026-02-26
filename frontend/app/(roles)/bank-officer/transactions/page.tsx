@@ -222,8 +222,8 @@ export default function TransactionsPage() {
           
 
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8 shrink-0">
-             <div className="bg-[#0d3b66] p-6 rounded-xl shadow-lg relative overflow-hidden text-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8 shrink-0 creditlens-stagger-4">
+             <div className="creditlens-card creditlens-card-hover bg-[#0d3b66] p-6 rounded-xl shadow-lg relative overflow-hidden text-white">
                 <p className="text-xs font-bold uppercase tracking-wider text-blue-200 mb-2">Total Volume (LKR)</p>
                 <h2 className="text-3xl font-bold mb-2">2,482,900</h2>
                 <div className="flex items-center gap-1 text-emerald-400 text-xs font-semibold">
@@ -231,7 +231,7 @@ export default function TransactionsPage() {
                 </div>
              </div>
 
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+             <div className="creditlens-card creditlens-card-hover bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Pending Transfers</p>
                 <h2 className="text-3xl font-bold text-[#0d3b66] mb-2">14</h2>
                 <div className="flex items-center gap-1 text-emerald-600 text-xs font-medium">
@@ -239,7 +239,7 @@ export default function TransactionsPage() {
                 </div>
              </div>
 
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+             <div className="creditlens-card creditlens-card-hover bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Suspicious Alerts</p>
                 <h2 className="text-3xl font-bold text-red-600 mb-2">03</h2>
                 <div className="flex items-center gap-1 text-red-600 text-xs font-medium bg-red-50 w-fit px-2 py-0.5 rounded">
@@ -247,7 +247,7 @@ export default function TransactionsPage() {
                 </div>
              </div>
 
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+             <div className="creditlens-card creditlens-card-hover bg-white p-6 rounded-xl shadow-sm border border-slate-100">
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Monthly Avg</p>
                 <h2 className="text-3xl font-bold text-[#0d3b66] mb-2">827,633</h2>
                 <div className="flex items-center gap-1 text-slate-400 text-xs font-medium">
@@ -263,7 +263,7 @@ export default function TransactionsPage() {
           </div>
 
           {/* Filters */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 shrink-0">
+          <div className="creditlens-card creditlens-card-hover creditlens-delay-4 bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 shrink-0">
              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
                 <div className="md:col-span-4 relative">
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -353,7 +353,7 @@ export default function TransactionsPage() {
           </div>
 
           {/* Transactions Table */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex-1 flex flex-col min-h-0">
+          <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex-1 flex flex-col min-h-0">
                    <div className="flex-1 overflow-auto">
                    <Table>
                       <TableHeader className="bg-sky-50/70 sticky top-0 z-10">

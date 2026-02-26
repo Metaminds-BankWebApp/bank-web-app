@@ -8,6 +8,8 @@ export interface CustomerFormData {
   username: string;
   password: string;
   confirmPassword: string;
+  bankAccount: string;
+  isAccountVerified: boolean;
   
   // Financial Data
   employmentType: string;
@@ -50,6 +52,8 @@ export const initialFormData: CustomerFormData = {
   username: "",
   password: "",
   confirmPassword: "",
+  bankAccount: "",
+  isAccountVerified: false,
   employmentType: "Permanent",
   monthlySalary: "",
   businessIncome: "",

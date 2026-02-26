@@ -137,7 +137,7 @@ export default function AddCustomerPage() {
                  <div className="space-y-6">
                     
                     {/* Stepper */}
-                    <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-100 overflow-x-auto">
+                    <div className="bg-white/95 backdrop-blur-md rounded-xl pt-8 pb-12 px-8 mb-8 shadow-sm border border-slate-100 overflow-x-auto sticky top-6 z-40">
                        <div className="flex items-center justify-between min-w-150 relative">
                           {/* Connecting Line Background */}
                           <div className="absolute top-4 left-0 w-full h-0.5 bg-slate-100 z-0"></div>

@@ -44,7 +44,7 @@ export default function BankOfficerSettingsPage() {
 
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-8">
             {/* Page header strip */}
-            <div className="mb-6 rounded-2xl border border-[#e5e7eb] bg-white/70 backdrop-blur p-4 sm:p-5 shadow-sm">
+            <div className="creditlens-card creditlens-card-hover creditlens-delay-1 mb-6 rounded-2xl border border-[#e5e7eb] bg-white/70 backdrop-blur p-4 sm:p-5 shadow-sm">
               <div className="flex flex-col gap-1">
                 <p className="text-sm text-gray-600">
                   Manage your profile, security, and work preferences for a
@@ -64,9 +64,9 @@ export default function BankOfficerSettingsPage() {
 
             <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
               {/* LEFT COLUMN */}
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-6 creditlens-stagger-3">
                 {/* Profile Information */}
-                <Card className="border-none shadow-sm rounded-2xl">
+                <Card className="creditlens-card creditlens-card-hover border-none shadow-sm rounded-2xl">
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -134,7 +134,7 @@ export default function BankOfficerSettingsPage() {
                 </Card>
 
                 {/* Work Context (Branch & Role) */}
-                <Card className="border-none shadow-sm rounded-2xl">
+                <Card className="creditlens-card creditlens-card-hover border-none shadow-sm rounded-2xl">
                   <CardHeader>
                     <h2 className="text-lg font-semibold text-[#0d3b66]">
                       Work Context
@@ -169,7 +169,7 @@ export default function BankOfficerSettingsPage() {
                 </Card>
 
                 {/* Preferences (Theme + Density) */}
-                <Card className="border-none shadow-sm rounded-2xl">
+                <Card className="creditlens-card creditlens-card-hover border-none shadow-sm rounded-2xl">
                   <CardHeader>
                     <h2 className="text-lg font-semibold text-[#0d3b66]">
                       Appearance & Preferences
@@ -301,9 +301,9 @@ export default function BankOfficerSettingsPage() {
               </div>
 
               {/* RIGHT COLUMN */}
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-6 creditlens-stagger-3">
                 {/* Security */}
-                <Card className="border-none shadow-sm rounded-2xl">
+                <Card className="creditlens-card creditlens-card-hover border-none shadow-sm rounded-2xl">
                   <CardHeader>
                     <h2 className="text-lg font-semibold text-[#0d3b66]">
                       Security
@@ -335,7 +335,7 @@ export default function BankOfficerSettingsPage() {
                 </Card>
 
                 {/* Notifications */}
-                <Card className="border-none shadow-sm rounded-2xl">
+                <Card className="creditlens-card creditlens-card-hover border-none shadow-sm rounded-2xl">
                   <CardHeader>
                     <h2 className="text-lg font-semibold text-[#0d3b66]">
                       Notifications
@@ -400,7 +400,7 @@ export default function BankOfficerSettingsPage() {
                 </Card>
 
                 {/* Account Actions */}
-                <Card className="border-none shadow-sm rounded-2xl">
+                <Card className="creditlens-card creditlens-card-hover border-none shadow-sm rounded-2xl">
                   <CardHeader>
                     <h2 className="text-lg font-semibold text-red-500">
                       Account Actions

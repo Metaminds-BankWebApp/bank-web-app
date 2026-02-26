@@ -125,10 +125,10 @@ export default function AllCustomersPage() {
 
    const riskCounts = useMemo(() => {
       return {
-         all: customers.length,
-         LOW: customers.filter((customer) => customer.riskLevel === "LOW").length,
-         MEDIUM: customers.filter((customer) => customer.riskLevel === "MEDIUM").length,
-         HIGH: customers.filter((customer) => customer.riskLevel === "HIGH").length,
+         all: 2450,
+         LOW: 1820,
+         MEDIUM: 420,
+         HIGH: 210,
       };
    }, []);
 
@@ -245,7 +245,7 @@ export default function AllCustomersPage() {
             <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
                       <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="All Customers" className="mb-6 shrink-0" />
 
-          <div className="flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="creditlens-card creditlens-card-hover creditlens-delay-1 flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
              {/* Toolbar */}
              <div className="p-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between gap-4 bg-slate-50/40">
                 <div className="relative max-w-sm flex-1">

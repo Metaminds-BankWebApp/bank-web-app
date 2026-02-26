@@ -8,7 +8,7 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 const currencyRegex = /^\d+(\.\d{1,2})?$/;
 
 export type PersonalDetailsErrors = Partial<
-  Record<"fullName" | "nic" | "dob" | "email" | "mobile" | "username" | "password" | "confirmPassword", string>
+  Record<"fullName" | "nic" | "dob" | "email" | "mobile" | "username" | "password" | "confirmPassword" | "bankAccount", string>
 >;
 
 export type FinancialDataErrors = Partial<
@@ -138,6 +138,12 @@ export function validatePersonalDetailsStep(formData: CustomerFormData): Persona
     errors.confirmPassword = "Please confirm the password.";
   } else if (formData.password !== formData.confirmPassword) {
     errors.confirmPassword = "Passwords do not match.";
+  }
+
+  if (!formData.bankAccount.trim()) {
+    errors.bankAccount = "Bank account is required.";
+  } else if (!formData.isAccountVerified) {
+    errors.bankAccount = "Please verify the bank account.";
   }
 
   return errors;

@@ -128,14 +128,14 @@ export default function CreditAnalysisPage() {
           <div className="flex-1 overflow-y-auto min-h-0">
           
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <StatCard title="TOTAL CUSTOMERS" value="2,450" trend="+2.5%" highlight />
-            <StatCard title="LOW RISK" value="1,820" trend="+1.2%" />
-            <StatCard title="MEDIUM RISK" value="420" trend="-0.8%" trendClass="text-amber-500" />
-            <StatCard title="HIGH RISK" value="210" trend="+4.1%" trendClass="text-red-500" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 creditlens-stagger-4">
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-1"><StatCard title="TOTAL CUSTOMERS" value="2,450" trend="+2.5%" highlight /></div>
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-2"><StatCard title="LOW RISK" value="1,820" trend="+1.2%" /></div>
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-3"><StatCard title="MEDIUM RISK" value="420" trend="-0.8%" trendClass="text-amber-500" /></div>
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-4"><StatCard title="HIGH RISK" value="210" trend="+4.1%" trendClass="text-red-500" /></div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/40">
               <div className="relative w-full md:max-w-lg">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />

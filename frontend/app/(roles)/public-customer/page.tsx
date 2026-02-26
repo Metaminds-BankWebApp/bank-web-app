@@ -155,7 +155,14 @@ export default function PublicCustomerRolePage() {
                 {/* Right Column: Cards Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                    {features.map((item, i) => (
-                      <div key={i} className={`group h-full ${item.locked ? 'cursor-not-allowed' : ''}`}>
+                      <div key={i} className={`group h-full relative ${item.locked ? 'cursor-not-allowed' : ''}`}>
+                         {item.locked && (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center rounded-[2rem] opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none bg-slate-900/5 backdrop-blur-[2px]">
+                               <div className="bg-slate-800 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-2xl translate-y-4 group-hover:translate-y-0 transition-transform duration-300 max-w-[85%] text-center border border-slate-700/50">
+                                  To get this feature you need to be joined as a bank customer.
+                               </div>
+                            </div>
+                         )}
                          <Link href={item.locked ? "#" : item.href} className={`block h-full ${item.locked ? 'pointer-events-none' : ''}`}>
                             <div className={`bg-white rounded-[2rem] p-8 h-full min-h-[220px] flex flex-col justify-between shadow-xl transition-all duration-300 relative overflow-hidden ${!item.locked ? 'hover:-translate-y-2 hover:shadow-2xl group-hover:ring-2 ring-white/20' : 'opacity-80'}`}>
                                 <div className="flex justify-between items-start mb-6">

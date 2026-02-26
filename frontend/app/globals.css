@@ -50,12 +50,13 @@
   /* Deep void background inspired by the dashboard image */
   --primecore-background: #060814;
   --primecore-foreground: #FFFFFF;
-  
+
   /* Glassy/Subtle borders */
   --primecore-border: rgba(194, 214, 255, 0.16);
-  
+
   /* Electric Blue/Purple tones for Primary */
-  --primecore-primary: #4F46E5; /* Indigo/Blue vibe */
+  --primecore-primary: #4F46E5;
+  /* Indigo/Blue vibe */
   --primecore-deep: #4338ca;
   --primecore-navy: #1e1b4b;
 
@@ -67,15 +68,15 @@
   --badge-success-bg: rgba(16, 185, 129, 0.15);
   --badge-success-border: rgba(16, 185, 129, 0.25);
   --badge-success-text: #34d399;
-  
+
   --badge-warning-bg: rgba(245, 158, 11, 0.15);
   --badge-warning-border: rgba(245, 158, 11, 0.25);
   --badge-warning-text: #fbbf24;
-  
+
   --badge-danger-bg: rgba(239, 68, 68, 0.15);
   --badge-danger-border: rgba(239, 68, 68, 0.25);
   --badge-danger-text: #f87171;
-  
+
   --badge-info-bg: rgba(59, 130, 246, 0.15);
   --badge-info-border: rgba(59, 130, 246, 0.25);
   --badge-info-text: #60a5fa;
@@ -85,12 +86,12 @@
   --notice-success-border: rgba(5, 150, 105, 0.4);
   --notice-success-text: #d1fae5;
   --notice-success-subtext: #a7f3d0;
-  
+
   --notice-danger-bg: rgba(153, 27, 27, 0.3);
   --notice-danger-border: rgba(220, 38, 38, 0.4);
   --notice-danger-text: #fee2e2;
   --notice-danger-subtext: #fecaca;
-  
+
   --notice-warning-bg: rgba(146, 64, 14, 0.3);
   --notice-warning-border: rgba(217, 119, 6, 0.4);
   --notice-warning-text: #fef3c7;
@@ -239,7 +240,7 @@
     background-color: #16294a;
     background-image:
       radial-gradient(120% 100% at 8% -16%, rgba(99, 145, 214, 0.28), transparent 62%) important,
-      linear-gradient ( 180deg, #203f6f 0%, #1a365f 58%, #142d51 100%) important;
+      linear-gradient (180deg, #203f6f 0%, #1a365f 58%, #142d51 100%) important;
     box-shadow:
       0 30px 62px -40px rgba(3, 16, 36, 0.86),
       0 14px 34px -28px rgba(99, 145, 214, 0.42);
@@ -253,6 +254,7 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
+
     .creditlens-card-hover:hover,
     .creditlens-card-hover:focus-within,
     .transact-card-hover:hover,
@@ -279,39 +281,39 @@
     --cl-enter-delay: 240ms;
   }
 
-  .creditlens-stagger-2 > :nth-child(1) {
+  .creditlens-stagger-2> :nth-child(1) {
     --cl-enter-delay: 60ms;
   }
 
-  .creditlens-stagger-2 > :nth-child(2) {
+  .creditlens-stagger-2> :nth-child(2) {
     --cl-enter-delay: 120ms;
   }
 
-  .creditlens-stagger-3 > :nth-child(1) {
+  .creditlens-stagger-3> :nth-child(1) {
     --cl-enter-delay: 60ms;
   }
 
-  .creditlens-stagger-3 > :nth-child(2) {
+  .creditlens-stagger-3> :nth-child(2) {
     --cl-enter-delay: 120ms;
   }
 
-  .creditlens-stagger-3 > :nth-child(3) {
+  .creditlens-stagger-3> :nth-child(3) {
     --cl-enter-delay: 180ms;
   }
 
-  .creditlens-stagger-4 > :nth-child(1) {
+  .creditlens-stagger-4> :nth-child(1) {
     --cl-enter-delay: 60ms;
   }
 
-  .creditlens-stagger-4 > :nth-child(2) {
+  .creditlens-stagger-4> :nth-child(2) {
     --cl-enter-delay: 120ms;
   }
 
-  .creditlens-stagger-4 > :nth-child(3) {
+  .creditlens-stagger-4> :nth-child(3) {
     --cl-enter-delay: 180ms;
   }
 
-  .creditlens-stagger-4 > :nth-child(4) {
+  .creditlens-stagger-4> :nth-child(4) {
     --cl-enter-delay: 240ms;
   }
 
@@ -351,6 +353,40 @@
   }
 }
 
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes trend-bar-rise {
+  from {
+    transform: scaleY(0.06);
+    opacity: 0.35;
+  }
+
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes trend-label-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes creditlens-card-enter {
   from {
     opacity: 0;
@@ -360,5 +396,27 @@
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes draw-line {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.chart-line-animate {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: draw-line 2s ease-out forwards;
+}
+
+.chart-line-animate-dashed {
+  animation: dash-move 3s linear forwards;
+}
+
+@keyframes dash-move {
+  to {
+    stroke-dashoffset: -20;
   }
 }

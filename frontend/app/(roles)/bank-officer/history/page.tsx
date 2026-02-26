@@ -212,7 +212,7 @@ export default function HistoryPage() {
       
 
           {/* Controls */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
              <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                         <Select value={dateRange} onValueChange={(value) => setDateRange(value as "30days" | "60days" | "90days" | "all") }>
                            <SelectTrigger className="min-w-42.5 bg-white">
@@ -264,7 +264,7 @@ export default function HistoryPage() {
           </div>
 
           {/* Content */}
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="creditlens-card creditlens-card-hover creditlens-delay-2 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
              {/* Tabs */}
              <div className="border-b border-slate-100 flex p-2 bg-slate-50/50 gap-2">
                 {[
