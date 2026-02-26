@@ -191,7 +191,7 @@ export default function Page() {
 		<div className="bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
 			<ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transaction History" name="John Deo" />
 
-			<Card className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 max-w-6xl mx-auto mt-6 w-full rounded-xl p-4 sm:mt-30 sm:p-6 lg:p-8">
+			<Card className="transact-card transact-card-hover bg-white transact-creditlens-shade creditlens-delay-1 max-w-6xl mx-auto mt-6 w-full rounded-xl p-4 sm:mt-30 sm:p-6 lg:p-8">
 				<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
 					<div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 flex-1">
 						<div className="relative max-w-md w-full sm:w-64">

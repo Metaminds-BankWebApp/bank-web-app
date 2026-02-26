@@ -74,7 +74,7 @@ export default function Page() {
 
       <section className="max-w-6xl mx-auto mt-6 sm:mt-8">
 
-        <Card className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 mt-6 w-full rounded-xl p-4 sm:mt-35 sm:min-h-[420px] sm:p-6 lg:p-8">
+  <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 mt-6 w-full rounded-xl p-4 sm:mt-35 sm:min-h-[420px] sm:p-6 lg:p-8">
           <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit} noValidate>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
