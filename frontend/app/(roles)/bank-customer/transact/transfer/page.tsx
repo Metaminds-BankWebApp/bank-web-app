@@ -177,7 +177,7 @@ export default function Page() {
           </div>
 
           {/* Transfer Form */}
-          <Card className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 mt-4 max-w-6xl mx-auto w-full rounded-xl p-4 sm:mt-10 sm:p-6 lg:p-8">
+          <Card className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 mt-1 max-w-6xl mx-auto w-full rounded-xl p-4 sm:mt-10 sm:p-6 lg:p-8">
             <form className="space-y-9">
               <div className="space-y-2">
                 <Label>Account Number</Label>
@@ -244,12 +244,16 @@ export default function Page() {
                 )}
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <label className="inline-flex items-center space-x-2">
                   <Checkbox checked={expenseTrack} onChange={(e) => setExpenseTrack(Boolean((e.target as HTMLInputElement).checked))} />
                   <span>Expenses track</span>
                 </label>
-                
+                {/* Note explaining expense tracking behavior */}
+                <ul className="mt-2 ml-5 list-disc text-ash text-muted-foreground text-sm">
+                  <ul>(If selected, the transaction is stored in the expense tracker; otherwise, it is treated as a standard payment.)
+               </ul>
+                </ul>
               </div>
 
               <div className="flex justify-end">

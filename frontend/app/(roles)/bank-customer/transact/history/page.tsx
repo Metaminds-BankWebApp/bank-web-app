@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Search, Eye, Filter } from "lucide-react"
+import { Search, Filter } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -200,7 +200,7 @@ export default function Page() {
 									<th className="px-4 py-3">Status</th>
 									<th className="px-4 py-3">Date</th>
 									<th className="px-4 py-3">Reference no</th>
-									<th className="px-4 py-3 text-center">Action</th>
+									{/* Action column removed */}
 								</tr>
 							</thead>
 
@@ -219,23 +219,7 @@ export default function Page() {
 										</td>
 										<td className="px-4 py-3 align-middle">{row.date}</td>
 										<td className="px-4 py-3 align-middle">{row.reference}</td>
-										<td className="px-4 py-3 align-middle">
-											<div className="flex items-center justify-center space-x-3">
-												<button
-													type="button"
-													className="p-1 rounded-md text-(--primecore-foreground)/70 hover:text-(--primecore-foreground) transition"
-													aria-label="View"
-												>
-													<Eye className="w-4 h-4" />
-												</button>
-												<button
-													type="button"
-													className="p-1 rounded-md text-(--primecore-foreground)/70 hover:text-destructive transition"
-													aria-label="Delete"
-												>
-												</button>
-											</div>
-										</td>
+										{/* Action cell removed */}
 									</tr>
 								))}
 							</tbody>
