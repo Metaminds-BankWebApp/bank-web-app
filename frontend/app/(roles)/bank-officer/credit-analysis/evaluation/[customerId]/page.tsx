@@ -344,7 +344,7 @@ function ReportsTab() {
               <div className="mt-6 space-y-2 text-sm text-slate-300">
                 <div className="flex justify-between">
                   <span>Evaluation Type:</span>
-                  <span className="font-semibold text-white">Self Assessment</span>
+                  <span className="font-semibold text-white">Bank Assessment</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Risk Category:</span>
@@ -762,20 +762,28 @@ function CreditInsightsTab() {
             iconClass="border border-yellow-300/35 bg-yellow-400/15 text-yellow-300"
           >
             <div className="rounded-xl border border-white/15 bg-white/5 p-4 text-sm text-slate-200">
-              Reduce utilization below <span className="font-semibold text-white">70%</span> to improve risk by
-              <span className="font-semibold text-emerald-200"> +10 points</span>.
+              Reduce credit utilization below <span className="font-semibold text-white">70%</span> to drop risk by{" "}
+              <span className="font-semibold text-emerald-200">+10 points</span>.
               <p className="mt-2 text-xs text-slate-300">
-                Best target: below 40% can improve by around 20 points.
+                (Best target, below 40% to drop by <span className="font-semibold text-white">~20 points</span>)
+              </p>
+              <p className="mt-2 text-xs text-slate-300">
+                How to reduce it: pay card balances before statement date, keep each card usage under 30%, and pause
+                new card spending until balances come down.
               </p>
             </div>
             <div className="rounded-xl border border-white/15 bg-white/5 p-4 text-sm text-slate-200">
               Avoid any missed payments for the next <span className="font-semibold text-white">12 months</span>.
               <p className="mt-2 text-xs text-slate-300">
-                This improves payment history factor and stability score.
+                (This can reduce Payment History points significantly)
               </p>
             </div>
             <div className="rounded-xl border border-white/15 bg-white/5 p-4 text-sm text-slate-200">
-              Reduce DTI below <span className="font-semibold text-white">30%</span> for better approval confidence.
+              Try to reduce DTI below <span className="font-semibold text-white">30%</span>
+              <p className="mt-2 text-xs text-slate-300">
+                How to reduce it: pay down monthly debt obligations, avoid new EMIs/loans, and increase stable monthly
+                income where possible.
+              </p>
             </div>
           </InsightCard>
         </div>
