@@ -37,8 +37,68 @@ export function RegisterForm() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!fullName || !email || !password) {
-      setError("Full name, email, and password are required.");
+    // Trim inputs
+    const tFullName = fullName.trim();
+    const tEmail = email.trim();
+    const tPhone = phone.trim();
+    const tCity = city.trim();
+    const tProvince = province.trim();
+    const tAddress = address.trim();
+
+    // Basic required checks
+    if (!tFullName) {
+      setError("Full name is required.");
+      return;
+    }
+
+    if (!tEmail) {
+      setError("Email is required.");
+      return;
+    }
+
+    if (!tPhone) {
+      setError("Phone number is required.");
+      return;
+    }
+
+    if (!tCity) {
+      setError("City is required.");
+      return;
+    }
+
+    if (!tProvince) {
+      setError("Province is required.");
+      return;
+    }
+
+    if (!tAddress) {
+      setError("Address is required.");
+      return;
+    }
+
+    if (!password) {
+      setError("Password is required.");
+      return;
+    }
+
+    // Email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(tEmail)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    // Phone: exactly 10 digits
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(tPhone)) {
+      setError("Phone number must be exactly 10 digits (numbers only).");
+      return;
+    }
+
+    // Password complexity: minimum 10 chars, at least one uppercase, one lowercase and one number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+    if (!passwordRegex.test(password)) {
+      setError("Password must be at least 10 characters and include uppercase, lowercase letters and numbers.");
       return;
     }
 
@@ -51,11 +111,11 @@ export function RegisterForm() {
     setError(null);
 
     try {
-      const { firstName, lastName } = splitName(fullName);
+      const { firstName, lastName } = splitName(tFullName);
       const response = await authService.register({
         firstName,
         lastName,
-        email,
+        email: tEmail,
         password,
       });
 
@@ -84,7 +144,10 @@ export function RegisterForm() {
         <Input label="Email Address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Phone Number" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="Phone Number" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+          <div>
+            <Input label="Phone Number" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="e.g. 7123456789" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+            <p className="mt-1 text-xs text-(--primecore-foreground)/60">Enter a 10-digit phone number (numbers only).</p>
+          </div>
           <Input label="City" value={city} onChange={(event) => setCity(event.target.value)} placeholder="City" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
         </div>
 
@@ -94,13 +157,16 @@ export function RegisterForm() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Password" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+          <div>
+            <Input label="Password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 10 chars, upper, lower, number" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+            <p className="mt-1 text-xs text-(--primecore-foreground)/60">Use at least 10 characters, including uppercase, lowercase and numbers.</p>
+          </div>
           <Input label="Confirm Password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm password" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
         </div>
 
         {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 
-        <Button type="submit" className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-semibold text-white hover:bg-primary/90" loading={isSubmitting}>
+        <Button type="submit" className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-semibold text-black hover:bg-primary/90" loading={isSubmitting}>
           {isSubmitting ? "Creating account..." : "Create account"}
         </Button>
 

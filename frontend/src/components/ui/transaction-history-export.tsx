@@ -334,7 +334,7 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 				description="Select the range, status, and file type to export your report."
 				footer={
 					<>
-						<Button variant="outline" onClick={() => setIsReportModalOpen(false)}>
+						<Button variant="outline" onClick={() => setIsReportModalOpen(false)} className="text-white">
 							Cancel
 						</Button>
 						<Button
@@ -355,10 +355,10 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 
 					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 						<div>
-							<p className="mb-2 text-xs font-medium uppercase tracking-wide text-(--primecore-foreground)/70">Report range</p>
+							<p className="mb-2 text-xs font-medium uppercase tracking-wide  text-white text-(--primecore-foreground)/70">Report range</p>
 							<Select value={reportRange} onValueChange={(value) => setReportRange(value as ReportRange)}>
-								<SelectTrigger>
-									<SelectValue placeholder="Select report range" />
+								<SelectTrigger className="text-black">
+									<SelectValue className="text-black" placeholder="Select report range" />
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value="last7">{reportRangeLabels.last7}</SelectItem>
@@ -369,10 +369,10 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 						</div>
 
 						<div>
-							<p className="mb-2 text-xs font-medium uppercase tracking-wide text-(--primecore-foreground)/70">Status</p>
+							<p className="mb-2 text-xs font-medium uppercase tracking-wide  text-white text-(--primecore-foreground)/70">Status</p>
 							<Select value={reportStatusFilter} onValueChange={(value) => setReportStatusFilter(value as ReportStatusFilter)}>
-								<SelectTrigger>
-									<SelectValue placeholder="Select status" />
+								<SelectTrigger className="text-black">
+									<SelectValue className="text-black"	 placeholder="Select status" />
 								</SelectTrigger>
 								<SelectContent>
 									<SelectItem value="all">All transactions</SelectItem>
@@ -384,10 +384,10 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 					</div>
 
 					<div>
-						<p className="mb-2 text-xs font-medium uppercase tracking-wide text-(--primecore-foreground)/70">File type</p>
+						<p className="mb-2 text-xs font-medium uppercase tracking-wide  text-white text-(--primecore-foreground)/70">File type</p>
 						<Select value={reportFileType} onValueChange={(value) => setReportFileType(value as ReportFileType)}>
-							<SelectTrigger>
-								<SelectValue placeholder="Select file type" />
+							<SelectTrigger className="text-black">
+								<SelectValue className="text-black"	 placeholder="Select file type" />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="csv">{reportFileTypeMeta.csv.label}</SelectItem>

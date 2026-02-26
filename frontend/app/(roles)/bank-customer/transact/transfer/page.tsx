@@ -17,10 +17,15 @@ export default function Page() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [accountNumber, setAccountNumber] = useState("")
   const [amount, setAmount] = useState("")
+  const [beneficiary, setBeneficiary] = useState("")
+  const [remark, setRemark] = useState("")
+  const [expenseTrack, setExpenseTrack] = useState(false)
   const balance = 81000.0
   const [formErrors, setFormErrors] = useState({
     accountNumber: "",
     amount: "",
+    beneficiary: "",
+  remark: "",
   })
 
   const length = 6
@@ -71,8 +76,9 @@ export default function Page() {
   }
 
   const handleAccountNumberChange = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, "")
-    setAccountNumber(digitsOnly)
+  // accept only digits and limit to 10 characters
+  const digitsOnly = value.replace(/\D/g, "").slice(0, 10)
+  setAccountNumber(digitsOnly)
     if (formErrors.accountNumber) {
       setFormErrors((prev) => ({ ...prev, accountNumber: "" }))
     }
@@ -88,14 +94,38 @@ export default function Page() {
     }
   }
 
+  const handleBeneficiaryChange = (value: string) => {
+    setBeneficiary(value)
+    if (formErrors.beneficiary) {
+      setFormErrors((prev) => ({ ...prev, beneficiary: "" }))
+    }
+  }
+
+  const handleRemarkChange = (value: string) => {
+    setRemark(value)
+    if (formErrors.remark) {
+      setFormErrors((prev) => ({ ...prev, remark: "" }))
+    }
+  }
+
   const validateTransferForm = () => {
     const nextErrors = {
       accountNumber: "",
       amount: "",
+      beneficiary: "",
+      remark: "",
     }
 
     if (!accountNumber) {
       nextErrors.accountNumber = "Account number is required."
+    }
+
+    if (!beneficiary || beneficiary.trim().length < 2) {
+      nextErrors.beneficiary = "Beneficiary name is required."
+    }
+
+    if (!remark) {
+      nextErrors.remark = "Remark is required."
     }
 
     const parsedAmount = Number.parseFloat(amount)
@@ -104,15 +134,17 @@ export default function Page() {
       nextErrors.amount = "Amount is required."
     } else if (Number.isNaN(parsedAmount)) {
       nextErrors.amount = "Amount must be a valid number."
-    } else if (parsedAmount <= 0) {
-      nextErrors.amount = "Amount must be greater than 0."
+    } else if (parsedAmount < 1000) {
+      nextErrors.amount = "Minimum transfer amount is LKR 1,000."
     } else if (parsedAmount > balance) {
       nextErrors.amount = "Amount exceeds available balance."
     }
 
-    setFormErrors(nextErrors)
-    return !nextErrors.accountNumber && !nextErrors.amount
+  setFormErrors(nextErrors)
+  return !nextErrors.accountNumber && !nextErrors.amount && !nextErrors.beneficiary && !nextErrors.remark
   }
+
+  // (removed silent validator; button will be clickable and validation runs on submit)
 
   const handleTransfer = () => {
     const isValid = validateTransferForm()
@@ -123,6 +155,17 @@ export default function Page() {
     setShowOtp(true)
   }
 
+  const isFormValid = React.useMemo(() => {
+    const parsedAmount = Number.parseFloat(amount || "0")
+    if (!accountNumber) return false
+    if (!beneficiary || beneficiary.trim().length < 2) return false
+    if (!remark) return false
+    if (!amount || Number.isNaN(parsedAmount)) return false
+    if (parsedAmount < 1000) return false
+    if (parsedAmount > balance) return false
+    return true
+  }, [accountNumber, beneficiary, remark, amount, balance])
+
   return (
     <div className="relative min-h-full">
 
@@ -132,7 +175,7 @@ export default function Page() {
           <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transfer" name="John Deo" />
 
           {/* Add Beneficiary Button */}
-          <div className="flex justify-end mt-16  pr-[7rem] ">
+          <div className="flex justify-end mt-14  pr-[7rem] ">
             <Link
               href="/bank-customer/transact/beneficiary"
               className="inline-flex items-center gap-2 px-5 py-2.5 
@@ -145,7 +188,7 @@ export default function Page() {
           </div>
 
           {/* Transfer Form */}
-          <Card className="transact-card transact-card-hover transact-creditlens-shade creditlens-delay-1 mt-4 max-w-6xl mx-auto w-full rounded-xl p-4 sm:mt-10 sm:p-6 lg:p-8">
+          <Card className="transact-card transact-card-hover bg-white creditlens-delay-1  max-w-6xl mx-auto w-full rounded-xl p-4 sm:mt-8 sm:p-6 lg:p-8">
             <form className="space-y-9">
               <div className="space-y-2">
                 <Label>Account Number</Label>
@@ -153,7 +196,8 @@ export default function Page() {
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  placeholder="Enter account number"
+                  placeholder="Enter 10-digit account number"
+                  maxLength={10}
                   value={accountNumber}
                   onChange={(e) => handleAccountNumberChange(e.target.value)}
                   aria-invalid={Boolean(formErrors.accountNumber)}
@@ -165,7 +209,15 @@ export default function Page() {
 
               <div className="space-y-2">
                 <Label>Beneficiary Name</Label>
-                <Input placeholder="Beneficiary full name" />
+                <Input
+                  placeholder="Beneficiary full name"
+                  value={beneficiary}
+                  onChange={(e) => handleBeneficiaryChange(e.target.value)}
+                  aria-invalid={Boolean(formErrors.beneficiary)}
+                />
+                {formErrors.beneficiary && (
+                  <p className="text-sm text-red-500">{formErrors.beneficiary}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -174,13 +226,13 @@ export default function Page() {
                   type="text"
                   inputMode="decimal"
                   pattern="[0-9]*[.]?[0-9]*"
-                  placeholder="0.00"
+                  placeholder="LKR 0.00"
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
                   aria-invalid={Boolean(formErrors.amount)}
                 />
                 <p className="text-sm text-muted-foreground">
-                  Available Balance: LKR {balance.toFixed(2)}
+                  Available balance: LKR {balance.toFixed(2)}
                 </p>
                 {formErrors.amount && (
                   <p className="text-sm text-red-500">{formErrors.amount}</p>
@@ -189,21 +241,35 @@ export default function Page() {
 
               <div className="space-y-2">
                 <Label>Remark</Label>
-                <Input placeholder="Add a note (optional)" />
+                <textarea
+                id="remark"
+                name="remark"
+                placeholder="Add a note or invoice reference"
+                value={remark}
+                required
+                onChange={(e) => setRemark(e.target.value)}
+                className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
+              />
+                {formErrors.remark && (
+                  <p className="text-sm text-red-500">{formErrors.remark}</p>
+                )}
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <label className="inline-flex items-center space-x-2">
-                  <Checkbox />
-                  <span>Expenses track</span>
+                  <Checkbox checked={expenseTrack} onChange={(e) => setExpenseTrack(Boolean((e.target as HTMLInputElement).checked))} />
+                  <span>Expense tracking</span>
                 </label>
+                {/* Note explaining expense tracking behavior */}
+                <p className="mt-2 ml-1 text-sm text-muted-foreground">If selected, this transaction will be saved to your expense tracker for reporting.</p>
               </div>
 
               <div className="flex justify-end">
                 <Button
                   type="button"
                   onClick={handleTransfer}
-                  className="w-full sm:w-auto bg-[#155E63] hover:bg-[#134e52] text-white px-8 py-5 rounded-xl"
+                  disabled={!isFormValid}
+                  className={`w-full sm:w-auto ${!isFormValid ? 'bg-[#155E63]/60 cursor-not-allowed opacity-70' : 'bg-[#155E63] hover:bg-[#134e52]'} text-white px-8 py-5 rounded-xl`}
                 >
                   Transfer Amount
                 </Button>
@@ -216,7 +282,7 @@ export default function Page() {
       {/* 🔹 OTP MODAL */}
       {showOtp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <Card className="transact-card transact-creditlens-shade max-w-2xl w-full rounded-3xl p-4 shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-8">
+          <Card className="transact-card bg-white max-w-2xl w-full rounded-3xl p-4 shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-8">
 
             <h2 className="text-xl sm:text-2xl font-semibold text-center text-[#155E63] mb-6 sm:mb-8">
               OTP Authentication
@@ -277,7 +343,7 @@ export default function Page() {
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
 
-          <Card className="transact-card transact-creditlens-shade max-w-2xl w-full rounded-3xl p-6 text-center shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-10">
+          <Card className="transact-card bg-white max-w-2xl w-full rounded-3xl p-6 text-center shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-10">
 
             <div className="flex justify-center mb-6 sm:mb-10">
               <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full bg-[#0B3E5A]/40 flex items-center justify-center">
