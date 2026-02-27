@@ -329,9 +329,9 @@ export default function ReportPage() {
         dtiLabel: "Medium",
         factors: [
           { name: "Payment History", value: 18, max: 30 },
-          { name: "Debt-to-Income", value: 12, max: 25 },
+          { name: "Debt-to-Income", value: 7, max: 25 },
           { name: "Utilization", value: 20, max: 20 },
-          { name: "Income Stability", value: 0, max: 15 },
+          { name: "Income Stability", value: 5, max: 15 },
           { name: "Active Facilities", value: 5, max: 10 },
         ],
       },

@@ -15,7 +15,7 @@ export default function BankCustomerCreditLensPage() {
     { name: "Payment history", value: 18, max: 30, color: "#fbbf24" },
     {
       name: "DTI",
-      value: 12,
+      value: 7,
       max: 25,
       color: "#34d399",
       infoTooltip: {
@@ -35,8 +35,8 @@ export default function BankCustomerCreditLensPage() {
         formula: "Utilization = (Total card balances / Total credit limits) x 100",
       },
     },
-    { name: "Income stability", value: 0, max: 15, color: "#e5e7eb" },
-    { name: "Active Facilities", value: 5, max: 10, color: "#34d399" },
+    { name: "Income stability", value: 5, max: 15, color: "#34d399" },
+    { name: "Active Facilities", value: 5, max: 10, color: "#fbbf24" },
   ];
 
   return (
