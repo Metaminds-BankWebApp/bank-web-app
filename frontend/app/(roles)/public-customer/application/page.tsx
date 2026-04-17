@@ -35,10 +35,15 @@ type Income = {
   id: string;
   type: string;
   amount: number;
+  salaryAmount?: number;
+  businessIncomeAmount?: number;
   salaryType?: string;
   employmentType?: string;
   contractDuration?: string;
+  incomeStability?: string;
 };
+
+type IncomeField = "salaryType" | "salaryAmount" | "employmentType" | "contractDuration" | "businessIncomeAmount" | "incomeStability";
 
 type Loan = {
   id: string;
@@ -80,6 +85,9 @@ export default function PublicCustomerApplicationPage() {
   const [salaryAmount, setSalaryAmount] = useState("");
   const [employmentType, setEmploymentType] = useState("Permanent");
   const [contractDuration, setContractDuration] = useState("");
+  const [businessIncomeAmount, setBusinessIncomeAmount] = useState("");
+  const [incomeStability, setIncomeStability] = useState("Stable");
+  const [incomeErrors, setIncomeErrors] = useState<Partial<Record<IncomeField, string>>>({});
 
   // --- Step 2 State (Loans) ---
   const [loanType, setLoanType] = useState("");
@@ -106,19 +114,89 @@ export default function PublicCustomerApplicationPage() {
    const [accountErrors, setAccountErrors] = useState<Record<string, string>>({});
 
   // --- Handlers ---
+  const includesSalaryDetails = incomeType === "Salary Worker" || incomeType === "Salary Worker + Business Person";
+  const includesBusinessDetails = incomeType === "Business Person" || incomeType === "Salary Worker + Business Person";
+
+  const clearIncomeError = (field: IncomeField) => {
+    setIncomeErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
+
   const handleAddIncome = () => {
-    if (!salaryAmount) return;
+    const nextIncomeErrors: Partial<Record<IncomeField, string>> = {};
+
+    if (includesSalaryDetails) {
+      const parsedSalaryAmount = Number(salaryAmount);
+
+      if (!salaryType) {
+        nextIncomeErrors.salaryType = "Salary type is required.";
+      }
+
+      if (!salaryAmount || Number.isNaN(parsedSalaryAmount) || parsedSalaryAmount <= 0) {
+        nextIncomeErrors.salaryAmount = "Monthly salary amount must be greater than 0.";
+      }
+
+      if (!employmentType) {
+        nextIncomeErrors.employmentType = "Employment type is required.";
+      }
+
+      if (employmentType === "Contract") {
+        const parsedContractDuration = Number(contractDuration);
+        if (!contractDuration.trim()) {
+          nextIncomeErrors.contractDuration = "Contract duration is required for contract employment.";
+        } else if (Number.isNaN(parsedContractDuration) || parsedContractDuration <= 0 || !Number.isInteger(parsedContractDuration)) {
+          nextIncomeErrors.contractDuration = "Contract duration must be a valid number of months.";
+        }
+      }
+    }
+
+    if (includesBusinessDetails) {
+      const parsedBusinessIncomeAmount = Number(businessIncomeAmount);
+
+      if (!businessIncomeAmount || Number.isNaN(parsedBusinessIncomeAmount) || parsedBusinessIncomeAmount <= 0) {
+        nextIncomeErrors.businessIncomeAmount = "Average monthly business income must be greater than 0.";
+      }
+
+      if (!incomeStability) {
+        nextIncomeErrors.incomeStability = "Income stability is required.";
+      }
+    }
+
+    if (Object.keys(nextIncomeErrors).length > 0) {
+      setIncomeErrors(nextIncomeErrors);
+      return;
+    }
+
+    setIncomeErrors({});
+
+    const salaryValue = includesSalaryDetails ? Number(salaryAmount) : 0;
+    const businessValue = includesBusinessDetails ? Number(businessIncomeAmount) : 0;
+
     const newIncome: Income = {
       id: Math.random().toString(36).substr(2, 9),
       type: incomeType,
-      amount: parseFloat(salaryAmount),
-      salaryType,
-      employmentType,
-      contractDuration
+      amount: salaryValue + businessValue,
+      salaryAmount: includesSalaryDetails ? salaryValue : undefined,
+      businessIncomeAmount: includesBusinessDetails ? businessValue : undefined,
+      salaryType: includesSalaryDetails ? salaryType : undefined,
+      employmentType: includesSalaryDetails ? employmentType : undefined,
+      contractDuration: includesSalaryDetails && employmentType === "Contract" ? contractDuration : undefined,
+      incomeStability: includesBusinessDetails ? incomeStability : undefined
     };
     setFormData(prev => ({ ...prev, incomes: [...prev.incomes, newIncome] }));
-    setSalaryAmount("");
-    setContractDuration("");
+
+    if (includesSalaryDetails) {
+      setSalaryAmount("");
+      setContractDuration("");
+    }
+
+    if (includesBusinessDetails) {
+      setBusinessIncomeAmount("");
+    }
   };
 
   const handleAddLoan = () => {
@@ -272,77 +350,161 @@ export default function PublicCustomerApplicationPage() {
                 <div className="space-y-6">
                    <div>
                       <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Customer Income Type</label>
-                      <Select value={incomeType} onValueChange={setIncomeType}>
+                      <Select
+                        value={incomeType}
+                        onValueChange={(value) => {
+                          setIncomeType(value);
+                          setIncomeErrors({});
+                        }}
+                      >
                         <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
                            <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
                            <SelectItem value="Salary Worker">Salary Worker</SelectItem>
-                           <SelectItem value="Business">Business Owner</SelectItem>
-                           <SelectItem value="Freelance">Freelance / Contract</SelectItem>
+                           <SelectItem value="Business Person">Business Person</SelectItem>
+                           <SelectItem value="Salary Worker + Business Person">Salary Worker + Business Person</SelectItem>
                         </SelectContent>
                       </Select>
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Salary Type</label>
-                        <Select value={salaryType} onValueChange={setSalaryType}>
-                           <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
-                              <SelectValue />
-                           </SelectTrigger>
-                           <SelectContent>
-                              <SelectItem value="Fixed">Fixed</SelectItem>
-                              <SelectItem value="Variable">Variable</SelectItem>
-                           </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Monthly Salary Amount (LKR)</label>
-                        <div className="relative">
-                           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">LKR</span>
-                           <Input 
-                              type="number" 
-                              className="h-12 pl-12 bg-slate-50 border-slate-200" 
-                              placeholder="0.00" 
-                              value={salaryAmount}
-                              onChange={(e) => setSalaryAmount(e.target.value)}
-                           />
+                   {includesSalaryDetails && (
+                     <div className="space-y-6 rounded-xl border border-slate-100 p-5">
+                        <h3 className="text-sm font-bold text-slate-800">Salary Worker</h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Salary Type</label>
+                            <Select
+                              value={salaryType}
+                              onValueChange={(value) => {
+                                setSalaryType(value);
+                                clearIncomeError("salaryType");
+                              }}
+                            >
+                               <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
+                                  <SelectValue />
+                               </SelectTrigger>
+                               <SelectContent>
+                                  <SelectItem value="Fixed">Fixed</SelectItem>
+                                  <SelectItem value="Average (Variable)">Average (Variable)</SelectItem>
+                               </SelectContent>
+                            </Select>
+                            {incomeErrors.salaryType && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{incomeErrors.salaryType}</p>}
+                          </div>
+                          <div>
+                            <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Monthly Salary Amount (LKR)</label>
+                            <div className="relative">
+                               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">LKR</span>
+                               <Input 
+                                  type="number" 
+                                  className="h-12 pl-12 bg-slate-50 border-slate-200" 
+                                  placeholder="0.00" 
+                                  value={salaryAmount}
+                                  onChange={(e) => {
+                                    setSalaryAmount(e.target.value);
+                                    clearIncomeError("salaryAmount");
+                                  }}
+                                  error={incomeErrors.salaryAmount}
+                               />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Employment Type</label>
+                            <Select
+                              value={employmentType}
+                              onValueChange={(value) => {
+                                setEmploymentType(value);
+                                clearIncomeError("employmentType");
+                                if (value !== "Contract") {
+                                  setContractDuration("");
+                                  clearIncomeError("contractDuration");
+                                }
+                              }}
+                            >
+                               <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
+                                  <SelectValue />
+                               </SelectTrigger>
+                               <SelectContent>
+                                  <SelectItem value="Permanent">Permanent</SelectItem>
+                                  <SelectItem value="Contract">Contract</SelectItem>
+                               </SelectContent>
+                            </Select>
+                            {incomeErrors.employmentType && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{incomeErrors.employmentType}</p>}
+                          </div>
+                          {employmentType === "Contract" && (
+                            <div>
+                              <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Contract Duration (Months)</label>
+                              <Input 
+                                 type="text" 
+                                 className="h-12 bg-slate-50 border-slate-200"
+                                 placeholder="e.g. 12" 
+                                 value={contractDuration}
+                                 onChange={(e) => {
+                                   setContractDuration(e.target.value);
+                                   clearIncomeError("contractDuration");
+                                 }}
+                                 error={incomeErrors.contractDuration}
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
-                   </div>
+                   )}
 
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Employment Type</label>
-                        <Select value={employmentType} onValueChange={setEmploymentType}>
-                           <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
-                              <SelectValue />
-                           </SelectTrigger>
-                           <SelectContent>
-                              <SelectItem value="Permanent">Permanent</SelectItem>
-                              <SelectItem value="Contract">Contract</SelectItem>
-                              <SelectItem value="Probation">Probation</SelectItem>
-                           </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Contract Duration (Months)</label>
-                        <Input 
-                           type="text" 
-                           className="h-12 bg-slate-50 border-slate-200"
-                           placeholder="e.g. 12" 
-                           value={contractDuration}
-                           onChange={(e) => setContractDuration(e.target.value)}
-                        />
-                      </div>
-                   </div>
+                   {includesBusinessDetails && (
+                     <div className="space-y-6 rounded-xl border border-slate-100 p-5">
+                        <h3 className="text-sm font-bold text-slate-800">Business Person</h3>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Average Monthly Business Income (LKR)</label>
+                          <div className="relative">
+                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">LKR</span>
+                             <Input 
+                                type="number" 
+                                className="h-12 pl-12 bg-slate-50 border-slate-200" 
+                                placeholder="0.00" 
+                                value={businessIncomeAmount}
+                                onChange={(e) => {
+                                  setBusinessIncomeAmount(e.target.value);
+                                  clearIncomeError("businessIncomeAmount");
+                                }}
+                                error={incomeErrors.businessIncomeAmount}
+                             />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Income Stability</label>
+                          <Select
+                            value={incomeStability}
+                            onValueChange={(value) => {
+                              setIncomeStability(value);
+                              clearIncomeError("incomeStability");
+                            }}
+                          >
+                             <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
+                                <SelectValue />
+                             </SelectTrigger>
+                             <SelectContent>
+                                <SelectItem value="Stable">Stable</SelectItem>
+                                <SelectItem value="Medium Fluctuation">Medium Fluctuation</SelectItem>
+                                <SelectItem value="High Fluctuation">High Fluctuation</SelectItem>
+                             </SelectContent>
+                          </Select>
+                          {incomeErrors.incomeStability && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{incomeErrors.incomeStability}</p>}
+                        </div>
+                     </div>
+                   )}
 
                    <Button 
                      onClick={handleAddIncome}
                      className="w-full h-12 bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20 mt-4"
                    >
-                      <Plus className="w-5 h-5 mr-2" /> Add Income to List
+                      <Plus className="w-5 h-5 mr-2" /> {incomeType === "Salary Worker" ? "Add Salary" : incomeType === "Business Person" ? "Add Business" : "Add Income to List"}
                    </Button>
                 </div>
              </div>
@@ -373,7 +535,13 @@ export default function PublicCustomerApplicationPage() {
                             <div key={item.id} className="bg-white border border-slate-100 rounded-xl p-4 flex items-center shadow-sm">
                                <div className="w-1/2">
                                   <p className="font-bold text-slate-800 text-sm">{item.type}</p>
-                                  <p className="text-xs text-slate-500">{item.salaryType}</p>
+                                  <p className="text-xs text-slate-500">
+                                    {item.type === "Business Person"
+                                      ? `Stability: ${item.incomeStability ?? "-"}`
+                                      : item.type === "Salary Worker + Business Person"
+                                        ? `Salary: ${item.salaryType ?? "-"} | Stability: ${item.incomeStability ?? "-"}`
+                                        : `Salary: ${item.salaryType ?? "-"}`}
+                                  </p>
                                </div>
                                <div className="w-1/3 text-right">
                                   <p className="font-bold text-slate-800 text-sm">{formatCurrency(item.amount)}</p>
