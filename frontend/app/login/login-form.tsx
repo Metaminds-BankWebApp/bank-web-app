@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { authService } from "@/src/api/auth/auth.service";
 import { ApiError } from "@/src/types/api-error";
 import { getRoleRedirectPath, useAuthStore } from "@/src/store";
@@ -19,6 +20,14 @@ const roleOptions: Array<{ value: UserRole; label: string }> = [
 function toRoleLabel(role: UserRole): string {
   const option = roleOptions.find((item) => item.value === role);
   return option?.label ?? role;
+}
+
+function normalizeRole(role: string): UserRole | null {
+  const candidate = role.toUpperCase();
+  if (candidate === "PUBLIC_CUSTOMER" || candidate === "BANK_CUSTOMER" || candidate === "BANK_OFFICER" || candidate === "ADMIN") {
+    return candidate;
+  }
+  return null;
 }
 
 function createDemoPayload(email: string, role: UserRole): LoginResponse {
@@ -49,6 +58,7 @@ export function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [forceLogin, setForceLogin] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -102,12 +112,28 @@ export function LoginForm() {
 
     try {
       const response = await authService.login({ email, password });
-      const redirectPath = login(response);
+      const normalizedRole = normalizeRole(response.user.role);
+
+      if (!normalizedRole) {
+        throw new ApiError({
+          message: "Unsupported role returned by server.",
+          code: "UNKNOWN_ERROR",
+        });
+      }
+
+      const normalizedResponse: LoginResponse = {
+        ...response,
+        user: {
+          ...response.user,
+          role: normalizedRole,
+        },
+      };
+      const redirectPath = login(normalizedResponse);
 
       showToast({
         type: "success",
         title: "Login successful",
-        description: `Redirecting to ${toRoleLabel(response.user.role)} dashboard.`,
+        description: `Redirecting to ${toRoleLabel(normalizedRole)} dashboard.`,
       });
 
       router.replace(redirectPath);
@@ -160,16 +186,28 @@ export function LoginForm() {
           className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
         />
 
-        <Input
-          label="Password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Enter your password"
-          labelClassName="text-(--primecore-foreground)/70"
-          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-        />
+        <div className="space-y-1.5">
+          <label htmlFor="login-password" className="text-sm font-medium text-(--primecore-foreground)/70">Password</label>
+          <div className="relative">
+            <input
+              id="login-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter your password"
+              className="h-14 w-full rounded-2xl border border-(--primecore-border) bg-(--primecore-surface) px-3.5 py-2.5 pr-12 text-sm text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ring-offset-background"
+            />
+            <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-(--primecore-foreground)/70 hover:text-(--primecore-foreground)"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
 
         <div className="flex items-center justify-end text-sm">
           <Link href="/forgot-password" className="font-medium text-[#0d3b66] underline-offset-4 hover:underline dark:text-[#7cc8ff]">

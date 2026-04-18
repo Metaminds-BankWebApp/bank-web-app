@@ -1,6 +1,7 @@
 import axios, { type AxiosError } from "axios";
 import { env } from "@/config/env";
 import { ApiError, type ApiErrorCode } from "@/src/types/api-error";
+import { useAuthStore } from "@/src/store";
 
 export const apiClient = axios.create({
   baseURL: env.apiBaseUrl,
@@ -11,6 +12,27 @@ export const apiClient = axios.create({
     Accept: "application/json",
   },
 });
+
+apiClient.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const axiosError = error as AxiosError;
+    if (axiosError.response?.status === 401) {
+      useAuthStore.getState().logout();
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 function resolveApiErrorCode(status?: number): ApiErrorCode {
   if (status === 401) return "UNAUTHORIZED";

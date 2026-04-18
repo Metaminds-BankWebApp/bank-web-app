@@ -1,10 +1,13 @@
 export interface CustomerFormData {
   // Personal Details
-  fullName: string;
+  firstName: string;
+  lastName: string;
   nic: string;
   dob: string;
   email: string;
   mobile: string;
+  province: string;
+  address: string;
   username: string;
   password: string;
   confirmPassword: string;
@@ -44,11 +47,14 @@ export interface CustomerFormData {
 }
 
 export const initialFormData: CustomerFormData = {
-  fullName: "",
+  firstName: "",
+  lastName: "",
   nic: "",
   dob: "",
   email: "",
   mobile: "",
+  province: "",
+  address: "",
   username: "",
   password: "",
   confirmPassword: "",
@@ -68,4 +74,8 @@ export interface StepProps {
   updateFormData: (data: Partial<CustomerFormData>) => void;
   onNext: () => void;
   onBack: () => void;
+  onSaveDraftStepOne?: () => Promise<void>;
+  onContinueStepOne?: () => Promise<void>;
+  isSavingDraftStepOne?: boolean;
+  isSubmittingStepOne?: boolean;
 }

@@ -8,7 +8,7 @@ const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 const currencyRegex = /^\d+(\.\d{1,2})?$/;
 
 export type PersonalDetailsErrors = Partial<
-  Record<"fullName" | "nic" | "dob" | "email" | "mobile" | "username" | "password" | "confirmPassword" | "bankAccount", string>
+  Record<"firstName" | "lastName" | "nic" | "dob" | "email" | "mobile" | "province" | "address" | "username" | "password" | "confirmPassword" | "bankAccount", string>
 >;
 
 export type FinancialDataErrors = Partial<
@@ -77,10 +77,16 @@ function isInteger(value: number): boolean {
 export function validatePersonalDetailsStep(formData: CustomerFormData): PersonalDetailsErrors {
   const errors: PersonalDetailsErrors = {};
 
-  if (!formData.fullName.trim()) {
-    errors.fullName = "Full name is required.";
-  } else if (formData.fullName.trim().length < 2) {
-    errors.fullName = "Full name must be at least 2 characters.";
+  if (!formData.firstName.trim()) {
+    errors.firstName = "First name is required.";
+  } else if (formData.firstName.trim().length < 2) {
+    errors.firstName = "First name must be at least 2 characters.";
+  }
+
+  if (!formData.lastName.trim()) {
+    errors.lastName = "Last name is required.";
+  } else if (formData.lastName.trim().length < 2) {
+    errors.lastName = "Last name must be at least 2 characters.";
   }
 
   if (!formData.nic.trim()) {
@@ -120,6 +126,16 @@ export function validatePersonalDetailsStep(formData: CustomerFormData): Persona
     errors.mobile = "Mobile number is required.";
   } else if (!contactRegex.test(formData.mobile.trim())) {
     errors.mobile = "Enter a valid mobile number.";
+  }
+
+  if (!formData.province.trim()) {
+    errors.province = "Province is required.";
+  }
+
+  if (!formData.address.trim()) {
+    errors.address = "Address is required.";
+  } else if (formData.address.trim().length < 5) {
+    errors.address = "Address must be at least 5 characters.";
   }
 
   if (!formData.username.trim()) {

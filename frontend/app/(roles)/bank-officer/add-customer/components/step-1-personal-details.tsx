@@ -12,7 +12,16 @@ import { Label } from "@/src/components/ui";
 import { CustomerFormData, StepProps } from "./types";
 import { PersonalDetailsErrors, validatePersonalDetailsStep } from "./validation";
 
-export function PersonalDetails({ formData, updateFormData, onNext, onBack }: StepProps) {
+export function PersonalDetails({
+  formData,
+  updateFormData,
+  onNext,
+  onBack,
+  onSaveDraftStepOne,
+  onContinueStepOne,
+  isSavingDraftStepOne,
+  isSubmittingStepOne,
+}: StepProps) {
   const [errors, setErrors] = useState<PersonalDetailsErrors>({});
 
   const validate = () => {
@@ -21,9 +30,18 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validate()) {
+      if (onContinueStepOne) {
+        await onContinueStepOne();
+      }
       onNext();
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (validate() && onSaveDraftStepOne) {
+      await onSaveDraftStepOne();
     }
   };
 
@@ -43,16 +61,29 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
       </div>
       
       <div className="p-8 space-y-8">
-        <div className="space-y-3">
-          <Label htmlFor="fullName" className="text-slate-700 font-medium">Full Name</Label>
-          <Input 
-            id="fullName" 
-            value={formData.fullName} 
-            onChange={handleChange}
-            placeholder="Johnathan Doe" 
-            className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${errors.fullName ? "border-red-500" : ""}`}
-          />
-          {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-3">
+            <Label htmlFor="firstName" className="text-slate-700 font-medium">First Name</Label>
+            <Input 
+              id="firstName" 
+              value={formData.firstName} 
+              onChange={handleChange}
+              placeholder="Johnathan" 
+              className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${errors.firstName ? "border-red-500" : ""}`}
+            />
+            {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName}</p>}
+          </div>
+          <div className="space-y-3">
+            <Label htmlFor="lastName" className="text-slate-700 font-medium">Last Name</Label>
+            <Input 
+              id="lastName" 
+              value={formData.lastName} 
+              onChange={handleChange}
+              placeholder="Doe" 
+              className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${errors.lastName ? "border-red-500" : ""}`}
+            />
+            {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName}</p>}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -103,6 +134,31 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
               className={`bg-slate-50 border-slate-200 h-11 ${errors.mobile ? "border-red-500" : ""}`} 
             />
             {errors.mobile && <p className="text-red-500 text-xs">{errors.mobile}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-3">
+            <Label htmlFor="province" className="text-slate-700 font-medium">Province</Label>
+            <Input 
+              id="province" 
+              value={formData.province} 
+              onChange={handleChange}
+              placeholder="Western" 
+              className={`bg-slate-50 border-slate-200 h-11 ${errors.province ? "border-red-500" : ""}`} 
+            />
+            {errors.province && <p className="text-red-500 text-xs">{errors.province}</p>}
+          </div>
+          <div className="space-y-3">
+            <Label htmlFor="address" className="text-slate-700 font-medium">Address</Label>
+            <Input 
+              id="address" 
+              value={formData.address} 
+              onChange={handleChange}
+              placeholder="123, Galle Road, Colombo" 
+              className={`bg-slate-50 border-slate-200 h-11 ${errors.address ? "border-red-500" : ""}`} 
+            />
+            {errors.address && <p className="text-red-500 text-xs">{errors.address}</p>}
           </div>
         </div>
 
@@ -166,7 +222,7 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
                  <Button 
                    type="button"
                    variant={formData.isAccountVerified ? "outline" : "primary"}
-                   className={`h-11 px-6 whitespace-nowrap min-w-[120px] ${formData.isAccountVerified ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" : "bg-[#0d3b66] hover:bg-[#1a4a7a] text-white"}`}
+                   className={`h-11 px-6 whitespace-nowrap min-w-30 ${formData.isAccountVerified ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" : "bg-[#0d3b66] hover:bg-[#1a4a7a] text-white"}`}
                    onClick={(e) => {
                       e.preventDefault();
                       if (formData.bankAccount && formData.bankAccount.length > 5) {
@@ -196,12 +252,20 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
             <ArrowLeft size={16} /> Back
         </Button>
         <div className="flex items-center gap-4">
-            <span className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600">Save Draft</span>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={Boolean(isSavingDraftStepOne || isSubmittingStepOne)}
+              className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSavingDraftStepOne ? "Saving Draft..." : "Save Draft"}
+            </button>
             <Button 
               onClick={handleNext}
+              disabled={Boolean(isSavingDraftStepOne || isSubmittingStepOne)}
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
             >
-                Continue <ArrowRight size={16} />
+                {isSubmittingStepOne ? "Saving..." : "Continue"} <ArrowRight size={16} />
             </Button>
         </div>
       </div>
