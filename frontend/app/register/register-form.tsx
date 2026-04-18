@@ -7,31 +7,39 @@ import { continuePublicCustomerStepOne } from "@/src/api/registration/public-cus
 import { ApiError } from "@/src/types/api-error";
 import { Button, Input, useToast } from "@/src/components/ui";
 
-const FULL_NAME_REQUIRED = "Full name is required.";
+const FIRST_NAME_REQUIRED = "First name is required.";
+const LAST_NAME_REQUIRED = "Last name is required.";
 const EMAIL_REQUIRED = "Email is required.";
 const PHONE_REQUIRED = "Phone number is required.";
-const CITY_REQUIRED = "City is required.";
+const NIC_REQUIRED = "NIC is required.";
+const DOB_REQUIRED = "Date of birth is required.";
+const USERNAME_REQUIRED = "Username is required.";
+const BANK_ACCOUNT_REQUIRED = "Bank account number is required.";
 const PROVINCE_REQUIRED = "Province is required.";
 const ADDRESS_REQUIRED = "Address is required.";
 const PASSWORD_REQUIRED = "Password is required.";
 const CONFIRM_PASSWORD_REQUIRED = "Confirm password is required.";
 const EMAIL_INVALID = "Please enter a valid email address.";
 const PHONE_INVALID = "Phone number must be exactly 10 digits (numbers only).";
+const NIC_INVALID = "Please enter a valid NIC.";
+const USERNAME_INVALID = "Username must be at least 4 characters.";
 const PASSWORD_INVALID = "Password must be at least 10 characters and include uppercase, lowercase letters and numbers.";
 const PASSWORD_MISMATCH = "Passwords do not match.";
 
-type FieldName = "fullName" | "email" | "phone" | "city" | "province" | "address" | "password" | "confirmPassword";
+type FieldName =
+  | "firstName"
+  | "lastName"
+  | "email"
+  | "phone"
+  | "nic"
+  | "dob"
+  | "username"
+  | "bankAccount"
+  | "province"
+  | "address"
+  | "password"
+  | "confirmPassword";
 type FieldErrors = Partial<Record<FieldName, string>>;
-
-function splitName(fullName: string): { firstName: string; lastName: string } {
-  const trimmed = fullName.trim();
-  if (!trimmed) {
-    return { firstName: "PrimeCore", lastName: "User" };
-  }
-
-  const [firstName, ...rest] = trimmed.split(/\s+/);
-  return { firstName, lastName: rest.join(" ") || "User" };
-}
 
 export function RegisterForm() {
   const router = useRouter();
@@ -81,10 +89,15 @@ export function RegisterForm() {
     const nextErrors: FieldErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
+    const nicRegex = /^(\d{9}[vVxX]|\d{12})$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 
-    if (!tFullName) {
-      nextErrors.fullName = FULL_NAME_REQUIRED;
+    if (!tFirstName) {
+      nextErrors.firstName = FIRST_NAME_REQUIRED;
+    }
+
+    if (!tLastName) {
+      nextErrors.lastName = LAST_NAME_REQUIRED;
     }
 
     if (!tEmail) {
@@ -99,8 +112,24 @@ export function RegisterForm() {
       nextErrors.phone = PHONE_INVALID;
     }
 
-    if (!tCity) {
-      nextErrors.city = CITY_REQUIRED;
+    if (!tNic) {
+      nextErrors.nic = NIC_REQUIRED;
+    } else if (!nicRegex.test(tNic)) {
+      nextErrors.nic = NIC_INVALID;
+    }
+
+    if (!tDob) {
+      nextErrors.dob = DOB_REQUIRED;
+    }
+
+    if (!tUsername) {
+      nextErrors.username = USERNAME_REQUIRED;
+    } else if (tUsername.length < 4) {
+      nextErrors.username = USERNAME_INVALID;
+    }
+
+    if (!tBankAccount) {
+      nextErrors.bankAccount = BANK_ACCOUNT_REQUIRED;
     }
 
     if (!tProvince) {
@@ -173,59 +202,80 @@ export function RegisterForm() {
       </header>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <Input
-          label="Full Name"
-          value={fullName}
-          onChange={(event) => {
-            setFullName(event.target.value);
-            clearFieldError("fullName");
-            setFormError(null);
-          }}
-          error={fieldErrors.fullName}
-          placeholder="John Doe"
-          labelClassName="text-(--primecore-foreground)/70"
-          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-        />
-        <Input
-          label="Email Address"
-          type="email"
-          value={email}
-          onChange={(event) => {
-            setEmail(event.target.value);
-            clearFieldError("email");
-            setFormError(null);
-          }}
-          error={fieldErrors.email}
-          placeholder="name@example.com"
-          labelClassName="text-(--primecore-foreground)/70"
-          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-        />
-
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            label="Phone Number"
-            value={phone}
+            label="First Name"
+            value={firstName}
             onChange={(event) => {
-              setPhone(event.target.value);
-              clearFieldError("phone");
+              setFirstName(event.target.value);
+              clearFieldError("firstName");
               setFormError(null);
             }}
-            error={fieldErrors.phone}
-            helperText="Enter a 10-digit phone number (numbers only)."
-            placeholder="e.g. 7123456789"
+            error={fieldErrors.firstName}
+            placeholder="John"
             labelClassName="text-(--primecore-foreground)/70"
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
           />
           <Input
-            label="City"
-            value={city}
+            label="Last Name"
+            value={lastName}
             onChange={(event) => {
-              setCity(event.target.value);
-              clearFieldError("city");
+              setLastName(event.target.value);
+              clearFieldError("lastName");
               setFormError(null);
             }}
-            error={fieldErrors.city}
-            placeholder="City"
+            error={fieldErrors.lastName}
+            placeholder="Doe"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+        </div>
+        <Input label="Email Address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Input label="Phone Number" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="e.g. 7123456789" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+            <p className="mt-1 text-xs text-(--primecore-foreground)/60">Enter a 10-digit phone number (numbers only).</p>
+          </div>
+          <Input
+            label="NIC"
+            value={nic}
+            onChange={(event) => {
+              setNic(event.target.value);
+              clearFieldError("nic");
+              setFormError(null);
+            }}
+            error={fieldErrors.nic}
+            placeholder="200012345678"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Date of Birth"
+            type="date"
+            value={dob}
+            onChange={(event) => {
+              setDob(event.target.value);
+              clearFieldError("dob");
+              setFormError(null);
+            }}
+            error={fieldErrors.dob}
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+          <Input
+            label="Username"
+            value={username}
+            onChange={(event) => {
+              setUsername(event.target.value);
+              clearFieldError("username");
+              setFormError(null);
+            }}
+            error={fieldErrors.username}
+            placeholder="john.doe.2000"
             labelClassName="text-(--primecore-foreground)/70"
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
           />
@@ -260,7 +310,19 @@ export function RegisterForm() {
           />
         </div>
 
-        <Input label="Bank Account Number" value={bankAccount} onChange={(event) => setBankAccount(event.target.value)} placeholder="100023456789" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+        <Input
+          label="Bank Account Number"
+          value={bankAccount}
+          onChange={(event) => {
+            setBankAccount(event.target.value);
+            clearFieldError("bankAccount");
+            setFormError(null);
+          }}
+          error={fieldErrors.bankAccount}
+          placeholder="100023456789"
+          labelClassName="text-(--primecore-foreground)/70"
+          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
