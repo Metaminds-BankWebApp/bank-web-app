@@ -5,14 +5,8 @@ import type {
   StepOneRegistrationResponse,
 } from "@/src/types/dto/registration.dto";
 
-export async function savePublicCustomerStepOneDraft(
+export async function registerPublicCustomer(
   payload: StepOneRegistrationRequest
 ): Promise<StepOneRegistrationResponse> {
-  return postStepOneRegistration(REGISTRATION_ENDPOINTS.publicCustomer.stepOneDraft, payload);
-}
-
-export async function continuePublicCustomerStepOne(
-  payload: StepOneRegistrationRequest
-): Promise<StepOneRegistrationResponse> {
-  return postStepOneRegistration(REGISTRATION_ENDPOINTS.publicCustomer.stepOneContinue, payload);
+  return postStepOneRegistration(REGISTRATION_ENDPOINTS.publicCustomer, payload);
 }

@@ -38,6 +38,7 @@ function resolveApiErrorCode(status?: number): ApiErrorCode {
   if (status === 401) return "UNAUTHORIZED";
   if (status === 403) return "FORBIDDEN";
   if (status === 404) return "NOT_FOUND";
+  if (status === 409) return "CONFLICT";
   if (status === 400 || status === 422) return "VALIDATION_ERROR";
   if (status && status >= 500) return "SERVER_ERROR";
   return "UNKNOWN_ERROR";

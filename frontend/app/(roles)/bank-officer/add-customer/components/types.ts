@@ -78,4 +78,6 @@ export interface StepProps {
   onContinueStepOne?: () => Promise<void>;
   isSavingDraftStepOne?: boolean;
   isSubmittingStepOne?: boolean;
+  serverStepOneErrors?: Partial<Record<"nic" | "email" | "username", string>>;
+  onClearServerStepOneError?: (field: "nic" | "email" | "username") => void;
 }

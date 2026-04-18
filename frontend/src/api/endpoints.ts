@@ -12,14 +12,8 @@ export const REGISTRATION_ENDPOINTS = {
     stepOneDraft: "/users/bank-customer/step-1/draft",
     stepOneContinue: "/users/bank-customer/step-1/continue",
   },
-  publicCustomer: {
-    stepOneDraft: "/users/public-customer/step-1/draft",
-    stepOneContinue: "/users/public-customer/step-1/continue",
-  },
-  bankOfficer: {
-    stepOneDraft: "/users/bank-officer/step-1/draft",
-    stepOneContinue: "/users/bank-officer/step-1/continue",
-  },
+  publicCustomer: "/users/public-customer",
+  bankOfficer: "/users/bank-officer",
 } as const;
 
 export const CUSTOMER_ENDPOINTS = {

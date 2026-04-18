@@ -21,8 +21,14 @@ export function PersonalDetails({
   onContinueStepOne,
   isSavingDraftStepOne,
   isSubmittingStepOne,
+  serverStepOneErrors,
+  onClearServerStepOneError,
 }: StepProps) {
   const [errors, setErrors] = useState<PersonalDetailsErrors>({});
+  const mergedErrors: PersonalDetailsErrors = {
+    ...errors,
+    ...serverStepOneErrors,
+  };
 
   const validate = () => {
     const newErrors = validatePersonalDetailsStep(formData);
@@ -51,6 +57,10 @@ export function PersonalDetails({
     if (id in errors && errors[id as keyof PersonalDetailsErrors]) {
       setErrors((prev) => ({ ...prev, [id]: undefined }));
     }
+
+    if (id === "nic" || id === "email" || id === "username") {
+      onClearServerStepOneError?.(id);
+    }
   };
 
   return (
@@ -69,9 +79,9 @@ export function PersonalDetails({
               value={formData.firstName} 
               onChange={handleChange}
               placeholder="Johnathan" 
-              className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${errors.firstName ? "border-red-500" : ""}`}
+              className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${mergedErrors.firstName ? "border-red-500" : ""}`}
             />
-            {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName}</p>}
+            {mergedErrors.firstName && <p className="text-red-500 text-xs">{mergedErrors.firstName}</p>}
           </div>
           <div className="space-y-3">
             <Label htmlFor="lastName" className="text-slate-700 font-medium">Last Name</Label>
@@ -80,9 +90,9 @@ export function PersonalDetails({
               value={formData.lastName} 
               onChange={handleChange}
               placeholder="Doe" 
-              className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${errors.lastName ? "border-red-500" : ""}`}
+              className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${mergedErrors.lastName ? "border-red-500" : ""}`}
             />
-            {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName}</p>}
+            {mergedErrors.lastName && <p className="text-red-500 text-xs">{mergedErrors.lastName}</p>}
           </div>
         </div>
 
@@ -94,9 +104,9 @@ export function PersonalDetails({
               value={formData.nic} 
               onChange={handleChange}
               placeholder="951234567V" 
-              className={`bg-slate-50 border-slate-200 h-11 ${errors.nic ? "border-red-500" : ""}`} 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.nic ? "border-red-500" : ""}`} 
             />
-            {errors.nic && <p className="text-red-500 text-xs">{errors.nic}</p>}
+            {mergedErrors.nic && <p className="text-red-500 text-xs">{mergedErrors.nic}</p>}
           </div>
           <div className="space-y-3">
             <Label htmlFor="dob" className="text-slate-700 font-medium">Date of Birth</Label>
@@ -107,7 +117,7 @@ export function PersonalDetails({
               onChange={handleChange}
               className={`bg-slate-50 border-slate-200 h-11 ${errors.dob ? "border-red-500" : ""}`} 
             />
-            {errors.dob && <p className="text-red-500 text-xs">{errors.dob}</p>}
+            {mergedErrors.dob && <p className="text-red-500 text-xs">{mergedErrors.dob}</p>}
           </div>
         </div>
 
@@ -120,9 +130,9 @@ export function PersonalDetails({
               value={formData.email} 
               onChange={handleChange}
               placeholder="john.doe@email.com" 
-              className={`bg-slate-50 border-slate-200 h-11 ${errors.email ? "border-red-500" : ""}`} 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.email ? "border-red-500" : ""}`} 
             />
-            {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
+            {mergedErrors.email && <p className="text-red-500 text-xs">{mergedErrors.email}</p>}
           </div>
           <div className="space-y-3">
             <Label htmlFor="mobile" className="text-slate-700 font-medium">Mobile Number</Label>
@@ -131,9 +141,9 @@ export function PersonalDetails({
               value={formData.mobile} 
               onChange={handleChange}
               placeholder="+94 77 123 4567" 
-              className={`bg-slate-50 border-slate-200 h-11 ${errors.mobile ? "border-red-500" : ""}`} 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.mobile ? "border-red-500" : ""}`} 
             />
-            {errors.mobile && <p className="text-red-500 text-xs">{errors.mobile}</p>}
+            {mergedErrors.mobile && <p className="text-red-500 text-xs">{mergedErrors.mobile}</p>}
           </div>
         </div>
 
@@ -145,9 +155,9 @@ export function PersonalDetails({
               value={formData.province} 
               onChange={handleChange}
               placeholder="Western" 
-              className={`bg-slate-50 border-slate-200 h-11 ${errors.province ? "border-red-500" : ""}`} 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.province ? "border-red-500" : ""}`} 
             />
-            {errors.province && <p className="text-red-500 text-xs">{errors.province}</p>}
+            {mergedErrors.province && <p className="text-red-500 text-xs">{mergedErrors.province}</p>}
           </div>
           <div className="space-y-3">
             <Label htmlFor="address" className="text-slate-700 font-medium">Address</Label>
@@ -156,9 +166,9 @@ export function PersonalDetails({
               value={formData.address} 
               onChange={handleChange}
               placeholder="123, Galle Road, Colombo" 
-              className={`bg-slate-50 border-slate-200 h-11 ${errors.address ? "border-red-500" : ""}`} 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.address ? "border-red-500" : ""}`} 
             />
-            {errors.address && <p className="text-red-500 text-xs">{errors.address}</p>}
+            {mergedErrors.address && <p className="text-red-500 text-xs">{mergedErrors.address}</p>}
           </div>
         </div>
 
@@ -173,9 +183,9 @@ export function PersonalDetails({
                 value={formData.username} 
                 onChange={handleChange}
                 placeholder="johndoe_95" 
-                className={`bg-slate-50 border-slate-200 h-11 ${errors.username ? "border-red-500" : ""}`} 
+                className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.username ? "border-red-500" : ""}`} 
               />
-              {errors.username && <p className="text-red-500 text-xs">{errors.username}</p>}
+              {mergedErrors.username && <p className="text-red-500 text-xs">{mergedErrors.username}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -186,9 +196,9 @@ export function PersonalDetails({
                     type="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className={`bg-slate-50 border-slate-200 h-11 ${errors.password ? "border-red-500" : ""}`}
+                    className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.password ? "border-red-500" : ""}`}
                   />
-                  {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
+                  {mergedErrors.password && <p className="text-red-500 text-xs">{mergedErrors.password}</p>}
               </div>
               <div className="space-y-3">
                   <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">Confirm Password</Label>
@@ -197,9 +207,9 @@ export function PersonalDetails({
                     type="password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`bg-slate-50 border-slate-200 h-11 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                    className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.confirmPassword ? "border-red-500" : ""}`}
                   />
-                  {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
+                  {mergedErrors.confirmPassword && <p className="text-red-500 text-xs">{mergedErrors.confirmPassword}</p>}
               </div>
             </div>
         </div>
@@ -216,7 +226,7 @@ export function PersonalDetails({
                    value={formData.bankAccount} 
                    onChange={handleChange}
                    placeholder="1000 2345 6789" 
-                   className={`bg-slate-50 border-slate-200 h-11 flex-1 ${errors.bankAccount ? "border-red-500" : ""}`} 
+                   className={`bg-slate-50 border-slate-200 h-11 flex-1 ${mergedErrors.bankAccount ? "border-red-500" : ""}`} 
                    disabled={formData.isAccountVerified}
                  />
                  <Button 
@@ -236,7 +246,7 @@ export function PersonalDetails({
                    ) : "Verify Account"}
                  </Button>
               </div>
-              {errors.bankAccount && <p className="text-red-500 text-xs">{errors.bankAccount}</p>}
+              {mergedErrors.bankAccount && <p className="text-red-500 text-xs">{mergedErrors.bankAccount}</p>}
            </div>
         </div>
       </div>

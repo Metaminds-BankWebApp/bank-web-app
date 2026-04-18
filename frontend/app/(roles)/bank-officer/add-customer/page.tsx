@@ -26,6 +26,31 @@ import {
 import type { StepOneRegistrationRequest } from "@/src/types/dto/registration.dto";
 import { ApiError } from "@/src/types/api-error";
 
+type StepOneConflictField = "nic" | "email" | "username";
+type StepOneFieldErrors = Partial<Record<StepOneConflictField, string>>;
+
+function extractStepOneFieldErrors(error: ApiError): StepOneFieldErrors {
+   const details = error.details as { fieldErrors?: unknown } | undefined;
+   const fieldErrors = details?.fieldErrors;
+   if (!fieldErrors || typeof fieldErrors !== "object") {
+      return {};
+   }
+
+   const source = fieldErrors as Record<string, unknown>;
+   const result: StepOneFieldErrors = {};
+   if (typeof source.nic === "string") {
+      result.nic = source.nic;
+   }
+   if (typeof source.email === "string") {
+      result.email = source.email;
+   }
+   if (typeof source.username === "string") {
+      result.username = source.username;
+   }
+
+   return result;
+}
+
 const generateCustomerId = () => `PC-${Math.floor(100000 + Math.random() * 900000)}`;
 const ADD_CUSTOMER_DRAFT_STORAGE_KEY = "bank-officer-add-customer-draft-v1";
 
@@ -40,6 +65,7 @@ export default function AddCustomerPage() {
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [generatedId, setGeneratedId] = useState("");
   const [submitError, setSubmitError] = useState("");
+   const [serverStepOneErrors, setServerStepOneErrors] = useState<StepOneFieldErrors>({});
    const [isSavingDraftStepOne, setIsSavingDraftStepOne] = useState(false);
    const [isSubmittingStepOne, setIsSubmittingStepOne] = useState(false);
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
@@ -101,6 +127,15 @@ export default function AddCustomerPage() {
     }
   };
 
+   const clearServerStepOneError = (field: StepOneConflictField) => {
+      setServerStepOneErrors((prev) => {
+         if (!prev[field]) {
+            return prev;
+         }
+         return { ...prev, [field]: undefined };
+      });
+   };
+
   const handleNext = () => {
     if (step < steps.length) {
       setStep(step + 1);
@@ -137,6 +172,7 @@ export default function AddCustomerPage() {
     setStep(1);
     setIsSuccess(false);
     setSubmitError("");
+         setServerStepOneErrors({});
       window.localStorage.removeItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
   };
 
@@ -158,13 +194,16 @@ export default function AddCustomerPage() {
    const saveStepOneDraft = async () => {
       setIsSavingDraftStepOne(true);
       setSubmitError("");
+      setServerStepOneErrors({});
       try {
          await saveBankCustomerStepOneDraft(mapStepOnePayload(formData));
       } catch (error) {
          if (error instanceof ApiError) {
             setSubmitError(error.message);
+            setServerStepOneErrors(extractStepOneFieldErrors(error));
          } else {
             setSubmitError("Failed to save draft. Please try again.");
+            setServerStepOneErrors({});
          }
          throw error;
       } finally {
@@ -175,13 +214,16 @@ export default function AddCustomerPage() {
    const continueStepOne = async () => {
       setIsSubmittingStepOne(true);
       setSubmitError("");
+      setServerStepOneErrors({});
       try {
          await continueBankCustomerStepOne(mapStepOnePayload(formData));
       } catch (error) {
          if (error instanceof ApiError) {
             setSubmitError(error.message);
+            setServerStepOneErrors(extractStepOneFieldErrors(error));
          } else {
             setSubmitError("Failed to save step one. Please try again.");
+            setServerStepOneErrors({});
          }
          throw error;
       } finally {
@@ -206,6 +248,8 @@ export default function AddCustomerPage() {
                   onContinueStepOne={continueStepOne}
                   isSavingDraftStepOne={isSavingDraftStepOne}
                   isSubmittingStepOne={isSubmittingStepOne}
+                  serverStepOneErrors={serverStepOneErrors}
+                  onClearServerStepOneError={clearServerStepOneError}
                />
             );
       case 2: return <FinancialData {...props} />;
@@ -215,7 +259,7 @@ export default function AddCustomerPage() {
       case 6: return <CRIBRequest {...props} />;
       case 7: return <CRIBRetrieval {...props} />;
       case 8: return <Review {...props} />;
-      default: return <PersonalDetails {...props} />;
+         default: return <PersonalDetails {...props} serverStepOneErrors={serverStepOneErrors} onClearServerStepOneError={clearServerStepOneError} />;
     }
   };
 

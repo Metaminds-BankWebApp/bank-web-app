@@ -5,14 +5,8 @@ import type {
   StepOneRegistrationResponse,
 } from "@/src/types/dto/registration.dto";
 
-export async function saveBankOfficerStepOneDraft(
+export async function registerBankOfficer(
   payload: StepOneRegistrationRequest
 ): Promise<StepOneRegistrationResponse> {
-  return postStepOneRegistration(REGISTRATION_ENDPOINTS.bankOfficer.stepOneDraft, payload);
-}
-
-export async function continueBankOfficerStepOne(
-  payload: StepOneRegistrationRequest
-): Promise<StepOneRegistrationResponse> {
-  return postStepOneRegistration(REGISTRATION_ENDPOINTS.bankOfficer.stepOneContinue, payload);
+  return postStepOneRegistration(REGISTRATION_ENDPOINTS.bankOfficer, payload);
 }
