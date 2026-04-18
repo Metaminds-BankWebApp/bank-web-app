@@ -7,6 +7,32 @@ import { continuePublicCustomerStepOne } from "@/src/api/registration/public-cus
 import { ApiError } from "@/src/types/api-error";
 import { Button, Input, useToast } from "@/src/components/ui";
 
+const FULL_NAME_REQUIRED = "Full name is required.";
+const EMAIL_REQUIRED = "Email is required.";
+const PHONE_REQUIRED = "Phone number is required.";
+const CITY_REQUIRED = "City is required.";
+const PROVINCE_REQUIRED = "Province is required.";
+const ADDRESS_REQUIRED = "Address is required.";
+const PASSWORD_REQUIRED = "Password is required.";
+const CONFIRM_PASSWORD_REQUIRED = "Confirm password is required.";
+const EMAIL_INVALID = "Please enter a valid email address.";
+const PHONE_INVALID = "Phone number must be exactly 10 digits (numbers only).";
+const PASSWORD_INVALID = "Password must be at least 10 characters and include uppercase, lowercase letters and numbers.";
+const PASSWORD_MISMATCH = "Passwords do not match.";
+
+type FieldName = "fullName" | "email" | "phone" | "city" | "province" | "address" | "password" | "confirmPassword";
+type FieldErrors = Partial<Record<FieldName, string>>;
+
+function splitName(fullName: string): { firstName: string; lastName: string } {
+  const trimmed = fullName.trim();
+  if (!trimmed) {
+    return { firstName: "PrimeCore", lastName: "User" };
+  }
+
+  const [firstName, ...rest] = trimmed.split(/\s+/);
+  return { firstName, lastName: rest.join(" ") || "User" };
+}
+
 export function RegisterForm() {
   const router = useRouter();
   const { showToast } = useToast();
@@ -24,7 +50,19 @@ export function RegisterForm() {
   const [password, setPassword] = useState("password123");
   const [confirmPassword, setConfirmPassword] = useState("password123");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [formError, setFormError] = useState<string | null>(null);
+
+  function clearFieldError(field: FieldName) {
+    setFieldErrors((current) => {
+      if (!current[field]) {
+        return current;
+      }
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -40,102 +78,60 @@ export function RegisterForm() {
     const tBankAccount = bankAccount.trim();
     const tProvince = province.trim();
     const tAddress = address.trim();
+    const nextErrors: FieldErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^\d{10}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 
-    // Basic required checks
-    if (!tFirstName) {
-      setError("First name is required.");
-      return;
-    }
-
-    if (!tLastName) {
-      setError("Last name is required.");
-      return;
+    if (!tFullName) {
+      nextErrors.fullName = FULL_NAME_REQUIRED;
     }
 
     if (!tEmail) {
-      setError("Email is required.");
-      return;
+      nextErrors.email = EMAIL_REQUIRED;
+    } else if (!emailRegex.test(tEmail)) {
+      nextErrors.email = EMAIL_INVALID;
     }
 
     if (!tPhone) {
-      setError("Phone number is required.");
-      return;
+      nextErrors.phone = PHONE_REQUIRED;
+    } else if (!phoneRegex.test(tPhone)) {
+      nextErrors.phone = PHONE_INVALID;
     }
 
-    if (!tNic) {
-      setError("NIC is required.");
-      return;
-    }
-
-    if (!tDob) {
-      setError("Date of birth is required.");
-      return;
-    }
-
-    if (!tUsername) {
-      setError("Username is required.");
-      return;
-    }
-
-    if (!tBankAccount) {
-      setError("Bank account number is required.");
-      return;
+    if (!tCity) {
+      nextErrors.city = CITY_REQUIRED;
     }
 
     if (!tProvince) {
-      setError("Province is required.");
-      return;
+      nextErrors.province = PROVINCE_REQUIRED;
     }
 
     if (!tAddress) {
-      setError("Address is required.");
-      return;
+      nextErrors.address = ADDRESS_REQUIRED;
     }
 
     if (!password) {
-      setError("Password is required.");
-      return;
+      nextErrors.password = PASSWORD_REQUIRED;
+    } else if (!passwordRegex.test(password)) {
+      nextErrors.password = PASSWORD_INVALID;
     }
 
-    // Email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(tEmail)) {
-      setError("Please enter a valid email address.");
-      return;
+    if (!confirmPassword) {
+      nextErrors.confirmPassword = CONFIRM_PASSWORD_REQUIRED;
+    } else if (password && password !== confirmPassword) {
+      nextErrors.confirmPassword = PASSWORD_MISMATCH;
     }
 
-    // Phone: exactly 10 digits
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(tPhone)) {
-      setError("Phone number must be exactly 10 digits (numbers only).");
-      return;
-    }
-
-    const nicRegex = /^(\d{9}[vVxX]|\d{12})$/;
-    if (!nicRegex.test(tNic)) {
-      setError("Please enter a valid NIC.");
-      return;
-    }
-
-    if (tUsername.length < 4) {
-      setError("Username must be at least 4 characters.");
-      return;
-    }
-
-    // Password complexity: minimum 10 chars, at least one uppercase, one lowercase and one number
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
-    if (!passwordRegex.test(password)) {
-      setError("Password must be at least 10 characters and include uppercase, lowercase letters and numbers.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+    if (Object.keys(nextErrors).length > 0) {
+      setFieldErrors(nextErrors);
+      setFormError(null);
       return;
     }
 
     setIsSubmitting(true);
-    setError(null);
+    setFieldErrors({});
+    setFormError(null);
 
     try {
       await continuePublicCustomerStepOne({
@@ -162,7 +158,7 @@ export function RegisterForm() {
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
       const message = apiError?.message ?? "Unable to register. Please try again.";
-      setError(message);
+      setFormError(message);
       showToast({ type: "error", title: "Registration failed", description: message });
     } finally {
       setIsSubmitting(false);
@@ -177,41 +173,129 @@ export function RegisterForm() {
       </header>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="First Name" value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="John" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
-          <Input label="Last Name" value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Doe" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
-        </div>
-        <Input label="Email Address" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+        <Input
+          label="Full Name"
+          value={fullName}
+          onChange={(event) => {
+            setFullName(event.target.value);
+            clearFieldError("fullName");
+            setFormError(null);
+          }}
+          error={fieldErrors.fullName}
+          placeholder="John Doe"
+          labelClassName="text-(--primecore-foreground)/70"
+          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+        />
+        <Input
+          label="Email Address"
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            clearFieldError("email");
+            setFormError(null);
+          }}
+          error={fieldErrors.email}
+          placeholder="name@example.com"
+          labelClassName="text-(--primecore-foreground)/70"
+          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Input label="Phone Number" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="e.g. 7123456789" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
-            <p className="mt-1 text-xs text-(--primecore-foreground)/60">Enter a 10-digit phone number (numbers only).</p>
-          </div>
-          <Input label="NIC" value={nic} onChange={(event) => setNic(event.target.value)} placeholder="200012345678" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+          <Input
+            label="Phone Number"
+            value={phone}
+            onChange={(event) => {
+              setPhone(event.target.value);
+              clearFieldError("phone");
+              setFormError(null);
+            }}
+            error={fieldErrors.phone}
+            helperText="Enter a 10-digit phone number (numbers only)."
+            placeholder="e.g. 7123456789"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+          <Input
+            label="City"
+            value={city}
+            onChange={(event) => {
+              setCity(event.target.value);
+              clearFieldError("city");
+              setFormError(null);
+            }}
+            error={fieldErrors.city}
+            placeholder="City"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Date of Birth" type="date" value={dob} onChange={(event) => setDob(event.target.value)} labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
-          <Input label="Username" value={username} onChange={(event) => setUsername(event.target.value)} placeholder="john.doe.2000" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input label="Province" value={province} onChange={(event) => setProvince(event.target.value)} placeholder="Province" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
-          <Input label="Address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Address" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+          <Input
+            label="Province"
+            value={province}
+            onChange={(event) => {
+              setProvince(event.target.value);
+              clearFieldError("province");
+              setFormError(null);
+            }}
+            error={fieldErrors.province}
+            placeholder="Province"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+          <Input
+            label="Address"
+            value={address}
+            onChange={(event) => {
+              setAddress(event.target.value);
+              clearFieldError("address");
+              setFormError(null);
+            }}
+            error={fieldErrors.address}
+            placeholder="Address"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
         </div>
 
         <Input label="Bank Account Number" value={bankAccount} onChange={(event) => setBankAccount(event.target.value)} placeholder="100023456789" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <Input label="Password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 10 chars, upper, lower, number" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
-            <p className="mt-1 text-xs text-(--primecore-foreground)/60">Use at least 10 characters, including uppercase, lowercase and numbers.</p>
-          </div>
-          <Input label="Confirm Password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm password" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              clearFieldError("password");
+              clearFieldError("confirmPassword");
+              setFormError(null);
+            }}
+            error={fieldErrors.password}
+            helperText="Use at least 10 characters, including uppercase, lowercase and numbers."
+            placeholder="At least 10 chars, upper, lower, number"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+          <Input
+            label="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            onChange={(event) => {
+              setConfirmPassword(event.target.value);
+              clearFieldError("confirmPassword");
+              setFormError(null);
+            }}
+            error={fieldErrors.confirmPassword}
+            placeholder="Confirm password"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
         </div>
 
-        {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+        {formError && <p className="text-xs text-red-500 dark:text-red-400">{formError}</p>}
 
         <Button type="submit" className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-semibold text-black hover:bg-primary/90" loading={isSubmitting}>
           {isSubmitting ? "Creating account..." : "Create account"}
