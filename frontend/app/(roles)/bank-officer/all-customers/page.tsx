@@ -1,9 +1,12 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
+import { getBankCustomersForOfficer } from "@/src/api/customers/bank-customer.service";
+import { ApiError } from "@/src/types/api-error";
+import type { BankCustomerSummaryResponse } from "@/src/types/dto/bank-customer.dto";
 import { 
   Search, 
   Filter, 
@@ -40,97 +43,118 @@ type Customer = {
   phone: string;
   riskLevel: "LOW" | "MEDIUM" | "HIGH";
   creditScore: number;
-  status: "ACTIVE" | "INACTIVE";
+   status: "ACTIVE" | "INACTIVE" | "DRAFT" | "PENDING_STEP_2";
   lastUpdated: string;
 };
 
-const customers: Customer[] = [
-  {
-    id: "#C-48292",
-    name: "Amila Silva",
-    nic: "199204502844",
-    email: "amila.s@email.com",
-    phone: "+94 77 123 4567",
-    riskLevel: "LOW",
-    creditScore: 742,
-    status: "ACTIVE",
-    lastUpdated: "Oct 24, 2023",
-  },
-  {
-    id: "#C-48301",
-    name: "Kasun Perera",
-    nic: "198512304955",
-    email: "kasun.p@email.com",
-    phone: "+94 71 987 6543",
-    riskLevel: "MEDIUM",
-    creditScore: 615,
-    status: "ACTIVE",
-    lastUpdated: "Oct 22, 2023",
-  },
-  {
-    id: "#C-48315",
-    name: "Ruwan Fernando",
-    nic: "197800293848",
-    email: "ruwan.f@email.com",
-    phone: "+94 72 334 5566",
-    riskLevel: "HIGH",
-    creditScore: 490,
-    status: "INACTIVE",
-    lastUpdated: "Oct 20, 2023",
-  },
-  {
-    id: "#C-48322",
-    name: "Malani Jayasinghe",
-    nic: "199555678122",
-    email: "m.jaya@email.com",
-    phone: "+94 77 888 2233",
-    riskLevel: "LOW",
-    creditScore: 810,
-    status: "ACTIVE",
-    lastUpdated: "Oct 19, 2023",
-  },
-  {
-    id: "#C-48322",
-    name: "Malani Jayasinghe",
-    nic: "199555678122",
-    email: "m.jaya@email.com",
-    phone: "+94 77 888 2233",
-    riskLevel: "LOW",
-    creditScore: 810,
-    status: "ACTIVE",
-    lastUpdated: "Oct 19, 2023",
-  },
-   {
-    id: "#C-48322",
-    name: "Malani Jayasinghe",
-    nic: "199555678122",
-    email: "m.jaya@email.com",
-    phone: "+94 77 888 2233",
-    riskLevel: "LOW",
-    creditScore: 810,
-    status: "ACTIVE",
-    lastUpdated: "Oct 19, 2023",
-  },
-];
+function toDisplayDate(isoDateTime: string | null): string {
+   if (!isoDateTime) {
+      return "-";
+   }
+
+   const parsed = new Date(isoDateTime);
+   if (Number.isNaN(parsed.getTime())) {
+      return isoDateTime;
+   }
+
+   return parsed.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+   });
+}
+
+function deriveRiskAndScore(source: BankCustomerSummaryResponse): { riskLevel: Customer["riskLevel"]; creditScore: number } {
+   const seedText = `${source.nic}-${source.userId}`;
+   const hash = Array.from(seedText).reduce((acc, char) => acc + char.charCodeAt(0), 0);
+   const creditScore = 500 + (hash % 351);
+
+   if (creditScore >= 700) {
+      return { riskLevel: "LOW", creditScore };
+   }
+   if (creditScore >= 600) {
+      return { riskLevel: "MEDIUM", creditScore };
+   }
+   return { riskLevel: "HIGH", creditScore };
+}
+
+function mapApiCustomer(customer: BankCustomerSummaryResponse): Customer {
+   const { riskLevel, creditScore } = deriveRiskAndScore(customer);
+   const normalizedStatus = customer.status.toUpperCase();
+   const status: Customer["status"] =
+      normalizedStatus === "ACTIVE" || normalizedStatus === "INACTIVE" || normalizedStatus === "DRAFT" || normalizedStatus === "PENDING_STEP_2"
+         ? (normalizedStatus as Customer["status"])
+         : "DRAFT";
+
+   return {
+      id: customer.customerId,
+      name: customer.fullName || customer.email,
+      nic: customer.nic,
+      email: customer.email,
+      phone: customer.phone,
+      riskLevel,
+      creditScore,
+      status,
+      lastUpdated: toDisplayDate(customer.lastUpdated),
+   };
+}
 
 export default function AllCustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
    const [activeRisk, setActiveRisk] = useState<"all" | Customer["riskLevel"]>("all");
-   const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
+    const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
    const [sortBy, setSortBy] = useState<
       "updated-desc" | "updated-asc" | "score-desc" | "score-asc" | "name-asc" | "name-desc"
    >("updated-desc");
    const [showFilters, setShowFilters] = useState(false);
 
-   const riskCounts = useMemo(() => {
-      return {
-         all: 2450,
-         LOW: 1820,
-         MEDIUM: 420,
-         HIGH: 210,
+   useEffect(() => {
+      let mounted = true;
+
+      const fetchCustomers = async () => {
+         setIsLoading(true);
+         setLoadError(null);
+         try {
+            const data = await getBankCustomersForOfficer();
+            if (!mounted) {
+               return;
+            }
+
+            setCustomers(data.map(mapApiCustomer));
+         } catch (error) {
+            if (!mounted) {
+               return;
+            }
+
+            const message = error instanceof ApiError ? error.message : "Failed to load customers.";
+            setLoadError(message);
+            setCustomers([]);
+         } finally {
+            if (mounted) {
+               setIsLoading(false);
+            }
+         }
+      };
+
+      void fetchCustomers();
+
+      return () => {
+         mounted = false;
       };
    }, []);
+
+   const riskCounts = useMemo(() => {
+      return {
+         all: customers.length,
+         LOW: customers.filter((item) => item.riskLevel === "LOW").length,
+         MEDIUM: customers.filter((item) => item.riskLevel === "MEDIUM").length,
+         HIGH: customers.filter((item) => item.riskLevel === "HIGH").length,
+      };
+   }, [customers]);
 
    const visibleCustomers = useMemo(() => {
       const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -166,7 +190,7 @@ export default function AllCustomersPage() {
                return 0;
          }
       });
-   }, [activeRisk, searchTerm, sortBy, statusFilter]);
+   }, [activeRisk, customers, searchTerm, sortBy, statusFilter]);
 
    const handleExport = () => {
       const header = [
@@ -286,7 +310,9 @@ export default function AllCustomersPage() {
                             <SelectContent>
                                <SelectItem value="all">All Statuses</SelectItem>
                                <SelectItem value="ACTIVE">Active</SelectItem>
-                               <SelectItem value="INACTIVE">Inactive</SelectItem>
+                                             <SelectItem value="INACTIVE">Inactive</SelectItem>
+                                             <SelectItem value="DRAFT">Draft</SelectItem>
+                                             <SelectItem value="PENDING_STEP_2">Pending Step 2</SelectItem>
                             </SelectContent>
                          </Select>
 
@@ -352,6 +378,11 @@ export default function AllCustomersPage() {
 
              {/* Table Container */}
              <div className="flex-1 overflow-auto min-h-0">
+             {loadError && (
+                <div className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                   {loadError}
+                </div>
+             )}
              <Table>
                 <TableHeader className="bg-sky-50/70 sticky top-0 z-10">
                    <TableRow>
@@ -368,8 +399,8 @@ export default function AllCustomersPage() {
                    </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {visibleCustomers.map((customer, index) => (
-                      <TableRow key={index} className="hover:bg-slate-50/50">
+                   {visibleCustomers.map((customer) => (
+                      <TableRow key={customer.id} className="hover:bg-slate-50/50">
                          <TableCell className="pl-6"><Checkbox /></TableCell>
                          <TableCell className="font-semibold text-slate-700">{customer.id}</TableCell>
                          <TableCell>
@@ -417,10 +448,18 @@ export default function AllCustomersPage() {
                       </TableRow>
                             ))}
 
-                            {visibleCustomers.length === 0 && (
+                            {!isLoading && visibleCustomers.length === 0 && (
                                <TableRow>
                                   <TableCell colSpan={10} className="py-10 text-center text-sm text-slate-500">
                                      No customers found for the selected filters.
+                                  </TableCell>
+                               </TableRow>
+                            )}
+
+                            {isLoading && (
+                               <TableRow>
+                                  <TableCell colSpan={10} className="py-10 text-center text-sm text-slate-500">
+                                     Loading customers...
                                   </TableCell>
                                </TableRow>
                             )}

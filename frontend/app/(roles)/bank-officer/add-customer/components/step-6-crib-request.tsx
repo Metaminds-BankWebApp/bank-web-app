@@ -1,17 +1,17 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowRight, ArrowLeft, Loader2, Link, Server, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, Loader2, Server, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
-import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
 import { StepProps } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { Checkbox } from "@/src/components/ui/checkbox";
 
-export function CRIBRequest({ formData, updateFormData, onNext, onBack }: StepProps) {
+export function CRIBRequest({ formData, onNext, onBack }: StepProps) {
   const [requestStatus, setRequestStatus] = useState<"draft" | "processing" | "sent" | "connected" | "retrieved">("draft");
   const [consentGiven, setConsentGiven] = useState(false);
+  const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
 
   // Simulate process
   useEffect(() => {
@@ -57,7 +57,7 @@ export function CRIBRequest({ formData, updateFormData, onNext, onBack }: StepPr
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Full Name</p>
-                   <p className="font-semibold text-slate-800">{formData.fullName || "Not Provided"}</p>
+                   <p className="font-semibold text-slate-800">{customerFullName || "Not Provided"}</p>
                 </div>
                 <div>
                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">NIC Number</p>
@@ -115,7 +115,7 @@ export function CRIBRequest({ formData, updateFormData, onNext, onBack }: StepPr
             <Button 
               onClick={handleInitiateRequest}
               disabled={!consentGiven || requestStatus !== "draft"}
-              className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200 min-w-[140px]"
+              className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200 min-w-35"
             >
                 {requestStatus === "draft" ? (
                     <>Initiate Request <ArrowRight size={16} /></>
@@ -210,7 +210,7 @@ export function CRIBRequest({ formData, updateFormData, onNext, onBack }: StepPr
             {/* CRIB Status Snapshot */}
             <div className="mt-8 pt-6 border-t border-slate-100">
                 <h4 className="text-xs font-bold text-[#0d3b66] mb-3">CRIB Snapshot</h4>
-                <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 flex items-center justify-center flex-col gap-2 min-h-[100px]">
+                <div className="bg-slate-50 rounded-lg p-4 border border-slate-100 flex items-center justify-center flex-col gap-2 min-h-25">
                     <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
                         <Server size={20} />
                     </div>

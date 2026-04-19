@@ -12,8 +12,23 @@ import { Label } from "@/src/components/ui";
 import { CustomerFormData, StepProps } from "./types";
 import { PersonalDetailsErrors, validatePersonalDetailsStep } from "./validation";
 
-export function PersonalDetails({ formData, updateFormData, onNext, onBack }: StepProps) {
+export function PersonalDetails({
+  formData,
+  updateFormData,
+  onNext,
+  onBack,
+  onSaveDraftStepOne,
+  onContinueStepOne,
+  isSavingDraftStepOne,
+  isSubmittingStepOne,
+  serverStepOneErrors,
+  onClearServerStepOneError,
+}: StepProps) {
   const [errors, setErrors] = useState<PersonalDetailsErrors>({});
+  const mergedErrors: PersonalDetailsErrors = {
+    ...errors,
+    ...serverStepOneErrors,
+  };
 
   const validate = () => {
     const newErrors = validatePersonalDetailsStep(formData);
@@ -21,9 +36,18 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validate()) {
+      if (onContinueStepOne) {
+        await onContinueStepOne();
+      }
       onNext();
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (validate() && onSaveDraftStepOne) {
+      await onSaveDraftStepOne();
     }
   };
 
@@ -32,6 +56,10 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
     updateFormData({ [id]: value } as Partial<CustomerFormData>);
     if (id in errors && errors[id as keyof PersonalDetailsErrors]) {
       setErrors((prev) => ({ ...prev, [id]: undefined }));
+    }
+
+    if (id === "nic" || id === "email" || id === "username") {
+      onClearServerStepOneError?.(id);
     }
   };
 
@@ -43,16 +71,29 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
       </div>
       
       <div className="p-8 space-y-8">
-        <div className="space-y-3">
-          <Label htmlFor="fullName" className="text-slate-700 font-medium">Full Name</Label>
-          <Input 
-            id="fullName" 
-            value={formData.fullName} 
-            onChange={handleChange}
-            placeholder="Johnathan Doe" 
-            className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${errors.fullName ? "border-red-500" : ""}`}
-          />
-          {errors.fullName && <p className="text-red-500 text-xs">{errors.fullName}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-3">
+            <Label htmlFor="firstName" className="text-slate-700 font-medium">First Name</Label>
+            <Input 
+              id="firstName" 
+              value={formData.firstName} 
+              onChange={handleChange}
+              placeholder="Johnathan" 
+              className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${mergedErrors.firstName ? "border-red-500" : ""}`}
+            />
+            {mergedErrors.firstName && <p className="text-red-500 text-xs">{mergedErrors.firstName}</p>}
+          </div>
+          <div className="space-y-3">
+            <Label htmlFor="lastName" className="text-slate-700 font-medium">Last Name</Label>
+            <Input 
+              id="lastName" 
+              value={formData.lastName} 
+              onChange={handleChange}
+              placeholder="Doe" 
+              className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${mergedErrors.lastName ? "border-red-500" : ""}`}
+            />
+            {mergedErrors.lastName && <p className="text-red-500 text-xs">{mergedErrors.lastName}</p>}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -63,9 +104,9 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
               value={formData.nic} 
               onChange={handleChange}
               placeholder="951234567V" 
-              className={`bg-slate-50 border-slate-200 h-11 ${errors.nic ? "border-red-500" : ""}`} 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.nic ? "border-red-500" : ""}`} 
             />
-            {errors.nic && <p className="text-red-500 text-xs">{errors.nic}</p>}
+            {mergedErrors.nic && <p className="text-red-500 text-xs">{mergedErrors.nic}</p>}
           </div>
           <div className="space-y-3">
             <Label htmlFor="dob" className="text-slate-700 font-medium">Date of Birth</Label>
@@ -76,7 +117,7 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
               onChange={handleChange}
               className={`bg-slate-50 border-slate-200 h-11 ${errors.dob ? "border-red-500" : ""}`} 
             />
-            {errors.dob && <p className="text-red-500 text-xs">{errors.dob}</p>}
+            {mergedErrors.dob && <p className="text-red-500 text-xs">{mergedErrors.dob}</p>}
           </div>
         </div>
 
@@ -89,9 +130,9 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
               value={formData.email} 
               onChange={handleChange}
               placeholder="john.doe@email.com" 
-              className={`bg-slate-50 border-slate-200 h-11 ${errors.email ? "border-red-500" : ""}`} 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.email ? "border-red-500" : ""}`} 
             />
-            {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
+            {mergedErrors.email && <p className="text-red-500 text-xs">{mergedErrors.email}</p>}
           </div>
           <div className="space-y-3">
             <Label htmlFor="mobile" className="text-slate-700 font-medium">Mobile Number</Label>
@@ -100,9 +141,34 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
               value={formData.mobile} 
               onChange={handleChange}
               placeholder="+94 77 123 4567" 
-              className={`bg-slate-50 border-slate-200 h-11 ${errors.mobile ? "border-red-500" : ""}`} 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.mobile ? "border-red-500" : ""}`} 
             />
-            {errors.mobile && <p className="text-red-500 text-xs">{errors.mobile}</p>}
+            {mergedErrors.mobile && <p className="text-red-500 text-xs">{mergedErrors.mobile}</p>}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-3">
+            <Label htmlFor="province" className="text-slate-700 font-medium">Province</Label>
+            <Input 
+              id="province" 
+              value={formData.province} 
+              onChange={handleChange}
+              placeholder="Western" 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.province ? "border-red-500" : ""}`} 
+            />
+            {mergedErrors.province && <p className="text-red-500 text-xs">{mergedErrors.province}</p>}
+          </div>
+          <div className="space-y-3">
+            <Label htmlFor="address" className="text-slate-700 font-medium">Address</Label>
+            <Input 
+              id="address" 
+              value={formData.address} 
+              onChange={handleChange}
+              placeholder="123, Galle Road, Colombo" 
+              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.address ? "border-red-500" : ""}`} 
+            />
+            {mergedErrors.address && <p className="text-red-500 text-xs">{mergedErrors.address}</p>}
           </div>
         </div>
 
@@ -117,9 +183,9 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
                 value={formData.username} 
                 onChange={handleChange}
                 placeholder="johndoe_95" 
-                className={`bg-slate-50 border-slate-200 h-11 ${errors.username ? "border-red-500" : ""}`} 
+                className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.username ? "border-red-500" : ""}`} 
               />
-              {errors.username && <p className="text-red-500 text-xs">{errors.username}</p>}
+              {mergedErrors.username && <p className="text-red-500 text-xs">{mergedErrors.username}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -130,9 +196,9 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
                     type="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className={`bg-slate-50 border-slate-200 h-11 ${errors.password ? "border-red-500" : ""}`}
+                    className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.password ? "border-red-500" : ""}`}
                   />
-                  {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
+                  {mergedErrors.password && <p className="text-red-500 text-xs">{mergedErrors.password}</p>}
               </div>
               <div className="space-y-3">
                   <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">Confirm Password</Label>
@@ -141,9 +207,9 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
                     type="password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`bg-slate-50 border-slate-200 h-11 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                    className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.confirmPassword ? "border-red-500" : ""}`}
                   />
-                  {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword}</p>}
+                  {mergedErrors.confirmPassword && <p className="text-red-500 text-xs">{mergedErrors.confirmPassword}</p>}
               </div>
             </div>
         </div>
@@ -160,13 +226,13 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
                    value={formData.bankAccount} 
                    onChange={handleChange}
                    placeholder="1000 2345 6789" 
-                   className={`bg-slate-50 border-slate-200 h-11 flex-1 ${errors.bankAccount ? "border-red-500" : ""}`} 
+                   className={`bg-slate-50 border-slate-200 h-11 flex-1 ${mergedErrors.bankAccount ? "border-red-500" : ""}`} 
                    disabled={formData.isAccountVerified}
                  />
                  <Button 
                    type="button"
                    variant={formData.isAccountVerified ? "outline" : "primary"}
-                   className={`h-11 px-6 whitespace-nowrap min-w-[120px] ${formData.isAccountVerified ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" : "bg-[#0d3b66] hover:bg-[#1a4a7a] text-white"}`}
+                   className={`h-11 px-6 whitespace-nowrap min-w-30 ${formData.isAccountVerified ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" : "bg-[#0d3b66] hover:bg-[#1a4a7a] text-white"}`}
                    onClick={(e) => {
                       e.preventDefault();
                       if (formData.bankAccount && formData.bankAccount.length > 5) {
@@ -180,7 +246,7 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
                    ) : "Verify Account"}
                  </Button>
               </div>
-              {errors.bankAccount && <p className="text-red-500 text-xs">{errors.bankAccount}</p>}
+              {mergedErrors.bankAccount && <p className="text-red-500 text-xs">{mergedErrors.bankAccount}</p>}
            </div>
         </div>
       </div>
@@ -196,12 +262,20 @@ export function PersonalDetails({ formData, updateFormData, onNext, onBack }: St
             <ArrowLeft size={16} /> Back
         </Button>
         <div className="flex items-center gap-4">
-            <span className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600">Save Draft</span>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={Boolean(isSavingDraftStepOne || isSubmittingStepOne)}
+              className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSavingDraftStepOne ? "Saving Draft..." : "Save Draft"}
+            </button>
             <Button 
               onClick={handleNext}
+              disabled={Boolean(isSavingDraftStepOne || isSubmittingStepOne)}
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
             >
-                Continue <ArrowRight size={16} />
+                {isSubmittingStepOne ? "Saving..." : "Continue"} <ArrowRight size={16} />
             </Button>
         </div>
       </div>
