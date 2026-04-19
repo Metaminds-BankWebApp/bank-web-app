@@ -3,10 +3,10 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
 import { registerPublicCustomer } from "@/src/api/registration/public-customer-registration.service";
 import { ApiError } from "@/src/types/api-error";
 import { Button, Input, useToast } from "@/src/components/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 
 type RegisterField = "firstName" | "lastName" | "email" | "phone" | "nic" | "dob" | "username" | "province" | "address" | "password" | "confirmPassword";
 type RegisterFieldErrors = Partial<Record<RegisterField, string>>;
@@ -25,6 +25,7 @@ type RegisterFormValues = {
 };
 
 const REGISTER_FIELDS: RegisterField[] = ["firstName", "lastName", "email", "phone", "nic", "dob", "username", "province", "address", "password", "confirmPassword"];
+const PROVINCES = ["Western", "Central", "Southern", "Northern", "Eastern", "North Western", "North Central", "Uva", "Sabaragamuwa"];
 
 function extractRegisterFieldErrors(apiError: ApiError): RegisterFieldErrors {
   const details = apiError.details as { fieldErrors?: unknown } | undefined;
@@ -60,7 +61,6 @@ export function RegisterForm() {
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("password123");
   const [confirmPassword, setConfirmPassword] = useState("password123");
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
@@ -342,20 +342,34 @@ export function RegisterForm() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Province"
-            value={province}
-            error={fieldErrors.province}
-            onChange={(event) => {
-              setProvince(event.target.value);
-              clearFieldError("province");
-              setError(null);
-            }}
-            onBlur={() => validateSingleField("province")}
-            placeholder="Province"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-(--primecore-foreground)/70">Province</label>
+            <Select
+              value={province}
+              onValueChange={(value) => {
+                setProvince(value);
+                clearFieldError("province");
+                setError(null);
+              }}
+            >
+              <SelectTrigger
+                className={`h-14 rounded-2xl bg-(--primecore-surface) text-(--primecore-foreground) ring-offset-background ${
+                  fieldErrors.province ? "border-red-500 focus-visible:ring-red-500" : "border-(--primecore-border)"
+                }`}
+                onBlur={() => validateSingleField("province")}
+              >
+                <SelectValue placeholder="Province" />
+              </SelectTrigger>
+              <SelectContent>
+                {PROVINCES.map((provinceName) => (
+                  <SelectItem key={provinceName} value={provinceName}>
+                    {provinceName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {fieldErrors.province && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.province}</p>}
+          </div>
           <Input
             label="Address"
             value={address}
@@ -392,35 +406,21 @@ export function RegisterForm() {
               className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-(--primecore-foreground)/70">Confirm Password</label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(event) => {
-                  setConfirmPassword(event.target.value);
-                  clearFieldError("confirmPassword");
-                  setError(null);
-                }}
-                onBlur={() => validateSingleField("confirmPassword")}
-                aria-invalid={!!fieldErrors.confirmPassword}
-                placeholder="Confirm password"
-                className={`h-14 w-full rounded-2xl border bg-(--primecore-surface) px-3.5 pr-11 text-sm text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ring-offset-background ${
-                  fieldErrors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : "border-(--primecore-border)"
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((current) => !current)}
-                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--primecore-foreground)/60 hover:text-(--primecore-foreground)"
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {fieldErrors.confirmPassword && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.confirmPassword}</p>}
-          </div>
+          <Input
+            label="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            error={fieldErrors.confirmPassword}
+            onChange={(event) => {
+              setConfirmPassword(event.target.value);
+              clearFieldError("confirmPassword");
+              setError(null);
+            }}
+            onBlur={() => validateSingleField("confirmPassword")}
+            placeholder="Confirm password"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
         </div>
 
         {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
