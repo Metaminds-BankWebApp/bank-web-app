@@ -188,7 +188,7 @@ export default function AddCustomerPage() {
       username: data.username.trim(),
       password: data.password,
       confirmPassword: data.confirmPassword,
-      bankAccount: data.bankAccount.trim(),
+      bankAccount: Number(data.bankAccount.trim()),
    });
 
    const saveStepOneDraft = async () => {

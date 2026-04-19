@@ -158,6 +158,8 @@ export function validatePersonalDetailsStep(formData: CustomerFormData): Persona
 
   if (!formData.bankAccount.trim()) {
     errors.bankAccount = "Bank account is required.";
+  } else if (!/^\d+$/.test(formData.bankAccount.trim())) {
+    errors.bankAccount = "Bank account must be a whole number.";
   } else if (!formData.isAccountVerified) {
     errors.bankAccount = "Please verify the bank account.";
   }

@@ -10,12 +10,12 @@ export interface StepOneRegistrationRequest {
   username: string;
   password: string;
   confirmPassword: string;
-  bankAccount: string;
+  bankAccount?: number;
 }
 
 export interface StepOneRegistrationResponse {
   userId: number;
   role: "BANK_CUSTOMER" | "PUBLIC_CUSTOMER" | "BANK_OFFICER" | string;
-  state: "DRAFT" | "PENDING_STEP_2" | string;
+  state: "DRAFT" | "PENDING_STEP_2" | "SUCCESS" | string;
   message: string;
 }

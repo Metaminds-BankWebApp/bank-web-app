@@ -42,7 +42,6 @@ export function RegisterForm() {
   const [nic, setNic] = useState("");
   const [dob, setDob] = useState("");
   const [username, setUsername] = useState("");
-  const [bankAccount, setBankAccount] = useState("");
   const [province, setProvince] = useState("");
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("password123");
@@ -71,7 +70,6 @@ export function RegisterForm() {
     const tNic = nic.trim();
     const tDob = dob.trim();
     const tUsername = username.trim();
-    const tBankAccount = bankAccount.trim();
     const tProvince = province.trim();
     const tAddress = address.trim();
 
@@ -108,11 +106,6 @@ export function RegisterForm() {
 
     if (!tUsername) {
       setError("Username is required.");
-      return;
-    }
-
-    if (!tBankAccount) {
-      setError("Bank account number is required.");
       return;
     }
 
@@ -185,7 +178,6 @@ export function RegisterForm() {
         username: tUsername,
         password,
         confirmPassword,
-        bankAccount: tBankAccount,
       });
 
       showToast({
@@ -238,8 +230,6 @@ export function RegisterForm() {
           <Input label="Province" value={province} onChange={(event) => setProvince(event.target.value)} placeholder="Province" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
           <Input label="Address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Address" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
         </div>
-
-        <Input label="Bank Account Number" value={bankAccount} onChange={(event) => setBankAccount(event.target.value)} placeholder="100023456789" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
