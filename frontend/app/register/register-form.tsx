@@ -113,7 +113,22 @@ export function RegisterForm() {
         if (!values.nic) return "NIC is required.";
         return nicRegex.test(values.nic) ? null : "Please enter a valid NIC.";
       case "dob":
-        return values.dob ? null : "Date of birth is required.";
+        if (!values.dob) return "Date of birth is required.";
+        {
+          const birthDate = new Date(values.dob);
+          if (Number.isNaN(birthDate.getTime())) {
+            return "Please enter a valid date of birth.";
+          }
+
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDifference = today.getMonth() - birthDate.getMonth();
+          if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+            age -= 1;
+          }
+
+          return age >= 18 ? null : "Age must be 18 or older.";
+        }
       case "username":
         if (!values.username) return "Username is required.";
         return values.username.length >= 4 ? null : "Username must be at least 4 characters.";
