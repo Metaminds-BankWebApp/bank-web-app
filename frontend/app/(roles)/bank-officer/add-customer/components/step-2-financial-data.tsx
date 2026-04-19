@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, ArrowLeft, DollarSign } from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
@@ -90,7 +90,6 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                         placeholder="0.00" 
                         className={`bg-slate-50 border-slate-200 h-11 pl-10 ${errors.monthlySalary ? "border-red-500" : ""}`} 
                       />
-                      <DollarSign className="absolute left-3 top-3 text-slate-400" size={16} />
                    </div>
                    {errors.monthlySalary && <p className="text-red-500 text-xs">{errors.monthlySalary}</p>}
                 </div>

@@ -3,67 +3,59 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
-import { authService } from "@/src/api/auth/auth.service";
+import { registerPublicCustomer } from "@/src/api/registration/public-customer-registration.service";
 import { ApiError } from "@/src/types/api-error";
-import { useAuthStore } from "@/src/store";
 import { Button, Input, useToast } from "@/src/components/ui";
 
-const FIRST_NAME_REQUIRED = "First name is required.";
-const FIRST_NAME_INVALID = "First name can contain letters, spaces, apostrophes and hyphens only.";
-const LAST_NAME_REQUIRED = "Last name is required.";
-const LAST_NAME_INVALID = "Last name can contain letters, spaces, apostrophes and hyphens only.";
-const EMAIL_REQUIRED = "Email is required.";
-const PHONE_REQUIRED = "Phone number is required.";
-const NIC_REQUIRED = "NIC is required.";
-const NIC_INVALID = "NIC must be 12 digits or 9 digits followed by V/X.";
-const DOB_REQUIRED = "Date of birth is required.";
-const DOB_INVALID = "Please enter a valid date of birth.";
-const DOB_FUTURE = "Date of birth must be in the past.";
-const DOB_AGE_LIMIT = "You must be at least 18 years old.";
-const USERNAME_REQUIRED = "Username is required.";
-const USERNAME_INVALID = "Username must be 4-30 characters and can contain letters, numbers, dots and underscores.";
-const PROVINCE_REQUIRED = "Province is required.";
-const ADDRESS_REQUIRED = "Address is required.";
-const PASSWORD_REQUIRED = "Password is required.";
-const CONFIRM_PASSWORD_REQUIRED = "Confirm password is required.";
-const EMAIL_INVALID = "Please enter a valid email address.";
-const PHONE_INVALID = "Phone number must be exactly 10 digits (numbers only).";
-const PASSWORD_INVALID = "Password must be at least 10 characters and include uppercase, lowercase letters and numbers.";
-const PASSWORD_MISMATCH = "Passwords do not match.";
+type RegisterField = "nic" | "email" | "username";
+type RegisterFieldErrors = Partial<Record<RegisterField, string>>;
 
-type FieldName = "firstName" | "lastName" | "email" | "phone" | "nic" | "dateOfBirth" | "username" | "province" | "address" | "password" | "confirmPassword";
-type FieldErrors = Partial<Record<FieldName, string>>;
+function extractRegisterFieldErrors(apiError: ApiError): RegisterFieldErrors {
+  const details = apiError.details as { fieldErrors?: unknown } | undefined;
+  const rawFieldErrors = details?.fieldErrors;
+  if (!rawFieldErrors || typeof rawFieldErrors !== "object") {
+    return {};
+  }
+
+  const source = rawFieldErrors as Record<string, unknown>;
+  const result: RegisterFieldErrors = {};
+  if (typeof source.nic === "string") {
+    result.nic = source.nic;
+  }
+  if (typeof source.email === "string") {
+    result.email = source.email;
+  }
+  if (typeof source.username === "string") {
+    result.username = source.username;
+  }
+  return result;
+}
 
 export function RegisterForm() {
   const router = useRouter();
   const { showToast } = useToast();
-  const login = useAuthStore((state) => state.login);
 
   const [firstName, setFirstName] = useState("Demo");
   const [lastName, setLastName] = useState("User");
   const [email, setEmail] = useState("demo@primecore.app");
   const [phone, setPhone] = useState("");
   const [nic, setNic] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [dob, setDob] = useState("");
   const [username, setUsername] = useState("");
   const [province, setProvince] = useState("");
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("password123");
   const [confirmPassword, setConfirmPassword] = useState("password123");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [formError, setFormError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
 
-  function clearFieldError(field: FieldName) {
-    setFieldErrors((current) => {
-      if (!current[field]) {
-        return current;
+  function clearFieldError(field: RegisterField) {
+    setFieldErrors((prev) => {
+      if (!prev[field]) {
+        return prev;
       }
-      const next = { ...current };
-      delete next[field];
-      return next;
+      return { ...prev, [field]: undefined };
     });
   }
 
@@ -76,116 +68,131 @@ export function RegisterForm() {
     const tEmail = email.trim();
     const tPhone = phone.trim();
     const tNic = nic.trim();
+    const tDob = dob.trim();
     const tUsername = username.trim();
     const tProvince = province.trim();
     const tAddress = address.trim();
-    const nextErrors: FieldErrors = {};
-    const nameRegex = /^[A-Za-z][A-Za-z\s'-]{0,49}$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\d{10}$/;
-    const nicRegex = /^(\d{12}|\d{9}[vVxX])$/;
-    const usernameRegex = /^[a-zA-Z0-9._]{4,30}$/;
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
+    // Basic required checks
     if (!tFirstName) {
-      nextErrors.firstName = FIRST_NAME_REQUIRED;
-    } else if (!nameRegex.test(tFirstName)) {
-      nextErrors.firstName = FIRST_NAME_INVALID;
+      setError("First name is required.");
+      return;
     }
 
     if (!tLastName) {
-      nextErrors.lastName = LAST_NAME_REQUIRED;
-    } else if (!nameRegex.test(tLastName)) {
-      nextErrors.lastName = LAST_NAME_INVALID;
+      setError("Last name is required.");
+      return;
     }
 
     if (!tEmail) {
-      nextErrors.email = EMAIL_REQUIRED;
-    } else if (!emailRegex.test(tEmail)) {
-      nextErrors.email = EMAIL_INVALID;
+      setError("Email is required.");
+      return;
     }
 
     if (!tPhone) {
-      nextErrors.phone = PHONE_REQUIRED;
-    } else if (!phoneRegex.test(tPhone)) {
-      nextErrors.phone = PHONE_INVALID;
+      setError("Phone number is required.");
+      return;
     }
 
     if (!tNic) {
-      nextErrors.nic = NIC_REQUIRED;
-    } else if (!nicRegex.test(tNic)) {
-      nextErrors.nic = NIC_INVALID;
+      setError("NIC is required.");
+      return;
     }
 
-    if (!dateOfBirth) {
-      nextErrors.dateOfBirth = DOB_REQUIRED;
-    } else {
-      const parsedDob = new Date(dateOfBirth);
-      if (Number.isNaN(parsedDob.getTime())) {
-        nextErrors.dateOfBirth = DOB_INVALID;
-      } else if (parsedDob >= today) {
-        nextErrors.dateOfBirth = DOB_FUTURE;
-      } else {
-        const age = today.getFullYear() - parsedDob.getFullYear() - (today.getMonth() < parsedDob.getMonth() || (today.getMonth() === parsedDob.getMonth() && today.getDate() < parsedDob.getDate()) ? 1 : 0);
-        if (age < 18) {
-          nextErrors.dateOfBirth = DOB_AGE_LIMIT;
-        }
-      }
+    if (!tDob) {
+      setError("Date of birth is required.");
+      return;
     }
 
     if (!tUsername) {
-      nextErrors.username = USERNAME_REQUIRED;
-    } else if (!usernameRegex.test(tUsername)) {
-      nextErrors.username = USERNAME_INVALID;
+      setError("Username is required.");
+      return;
     }
 
     if (!tProvince) {
-      nextErrors.province = PROVINCE_REQUIRED;
+      setError("Province is required.");
+      return;
     }
 
     if (!tAddress) {
-      nextErrors.address = ADDRESS_REQUIRED;
+      setError("Address is required.");
+      return;
     }
 
     if (!password) {
-      nextErrors.password = PASSWORD_REQUIRED;
-    } else if (!passwordRegex.test(password)) {
-      nextErrors.password = PASSWORD_INVALID;
+      setError("Password is required.");
+      return;
     }
 
-    if (!confirmPassword) {
-      nextErrors.confirmPassword = CONFIRM_PASSWORD_REQUIRED;
-    } else if (password && password !== confirmPassword) {
-      nextErrors.confirmPassword = PASSWORD_MISMATCH;
+    // Email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(tEmail)) {
+      setError("Please enter a valid email address.");
+      return;
     }
 
-    if (Object.keys(nextErrors).length > 0) {
-      setFieldErrors(nextErrors);
-      setFormError(null);
+    // Phone: exactly 10 digits
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(tPhone)) {
+      setError("Phone number must be exactly 10 digits (numbers only).");
+      return;
+    }
+
+    const nicRegex = /^(\d{9}[vVxX]|\d{12})$/;
+    if (!nicRegex.test(tNic)) {
+      setError("Please enter a valid NIC.");
+      return;
+    }
+
+    if (tUsername.length < 4) {
+      setError("Username must be at least 4 characters.");
+      return;
+    }
+
+    // Password complexity: minimum 10 chars, at least one uppercase, one lowercase and one number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+    if (!passwordRegex.test(password)) {
+      setError("Password must be at least 10 characters and include uppercase, lowercase letters and numbers.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
       return;
     }
 
     setIsSubmitting(true);
+    setError(null);
     setFieldErrors({});
-    setFormError(null);
 
     try {
-      const response = await authService.register({
+      await registerPublicCustomer({
         firstName: tFirstName,
         lastName: tLastName,
+        nic: tNic,
+        dob: tDob,
         email: tEmail,
+        mobile: tPhone,
+        province: tProvince,
+        address: tAddress,
+        username: tUsername,
         password,
+        confirmPassword,
       });
 
-      login(response);
-      showToast({ type: "success", title: "Account created", description: "Redirecting to application form." });
-      router.replace("/public-customer/application");
+      showToast({
+        type: "success",
+        title: "Account created",
+        description: "Your registration step one is saved. Please sign in.",
+      });
+      router.replace("/login");
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
+      if (apiError) {
+        setFieldErrors(extractRegisterFieldErrors(apiError));
+      }
       const message = apiError?.message ?? "Unable to register. Please try again.";
-      setFormError(message);
+      setError(message);
       showToast({ type: "error", title: "Registration failed", description: message });
     } finally {
       setIsSubmitting(false);
@@ -201,185 +208,38 @@ export function RegisterForm() {
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="First Name"
-            value={firstName}
-            onChange={(event) => {
-              setFirstName(event.target.value);
-              clearFieldError("firstName");
-              setFormError(null);
-            }}
-            error={fieldErrors.firstName}
-            placeholder="Demo"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-          <Input
-            label="Last Name"
-            value={lastName}
-            onChange={(event) => {
-              setLastName(event.target.value);
-              clearFieldError("lastName");
-              setFormError(null);
-            }}
-            error={fieldErrors.lastName}
-            placeholder="User"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
+          <Input label="First Name" value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="John" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+          <Input label="Last Name" value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder="Doe" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
         </div>
-
-        <Input
-          label="Email Address"
-          type="email"
-          value={email}
-          onChange={(event) => {
-            setEmail(event.target.value);
-            clearFieldError("email");
-            setFormError(null);
-          }}
-          error={fieldErrors.email}
-          placeholder="name@example.com"
-          labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-        />
+        <Input label="Email Address" type="email" value={email} error={fieldErrors.email} onChange={(event) => { setEmail(event.target.value); clearFieldError("email"); }} placeholder="name@example.com" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Phone Number"
-            value={phone}
-            onChange={(event) => {
-              setPhone(event.target.value);
-              clearFieldError("phone");
-              setFormError(null);
-            }}
-            error={fieldErrors.phone}
-            helperText="Enter a 10-digit phone number (numbers only)."
-            placeholder="e.g. 7123456789"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-          <Input
-            label="NIC"
-            value={nic}
-            onChange={(event) => {
-              setNic(event.target.value);
-              clearFieldError("nic");
-              setFormError(null);
-            }}
-            error={fieldErrors.nic}
-            placeholder="200012345678"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Date of Birth"
-            type="date"
-            value={dateOfBirth}
-            onChange={(event) => {
-              setDateOfBirth(event.target.value);
-              clearFieldError("dateOfBirth");
-              setFormError(null);
-            }}
-            error={fieldErrors.dateOfBirth}
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) ring-offset-background"
-          />
-          <Input
-            label="Username"
-            value={username}
-            onChange={(event) => {
-              setUsername(event.target.value);
-              clearFieldError("username");
-              setFormError(null);
-            }}
-            error={fieldErrors.username}
-            placeholder="john.doe.2000"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Province"
-            value={province}
-            onChange={(event) => {
-              setProvince(event.target.value);
-              clearFieldError("province");
-              setFormError(null);
-            }}
-            error={fieldErrors.province}
-            placeholder="Province"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-          <Input
-            label="Address"
-            value={address}
-            onChange={(event) => {
-              setAddress(event.target.value);
-              clearFieldError("address");
-              setFormError(null);
-            }}
-            error={fieldErrors.address}
-            placeholder="Address"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-              clearFieldError("password");
-              clearFieldError("confirmPassword");
-              setFormError(null);
-            }}
-            error={fieldErrors.password}
-            helperText="Use at least 10 characters, including uppercase, lowercase and numbers."
-            placeholder="At least 10 chars, upper, lower, number"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-(--primecore-foreground)/70">Confirm Password</label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(event) => {
-                  setConfirmPassword(event.target.value);
-                  clearFieldError("confirmPassword");
-                  setFormError(null);
-                }}
-                aria-invalid={!!fieldErrors.confirmPassword}
-                className={`h-14 w-full rounded-2xl border bg-(--primecore-surface) px-3.5 pr-11 text-sm text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ring-offset-background ${
-                  fieldErrors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : "border-(--primecore-border)"
-                }`}
-                placeholder="Confirm password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((current) => !current)}
-                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--primecore-foreground)/60 hover:text-(--primecore-foreground)"
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {fieldErrors.confirmPassword && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.confirmPassword}</p>}
+          <div>
+            <Input label="Phone Number" value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="e.g. 7123456789" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+            <p className="mt-1 text-xs text-(--primecore-foreground)/60">Enter a 10-digit phone number (numbers only).</p>
           </div>
+          <Input label="NIC" value={nic} error={fieldErrors.nic} onChange={(event) => { setNic(event.target.value); clearFieldError("nic"); }} placeholder="200012345678" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
         </div>
 
-        {formError && <p className="text-xs text-red-500 dark:text-red-400">{formError}</p>}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input label="Date of Birth" type="date" value={dob} onChange={(event) => setDob(event.target.value)} labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+          <Input label="Username" value={username} error={fieldErrors.username} onChange={(event) => { setUsername(event.target.value); clearFieldError("username"); }} placeholder="john.doe.2000" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input label="Province" value={province} onChange={(event) => setProvince(event.target.value)} placeholder="Province" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+          <Input label="Address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="Address" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Input label="Password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 10 chars, upper, lower, number" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+            <p className="mt-1 text-xs text-(--primecore-foreground)/60">Use at least 10 characters, including uppercase, lowercase and numbers.</p>
+          </div>
+          <Input label="Confirm Password" type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="Confirm password" labelClassName="text-(--primecore-foreground)/70" className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background" />
+        </div>
+
+        {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 
         <Button type="submit" className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-semibold text-black hover:bg-primary/90" loading={isSubmitting}>
           {isSubmitting ? "Creating account..." : "Create account"}

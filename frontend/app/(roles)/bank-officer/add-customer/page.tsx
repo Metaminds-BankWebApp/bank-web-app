@@ -1,12 +1,11 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { 
   CheckCircle2, 
-  User, 
-  ShieldCheck
+   User
 } from "lucide-react";
 import { initialFormData, CustomerFormData } from "./components/types";
 import { PersonalDetails } from "./components/step-1-personal-details";
@@ -20,8 +19,45 @@ import { Review } from "./components/step-8-review";
 import { SuccessView } from "./components/success-view";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { validateCustomerSubmission } from "./components/validation";
+import {
+   continueBankCustomerStepOne,
+   saveBankCustomerStepOneDraft,
+} from "@/src/api/registration/bank-customer-registration.service";
+import type { StepOneRegistrationRequest } from "@/src/types/dto/registration.dto";
+import { ApiError } from "@/src/types/api-error";
+
+type StepOneConflictField = "nic" | "email" | "username";
+type StepOneFieldErrors = Partial<Record<StepOneConflictField, string>>;
+
+function extractStepOneFieldErrors(error: ApiError): StepOneFieldErrors {
+   const details = error.details as { fieldErrors?: unknown } | undefined;
+   const fieldErrors = details?.fieldErrors;
+   if (!fieldErrors || typeof fieldErrors !== "object") {
+      return {};
+   }
+
+   const source = fieldErrors as Record<string, unknown>;
+   const result: StepOneFieldErrors = {};
+   if (typeof source.nic === "string") {
+      result.nic = source.nic;
+   }
+   if (typeof source.email === "string") {
+      result.email = source.email;
+   }
+   if (typeof source.username === "string") {
+      result.username = source.username;
+   }
+
+   return result;
+}
 
 const generateCustomerId = () => `PC-${Math.floor(100000 + Math.random() * 900000)}`;
+const ADD_CUSTOMER_DRAFT_STORAGE_KEY = "bank-officer-add-customer-draft-v1";
+
+type StoredAddCustomerDraft = {
+   step: number;
+   formData: CustomerFormData;
+};
 
 export default function AddCustomerPage() {
   const [step, setStep] = useState(1);
@@ -29,6 +65,49 @@ export default function AddCustomerPage() {
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [generatedId, setGeneratedId] = useState("");
   const [submitError, setSubmitError] = useState("");
+   const [serverStepOneErrors, setServerStepOneErrors] = useState<StepOneFieldErrors>({});
+   const [isSavingDraftStepOne, setIsSavingDraftStepOne] = useState(false);
+   const [isSubmittingStepOne, setIsSubmittingStepOne] = useState(false);
+   const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
+
+   useEffect(() => {
+      try {
+         const rawDraft = window.localStorage.getItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
+         if (!rawDraft) {
+            return;
+         }
+
+         const parsedDraft = JSON.parse(rawDraft) as Partial<StoredAddCustomerDraft>;
+         if (parsedDraft.formData) {
+            setFormData({
+               ...initialFormData,
+               ...parsedDraft.formData,
+               loans: Array.isArray(parsedDraft.formData.loans) ? parsedDraft.formData.loans : [],
+               creditCards: Array.isArray(parsedDraft.formData.creditCards) ? parsedDraft.formData.creditCards : [],
+               liabilities: Array.isArray(parsedDraft.formData.liabilities) ? parsedDraft.formData.liabilities : [],
+            });
+         }
+
+         if (
+            typeof parsedDraft.step === "number" &&
+            Number.isInteger(parsedDraft.step) &&
+            parsedDraft.step >= 1 &&
+            parsedDraft.step <= 8
+         ) {
+            setStep(parsedDraft.step);
+         }
+      } catch {
+         // Ignore broken localStorage payloads and start with default values.
+      }
+   }, []);
+
+   useEffect(() => {
+      const draft: StoredAddCustomerDraft = {
+         step,
+         formData,
+      };
+      window.localStorage.setItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+   }, [step, formData]);
   
   const steps = [
     { id: 1, label: "Personal Details" },
@@ -47,6 +126,15 @@ export default function AddCustomerPage() {
       setSubmitError("");
     }
   };
+
+   const clearServerStepOneError = (field: StepOneConflictField) => {
+      setServerStepOneErrors((prev) => {
+         if (!prev[field]) {
+            return prev;
+         }
+         return { ...prev, [field]: undefined };
+      });
+   };
 
   const handleNext = () => {
     if (step < steps.length) {
@@ -84,10 +172,67 @@ export default function AddCustomerPage() {
     setStep(1);
     setIsSuccess(false);
     setSubmitError("");
+         setServerStepOneErrors({});
+      window.localStorage.removeItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
   };
 
+   const mapStepOnePayload = (data: CustomerFormData): StepOneRegistrationRequest => ({
+      firstName: data.firstName.trim(),
+      lastName: data.lastName.trim(),
+      nic: data.nic.trim(),
+      dob: data.dob.trim(),
+      email: data.email.trim(),
+      mobile: data.mobile.trim(),
+      province: data.province.trim(),
+      address: data.address.trim(),
+      username: data.username.trim(),
+      password: data.password,
+      confirmPassword: data.confirmPassword,
+      bankAccount: Number(data.bankAccount.trim()),
+   });
+
+   const saveStepOneDraft = async () => {
+      setIsSavingDraftStepOne(true);
+      setSubmitError("");
+      setServerStepOneErrors({});
+      try {
+         await saveBankCustomerStepOneDraft(mapStepOnePayload(formData));
+      } catch (error) {
+         if (error instanceof ApiError) {
+            setSubmitError(error.message);
+            setServerStepOneErrors(extractStepOneFieldErrors(error));
+         } else {
+            setSubmitError("Failed to save draft. Please try again.");
+            setServerStepOneErrors({});
+         }
+         throw error;
+      } finally {
+         setIsSavingDraftStepOne(false);
+      }
+   };
+
+   const continueStepOne = async () => {
+      setIsSubmittingStepOne(true);
+      setSubmitError("");
+      setServerStepOneErrors({});
+      try {
+         await continueBankCustomerStepOne(mapStepOnePayload(formData));
+      } catch (error) {
+         if (error instanceof ApiError) {
+            setSubmitError(error.message);
+            setServerStepOneErrors(extractStepOneFieldErrors(error));
+         } else {
+            setSubmitError("Failed to save step one. Please try again.");
+            setServerStepOneErrors({});
+         }
+         throw error;
+      } finally {
+         setIsSubmittingStepOne(false);
+      }
+   };
+
   const renderStep = () => {
-    const props = {
+      const props = {
       formData,
       updateFormData,
       onNext: handleNext,
@@ -95,7 +240,18 @@ export default function AddCustomerPage() {
     };
 
     switch (step) {
-      case 1: return <PersonalDetails {...props} />;
+         case 1:
+            return (
+               <PersonalDetails
+                  {...props}
+                  onSaveDraftStepOne={saveStepOneDraft}
+                  onContinueStepOne={continueStepOne}
+                  isSavingDraftStepOne={isSavingDraftStepOne}
+                  isSubmittingStepOne={isSubmittingStepOne}
+                  serverStepOneErrors={serverStepOneErrors}
+                  onClearServerStepOneError={clearServerStepOneError}
+               />
+            );
       case 2: return <FinancialData {...props} />;
       case 3: return <Loans {...props} />;
       case 4: return <CreditCards {...props} />;
@@ -103,7 +259,7 @@ export default function AddCustomerPage() {
       case 6: return <CRIBRequest {...props} />;
       case 7: return <CRIBRetrieval {...props} />;
       case 8: return <Review {...props} />;
-      default: return <PersonalDetails {...props} />;
+         default: return <PersonalDetails {...props} serverStepOneErrors={serverStepOneErrors} onClearServerStepOneError={clearServerStepOneError} />;
     }
   };
 
@@ -118,7 +274,7 @@ export default function AddCustomerPage() {
           {isSuccess ? (
              <div className="bg-white rounded-xl shadow-sm border border-slate-100 min-h-150 flex items-center justify-center">
                 <SuccessView 
-                   customerName={formData.fullName}  
+                   customerName={customerFullName || "New Customer"}  
                    generatedId={generatedId}
                    onReset={handleReset}
                 />
@@ -182,7 +338,7 @@ export default function AddCustomerPage() {
                                 <User size={28} />
                              </div>
                              <div>
-                                <h3 className="text-lg font-bold text-slate-800">{formData.fullName || "New Customer"}</h3>
+                                <h3 className="text-lg font-bold text-slate-800">{customerFullName || "New Customer"}</h3>
                                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">Incomplete Registration</p>
                              </div>
                           </div>
@@ -191,7 +347,7 @@ export default function AddCustomerPage() {
                        <div className="p-6 space-y-5">
                           <div className="flex justify-between items-center pb-2 border-b border-slate-50/50">
                              <span className="text-xs text-slate-400 font-medium">Full Name</span>
-                             <span className="text-xs font-bold text-slate-700 text-right">{formData.fullName || "-"}</span>
+                             <span className="text-xs font-bold text-slate-700 text-right">{customerFullName || "-"}</span>
                           </div>
                           <div className="flex justify-between items-center pb-2 border-b border-slate-50/50">
                              <span className="text-xs text-slate-400 font-medium">NIC Number</span>
@@ -209,8 +365,16 @@ export default function AddCustomerPage() {
                              <span className="text-xs text-slate-400 font-medium">Date of Birth</span>
                              <span className="text-xs font-bold text-slate-700 text-right">{formData.dob || "-"}</span>
                           </div>
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-50/50">
+                             <span className="text-xs text-slate-400 font-medium">Province</span>
+                             <span className="text-xs font-bold text-slate-700 text-right">{formData.province || "-"}</span>
+                          </div>
+                          <div className="flex justify-between items-center pb-2 border-b border-slate-50/50">
+                             <span className="text-xs text-slate-400 font-medium">Address</span>
+                             <span className="text-xs font-bold text-slate-700 text-right">{formData.address || "-"}</span>
+                          </div>
 
-                          <div className="mt-6 bg-slate-50 rounded-lg p-4 border border-slate-100">
+                          {/* <div className="mt-6 bg-slate-50 rounded-lg p-4 border border-slate-100">
                              <div className="flex items-start gap-3">
                                 <ShieldCheck className="h-5 w-5 text-emerald-500 mt-0.5 shrink-0" />
                                 <div>
@@ -220,7 +384,7 @@ export default function AddCustomerPage() {
                                    </p>
                                 </div>
                              </div>
-                          </div>
+                          </div> */}
                        </div>
                     </div>
                  </div>

@@ -5,6 +5,8 @@ import { Button } from "@/src/components/ui/button";
 import { StepProps } from "./types";
 
 export function Review({ formData, onNext, onBack }: StepProps) {
+   const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="px-8 py-6 border-b border-slate-100">
@@ -69,9 +71,13 @@ export function Review({ formData, onNext, onBack }: StepProps) {
               </div>
               <div className="grid grid-cols-2 text-sm gap-y-2">
                  <div className="text-slate-500">Full Name</div>
-                 <div className="font-medium text-slate-800 text-right">{formData.fullName}</div>
+                 <div className="font-medium text-slate-800 text-right">{customerFullName || "-"}</div>
                  <div className="text-slate-500">NIC Number</div>
                  <div className="font-medium text-slate-800 text-right">{formData.nic}</div>
+                 <div className="text-slate-500">Province</div>
+                 <div className="font-medium text-slate-800 text-right">{formData.province || "-"}</div>
+                 <div className="text-slate-500">Address</div>
+                 <div className="font-medium text-slate-800 text-right">{formData.address || "-"}</div>
               </div>
            </div>
            

@@ -38,7 +38,7 @@ export function CRIBRetrieval({ formData, updateFormData, onNext, onBack }: Step
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] animate-in fade-in duration-500">
+      <div className="flex flex-col items-center justify-center min-h-100 animate-in fade-in duration-500">
          <div className="relative w-24 h-24 mb-6">
             <div className="absolute inset-0 border-t-4 border-[#3e9fd3] rounded-full animate-spin"></div>
             <div className="absolute inset-2 border-r-4 border-slate-200 rounded-full animate-spin direction-reverse"></div>

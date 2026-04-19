@@ -18,7 +18,7 @@ export default function BankOfficerRolePage() {
             {/* Left Column */}
             <div className="flex flex-col gap-6 h-full">
               {/* Bank Target */}
-              <Card className="creditlens-card creditlens-card-hover creditlens-delay-1 border-none shadow-sm flex flex-col justify-center flex-shrink-0">
+              <Card className="creditlens-card creditlens-card-hover creditlens-delay-1 border-none shadow-sm flex flex-col justify-center shrink-0">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <h2 className="text-lg font-semibold">Bank Target</h2>
                   <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-semibold text-gray-500 cursor-pointer hover:bg-gray-50">Show All</span>
@@ -43,7 +43,7 @@ export default function BankOfficerRolePage() {
               </Card>
 
               {/* Chart Section */}
-              <Card className="creditlens-card creditlens-card-hover creditlens-delay-2 border-none shadow-sm flex-1 flex flex-col min-h-[300px]">
+              <Card className="creditlens-card creditlens-card-hover creditlens-delay-2 border-none shadow-sm flex-1 flex flex-col min-h-75">
                 <CardHeader className="flex flex-row items-center justify-between shrink-0">
                   <h2 className="text-lg font-semibold">Customer Risk Segmentation</h2>
                   <div className="flex items-center gap-4">
@@ -100,7 +100,7 @@ export default function BankOfficerRolePage() {
                                return (
                                  <div key={i} className="group relative flex flex-col items-center flex-1 h-full justify-end">
                                     {/* Tooltip */}
-                                    <div className="absolute -top-16 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-slate-200 text-slate-800 text-xs py-2 px-3 rounded shadow-xl pointer-events-none whitespace-nowrap z-20 flex flex-col gap-1 min-w-[120px]">
+                                    <div className="absolute -top-16 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-slate-200 text-slate-800 text-xs py-2 px-3 rounded shadow-xl pointer-events-none whitespace-nowrap z-20 flex flex-col gap-1 min-w-30">
                                        <div className="font-bold text-slate-600 mb-1 border-b pb-1 text-center">{data.month} Portfolio</div>
                                        <div className="flex justify-between w-full"><span>Low:</span> <span className="font-semibold text-sky-500">{data.low}</span></div>
                                        <div className="flex justify-between w-full"><span>Medium:</span> <span className="font-semibold text-blue-600">{data.medium}</span></div>
@@ -109,7 +109,7 @@ export default function BankOfficerRolePage() {
                                     </div>
                                     
                                     {/* Stacked Bars Container */}
-                                    <div className="flex flex-col-reverse w-full max-w-[32px] cursor-pointer" 
+                                    <div className="flex flex-col-reverse w-full max-w-8 cursor-pointer" 
                                       style={{ 
                                         height: '100%', 
                                         transformOrigin: "bottom",
@@ -162,7 +162,7 @@ export default function BankOfficerRolePage() {
             <div className="flex flex-col gap-6 h-full min-h-0">
                <div className="grid grid-cols-2 gap-4 shrink-0 creditlens-stagger-4">
                   {/* Card 1 */}
-                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-[#3b82f6] text-[#0d3b66] shadow-sm flex flex-col justify-center min-h-[140px]">
+                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-[#3b82f6] text-[#0d3b66] shadow-sm flex flex-col justify-center min-h-35">
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium opacity-90">Total Customers</p>
@@ -176,7 +176,7 @@ export default function BankOfficerRolePage() {
                   </Card>
 
                   {/* Card 2 */}
-                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-[140px]">
+                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-35">
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">Low Risk</p>
@@ -190,7 +190,7 @@ export default function BankOfficerRolePage() {
                   </Card>
 
                    {/* Card 3 */}
-                   <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-[140px]">
+                   <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-35">
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">Medium Risk</p>
@@ -204,7 +204,7 @@ export default function BankOfficerRolePage() {
                   </Card>
 
                   {/* Card 4 */}
-                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-[140px]">
+                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-35">
                      <CardContent className="p-4 flex flex-col justify-between h-full">
                         <div className="flex justify-between items-start mb-1">
                            <p className="text-xs font-medium text-gray-500">High Risk</p>
@@ -218,15 +218,15 @@ export default function BankOfficerRolePage() {
                   </Card>
                </div>
 
-               <div className="flex flex-col gap-5 flex-1 min-h-[400px] creditlens-stagger-2">
+               <div className="flex flex-col gap-5 flex-1 min-h-100 creditlens-stagger-2">
                   <div className="creditlens-card creditlens-card-hover relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center flex-1">
                      <div className="relative z-10 flex flex-col justify-center h-full">
-                        <h3 className="mb-3 text-2xl font-bold">Pending Verifications</h3>
+                        <h3 className="mb-3 text-2xl font-bold">New Registrations</h3>
                         <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">
-                           18 customer profiles are waiting for Personal and income document validation.
+                           18 customer profiles are registered for the day
                         </p>
                         <div>
-                           <button className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">Review Queue</button>
+                           <button className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">View More</button>
                         </div>
                      </div>
                      <div className="absolute -bottom-4 -right-4 h-40 w-40 rounded-full border-20 border-white/10"></div>
