@@ -126,45 +126,51 @@ export default function PublicCustomerApplicationPage() {
     });
   };
 
-  const handleAddIncome = () => {
+  const validateSalaryIncome = () => {
     const nextIncomeErrors: Partial<Record<IncomeField, string>> = {};
+    const parsedSalaryAmount = Number(salaryAmount);
 
-    if (includesSalaryDetails) {
-      const parsedSalaryAmount = Number(salaryAmount);
+    if (!salaryType) {
+      nextIncomeErrors.salaryType = "Salary type is required.";
+    }
 
-      if (!salaryType) {
-        nextIncomeErrors.salaryType = "Salary type is required.";
-      }
+    if (!salaryAmount || Number.isNaN(parsedSalaryAmount) || parsedSalaryAmount <= 0) {
+      nextIncomeErrors.salaryAmount = "Monthly salary amount must be greater than 0.";
+    }
 
-      if (!salaryAmount || Number.isNaN(parsedSalaryAmount) || parsedSalaryAmount <= 0) {
-        nextIncomeErrors.salaryAmount = "Monthly salary amount must be greater than 0.";
-      }
+    if (!employmentType) {
+      nextIncomeErrors.employmentType = "Employment type is required.";
+    }
 
-      if (!employmentType) {
-        nextIncomeErrors.employmentType = "Employment type is required.";
-      }
-
-      if (employmentType === "Contract") {
-        const parsedContractDuration = Number(contractDuration);
-        if (!contractDuration.trim()) {
-          nextIncomeErrors.contractDuration = "Contract duration is required for contract employment.";
-        } else if (Number.isNaN(parsedContractDuration) || parsedContractDuration <= 0 || !Number.isInteger(parsedContractDuration)) {
-          nextIncomeErrors.contractDuration = "Contract duration must be a valid number of months.";
-        }
+    if (employmentType === "Contract") {
+      const parsedContractDuration = Number(contractDuration);
+      if (!contractDuration.trim()) {
+        nextIncomeErrors.contractDuration = "Contract duration is required for contract employment.";
+      } else if (Number.isNaN(parsedContractDuration) || parsedContractDuration <= 0 || !Number.isInteger(parsedContractDuration)) {
+        nextIncomeErrors.contractDuration = "Contract duration must be a valid number of months.";
       }
     }
 
-    if (includesBusinessDetails) {
-      const parsedBusinessIncomeAmount = Number(businessIncomeAmount);
+    return nextIncomeErrors;
+  };
 
-      if (!businessIncomeAmount || Number.isNaN(parsedBusinessIncomeAmount) || parsedBusinessIncomeAmount <= 0) {
-        nextIncomeErrors.businessIncomeAmount = "Average monthly business income must be greater than 0.";
-      }
+  const validateBusinessIncome = () => {
+    const nextIncomeErrors: Partial<Record<IncomeField, string>> = {};
+    const parsedBusinessIncomeAmount = Number(businessIncomeAmount);
 
-      if (!incomeStability) {
-        nextIncomeErrors.incomeStability = "Income stability is required.";
-      }
+    if (!businessIncomeAmount || Number.isNaN(parsedBusinessIncomeAmount) || parsedBusinessIncomeAmount <= 0) {
+      nextIncomeErrors.businessIncomeAmount = "Average monthly business income must be greater than 0.";
     }
+
+    if (!incomeStability) {
+      nextIncomeErrors.incomeStability = "Income stability is required.";
+    }
+
+    return nextIncomeErrors;
+  };
+
+  const handleAddSalaryIncome = () => {
+    const nextIncomeErrors = validateSalaryIncome();
 
     if (Object.keys(nextIncomeErrors).length > 0) {
       setIncomeErrors(nextIncomeErrors);
@@ -172,31 +178,40 @@ export default function PublicCustomerApplicationPage() {
     }
 
     setIncomeErrors({});
-
-    const salaryValue = includesSalaryDetails ? Number(salaryAmount) : 0;
-    const businessValue = includesBusinessDetails ? Number(businessIncomeAmount) : 0;
-
+    const salaryValue = Number(salaryAmount);
     const newIncome: Income = {
       id: Math.random().toString(36).substr(2, 9),
-      type: incomeType,
-      amount: salaryValue + businessValue,
-      salaryAmount: includesSalaryDetails ? salaryValue : undefined,
-      businessIncomeAmount: includesBusinessDetails ? businessValue : undefined,
-      salaryType: includesSalaryDetails ? salaryType : undefined,
-      employmentType: includesSalaryDetails ? employmentType : undefined,
-      contractDuration: includesSalaryDetails && employmentType === "Contract" ? contractDuration : undefined,
-      incomeStability: includesBusinessDetails ? incomeStability : undefined
+      type: "Salary Worker",
+      amount: salaryValue,
+      salaryAmount: salaryValue,
+      salaryType,
+      employmentType,
+      contractDuration: employmentType === "Contract" ? contractDuration : undefined
     };
     setFormData(prev => ({ ...prev, incomes: [...prev.incomes, newIncome] }));
+    setSalaryAmount("");
+    setContractDuration("");
+  };
 
-    if (includesSalaryDetails) {
-      setSalaryAmount("");
-      setContractDuration("");
+  const handleAddBusinessIncome = () => {
+    const nextIncomeErrors = validateBusinessIncome();
+
+    if (Object.keys(nextIncomeErrors).length > 0) {
+      setIncomeErrors(nextIncomeErrors);
+      return;
     }
 
-    if (includesBusinessDetails) {
-      setBusinessIncomeAmount("");
-    }
+    setIncomeErrors({});
+    const businessValue = Number(businessIncomeAmount);
+    const newIncome: Income = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: "Business Person",
+      amount: businessValue,
+      businessIncomeAmount: businessValue,
+      incomeStability
+    };
+    setFormData(prev => ({ ...prev, incomes: [...prev.incomes, newIncome] }));
+    setBusinessIncomeAmount("");
   };
 
   const handleAddLoan = () => {
@@ -452,6 +467,13 @@ export default function PublicCustomerApplicationPage() {
                             </div>
                           )}
                         </div>
+
+                        <Button
+                          onClick={handleAddSalaryIncome}
+                          className="w-full h-12 bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20"
+                        >
+                          <Plus className="w-5 h-5 mr-2" /> Add Salary
+                        </Button>
                       </div>
                    )}
 
@@ -497,15 +519,15 @@ export default function PublicCustomerApplicationPage() {
                           </Select>
                           {incomeErrors.incomeStability && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{incomeErrors.incomeStability}</p>}
                         </div>
+
+                        <Button
+                          onClick={handleAddBusinessIncome}
+                          className="w-full h-12 bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20"
+                        >
+                          <Plus className="w-5 h-5 mr-2" /> Add Business
+                        </Button>
                      </div>
                    )}
-
-                   <Button 
-                     onClick={handleAddIncome}
-                     className="w-full h-12 bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20 mt-4"
-                   >
-                      <Plus className="w-5 h-5 mr-2" /> {incomeType === "Salary Worker" ? "Add Salary" : incomeType === "Business Person" ? "Add Business" : "Add Income to List"}
-                   </Button>
                 </div>
              </div>
 
@@ -1017,8 +1039,15 @@ export default function PublicCustomerApplicationPage() {
                          </p>
                      </div>
 
-              <div className="flex justify-center pt-4">
-               
+              <div className="flex justify-center gap-4 pt-4">
+                 <Button
+                   type="button"
+                   variant="outline"
+                   onClick={prevStep}
+                   className="border-slate-300 text-slate-700 hover:bg-slate-100 px-8 py-6 rounded-lg font-semibold text-lg"
+                 >
+                    <ArrowLeft size={16} className="mr-2" /> Back
+                 </Button>
                  <Button onClick={submitApplication}  className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white px-12 py-6 rounded-lg font-bold text-lg shadow-xl shadow-blue-500/20">
                     Submit Application
                  </Button>

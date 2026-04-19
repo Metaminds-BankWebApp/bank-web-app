@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { authService } from "@/src/api/auth/auth.service";
 import { ApiError } from "@/src/types/api-error";
 import { useAuthStore } from "@/src/store";
@@ -48,6 +49,7 @@ export function RegisterForm() {
   const [password, setPassword] = useState("password123");
   const [confirmPassword, setConfirmPassword] = useState("password123");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -261,20 +263,34 @@ export function RegisterForm() {
             labelClassName="text-(--primecore-foreground)/70"
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
           />
-          <Input
-            label="Confirm Password"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => {
-              setConfirmPassword(event.target.value);
-              clearFieldError("confirmPassword");
-              setFormError(null);
-            }}
-            error={fieldErrors.confirmPassword}
-            placeholder="Confirm password"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-(--primecore-foreground)/70">Confirm Password</label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(event) => {
+                  setConfirmPassword(event.target.value);
+                  clearFieldError("confirmPassword");
+                  setFormError(null);
+                }}
+                aria-invalid={!!fieldErrors.confirmPassword}
+                className={`h-14 w-full rounded-2xl border bg-(--primecore-surface) px-3.5 pr-11 text-sm text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ring-offset-background ${
+                  fieldErrors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : "border-(--primecore-border)"
+                }`}
+                placeholder="Confirm password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((current) => !current)}
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-(--primecore-foreground)/60 hover:text-(--primecore-foreground)"
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            {fieldErrors.confirmPassword && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.confirmPassword}</p>}
+          </div>
         </div>
 
         {formError && <p className="text-xs text-red-500 dark:text-red-400">{formError}</p>}
