@@ -9,10 +9,20 @@ import { ApiError } from "@/src/types/api-error";
 import { useAuthStore } from "@/src/store";
 import { Button, Input, useToast } from "@/src/components/ui";
 
-const FULL_NAME_REQUIRED = "Full name is required.";
+const FIRST_NAME_REQUIRED = "First name is required.";
+const FIRST_NAME_INVALID = "First name can contain letters, spaces, apostrophes and hyphens only.";
+const LAST_NAME_REQUIRED = "Last name is required.";
+const LAST_NAME_INVALID = "Last name can contain letters, spaces, apostrophes and hyphens only.";
 const EMAIL_REQUIRED = "Email is required.";
 const PHONE_REQUIRED = "Phone number is required.";
-const CITY_REQUIRED = "City is required.";
+const NIC_REQUIRED = "NIC is required.";
+const NIC_INVALID = "NIC must be 12 digits or 9 digits followed by V/X.";
+const DOB_REQUIRED = "Date of birth is required.";
+const DOB_INVALID = "Please enter a valid date of birth.";
+const DOB_FUTURE = "Date of birth must be in the past.";
+const DOB_AGE_LIMIT = "You must be at least 18 years old.";
+const USERNAME_REQUIRED = "Username is required.";
+const USERNAME_INVALID = "Username must be 4-30 characters and can contain letters, numbers, dots and underscores.";
 const PROVINCE_REQUIRED = "Province is required.";
 const ADDRESS_REQUIRED = "Address is required.";
 const PASSWORD_REQUIRED = "Password is required.";
@@ -22,28 +32,21 @@ const PHONE_INVALID = "Phone number must be exactly 10 digits (numbers only).";
 const PASSWORD_INVALID = "Password must be at least 10 characters and include uppercase, lowercase letters and numbers.";
 const PASSWORD_MISMATCH = "Passwords do not match.";
 
-type FieldName = "fullName" | "email" | "phone" | "city" | "province" | "address" | "password" | "confirmPassword";
+type FieldName = "firstName" | "lastName" | "email" | "phone" | "nic" | "dateOfBirth" | "username" | "province" | "address" | "password" | "confirmPassword";
 type FieldErrors = Partial<Record<FieldName, string>>;
-
-function splitName(fullName: string): { firstName: string; lastName: string } {
-  const trimmed = fullName.trim();
-  if (!trimmed) {
-    return { firstName: "PrimeCore", lastName: "User" };
-  }
-
-  const [firstName, ...rest] = trimmed.split(/\s+/);
-  return { firstName, lastName: rest.join(" ") || "User" };
-}
 
 export function RegisterForm() {
   const router = useRouter();
   const { showToast } = useToast();
   const login = useAuthStore((state) => state.login);
 
-  const [fullName, setFullName] = useState("Demo User");
+  const [firstName, setFirstName] = useState("Demo");
+  const [lastName, setLastName] = useState("User");
   const [email, setEmail] = useState("demo@primecore.app");
   const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("");
+  const [nic, setNic] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [username, setUsername] = useState("");
   const [province, setProvince] = useState("");
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("password123");
@@ -68,19 +71,34 @@ export function RegisterForm() {
     event.preventDefault();
 
     // Trim inputs
-    const tFullName = fullName.trim();
+    const tFirstName = firstName.trim();
+    const tLastName = lastName.trim();
     const tEmail = email.trim();
     const tPhone = phone.trim();
-    const tCity = city.trim();
+    const tNic = nic.trim();
+    const tUsername = username.trim();
     const tProvince = province.trim();
     const tAddress = address.trim();
     const nextErrors: FieldErrors = {};
+    const nameRegex = /^[A-Za-z][A-Za-z\s'-]{0,49}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
+    const nicRegex = /^(\d{12}|\d{9}[vVxX])$/;
+    const usernameRegex = /^[a-zA-Z0-9._]{4,30}$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    if (!tFullName) {
-      nextErrors.fullName = FULL_NAME_REQUIRED;
+    if (!tFirstName) {
+      nextErrors.firstName = FIRST_NAME_REQUIRED;
+    } else if (!nameRegex.test(tFirstName)) {
+      nextErrors.firstName = FIRST_NAME_INVALID;
+    }
+
+    if (!tLastName) {
+      nextErrors.lastName = LAST_NAME_REQUIRED;
+    } else if (!nameRegex.test(tLastName)) {
+      nextErrors.lastName = LAST_NAME_INVALID;
     }
 
     if (!tEmail) {
@@ -95,8 +113,32 @@ export function RegisterForm() {
       nextErrors.phone = PHONE_INVALID;
     }
 
-    if (!tCity) {
-      nextErrors.city = CITY_REQUIRED;
+    if (!tNic) {
+      nextErrors.nic = NIC_REQUIRED;
+    } else if (!nicRegex.test(tNic)) {
+      nextErrors.nic = NIC_INVALID;
+    }
+
+    if (!dateOfBirth) {
+      nextErrors.dateOfBirth = DOB_REQUIRED;
+    } else {
+      const parsedDob = new Date(dateOfBirth);
+      if (Number.isNaN(parsedDob.getTime())) {
+        nextErrors.dateOfBirth = DOB_INVALID;
+      } else if (parsedDob >= today) {
+        nextErrors.dateOfBirth = DOB_FUTURE;
+      } else {
+        const age = today.getFullYear() - parsedDob.getFullYear() - (today.getMonth() < parsedDob.getMonth() || (today.getMonth() === parsedDob.getMonth() && today.getDate() < parsedDob.getDate()) ? 1 : 0);
+        if (age < 18) {
+          nextErrors.dateOfBirth = DOB_AGE_LIMIT;
+        }
+      }
+    }
+
+    if (!tUsername) {
+      nextErrors.username = USERNAME_REQUIRED;
+    } else if (!usernameRegex.test(tUsername)) {
+      nextErrors.username = USERNAME_INVALID;
     }
 
     if (!tProvince) {
@@ -130,10 +172,9 @@ export function RegisterForm() {
     setFormError(null);
 
     try {
-      const { firstName, lastName } = splitName(tFullName);
       const response = await authService.register({
-        firstName,
-        lastName,
+        firstName: tFirstName,
+        lastName: tLastName,
         email: tEmail,
         password,
       });
@@ -159,19 +200,35 @@ export function RegisterForm() {
       </header>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <Input
-          label="Full Name"
-          value={fullName}
-          onChange={(event) => {
-            setFullName(event.target.value);
-            clearFieldError("fullName");
-            setFormError(null);
-          }}
-          error={fieldErrors.fullName}
-          placeholder="John Doe"
-          labelClassName="text-(--primecore-foreground)/70"
-          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="First Name"
+            value={firstName}
+            onChange={(event) => {
+              setFirstName(event.target.value);
+              clearFieldError("firstName");
+              setFormError(null);
+            }}
+            error={fieldErrors.firstName}
+            placeholder="Demo"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+          <Input
+            label="Last Name"
+            value={lastName}
+            onChange={(event) => {
+              setLastName(event.target.value);
+              clearFieldError("lastName");
+              setFormError(null);
+            }}
+            error={fieldErrors.lastName}
+            placeholder="User"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+        </div>
+
         <Input
           label="Email Address"
           type="email"
@@ -184,7 +241,7 @@ export function RegisterForm() {
           error={fieldErrors.email}
           placeholder="name@example.com"
           labelClassName="text-(--primecore-foreground)/70"
-          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
         />
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -203,15 +260,44 @@ export function RegisterForm() {
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
           />
           <Input
-            label="City"
-            value={city}
+            label="NIC"
+            value={nic}
             onChange={(event) => {
-              setCity(event.target.value);
-              clearFieldError("city");
+              setNic(event.target.value);
+              clearFieldError("nic");
               setFormError(null);
             }}
-            error={fieldErrors.city}
-            placeholder="City"
+            error={fieldErrors.nic}
+            placeholder="200012345678"
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Date of Birth"
+            type="date"
+            value={dateOfBirth}
+            onChange={(event) => {
+              setDateOfBirth(event.target.value);
+              clearFieldError("dateOfBirth");
+              setFormError(null);
+            }}
+            error={fieldErrors.dateOfBirth}
+            labelClassName="text-(--primecore-foreground)/70"
+            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) ring-offset-background"
+          />
+          <Input
+            label="Username"
+            value={username}
+            onChange={(event) => {
+              setUsername(event.target.value);
+              clearFieldError("username");
+              setFormError(null);
+            }}
+            error={fieldErrors.username}
+            placeholder="john.doe.2000"
             labelClassName="text-(--primecore-foreground)/70"
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
           />
