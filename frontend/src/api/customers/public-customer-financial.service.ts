@@ -15,7 +15,7 @@ export async function savePublicCustomerIncomeStep(
   payload: PublicCustomerIncomeStepRequest,
 ): Promise<PublicCustomerFinancialStepResponse> {
   try {
-    const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
+    const { data } = await apiClient.post<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveIncomeStep(publicCustomerId),
       payload,
     );
@@ -30,7 +30,7 @@ export async function savePublicCustomerLoanStep(
   payload: PublicCustomerLoanStepRequest,
 ): Promise<PublicCustomerFinancialStepResponse> {
   try {
-    const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
+    const { data } = await apiClient.post<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveLoanStep(publicCustomerId),
       payload,
     );
@@ -45,7 +45,7 @@ export async function savePublicCustomerCardStep(
   payload: PublicCustomerCardStepRequest,
 ): Promise<PublicCustomerFinancialStepResponse> {
   try {
-    const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
+    const { data } = await apiClient.post<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveCardStep(publicCustomerId),
       payload,
     );
@@ -60,7 +60,7 @@ export async function savePublicCustomerLiabilityStep(
   payload: PublicCustomerLiabilityStepRequest,
 ): Promise<PublicCustomerFinancialStepResponse> {
   try {
-    const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
+    const { data } = await apiClient.post<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveLiabilityStep(publicCustomerId),
       payload,
     );
