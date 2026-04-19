@@ -3,6 +3,20 @@
 import { useState } from "react";
 import { AuthGuard } from "@/src/components/auth";
 import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/src/store";
+import {
+   savePublicCustomerCardStep,
+   savePublicCustomerIncomeStep,
+   savePublicCustomerLiabilityStep,
+   savePublicCustomerLoanStep,
+} from "@/src/api/customers/public-customer-financial.service";
+import type {
+   PublicCustomerFinancialStepResponse,
+   PublicCustomerIncomeStepRequest,
+   PublicCustomerLoanStepRequest,
+   PublicCustomerCardStepRequest,
+   PublicCustomerLiabilityStepRequest,
+} from "@/src/types/dto/public-customer-financial.dto";
 import { 
   Check, 
   Trash2, 
@@ -68,8 +82,13 @@ type Liability = {
 // --- Main Application Component ---
 export default function PublicCustomerApplicationPage() {
   const router = useRouter();
+   const authUser = useAuthStore((state) => state.user);
+   const authToken = useAuthStore((state) => state.token);
   const [step, setStep] = useState(1);
   const [skippedSteps, setSkippedSteps] = useState<number[]>([]);
+   const [financialRecordId, setFinancialRecordId] = useState<number | null>(null);
+   const [isSavingStep, setIsSavingStep] = useState(false);
+   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     incomes: [] as Income[],
     loans: [] as Loan[],
@@ -269,12 +288,131 @@ export default function PublicCustomerApplicationPage() {
     return `LKR ${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
 
-  const nextStep = () => {
-    setSkippedSteps(prev => prev.filter((skippedStep) => skippedStep !== step));
-    setStep(prev => Math.min(prev + 1, 5));
-  };
+   const toEnumToken = (value?: string) => {
+      if (!value) return undefined;
+      return value
+         .trim()
+         .toUpperCase()
+         .replace(/[^A-Z0-9]+/g, "_")
+         .replace(/^_+|_+$/g, "");
+   };
+
+   const resolvePublicCustomerId = () => {
+      const userId = Number(authUser?.id);
+      if (Number.isFinite(userId) && userId > 0) {
+         return userId;
+      }
+
+      if (!authToken) {
+         return null;
+      }
+
+      try {
+         const payload = authToken.split(".")[1];
+         if (!payload) return null;
+
+         const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+         const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+         const decoded = JSON.parse(atob(padded)) as Record<string, unknown>;
+         const claimCandidate = decoded.userId ?? decoded.id ?? decoded.uid ?? decoded.sub;
+         const parsed = Number(claimCandidate);
+         return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+      } catch {
+         return null;
+      }
+   };
+
+   const buildIncomePayload = (): PublicCustomerIncomeStepRequest => ({
+      incomes: formData.incomes.map((income) => {
+         const isBusiness = income.type.toUpperCase().includes("BUSINESS") && !income.salaryAmount;
+         return {
+            incomeCategory: isBusiness ? "BUSINESS" : "SALARY",
+            amount: income.amount,
+            salaryType: toEnumToken(income.salaryType),
+            employmentType: toEnumToken(income.employmentType),
+            contractDurationMonths: income.contractDuration ? Number(income.contractDuration) : undefined,
+            incomeStability: toEnumToken(income.incomeStability),
+         };
+      }),
+   });
+
+   const buildLoanPayload = (): PublicCustomerLoanStepRequest => ({
+      loans: formData.loans.map((loan) => ({
+         loanType: loan.type,
+         monthlyEmi: loan.monthlyEMI,
+         remainingBalance: loan.balance,
+      })),
+   });
+
+   const buildCardPayload = (): PublicCustomerCardStepRequest => ({
+      cards: formData.cards.map((card) => ({
+         provider: card.provider,
+         creditLimit: card.limit,
+         outstandingBalance: card.outstanding,
+      })),
+   });
+
+   const buildLiabilityPayload = (): PublicCustomerLiabilityStepRequest => ({
+      liabilities: formData.liabilities.map((liability) => ({
+         description: liability.description,
+         monthlyAmount: liability.amount,
+      })),
+      missedPayments: formData.missedPayments,
+   });
+
+   const saveFinancialStep = async (): Promise<PublicCustomerFinancialStepResponse> => {
+      const publicCustomerId = resolvePublicCustomerId();
+
+      if (!publicCustomerId) {
+         throw new Error("Unable to resolve your customer profile. Please sign in again.");
+      }
+
+      if (step === 1) {
+         return savePublicCustomerIncomeStep(publicCustomerId, buildIncomePayload());
+      }
+
+      if (step === 2) {
+         return savePublicCustomerLoanStep(publicCustomerId, buildLoanPayload());
+      }
+
+      if (step === 3) {
+         return savePublicCustomerCardStep(publicCustomerId, buildCardPayload());
+      }
+
+      if (step === 4) {
+         return savePublicCustomerLiabilityStep(publicCustomerId, buildLiabilityPayload());
+      }
+
+      throw new Error("This step does not require persistence.");
+   };
+
+   const nextStep = async () => {
+      if (isSavingStep || step >= 5) {
+         return;
+      }
+
+      try {
+         setIsSavingStep(true);
+         const savedStep = await saveFinancialStep();
+         setFinancialRecordId(savedStep.recordId);
+         setSkippedSteps((prev) => prev.filter((skippedStep) => skippedStep !== step));
+         setStep((prev) => Math.min(prev + 1, 5));
+      } catch (error) {
+         const message = error instanceof Error ? error.message : "Failed to save your progress.";
+         showToast({
+            title: "Could not save this section",
+            description: message,
+            type: "error",
+         });
+      } finally {
+         setIsSavingStep(false);
+      }
+   };
 
   const skipStep = () => {
+      if (isSavingStep) {
+         return;
+      }
     setSkippedSteps(prev => (prev.includes(step) ? prev : [...prev, step]));
     setStep(prev => Math.min(prev + 1, 5));
   };
@@ -282,18 +420,27 @@ export default function PublicCustomerApplicationPage() {
   const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
   const { showToast } = useToast();
 
-  const submitApplication = () => {
+  const submitApplication = async () => {
+      if (isSubmitting) {
+        return;
+      }
+
+      setIsSubmitting(true);
       // Submission without client-side validation per current request
       // Logic to submit data would go here (send formData + account info to backend)
       showToast({ 
          title: "Application Submitted", 
-         description: "Your application has been received. Redirecting to dashboard...",
+         description: financialRecordId
+           ? `Financial record #${financialRecordId} submitted. Redirecting to dashboard...`
+           : "Your application has been received. Redirecting to dashboard...",
          type: "success"
       });
 
       setTimeout(() => {
          router.replace("/public-customer"); // Redirect to dashboard
       }, 1500);
+
+      setIsSubmitting(false);
   };
 
   return (
@@ -1048,8 +1195,8 @@ export default function PublicCustomerApplicationPage() {
                  >
                     <ArrowLeft size={16} className="mr-2" /> Back
                  </Button>
-                 <Button onClick={submitApplication}  className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white px-12 py-6 rounded-lg font-bold text-lg shadow-xl shadow-blue-500/20">
-                    Submit Application
+                 <Button onClick={submitApplication} disabled={isSubmitting} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white px-12 py-6 rounded-lg font-bold text-lg shadow-xl shadow-blue-500/20">
+                    {isSubmitting ? "Submitting..." : "Submit Application"}
                  </Button>
               </div>
           </div>
@@ -1059,7 +1206,7 @@ export default function PublicCustomerApplicationPage() {
         {step < 5 && (
            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-4 px-6 z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
               <div className="max-w-6xl mx-auto flex justify-between items-center">
-                  <Button variant="outline" onClick={prevStep} disabled={step === 1} className="gap-2 border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 h-10 px-6">
+                  <Button variant="outline" onClick={prevStep} disabled={step === 1 || isSavingStep} className="gap-2 border-slate-300 text-slate-600 hover:text-slate-900 hover:bg-slate-100 h-10 px-6">
                      <ArrowLeft size={16} /> Back
                   </Button>
                   
@@ -1070,11 +1217,11 @@ export default function PublicCustomerApplicationPage() {
                            {step === 1 ? "Loans" : step === 2 ? "Credit Cards" : step === 3 ? "Liabilities" : "Review"}
                         </span>
                      </div>
-                     <Button variant="ghost" onClick={skipStep} className="h-10 px-4 text-slate-500 hover:text-slate-900 hover:bg-slate-100">
+                        <Button variant="ghost" onClick={skipStep} disabled={isSavingStep} className="h-10 px-4 text-slate-500 hover:text-slate-900 hover:bg-slate-100">
                         Skip
                      </Button>
-                     <Button onClick={nextStep} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white gap-2 px-8 h-10 rounded-lg shadow-lg shadow-blue-400/20">
-                           Next <span className="hidden sm:inline">Section</span> <ArrowRight size={16} />
+                        <Button onClick={nextStep} disabled={isSavingStep} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white gap-2 px-8 h-10 rounded-lg shadow-lg shadow-blue-400/20">
+                           {isSavingStep ? "Saving..." : "Next"} <span className="hidden sm:inline">Section</span> <ArrowRight size={16} />
                      </Button>
                   </div>
               </div>

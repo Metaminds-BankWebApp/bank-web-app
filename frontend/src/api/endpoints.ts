@@ -24,6 +24,24 @@ export const CUSTOMER_ENDPOINTS = {
   verifyBankAccount: "/bank-officers/customers/accounts/verify",
 } as const;
 
+export const PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS = {
+  base: (publicCustomerId: number) => `/public-customers/${publicCustomerId}/financial-records`,
+  saveIncomeStep: (publicCustomerId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/steps/income`,
+  saveLoanStep: (publicCustomerId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/steps/loans`,
+  saveCardStep: (publicCustomerId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/steps/cards`,
+  saveLiabilityStep: (publicCustomerId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/steps/liabilities`,
+  current: (publicCustomerId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/current`,
+  history: (publicCustomerId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/history`,
+  byId: (publicCustomerId: number, recordId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/${recordId}`,
+} as const;
+
 export const ADMIN_ENDPOINTS = {
   bankOfficers: "/admin/bank-officers",
   branches: "/admin/branches",
