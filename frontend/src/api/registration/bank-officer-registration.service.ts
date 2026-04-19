@@ -8,5 +8,5 @@ import type {
 export async function registerBankOfficer(
   payload: StepOneRegistrationRequest
 ): Promise<StepOneRegistrationResponse> {
-  return postStepOneRegistration(REGISTRATION_ENDPOINTS.bankOfficer, payload);
+  return postStepOneRegistration(REGISTRATION_ENDPOINTS.bankOfficer.create, payload);
 }

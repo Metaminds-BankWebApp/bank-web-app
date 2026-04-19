@@ -23,10 +23,11 @@ import {
    continueBankCustomerStepOne,
    saveBankCustomerStepOneDraft,
 } from "@/src/api/registration/bank-customer-registration.service";
+import { verifyBankAccount } from "@/src/api/customers/account-verification.service";
 import type { StepOneRegistrationRequest } from "@/src/types/dto/registration.dto";
 import { ApiError } from "@/src/types/api-error";
 
-type StepOneConflictField = "nic" | "email" | "username";
+type StepOneConflictField = "nic" | "email" | "username" | "bankAccount";
 type StepOneFieldErrors = Partial<Record<StepOneConflictField, string>>;
 
 function extractStepOneFieldErrors(error: ApiError): StepOneFieldErrors {
@@ -47,8 +48,33 @@ function extractStepOneFieldErrors(error: ApiError): StepOneFieldErrors {
    if (typeof source.username === "string") {
       result.username = source.username;
    }
+   if (typeof source.bankAccount === "string") {
+      result.bankAccount = source.bankAccount;
+   }
+   if (typeof source.accountNumber === "string") {
+      result.bankAccount = source.accountNumber;
+   }
 
    return result;
+}
+
+function buildDuplicateFieldMessage(fieldErrors: StepOneFieldErrors): string | null {
+   const labels: Record<StepOneConflictField, string> = {
+      nic: "NIC",
+      email: "Email",
+      username: "Username",
+      bankAccount: "Bank Account",
+   };
+
+   const duplicateFields = (Object.keys(fieldErrors) as StepOneConflictField[]).filter(
+      (field) => typeof fieldErrors[field] === "string" && Boolean(fieldErrors[field]?.trim())
+   );
+
+   if (duplicateFields.length === 0) {
+      return null;
+   }
+
+   return `Duplicate values found for: ${duplicateFields.map((field) => labels[field]).join(", ")}. Please use unique values.`;
 }
 
 const generateCustomerId = () => `PC-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -68,6 +94,7 @@ export default function AddCustomerPage() {
    const [serverStepOneErrors, setServerStepOneErrors] = useState<StepOneFieldErrors>({});
    const [isSavingDraftStepOne, setIsSavingDraftStepOne] = useState(false);
    const [isSubmittingStepOne, setIsSubmittingStepOne] = useState(false);
+   const [isVerifyingAccount, setIsVerifyingAccount] = useState(false);
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
 
    useEffect(() => {
@@ -121,7 +148,15 @@ export default function AddCustomerPage() {
   ];
 
   const updateFormData = (data: Partial<CustomerFormData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
+      setFormData(prev => {
+         const next = { ...prev, ...data };
+         if (Object.prototype.hasOwnProperty.call(data, "bankAccount")) {
+            next.isAccountVerified = false;
+            next.accountVerificationStatus = "";
+            next.accountVerificationMessage = "";
+         }
+         return next;
+      });
     if (submitError) {
       setSubmitError("");
     }
@@ -188,8 +223,54 @@ export default function AddCustomerPage() {
       username: data.username.trim(),
       password: data.password,
       confirmPassword: data.confirmPassword,
-      bankAccount: Number(data.bankAccount.trim()),
+      accountNumber: data.bankAccount.replace(/\s+/g, "").trim() || undefined,
    });
+
+   const verifyStepOneAccount = async () => {
+      const accountNumber = formData.bankAccount.replace(/\s+/g, "").trim();
+      if (!accountNumber) {
+         updateFormData({
+            isAccountVerified: false,
+            accountVerificationStatus: "NOT_FOUND",
+            accountVerificationMessage: "Bank account number is required.",
+         });
+         return;
+      }
+
+      setIsVerifyingAccount(true);
+      try {
+         const verification = await verifyBankAccount(accountNumber);
+         if (verification.exists) {
+            updateFormData({
+               isAccountVerified: true,
+               accountVerificationStatus: verification.status,
+               accountVerificationMessage: `Account found. Status: ${verification.status}`,
+            });
+         } else {
+            updateFormData({
+               isAccountVerified: false,
+               accountVerificationStatus: verification.status,
+               accountVerificationMessage: verification.message || "Account not found.",
+            });
+         }
+      } catch (error) {
+         if (error instanceof ApiError) {
+            updateFormData({
+               isAccountVerified: false,
+               accountVerificationStatus: "NOT_FOUND",
+               accountVerificationMessage: error.message || "Unable to verify account.",
+            });
+         } else {
+            updateFormData({
+               isAccountVerified: false,
+               accountVerificationStatus: "NOT_FOUND",
+               accountVerificationMessage: "Unable to verify account right now.",
+            });
+         }
+      } finally {
+         setIsVerifyingAccount(false);
+      }
+   };
 
    const saveStepOneDraft = async () => {
       setIsSavingDraftStepOne(true);
@@ -199,8 +280,10 @@ export default function AddCustomerPage() {
          await saveBankCustomerStepOneDraft(mapStepOnePayload(formData));
       } catch (error) {
          if (error instanceof ApiError) {
-            setSubmitError(error.message);
-            setServerStepOneErrors(extractStepOneFieldErrors(error));
+            const fieldErrors = extractStepOneFieldErrors(error);
+            const duplicateMessage = buildDuplicateFieldMessage(fieldErrors);
+            setSubmitError(duplicateMessage || error.message);
+            setServerStepOneErrors(fieldErrors);
          } else {
             setSubmitError("Failed to save draft. Please try again.");
             setServerStepOneErrors({});
@@ -216,11 +299,32 @@ export default function AddCustomerPage() {
       setSubmitError("");
       setServerStepOneErrors({});
       try {
+         const accountNumber = formData.bankAccount.replace(/\s+/g, "").trim();
+         const verification = await verifyBankAccount(accountNumber);
+         if (!verification.exists) {
+            updateFormData({
+               isAccountVerified: false,
+               accountVerificationStatus: verification.status,
+               accountVerificationMessage: verification.message || "Account not found.",
+            });
+            const message = verification.message || "Account not found.";
+            setSubmitError(message);
+            throw new Error(message);
+         }
+
+         updateFormData({
+            isAccountVerified: true,
+            accountVerificationStatus: verification.status,
+            accountVerificationMessage: `Account found. Status: ${verification.status}`,
+         });
+
          await continueBankCustomerStepOne(mapStepOnePayload(formData));
       } catch (error) {
          if (error instanceof ApiError) {
-            setSubmitError(error.message);
-            setServerStepOneErrors(extractStepOneFieldErrors(error));
+            const fieldErrors = extractStepOneFieldErrors(error);
+            const duplicateMessage = buildDuplicateFieldMessage(fieldErrors);
+            setSubmitError(duplicateMessage || error.message);
+            setServerStepOneErrors(fieldErrors);
          } else {
             setSubmitError("Failed to save step one. Please try again.");
             setServerStepOneErrors({});
@@ -246,6 +350,8 @@ export default function AddCustomerPage() {
                   {...props}
                   onSaveDraftStepOne={saveStepOneDraft}
                   onContinueStepOne={continueStepOne}
+                  onVerifyAccount={verifyStepOneAccount}
+                  isVerifyingAccount={isVerifyingAccount}
                   isSavingDraftStepOne={isSavingDraftStepOne}
                   isSubmittingStepOne={isSubmittingStepOne}
                   serverStepOneErrors={serverStepOneErrors}

@@ -9,13 +9,22 @@ export const AUTH_ENDPOINTS = {
 
 export const REGISTRATION_ENDPOINTS = {
   bankCustomer: {
-    stepOneDraft: "/users/bank-customer/step-1/draft",
-    stepOneContinue: "/users/bank-customer/step-1/continue",
+    stepOneDraft: "/bank-officers/customers/step-1/draft",
+    stepOneContinue: "/bank-officers/customers/step-1/continue",
   },
-  publicCustomer: "/users/public-customer",
-  bankOfficer: "/users/bank-officer",
+  publicCustomer: "/public-customers",
+  bankOfficer: {
+    draft: "/admin/bank-officers/draft",
+    create: "/admin/bank-officers",
+  },
 } as const;
 
 export const CUSTOMER_ENDPOINTS = {
-  bankOfficerCustomers: "/users/bank-officer/customers",
+  bankOfficerCustomers: "/bank-officers/customers",
+  verifyBankAccount: "/bank-officers/customers/accounts/verify",
+} as const;
+
+export const ADMIN_ENDPOINTS = {
+  bankOfficers: "/admin/bank-officers",
+  branches: "/admin/branches",
 } as const;
