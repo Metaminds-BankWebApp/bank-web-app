@@ -13,6 +13,8 @@ export interface CustomerFormData {
   confirmPassword: string;
   bankAccount: string;
   isAccountVerified: boolean;
+  accountVerificationStatus: string;
+  accountVerificationMessage: string;
   
   // Financial Data
   employmentType: string;
@@ -60,6 +62,8 @@ export const initialFormData: CustomerFormData = {
   confirmPassword: "",
   bankAccount: "",
   isAccountVerified: false,
+  accountVerificationStatus: "",
+  accountVerificationMessage: "",
   employmentType: "Permanent",
   monthlySalary: "",
   businessIncome: "",
@@ -80,4 +84,6 @@ export interface StepProps {
   isSubmittingStepOne?: boolean;
   serverStepOneErrors?: Partial<Record<"nic" | "email" | "username", string>>;
   onClearServerStepOneError?: (field: "nic" | "email" | "username") => void;
+  onVerifyAccount?: () => Promise<void>;
+  isVerifyingAccount?: boolean;
 }

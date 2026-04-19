@@ -16,6 +16,10 @@ const roleRedirectMap: Record<UserRole, RoleRedirectPath> = {
   ADMIN: "/admin",
 };
 
+function isUserRole(value: string): value is UserRole {
+  return value === "PUBLIC_CUSTOMER" || value === "BANK_CUSTOMER" || value === "BANK_OFFICER" || value === "ADMIN";
+}
+
 export function getRoleRedirectPath(role: UserRole): RoleRedirectPath {
   return roleRedirectMap[role];
 }
@@ -35,7 +39,12 @@ export const useAuthStore = create<AuthState>()(
       role: null,
       user: null,
       login: (payload) => {
-        const nextRole = payload.user.role;
+        const rawRole = payload.user.role;
+        if (!isUserRole(rawRole)) {
+          throw new Error(`Unsupported role returned by backend: ${rawRole}`);
+        }
+
+        const nextRole: UserRole = rawRole;
 
         set({
           token: payload.accessToken,

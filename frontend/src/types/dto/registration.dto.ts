@@ -11,6 +11,7 @@ export interface StepOneRegistrationRequest {
   password: string;
   confirmPassword: string;
   bankAccount?: number;
+  accountNumber?: string;
 }
 
 export interface StepOneRegistrationResponse {

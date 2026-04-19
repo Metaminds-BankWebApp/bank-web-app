@@ -17,6 +17,8 @@ export function PersonalDetails({
   updateFormData,
   onNext,
   onBack,
+  onVerifyAccount,
+  isVerifyingAccount,
   onSaveDraftStepOne,
   onContinueStepOne,
   isSavingDraftStepOne,
@@ -37,11 +39,17 @@ export function PersonalDetails({
   };
 
   const handleNext = async () => {
-    if (validate()) {
+    if (!validate()) {
+      return;
+    }
+
+    try {
       if (onContinueStepOne) {
         await onContinueStepOne();
       }
       onNext();
+    } catch {
+      // Step-one API errors are surfaced by parent state; keep the user on this step.
     }
   };
 
@@ -58,7 +66,7 @@ export function PersonalDetails({
       setErrors((prev) => ({ ...prev, [id]: undefined }));
     }
 
-    if (id === "nic" || id === "email" || id === "username") {
+    if (id === "nic" || id === "email" || id === "username" || id === "bankAccount") {
       onClearServerStepOneError?.(id);
     }
   };
@@ -233,20 +241,25 @@ export function PersonalDetails({
                    type="button"
                    variant={formData.isAccountVerified ? "outline" : "primary"}
                    className={`h-11 px-6 whitespace-nowrap min-w-30 ${formData.isAccountVerified ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100" : "bg-[#0d3b66] hover:bg-[#1a4a7a] text-white"}`}
-                   onClick={(e) => {
-                      e.preventDefault();
-                      if (formData.bankAccount && formData.bankAccount.length > 5) {
-                         updateFormData({ isAccountVerified: true });
-                      }
+                   onClick={async (e) => {
+                     e.preventDefault();
+                     if (onVerifyAccount) {
+                       await onVerifyAccount();
+                     }
                    }}
-                   disabled={formData.isAccountVerified || !formData.bankAccount}
+                   disabled={Boolean(isVerifyingAccount || !formData.bankAccount)}
                  >
                    {formData.isAccountVerified ? (
                       <><CheckCircle2 size={16} className="mr-2" /> Verified</>
-                   ) : "Verify Account"}
+                   ) : isVerifyingAccount ? "Verifying..." : "Verify Account"}
                  </Button>
               </div>
               {mergedErrors.bankAccount && <p className="text-red-500 text-xs">{mergedErrors.bankAccount}</p>}
+                {!mergedErrors.bankAccount && formData.accountVerificationMessage && (
+                 <p className={`text-xs ${formData.isAccountVerified ? "text-emerald-600" : "text-amber-600"}`}>
+                  {formData.accountVerificationMessage}
+                 </p>
+                )}
            </div>
         </div>
       </div>
