@@ -156,12 +156,12 @@ export function validatePersonalDetailsStep(formData: CustomerFormData): Persona
     errors.confirmPassword = "Passwords do not match.";
   }
 
-  if (!formData.bankAccount.trim()) {
-    errors.bankAccount = "Bank account is required.";
-  } else if (!/^\d+$/.test(formData.bankAccount.trim())) {
-    errors.bankAccount = "Bank account must be a whole number.";
-  } else if (!formData.isAccountVerified) {
-    errors.bankAccount = "Please verify the bank account.";
+  if (formData.bankAccount.trim()) {
+    if (!/^\d+$/.test(formData.bankAccount.trim())) {
+      errors.bankAccount = "Bank account must be a whole number.";
+    } else if (!formData.isAccountVerified) {
+      errors.bankAccount = "Please verify the bank account.";
+    }
   }
 
   return errors;

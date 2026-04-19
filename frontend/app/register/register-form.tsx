@@ -180,6 +180,7 @@ export function RegisterForm() {
         dob: values.dob,
         email: values.email,
         mobile: values.phone,
+        bankAccount: Number(values.phone),
         province: values.province,
         address: values.address,
         username: values.username,
