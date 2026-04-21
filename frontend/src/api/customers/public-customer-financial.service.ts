@@ -2,6 +2,7 @@ import apiClient, { toApiError } from "@/src/api/client";
 import { PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS } from "@/src/api/endpoints";
 import type {
   PublicCustomerCardStepRequest,
+  PublicCustomerMeResponse,
   PublicCustomerFinancialRecordResponse,
   PublicCustomerFinancialRecordSummaryResponse,
   PublicCustomerFinancialStepResponse,
@@ -10,12 +11,21 @@ import type {
   PublicCustomerLoanStepRequest,
 } from "@/src/types/dto/public-customer-financial.dto";
 
+export async function getMyPublicCustomerProfile(): Promise<PublicCustomerMeResponse> {
+  try {
+    const { data } = await apiClient.get<PublicCustomerMeResponse>(PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.me);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export async function savePublicCustomerIncomeStep(
   publicCustomerId: number,
   payload: PublicCustomerIncomeStepRequest,
 ): Promise<PublicCustomerFinancialStepResponse> {
   try {
-    const { data } = await apiClient.post<PublicCustomerFinancialStepResponse>(
+    const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveIncomeStep(publicCustomerId),
       payload,
     );
@@ -30,7 +40,7 @@ export async function savePublicCustomerLoanStep(
   payload: PublicCustomerLoanStepRequest,
 ): Promise<PublicCustomerFinancialStepResponse> {
   try {
-    const { data } = await apiClient.post<PublicCustomerFinancialStepResponse>(
+    const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveLoanStep(publicCustomerId),
       payload,
     );
@@ -45,7 +55,7 @@ export async function savePublicCustomerCardStep(
   payload: PublicCustomerCardStepRequest,
 ): Promise<PublicCustomerFinancialStepResponse> {
   try {
-    const { data } = await apiClient.post<PublicCustomerFinancialStepResponse>(
+    const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveCardStep(publicCustomerId),
       payload,
     );
@@ -60,7 +70,7 @@ export async function savePublicCustomerLiabilityStep(
   payload: PublicCustomerLiabilityStepRequest,
 ): Promise<PublicCustomerFinancialStepResponse> {
   try {
-    const { data } = await apiClient.post<PublicCustomerFinancialStepResponse>(
+    const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveLiabilityStep(publicCustomerId),
       payload,
     );

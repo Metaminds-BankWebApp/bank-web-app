@@ -12,7 +12,7 @@ export type PersonalDetailsErrors = Partial<
 >;
 
 export type FinancialDataErrors = Partial<
-  Record<"employmentType" | "monthlySalary" | "businessIncome" | "income", string>
+  Record<"incomeType" | "salaryType" | "employmentType" | "contractDurationMonths" | "monthlySalary" | "businessIncome" | "incomeStability" | "income", string>
 >;
 
 export type LoanDraft = {
@@ -169,14 +169,36 @@ export function validatePersonalDetailsStep(formData: CustomerFormData): Persona
 
 export function validateFinancialDataStep(formData: CustomerFormData): FinancialDataErrors {
   const errors: FinancialDataErrors = {};
+  const incomeType = formData.incomeType.trim();
+  const salaryType = formData.salaryType.trim();
+  const employmentType = formData.employmentType.trim();
+  const contractDurationMonths = formData.contractDurationMonths.trim();
   const monthlySalary = formData.monthlySalary.trim();
   const businessIncome = formData.businessIncome.trim();
+  const incomeStability = formData.incomeStability.trim();
 
-  if (!formData.employmentType.trim()) {
+  if (!incomeType) {
+    errors.incomeType = "Customer income type is required.";
+  }
+
+  const includesSalaryDetails = incomeType !== "Business Person";
+  const includesBusinessDetails = incomeType !== "Salary Worker";
+
+  if (includesSalaryDetails && !salaryType) {
+    errors.salaryType = "Salary type is required.";
+  }
+
+  if (includesSalaryDetails && !employmentType) {
     errors.employmentType = "Employment type is required.";
   }
 
-  if (monthlySalary) {
+  if (includesSalaryDetails && employmentType === "Contract" && !contractDurationMonths) {
+    errors.contractDurationMonths = "Contract duration is required for contract employment.";
+  } else if (includesSalaryDetails && contractDurationMonths && (!isInteger(Number(contractDurationMonths)) || Number(contractDurationMonths) <= 0)) {
+    errors.contractDurationMonths = "Contract duration must be a positive whole number.";
+  }
+
+  if (includesSalaryDetails && monthlySalary) {
     if (!isCurrencyFormat(monthlySalary)) {
       errors.monthlySalary = "Enter a valid salary amount.";
     } else if (toAmount(monthlySalary) <= 0) {
@@ -184,7 +206,7 @@ export function validateFinancialDataStep(formData: CustomerFormData): Financial
     }
   }
 
-  if (businessIncome) {
+  if (includesBusinessDetails && businessIncome) {
     if (!isCurrencyFormat(businessIncome)) {
       errors.businessIncome = "Enter a valid business income amount.";
     } else if (toAmount(businessIncome) <= 0) {
@@ -192,9 +214,13 @@ export function validateFinancialDataStep(formData: CustomerFormData): Financial
     }
   }
 
-  if (!monthlySalary && !businessIncome) {
+  if (includesBusinessDetails && !incomeStability) {
+    errors.incomeStability = "Income stability is required for business income.";
+  }
+
+  if (includesSalaryDetails && includesBusinessDetails && !monthlySalary && !businessIncome) {
     errors.income = "Enter at least one income source.";
-  } else if (!errors.monthlySalary && !errors.businessIncome) {
+  } else if ((includesSalaryDetails || includesBusinessDetails) && !errors.monthlySalary && !errors.businessIncome) {
     const totalIncome = (monthlySalary ? toAmount(monthlySalary) : 0) + (businessIncome ? toAmount(businessIncome) : 0);
     if (totalIncome <= 0) {
       errors.income = "Total income must be greater than 0.";

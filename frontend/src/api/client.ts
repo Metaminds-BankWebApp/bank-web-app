@@ -27,7 +27,7 @@ apiClient.interceptors.response.use(
   (error) => {
     const axiosError = error as AxiosError;
     if (axiosError.response?.status === 401) {
-      useAuthStore.getState().logout();
+      useAuthStore.getState().clearSession();
     }
 
     return Promise.reject(error);

@@ -1,5 +1,6 @@
 export const AUTH_ENDPOINTS = {
   login: "/auth/login",
+  me: "/auth/me",
   register: "/auth/register",
   logout: "/auth/logout",
   forgotPassword: "/auth/forgot-password",
@@ -22,9 +23,34 @@ export const REGISTRATION_ENDPOINTS = {
 export const CUSTOMER_ENDPOINTS = {
   bankOfficerCustomers: "/bank-officers/customers",
   verifyBankAccount: "/bank-officers/customers/accounts/verify",
+  bankOfficerCustomerByUser: (userId: number) => `/bank-officers/customers/user/${userId}`,
+} as const;
+
+export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
+  saveIncomeStep: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/income/continue`,
+  saveLoanStep: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/loans/continue`,
+  saveCardStep: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/cards/continue`,
+  saveLiabilityStep: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/liabilities/continue`,
+  saveCribRequestStep: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/crib-request/continue`,
+  saveCribRetrievalStep: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/crib-retrieval/continue`,
+  completeCribReviewStep: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/review/complete`,
+  current: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/current`,
+  history: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/history`,
+  byId: (bankCustomerId: number, bankRecordId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/${bankRecordId}`,
 } as const;
 
 export const PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS = {
+  me: "/public-customers/me",
   base: (publicCustomerId: number) => `/public-customers/${publicCustomerId}/financial-records`,
   saveIncomeStep: (publicCustomerId: number) =>
     `/public-customers/${publicCustomerId}/financial-records/steps/income`,

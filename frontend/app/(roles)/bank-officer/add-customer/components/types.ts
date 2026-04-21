@@ -17,9 +17,13 @@ export interface CustomerFormData {
   accountVerificationMessage: string;
   
   // Financial Data
+  incomeType: string;
+  salaryType: string;
   employmentType: string;
+  contractDurationMonths: string;
   monthlySalary: string;
   businessIncome: string;
+  incomeStability: string;
   
   // Loans
   loans: {
@@ -42,6 +46,9 @@ export interface CustomerFormData {
   }[];
   
   missedPaymentsLast12Months: number;
+  cribRequestType?: string;
+  cribRequestStatus?: string;
+  cribReportStatus?: string;
   creditScore?: number;
   inquiryCount?: number;
   activeLoansCount?: number;
@@ -64,13 +71,20 @@ export const initialFormData: CustomerFormData = {
   isAccountVerified: false,
   accountVerificationStatus: "",
   accountVerificationMessage: "",
+  incomeType: "Salary Worker",
+  salaryType: "Fixed",
   employmentType: "Permanent",
+  contractDurationMonths: "",
   monthlySalary: "",
   businessIncome: "",
+  incomeStability: "Stable",
   loans: [],
   creditCards: [],
   liabilities: [],
   missedPaymentsLast12Months: 0,
+  cribRequestType: "FULL_REPORT",
+  cribRequestStatus: "SUBMITTED",
+  cribReportStatus: "PENDING",
 };
 
 export interface StepProps {
@@ -83,7 +97,13 @@ export interface StepProps {
   isSavingDraftStepOne?: boolean;
   isSubmittingStepOne?: boolean;
   serverStepOneErrors?: Partial<Record<"nic" | "email" | "username", string>>;
-  onClearServerStepOneError?: (field: "nic" | "email" | "username") => void;
+  onClearServerStepOneError?: (field: "nic" | "email" | "username" | "bankAccount") => void;
   onVerifyAccount?: () => Promise<void>;
   isVerifyingAccount?: boolean;
+  onSaveCribRequestStep?: (requestType: string) => Promise<void>;
+  onSaveCribRetrievalStep?: (payload?: { requestStatus?: string; reportStatus?: string }) => Promise<void>;
+  onCompleteCribReviewStep?: () => Promise<void>;
+  isSavingCribRequestStep?: boolean;
+  isSavingCribRetrievalStep?: boolean;
+  isCompletingCribReviewStep?: boolean;
 }

@@ -42,6 +42,12 @@ export interface PublicCustomerFinancialStepResponse {
   message: string;
 }
 
+export interface PublicCustomerMeResponse {
+  publicCustomerId: number;
+  userId: number;
+  customerCode: string;
+}
+
 export interface PublicCustomerFinancialRecordSummaryResponse {
   recordId: number;
   publicCustomerId: number;

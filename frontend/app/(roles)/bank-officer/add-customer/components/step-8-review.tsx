@@ -1,11 +1,32 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { StepProps } from "./types";
 
-export function Review({ formData, onNext, onBack }: StepProps) {
+export function Review({
+  formData,
+  onNext,
+  onBack,
+  onCompleteCribReviewStep,
+  isCompletingCribReviewStep,
+}: StepProps) {
+   const [errorMessage, setErrorMessage] = useState("");
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
+
+   const handleSubmit = async () => {
+      setErrorMessage("");
+
+      try {
+        if (onCompleteCribReviewStep) {
+          await onCompleteCribReviewStep();
+        }
+        onNext();
+      } catch (error) {
+        setErrorMessage(error instanceof Error ? error.message : "Failed to complete onboarding.");
+      }
+   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -91,6 +112,10 @@ export function Review({ formData, onNext, onBack }: StepProps) {
                  <div className="font-medium text-slate-800 text-right">{formData.employmentType}</div>
                  <div className="text-slate-500">Monthly Net</div>
                  <div className="font-medium text-slate-800 text-right">LKR {formData.monthlySalary}</div>
+                 <div className="text-slate-500">CRIB Request Status</div>
+                 <div className="font-medium text-slate-800 text-right">{formData.cribRequestStatus || "-"}</div>
+                 <div className="text-slate-500">CRIB Report Status</div>
+                 <div className="font-medium text-slate-800 text-right">{formData.cribReportStatus || "-"}</div>
               </div>
            </div>
         </div>
@@ -101,20 +126,28 @@ export function Review({ formData, onNext, onBack }: StepProps) {
         </div>
       </div>
 
+      {errorMessage && (
+        <div className="mx-8 mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          {errorMessage}
+        </div>
+      )}
+
       {/* Actions */}
       <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-slate-200 px-8 py-4 flex items-center justify-between z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         <Button 
           variant="ghost" 
           onClick={onBack}
           className="gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+          disabled={Boolean(isCompletingCribReviewStep)}
         >
             <ArrowLeft size={16} /> Back
         </Button>
         <div className="flex items-center gap-4">
             <span className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600">Save Draft</span>
             <Button 
-              onClick={onNext}
+              onClick={handleSubmit}
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
+              disabled={Boolean(isCompletingCribReviewStep)}
             >
                 Submit & Create <ArrowRight size={16} />
             </Button>

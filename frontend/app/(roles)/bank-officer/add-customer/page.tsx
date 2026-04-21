@@ -24,6 +24,24 @@ import {
    saveBankCustomerStepOneDraft,
 } from "@/src/api/registration/bank-customer-registration.service";
 import { verifyBankAccount } from "@/src/api/customers/account-verification.service";
+import {
+   completeBankCustomerCribReviewStep,
+   getOwnedBankCustomerIdentityByUserId,
+   saveBankCustomerCardStep,
+   saveBankCustomerCribRequestStep,
+   saveBankCustomerCribRetrievalStep,
+   saveBankCustomerIncomeStep,
+   saveBankCustomerLiabilityStep,
+   saveBankCustomerLoanStep,
+} from "@/src/api/customers/bank-customer-financial.service";
+import type {
+   BankCustomerCardStepRequest,
+   BankCustomerCribRequestStepRequest,
+   BankCustomerCribRetrievalStepRequest,
+   BankCustomerIncomeStepRequest,
+   BankCustomerLiabilityStepRequest,
+   BankCustomerLoanStepRequest,
+} from "@/src/types/dto/bank-customer-financial.dto";
 import type { StepOneRegistrationRequest } from "@/src/types/dto/registration.dto";
 import { ApiError } from "@/src/types/api-error";
 
@@ -83,6 +101,7 @@ const ADD_CUSTOMER_DRAFT_STORAGE_KEY = "bank-officer-add-customer-draft-v1";
 type StoredAddCustomerDraft = {
    step: number;
    formData: CustomerFormData;
+   createdBankCustomerId: number | null;
 };
 
 export default function AddCustomerPage() {
@@ -92,9 +111,13 @@ export default function AddCustomerPage() {
   const [generatedId, setGeneratedId] = useState("");
   const [submitError, setSubmitError] = useState("");
    const [serverStepOneErrors, setServerStepOneErrors] = useState<StepOneFieldErrors>({});
+   const [createdBankCustomerId, setCreatedBankCustomerId] = useState<number | null>(null);
    const [isSavingDraftStepOne, setIsSavingDraftStepOne] = useState(false);
    const [isSubmittingStepOne, setIsSubmittingStepOne] = useState(false);
    const [isVerifyingAccount, setIsVerifyingAccount] = useState(false);
+   const [isSavingCribRequestStep, setIsSavingCribRequestStep] = useState(false);
+   const [isSavingCribRetrievalStep, setIsSavingCribRetrievalStep] = useState(false);
+   const [isCompletingCribReviewStep, setIsCompletingCribReviewStep] = useState(false);
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
 
    useEffect(() => {
@@ -115,6 +138,10 @@ export default function AddCustomerPage() {
             });
          }
 
+         if (typeof parsedDraft.createdBankCustomerId === "number") {
+            setCreatedBankCustomerId(parsedDraft.createdBankCustomerId);
+         }
+
          if (
             typeof parsedDraft.step === "number" &&
             Number.isInteger(parsedDraft.step) &&
@@ -132,9 +159,10 @@ export default function AddCustomerPage() {
       const draft: StoredAddCustomerDraft = {
          step,
          formData,
+         createdBankCustomerId,
       };
       window.localStorage.setItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-   }, [step, formData]);
+   }, [step, formData, createdBankCustomerId]);
   
   const steps = [
     { id: 1, label: "Personal Details" },
@@ -172,12 +200,25 @@ export default function AddCustomerPage() {
    };
 
   const handleNext = () => {
-    if (step < steps.length) {
-      setStep(step + 1);
-      if (submitError) {
-        setSubmitError("");
-      }
-    } else {
+      if (step < steps.length) {
+         void (async () => {
+            try {
+               if (step >= 2 && step <= 5) {
+                  await persistFinancialStep(step);
+               }
+               setStep((prev) => prev + 1);
+               if (submitError) {
+                  setSubmitError("");
+               }
+            } catch (error) {
+               if (error instanceof ApiError) {
+                  setSubmitError(error.message || "Failed to save financial step.");
+                  return;
+               }
+               setSubmitError("Failed to save financial step. Please try again.");
+            }
+         })();
+      } else {
       const validation = validateCustomerSubmission(formData);
       if (!validation.isValid) {
         setSubmitError(validation.message || "Please fix validation errors before submitting.");
@@ -208,8 +249,102 @@ export default function AddCustomerPage() {
     setIsSuccess(false);
     setSubmitError("");
          setServerStepOneErrors({});
+         setCreatedBankCustomerId(null);
       window.localStorage.removeItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
   };
+
+      const toEnumToken = (value?: string) => {
+         if (!value) return undefined;
+         return value
+            .trim()
+            .toUpperCase()
+            .replace(/[^A-Z0-9]+/g, "_")
+            .replace(/^_+|_+$/g, "");
+      };
+
+      const parseCurrency = (value: string) => {
+         const parsed = Number(value);
+         return Number.isFinite(parsed) ? parsed : 0;
+      };
+
+      const buildIncomePayload = (): BankCustomerIncomeStepRequest => {
+         const incomes: BankCustomerIncomeStepRequest["incomes"] = [];
+         const incomeType = formData.incomeType || "Salary Worker";
+         const includesSalaryDetails = incomeType !== "Business Person";
+         const includesBusinessDetails = incomeType !== "Salary Worker";
+
+         if (includesSalaryDetails && formData.monthlySalary.trim()) {
+            incomes.push({
+               incomeCategory: "SALARY",
+               amount: parseCurrency(formData.monthlySalary),
+               salaryType: toEnumToken(formData.salaryType),
+               employmentType: toEnumToken(formData.employmentType),
+               contractDurationMonths:
+                  formData.employmentType === "Contract" && formData.contractDurationMonths.trim()
+                     ? Number(formData.contractDurationMonths)
+                     : undefined,
+            });
+         }
+
+         if (includesBusinessDetails && formData.businessIncome.trim()) {
+            incomes.push({
+               incomeCategory: "BUSINESS",
+               amount: parseCurrency(formData.businessIncome),
+               incomeStability: toEnumToken(formData.incomeStability),
+            });
+         }
+
+         return { incomes };
+      };
+
+      const buildLoanPayload = (): BankCustomerLoanStepRequest => ({
+         loans: formData.loans.map((loan) => ({
+            loanType: loan.type,
+            monthlyEmi: parseCurrency(loan.monthlyEmi),
+            remainingBalance: parseCurrency(loan.remainingBalance),
+         })),
+      });
+
+      const buildCardPayload = (): BankCustomerCardStepRequest => ({
+         cards: formData.creditCards.map((card) => ({
+            provider: card.issuer,
+            creditLimit: parseCurrency(card.limit),
+            outstandingBalance: parseCurrency(card.outstandingBalance),
+         })),
+      });
+
+      const buildLiabilityPayload = (): BankCustomerLiabilityStepRequest => ({
+         liabilities: formData.liabilities.map((liability) => ({
+            description: liability.category,
+            monthlyAmount: parseCurrency(liability.monthlyAmount),
+         })),
+         missedPayments: formData.missedPaymentsLast12Months,
+      });
+
+      const persistFinancialStep = async (currentStep: number) => {
+         if (!createdBankCustomerId) {
+            throw new Error("Please complete step 1 to create the bank customer before adding financial data.");
+         }
+
+         if (currentStep === 2) {
+            await saveBankCustomerIncomeStep(createdBankCustomerId, buildIncomePayload());
+            return;
+         }
+
+         if (currentStep === 3) {
+            await saveBankCustomerLoanStep(createdBankCustomerId, buildLoanPayload());
+            return;
+         }
+
+         if (currentStep === 4) {
+            await saveBankCustomerCardStep(createdBankCustomerId, buildCardPayload());
+            return;
+         }
+
+         if (currentStep === 5) {
+            await saveBankCustomerLiabilityStep(createdBankCustomerId, buildLiabilityPayload());
+         }
+      };
 
    const mapStepOnePayload = (data: CustomerFormData): StepOneRegistrationRequest => ({
       firstName: data.firstName.trim(),
@@ -318,13 +453,18 @@ export default function AddCustomerPage() {
             accountVerificationMessage: `Account found. Status: ${verification.status}`,
          });
 
-         await continueBankCustomerStepOne(mapStepOnePayload(formData));
+         const response = await continueBankCustomerStepOne(mapStepOnePayload(formData));
+         const customerIdentity = await getOwnedBankCustomerIdentityByUserId(response.userId);
+         setCreatedBankCustomerId(customerIdentity.bankCustomerId);
       } catch (error) {
          if (error instanceof ApiError) {
             const fieldErrors = extractStepOneFieldErrors(error);
             const duplicateMessage = buildDuplicateFieldMessage(fieldErrors);
             setSubmitError(duplicateMessage || error.message);
             setServerStepOneErrors(fieldErrors);
+         } else if (error instanceof Error) {
+            setSubmitError(error.message || "Failed to save step one. Please try again.");
+            setServerStepOneErrors({});
          } else {
             setSubmitError("Failed to save step one. Please try again.");
             setServerStepOneErrors({});
@@ -332,6 +472,75 @@ export default function AddCustomerPage() {
          throw error;
       } finally {
          setIsSubmittingStepOne(false);
+      }
+   };
+
+   const saveCribRequestStep = async (requestType: string) => {
+      if (!createdBankCustomerId) {
+         throw new Error("Please complete step 1 to create the bank customer before adding CRIB data.");
+      }
+
+      setIsSavingCribRequestStep(true);
+      try {
+         const response = await saveBankCustomerCribRequestStep(createdBankCustomerId, {
+            requestType,
+         } as BankCustomerCribRequestStepRequest);
+
+         updateFormData({
+            cribRequestType: requestType,
+            cribRequestStatus: response.requestStatus ?? "SUBMITTED",
+            cribReportStatus: response.reportStatus ?? "PENDING",
+         });
+
+         return response;
+      } finally {
+         setIsSavingCribRequestStep(false);
+      }
+   };
+
+   const saveCribRetrievalStep = async (payload?: { requestStatus?: string; reportStatus?: string }) => {
+      if (!createdBankCustomerId) {
+         throw new Error("Please complete step 1 to create the bank customer before adding CRIB data.");
+      }
+
+      setIsSavingCribRetrievalStep(true);
+      try {
+         const response = await saveBankCustomerCribRetrievalStep(createdBankCustomerId, {
+            requestStatus: payload?.requestStatus,
+            reportStatus: payload?.reportStatus,
+         } as BankCustomerCribRetrievalStepRequest);
+
+         updateFormData({
+            cribRequestStatus: response.requestStatus ?? "COMPLETED",
+            cribReportStatus: response.reportStatus ?? "READY",
+            creditScore: formData.creditScore ?? 785,
+            missedPaymentsLast12Months: formData.missedPaymentsLast12Months ?? 0,
+            activeLoansCount: formData.activeLoansCount ?? 2,
+            totalActiveLoanValue: formData.totalActiveLoanValue ?? 4500000,
+            inquiryCount: formData.inquiryCount ?? 1,
+          });
+
+         return response;
+      } finally {
+         setIsSavingCribRetrievalStep(false);
+      }
+   };
+
+   const completeCribReviewStep = async () => {
+      if (!createdBankCustomerId) {
+         throw new Error("Please complete step 1 to create the bank customer before finishing onboarding.");
+      }
+
+      setIsCompletingCribReviewStep(true);
+      try {
+         const response = await completeBankCustomerCribReviewStep(createdBankCustomerId);
+         updateFormData({
+            cribRequestStatus: response.requestStatus ?? "COMPLETED",
+            cribReportStatus: response.reportStatus ?? "READY",
+         });
+         return response;
+      } finally {
+         setIsCompletingCribReviewStep(false);
       }
    };
 
@@ -362,9 +571,9 @@ export default function AddCustomerPage() {
       case 3: return <Loans {...props} />;
       case 4: return <CreditCards {...props} />;
       case 5: return <Liabilities {...props} />;
-      case 6: return <CRIBRequest {...props} />;
-      case 7: return <CRIBRetrieval {...props} />;
-      case 8: return <Review {...props} />;
+      case 6: return <CRIBRequest {...props} onSaveCribRequestStep={saveCribRequestStep} isSavingCribRequestStep={isSavingCribRequestStep} />;
+      case 7: return <CRIBRetrieval {...props} onSaveCribRetrievalStep={saveCribRetrievalStep} isSavingCribRetrievalStep={isSavingCribRetrievalStep} />;
+      case 8: return <Review {...props} onCompleteCribReviewStep={completeCribReviewStep} isCompletingCribReviewStep={isCompletingCribReviewStep} />;
          default: return <PersonalDetails {...props} serverStepOneErrors={serverStepOneErrors} onClearServerStepOneError={clearServerStepOneError} />;
     }
   };

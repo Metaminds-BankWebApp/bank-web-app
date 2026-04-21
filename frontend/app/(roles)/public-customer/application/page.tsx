@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { AuthGuard } from "@/src/components/auth";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/src/store";
 import {
+   getMyPublicCustomerProfile,
    savePublicCustomerCardStep,
    savePublicCustomerIncomeStep,
    savePublicCustomerLiabilityStep,
@@ -82,11 +82,10 @@ type Liability = {
 // --- Main Application Component ---
 export default function PublicCustomerApplicationPage() {
   const router = useRouter();
-   const authUser = useAuthStore((state) => state.user);
-   const authToken = useAuthStore((state) => state.token);
   const [step, setStep] = useState(1);
   const [skippedSteps, setSkippedSteps] = useState<number[]>([]);
    const [financialRecordId, setFinancialRecordId] = useState<number | null>(null);
+   const [resolvedPublicCustomerId, setResolvedPublicCustomerId] = useState<number | null>(null);
    const [isSavingStep, setIsSavingStep] = useState(false);
    const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -297,29 +296,18 @@ export default function PublicCustomerApplicationPage() {
          .replace(/^_+|_+$/g, "");
    };
 
-   const resolvePublicCustomerId = () => {
-      const userId = Number(authUser?.id);
-      if (Number.isFinite(userId) && userId > 0) {
-         return userId;
+   const resolvePublicCustomerId = async () => {
+      if (resolvedPublicCustomerId && resolvedPublicCustomerId > 0) {
+         return resolvedPublicCustomerId;
       }
 
-      if (!authToken) {
-         return null;
+      const me = await getMyPublicCustomerProfile();
+      if (!me.publicCustomerId || me.publicCustomerId <= 0) {
+         throw new Error("Unable to resolve your public customer profile id.");
       }
 
-      try {
-         const payload = authToken.split(".")[1];
-         if (!payload) return null;
-
-         const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-         const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
-         const decoded = JSON.parse(atob(padded)) as Record<string, unknown>;
-         const claimCandidate = decoded.userId ?? decoded.id ?? decoded.uid ?? decoded.sub;
-         const parsed = Number(claimCandidate);
-         return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-      } catch {
-         return null;
-      }
+      setResolvedPublicCustomerId(me.publicCustomerId);
+      return me.publicCustomerId;
    };
 
    const buildIncomePayload = (): PublicCustomerIncomeStepRequest => ({
@@ -361,7 +349,7 @@ export default function PublicCustomerApplicationPage() {
    });
 
    const saveFinancialStep = async (): Promise<PublicCustomerFinancialStepResponse> => {
-      const publicCustomerId = resolvePublicCustomerId();
+      const publicCustomerId = await resolvePublicCustomerId();
 
       if (!publicCustomerId) {
          throw new Error("Unable to resolve your customer profile. Please sign in again.");
