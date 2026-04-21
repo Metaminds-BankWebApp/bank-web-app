@@ -29,7 +29,9 @@ export function validateBranchForm(formData: BranchFormData): BranchFormErrors {
   return errors;
 }
 
-export function isBranchFormComplete(formData: Pick<BranchFormData, "branchName" | "contact" | "email" | "address">): boolean {
+export function isBranchFormComplete(
+  formData: Pick<BranchFormData, "branchName" | "contact" | "email" | "address">
+): boolean {
   return Boolean(
     formData.branchName.trim() &&
       formData.contact.trim() &&

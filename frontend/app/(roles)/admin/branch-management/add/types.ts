@@ -1,12 +1,14 @@
+export type BranchStatus = "ACTIVE" | "INACTIVE" | "MAINTENANCE";
+
 export type BranchFormData = {
   branchName: string;
-  branchId: string;
+  branchId: string; // visible in frontend, maps to backend branchCode
   customers: string;
   officers: string;
   contact: string;
   email: string;
   address: string;
-  isActive: boolean;
+  status: BranchStatus;
 };
 
 export type BranchFormErrors = Partial<
