@@ -963,7 +963,7 @@ export default function PublicCustomerApplicationPage() {
              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 h-fit">
                 <div className="flex items-center gap-2 mb-2">
                     <div className="bg-[#3e9fd3] p-1 rounded-md text-white"><FileText size={16} /></div>
-                    <h2 className="text-xl font-bold text-slate-900">Liability Details</h2>
+                    <h2 className="text-xl font-bold text-slate-900">Other Liability Details</h2>
                 </div>
                 
                 <div className="space-y-6 mt-8">
@@ -978,7 +978,7 @@ export default function PublicCustomerApplicationPage() {
                    </div>
 
                    <div>
-                     <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Other Monthly Obligations Total (LKR)</label>
+                     <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Monthly Obligations Total (LKR)</label>
                      <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">LKR</span>
                         <Input 
