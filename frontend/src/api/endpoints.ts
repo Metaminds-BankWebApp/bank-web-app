@@ -79,6 +79,11 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
   byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
 } as const;
 
+export const USER_PROFILE_ENDPOINTS = {
+  current: "/users/profile",
+  update: "/users/profile",
+} as const;
+
 export const ADMIN_ENDPOINTS = {
   bankOfficers: "/admin/bank-officers",
   branches: "/admin/branches",
