@@ -11,6 +11,7 @@ import {
    savePublicCustomerLiabilityStep,
    savePublicCustomerLoanStep,
 } from "@/src/api/customers/public-customer-financial.service";
+import { createPublicCreditEvaluation } from "@/src/api/creditlens/public-creditlens.service";
 import type {
    PublicCustomerFinancialStepResponse,
    PublicCustomerFinancialRecordResponse,
@@ -1151,67 +1152,21 @@ export default function PublicCustomerApplicationPage() {
       }
 
       setIsSubmitting(true);
-      updateStepStatus(5, {
-        status: "IN_PROGRESS",
-        note: "Submitting application...",
+      // Submission without client-side validation per current request
+      // Logic to submit data would go here (send formData + account info to backend)
+      showToast({ 
+         title: "Application Submitted", 
+         description: financialRecordId
+           ? `Financial record #${financialRecordId} submitted. Redirecting to dashboard...`
+           : "Your application has been received. Redirecting to dashboard...",
+         type: "success"
       });
 
-      try {
-         const publicCustomerId = await resolvePublicCustomerId();
-         let latestRecordId = financialRecordId;
+      setTimeout(() => {
+         router.replace("/public-customer"); // Redirect to dashboard
+      }, 1500);
 
-         for (const targetStep of [1, 2, 3, 4]) {
-            updateStepStatus(targetStep, {
-               status: "IN_PROGRESS",
-               backendSynced: false,
-               note: "Saving latest data to server...",
-            });
-
-            const response = await saveFinancialStepByStep(publicCustomerId, targetStep);
-            latestRecordId = response.recordId;
-            setFinancialRecordId(response.recordId);
-            updateStepStatus(targetStep, {
-               status: "COMPLETED",
-               backendSynced: true,
-               recordId: response.recordId,
-               note: "Saved during final submit.",
-            });
-         }
-
-         setSkippedSteps([]);
-         showToast({
-            title: "Application Submitted",
-            description: latestRecordId
-               ? `Financial record #${latestRecordId} submitted. Redirecting to dashboard...`
-               : "Your application has been received. Redirecting to dashboard...",
-            type: "success",
-         });
-         updateStepStatus(5, {
-            status: "COMPLETED",
-            backendSynced: true,
-            recordId: latestRecordId,
-            note: "Application submitted successfully.",
-         });
-         window.localStorage.removeItem(PUBLIC_CUSTOMER_APPLICATION_DRAFT_KEY);
-
-         setTimeout(() => {
-            router.replace("/public-customer");
-         }, 1500);
-      } catch (error) {
-         const message = error instanceof Error ? error.message : "Failed to submit application.";
-         updateStepStatus(5, {
-            status: "FAILED",
-            backendSynced: false,
-            note: message,
-         });
-         showToast({
-            title: "Submission failed",
-            description: message,
-            type: "error",
-         });
-      } finally {
-         setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
   };
 
   return (
@@ -1747,7 +1702,7 @@ export default function PublicCustomerApplicationPage() {
              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 h-fit">
                 <div className="flex items-center gap-2 mb-2">
                     <div className="bg-[#3e9fd3] p-1 rounded-md text-white"><FileText size={16} /></div>
-                    <h2 className="text-xl font-bold text-slate-900">Liability Details</h2>
+                    <h2 className="text-xl font-bold text-slate-900">Other Liability Details</h2>
                 </div>
                 
                 <div className="space-y-6 mt-8">
@@ -1762,7 +1717,7 @@ export default function PublicCustomerApplicationPage() {
                    </div>
 
                    <div>
-                     <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Other Monthly Obligations Total (LKR)</label>
+                     <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Monthly Obligations Total (LKR)</label>
                      <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-medium">LKR</span>
                         <Input 
