@@ -20,6 +20,11 @@ export default function Page() {
   const [submitError, setSubmitError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const shouldShowInlineError = (field: string) => {
+    const fieldMessage = errors[field]
+    return Boolean(fieldMessage) && fieldMessage !== submitError
+  }
+
   const validate = () => {
     const e: { [k: string]: string } = {}
     const normalizedAccountNumber = accountNumber.trim()
@@ -152,7 +157,7 @@ export default function Page() {
                                   onChange={(e) => handleAccountNumberChange((e as React.ChangeEvent<HTMLInputElement>).target.value)}
                                   aria-invalid={!!errors.accountNumber}
                                 />
-                {errors.accountNumber && (
+                {shouldShowInlineError("accountNumber") && (
                   <p className="text-xs text-red-600 mt-1" role="alert">{errors.accountNumber}</p>
                 )}
               </div>
@@ -177,7 +182,7 @@ export default function Page() {
           }}
           className="w-full"
                 />
-                {errors.nickName && (
+                {shouldShowInlineError("nickName") && (
                   <p className="text-xs text-red-600 mt-1" role="alert">{errors.nickName}</p>
                 )}
               </div>
@@ -203,7 +208,7 @@ export default function Page() {
                 }}
                 className="w-full min-h-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
               />
-              {errors.remark && (
+              {shouldShowInlineError("remark") && (
                 <p className="text-xs text-red-600 mt-1" role="alert">{errors.remark}</p>
               )}
             </div>
