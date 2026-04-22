@@ -2,6 +2,7 @@ import apiClient, { toApiError } from "@/src/api/client";
 import { AUTH_ENDPOINTS } from "@/src/api/endpoints";
 import type {
   AuthActionResponse,
+  AuthMeResponse,
   ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
@@ -13,6 +14,15 @@ import type {
 export async function login(payload: LoginRequest): Promise<LoginResponse> {
   try {
     const { data } = await apiClient.post<LoginResponse>(AUTH_ENDPOINTS.login, payload);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function me(): Promise<AuthMeResponse> {
+  try {
+    const { data } = await apiClient.get<AuthMeResponse>(AUTH_ENDPOINTS.me);
     return data;
   } catch (error) {
     throw toApiError(error);
@@ -98,6 +108,7 @@ export async function resetPassword(payload: ResetPasswordRequest): Promise<Auth
 
 export const authService = {
   login,
+  me,
   register,
   logout,
   forgotPassword,
