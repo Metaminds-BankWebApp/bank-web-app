@@ -391,6 +391,7 @@ export function RegisterForm() {
             <Input
               label="Password"
               type="password"
+              enablePasswordToggle
               value={password}
               error={fieldErrors.password}
               onChange={(event) => {
@@ -409,6 +410,7 @@ export function RegisterForm() {
           <Input
             label="Confirm Password"
             type="password"
+            enablePasswordToggle
             value={confirmPassword}
             error={fieldErrors.confirmPassword}
             onChange={(event) => {

@@ -2,14 +2,15 @@ import apiClient, { toApiError } from "@/src/api/client";
 import { BANK_CUSTOMER_FINANCIAL_ENDPOINTS, CUSTOMER_ENDPOINTS } from "@/src/api/endpoints";
 import type {
   BankCustomerCardStepRequest,
+  BankCustomerFinancialRecordResponse,
   BankCustomerCribRequestStepRequest,
-  BankCustomerCribRetrievalStepRequest,
   BankCustomerCribStepResponse,
   BankCustomerFinancialStepResponse,
   BankCustomerIncomeStepRequest,
   BankCustomerLiabilityStepRequest,
   BankCustomerLoanStepRequest,
   BankOfficerCustomerIdentityResponse,
+  BankOfficerCustomerStepOnePrefillResponse,
 } from "@/src/types/dto/bank-customer-financial.dto";
 
 export async function getOwnedBankCustomerIdentityByUserId(
@@ -18,6 +19,37 @@ export async function getOwnedBankCustomerIdentityByUserId(
   try {
     const { data } = await apiClient.get<BankOfficerCustomerIdentityResponse>(
       CUSTOMER_ENDPOINTS.bankOfficerCustomerByUser(userId),
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function findOwnedBankCustomerStepOneByNic(
+  nic: string,
+): Promise<BankOfficerCustomerStepOnePrefillResponse> {
+  try {
+    const { data } = await apiClient.get<BankOfficerCustomerStepOnePrefillResponse>(
+      CUSTOMER_ENDPOINTS.bankOfficerCustomerStepOneByNic,
+      {
+        params: {
+          nic,
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getCurrentBankCustomerFinancialRecord(
+  bankCustomerId: number,
+): Promise<BankCustomerFinancialRecordResponse> {
+  try {
+    const { data } = await apiClient.get<BankCustomerFinancialRecordResponse>(
+      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.current(bankCustomerId),
     );
     return data;
   } catch (error) {
@@ -85,28 +117,13 @@ export async function saveBankCustomerLiabilityStep(
   }
 }
 
-export async function saveBankCustomerCribRequestStep(
+export async function saveBankCustomerCribLinkingStep(
   bankCustomerId: number,
   payload: BankCustomerCribRequestStepRequest,
 ): Promise<BankCustomerCribStepResponse> {
   try {
     const { data } = await apiClient.post<BankCustomerCribStepResponse>(
-      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.saveCribRequestStep(bankCustomerId),
-      payload,
-    );
-    return data;
-  } catch (error) {
-    throw toApiError(error);
-  }
-}
-
-export async function saveBankCustomerCribRetrievalStep(
-  bankCustomerId: number,
-  payload: BankCustomerCribRetrievalStepRequest,
-): Promise<BankCustomerCribStepResponse> {
-  try {
-    const { data } = await apiClient.post<BankCustomerCribStepResponse>(
-      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.saveCribRetrievalStep(bankCustomerId),
+      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.saveCribLinkingStep(bankCustomerId),
       payload,
     );
     return data;
