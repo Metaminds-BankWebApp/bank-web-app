@@ -10,6 +10,7 @@ import {
    savePublicCustomerLiabilityStep,
    savePublicCustomerLoanStep,
 } from "@/src/api/customers/public-customer-financial.service";
+import { createPublicCreditEvaluation } from "@/src/api/creditlens/public-creditlens.service";
 import type {
    PublicCustomerFinancialStepResponse,
    PublicCustomerIncomeStepRequest,
@@ -414,21 +415,32 @@ export default function PublicCustomerApplicationPage() {
       }
 
       setIsSubmitting(true);
-      // Submission without client-side validation per current request
-      // Logic to submit data would go here (send formData + account info to backend)
-      showToast({ 
-         title: "Application Submitted", 
-         description: financialRecordId
-           ? `Financial record #${financialRecordId} submitted. Redirecting to dashboard...`
-           : "Your application has been received. Redirecting to dashboard...",
-         type: "success"
-      });
+      try {
+        const evaluation = await createPublicCreditEvaluation();
 
-      setTimeout(() => {
-         router.replace("/public-customer"); // Redirect to dashboard
-      }, 1500);
+        showToast({
+          title: "Application Submitted",
+          description: financialRecordId
+            ? `Financial record #${financialRecordId} generated a CreditLens score of ${evaluation.totalRiskPoints} (${evaluation.riskLabel}). Redirecting to CreditLens...`
+            : `CreditLens score ${evaluation.totalRiskPoints} (${evaluation.riskLabel}) generated successfully. Redirecting to CreditLens...`,
+          type: "success",
+        });
 
-      setIsSubmitting(false);
+        await new Promise((resolve) => window.setTimeout(resolve, 1400));
+        router.replace("/public-customer/creditlens");
+      } catch (error) {
+        const message = error instanceof Error
+          ? error.message
+          : "Unable to generate your CreditLens evaluation right now.";
+
+        showToast({
+          title: "Could not submit application",
+          description: message,
+          type: "error",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
   };
 
   return (

@@ -68,6 +68,17 @@ export const PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS = {
     `/public-customers/${publicCustomerId}/financial-records/${recordId}`,
 } as const;
 
+export const PUBLIC_CREDITLENS_ENDPOINTS = {
+  createEvaluation: "/creditlens/public/evaluations",
+  current: "/creditlens/public/current",
+  dashboard: "/creditlens/public/dashboard",
+  trends: "/creditlens/public/trends",
+  insights: "/creditlens/public/insights",
+  report: "/creditlens/public/report",
+  history: "/creditlens/public/history",
+  byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
+} as const;
+
 export const ADMIN_ENDPOINTS = {
   bankOfficers: "/admin/bank-officers",
   branches: "/admin/branches",
