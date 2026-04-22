@@ -20,11 +20,6 @@ export default function Page() {
   const [submitError, setSubmitError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const shouldShowInlineError = (field: string) => {
-    const fieldMessage = errors[field]
-    return Boolean(fieldMessage) && fieldMessage !== submitError
-  }
-
   const validate = () => {
     const e: { [k: string]: string } = {}
     const normalizedAccountNumber = accountNumber.trim()
@@ -69,6 +64,7 @@ export default function Page() {
     const hasErrors = Object.keys(validation).length > 0
     if (hasErrors) {
       const firstKey = Object.keys(validation)[0]
+      setSubmitError(validation[firstKey] || "Please fix the form validation errors.")
       const el = document.getElementById(firstKey)
       if (el) (el as HTMLElement).focus()
       return
@@ -123,7 +119,8 @@ export default function Page() {
       }
 
       setErrors((prev) => ({ ...prev, ...nextErrors }))
-      setSubmitError(message)
+      const firstFieldError = Object.values(nextErrors).find((value) => Boolean(value))
+      setSubmitError(typeof firstFieldError === "string" ? firstFieldError : message)
     } finally {
       setIsSubmitting(false)
     }
@@ -157,9 +154,6 @@ export default function Page() {
                                   onChange={(e) => handleAccountNumberChange((e as React.ChangeEvent<HTMLInputElement>).target.value)}
                                   aria-invalid={!!errors.accountNumber}
                                 />
-                {shouldShowInlineError("accountNumber") && (
-                  <p className="text-xs text-red-600 mt-1" role="alert">{errors.accountNumber}</p>
-                )}
               </div>
         <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="nickName">Nick name</Label>
@@ -182,9 +176,6 @@ export default function Page() {
           }}
           className="w-full"
                 />
-                {shouldShowInlineError("nickName") && (
-                  <p className="text-xs text-red-600 mt-1" role="alert">{errors.nickName}</p>
-                )}
               </div>
             </div>
 
@@ -208,9 +199,6 @@ export default function Page() {
                 }}
                 className="w-full min-h-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
               />
-              {shouldShowInlineError("remark") && (
-                <p className="text-xs text-red-600 mt-1" role="alert">{errors.remark}</p>
-              )}
             </div>
 
             <div className="flex justify-end mt-2 sm:mt-4">
