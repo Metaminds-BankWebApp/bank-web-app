@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import ModuleHeader from "@/src/components/ui/module-header";
+import { authService } from "@/src/api/auth/auth.service"
+import { beneficiaryService } from "@/src/api/transact/beneficiary.service"
+import { ApiError } from "@/src/types/api-error"
 
 export default function Page() {
   const router = useRouter()
@@ -14,58 +17,111 @@ export default function Page() {
   const [nickName, setNickName] = useState("")
   const [remark, setRemark] = useState("")
   const [errors, setErrors] = useState<{ [k: string]: string }>({})
+  const [submitError, setSubmitError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Basic validation rules (can be adjusted)
   const validate = () => {
     const e: { [k: string]: string } = {}
+    const normalizedAccountNumber = accountNumber.trim()
+    const normalizedNickName = nickName.trim()
+    const normalizedRemark = remark.trim()
 
-    if (!accountNumber) e.accountNumber = "Account number is required"
-    else if (!/^\d+$/.test(accountNumber)) e.accountNumber = "Account number must contain only digits"
-    else if (accountNumber.length < 6) e.accountNumber = "Account number must be at least 6 digits"
-    else if (accountNumber.length > 18) e.accountNumber = "Account number is too long"
+    if (!normalizedAccountNumber) e.accountNumber = "Account number is required"
+    else if (!/^\d+$/.test(normalizedAccountNumber)) e.accountNumber = "Account number must contain only digits"
+    else if (normalizedAccountNumber.length < 6) e.accountNumber = "Account number must be at least 6 digits"
+    else if (normalizedAccountNumber.length > 20) e.accountNumber = "Account number must not exceed 20 digits"
 
-  // nickName and remark: required only (no length checks)
-  if (!nickName) e.nickName = "Nick name is required"
-  if (!remark) e.remark = "Remark is required"
+    if (!normalizedNickName) e.nickName = "Nick name is required"
+    else if (normalizedNickName.length > 100) e.nickName = "Nick name must not exceed 100 characters"
+
+    if (!normalizedRemark) e.remark = "Remark is required"
+    else if (normalizedRemark.length > 255) e.remark = "Remark must not exceed 255 characters"
 
     return e
   }
 
   const handleAccountNumberChange = (value: string) => {
-    const digitsOnly = value.replace(/\D/g, "")
+    const digitsOnly = value.replace(/\D/g, "").slice(0, 20)
     setAccountNumber(digitsOnly)
+    if (errors.accountNumber) {
+      setErrors((prev) => ({ ...prev, accountNumber: "" }))
+    }
+    if (submitError) {
+      setSubmitError("")
+    }
   }
 
-  const handleSubmit = (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
-    setIsSubmitting(true)
+
+    if (isSubmitting) {
+      return
+    }
+
+    setSubmitError("")
     const validation = validate()
     setErrors(validation)
     const hasErrors = Object.keys(validation).length > 0
-    if (!hasErrors) {
-      // persist to localStorage (append to 'beneficiaries' list)
-      try {
-        const key = "beneficiaries"
-        const existing = localStorage.getItem(key)
-        const list = existing ? JSON.parse(existing) : []
-        list.push({ accountNumber, nickName, remark, createdAt: new Date().toISOString() })
-        localStorage.setItem(key, JSON.stringify(list))
-      } catch (err) {
-        // silent: localStorage may be unavailable in some environments
-        // eslint-disable-next-line no-console
-        console.error("Failed to save beneficiary to localStorage", err)
-      }
-
-      // on success, navigate
-      router.push("/bank-customer/transact/transfer")
-    } else {
-      // focus first invalid field (optional)
+    if (hasErrors) {
       const firstKey = Object.keys(validation)[0]
       const el = document.getElementById(firstKey)
       if (el) (el as HTMLElement).focus()
+      return
     }
-    setIsSubmitting(false)
+
+    setIsSubmitting(true)
+
+    try {
+      const me = await authService.me()
+      if (String(me.roleName).toUpperCase() !== "BANK_CUSTOMER" || !me.bankCustomerId) {
+        setSubmitError("Only logged-in bank customers can add beneficiaries.")
+        return
+      }
+
+      await beneficiaryService.createBeneficiary({
+        beneficiaryAccountNo: accountNumber.trim(),
+        nickName: nickName.trim(),
+        remark: remark.trim(),
+      })
+
+      router.push("/bank-customer/transact/transfer")
+    } catch (error) {
+      const nextErrors: { [k: string]: string } = {}
+      let message = "Unable to save beneficiary. Please try again."
+
+      if (error instanceof ApiError) {
+        message = error.message || message
+        const details = (error.details ?? {}) as {
+          fieldErrors?: Record<string, unknown>
+        }
+        const fieldErrors = details.fieldErrors
+        if (fieldErrors) {
+          if (typeof fieldErrors.beneficiaryAccountNo === "string") {
+            nextErrors.accountNumber = fieldErrors.beneficiaryAccountNo
+          }
+          if (typeof fieldErrors.nickName === "string") {
+            nextErrors.nickName = fieldErrors.nickName
+          }
+          if (typeof fieldErrors.remark === "string") {
+            nextErrors.remark = fieldErrors.remark
+          }
+        }
+
+        if (
+          !nextErrors.accountNumber &&
+          (message === "Account number not found" || message === "Beneficiary already added")
+        ) {
+          nextErrors.accountNumber = message
+        }
+      } else if (error instanceof Error && error.message) {
+        message = error.message
+      }
+
+      setErrors((prev) => ({ ...prev, ...nextErrors }))
+      setSubmitError(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -76,6 +132,11 @@ export default function Page() {
 
   <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 mt-6 w-full rounded-xl p-4 sm:mt-35 sm:min-h-[420px] sm:p-6 lg:p-8">
           <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit} noValidate>
+            {submitError && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+                {submitError}
+              </div>
+            )}
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="space-y-2 sm:col-span-2">
@@ -85,8 +146,8 @@ export default function Page() {
                                   type="text"
                                   inputMode="numeric"
                                   pattern="[0-9]*"
-                                  placeholder="Enter 10-digit account number"
-                                  maxLength={10}
+                                  placeholder="Enter account number"
+                                  maxLength={20}
                                   value={accountNumber}
                                   onChange={(e) => handleAccountNumberChange((e as React.ChangeEvent<HTMLInputElement>).target.value)}
                                   aria-invalid={!!errors.accountNumber}
@@ -105,7 +166,15 @@ export default function Page() {
                   value={nickName}
                   aria-invalid={!!errors.nickName}
                   required
-          onChange={(e) => setNickName(e.target.value)}
+          onChange={(e) => {
+            setNickName(e.target.value)
+            if (errors.nickName) {
+              setErrors((prev) => ({ ...prev, nickName: "" }))
+            }
+            if (submitError) {
+              setSubmitError("")
+            }
+          }}
           className="w-full"
                 />
                 {errors.nickName && (
@@ -123,7 +192,15 @@ export default function Page() {
                 value={remark}
                 aria-invalid={!!errors.remark}
                 required
-                onChange={(e) => setRemark(e.target.value)}
+                onChange={(e) => {
+                  setRemark(e.target.value)
+                  if (errors.remark) {
+                    setErrors((prev) => ({ ...prev, remark: "" }))
+                  }
+                  if (submitError) {
+                    setSubmitError("")
+                  }
+                }}
                 className="w-full min-h-[180px] rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
               />
               {errors.remark && (

@@ -84,3 +84,13 @@ export const ADMIN_ENDPOINTS = {
   bankOfficers: "/admin/bank-officers",
   branches: "/admin/branches",
 } as const;
+
+export const TRANSACT_ENDPOINTS = {
+  transactionsInitiate: "/bank-customers/transact/transactions/initiate",
+  transactionsVerifyOtp: "/bank-customers/transact/transactions/verify-otp",
+  transactionsResendOtp: "/bank-customers/transact/transactions/resend-otp",
+  transactionsHistory: "/bank-customers/transact/transactions/history",
+  transactionByReference: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}`,
+  beneficiaries: "/bank-customers/transact/beneficiaries",
+  beneficiaryById: (beneficiaryId: number) => `/bank-customers/transact/beneficiaries/${beneficiaryId}`,
+} as const;
