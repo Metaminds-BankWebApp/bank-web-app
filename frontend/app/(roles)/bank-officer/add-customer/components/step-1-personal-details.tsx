@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { 
   CheckCircle2, 
+  Search,
   ArrowRight, 
   ArrowLeft 
 } from "lucide-react";
@@ -21,8 +22,11 @@ export function PersonalDetails({
   isVerifyingAccount,
   onSaveDraftStepOne,
   onContinueStepOne,
+  onLookupCustomerByNic,
   isSavingDraftStepOne,
   isSubmittingStepOne,
+  isLookingUpCustomerByNic,
+  hasExistingCustomerMatch,
   serverStepOneErrors,
   onClearServerStepOneError,
 }: StepProps) {
@@ -33,7 +37,9 @@ export function PersonalDetails({
   };
 
   const validate = () => {
-    const newErrors = validatePersonalDetailsStep(formData);
+    const newErrors = validatePersonalDetailsStep(formData, {
+      allowPasswordUnchanged: Boolean(hasExistingCustomerMatch),
+    });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -59,6 +65,17 @@ export function PersonalDetails({
     }
   };
 
+  const handleLookupCustomerByNic = async () => {
+    if (!onLookupCustomerByNic) {
+      return;
+    }
+    if (!formData.nic.trim()) {
+      setErrors((prev) => ({ ...prev, nic: "NIC number is required." }));
+      return;
+    }
+    await onLookupCustomerByNic();
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target as HTMLInputElement & { id: keyof CustomerFormData };
     updateFormData({ [id]: value } as Partial<CustomerFormData>);
@@ -79,6 +96,39 @@ export function PersonalDetails({
       </div>
       
       <div className="p-8 space-y-8">
+        <div className="rounded-xl border border-[#c9e8f8] bg-[#f1f9fe] p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="nic" className="text-slate-700 font-semibold">NIC Number (Primary Lookup)</Label>
+              <Input
+                id="nic"
+                value={formData.nic}
+                onChange={handleChange}
+                placeholder="951234567V"
+                className={`bg-white border-slate-200 h-11 ${mergedErrors.nic ? "border-red-500" : ""}`}
+              />
+              {mergedErrors.nic && <p className="text-red-500 text-xs">{mergedErrors.nic}</p>}
+            </div>
+            <Button
+              type="button"
+              onClick={handleLookupCustomerByNic}
+              disabled={Boolean(isLookingUpCustomerByNic || isSavingDraftStepOne || isSubmittingStepOne || !formData.nic.trim())}
+              className="h-11 min-w-52 bg-[#0d3b66] hover:bg-[#1a4a7a] text-white"
+            >
+              <Search size={16} className="mr-2" />
+              {isLookingUpCustomerByNic ? "Searching..." : "Find Existing Customer"}
+            </Button>
+          </div>
+          <p className="mt-3 text-xs text-slate-600">
+            Enter NIC first. If customer already exists, we will load saved details so you can update without duplicate inserts.
+          </p>
+          {hasExistingCustomerMatch && (
+            <p className="mt-2 text-xs font-semibold text-emerald-700">
+              Existing customer found and loaded. You can now edit and continue.
+            </p>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-3">
             <Label htmlFor="firstName" className="text-slate-700 font-medium">First Name</Label>
@@ -106,17 +156,6 @@ export function PersonalDetails({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-3">
-            <Label htmlFor="nic" className="text-slate-700 font-medium">NIC Number</Label>
-            <Input 
-              id="nic" 
-              value={formData.nic} 
-              onChange={handleChange}
-              placeholder="951234567V" 
-              className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.nic ? "border-red-500" : ""}`} 
-            />
-            {mergedErrors.nic && <p className="text-red-500 text-xs">{mergedErrors.nic}</p>}
-          </div>
-          <div className="space-y-3">
             <Label htmlFor="dob" className="text-slate-700 font-medium">Date of Birth</Label>
             <Input 
               id="dob" 
@@ -127,9 +166,6 @@ export function PersonalDetails({
             />
             {mergedErrors.dob && <p className="text-red-500 text-xs">{mergedErrors.dob}</p>}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-3">
             <Label htmlFor="email" className="text-slate-700 font-medium">Email Address</Label>
             <Input 
@@ -142,6 +178,9 @@ export function PersonalDetails({
             />
             {mergedErrors.email && <p className="text-red-500 text-xs">{mergedErrors.email}</p>}
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-3">
             <Label htmlFor="mobile" className="text-slate-700 font-medium">Mobile Number</Label>
             <Input 
@@ -153,9 +192,6 @@ export function PersonalDetails({
             />
             {mergedErrors.mobile && <p className="text-red-500 text-xs">{mergedErrors.mobile}</p>}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-3">
             <Label htmlFor="province" className="text-slate-700 font-medium">Province</Label>
             <Input 
@@ -167,6 +203,9 @@ export function PersonalDetails({
             />
             {mergedErrors.province && <p className="text-red-500 text-xs">{mergedErrors.province}</p>}
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-3">
             <Label htmlFor="address" className="text-slate-700 font-medium">Address</Label>
             <Input 
@@ -178,6 +217,7 @@ export function PersonalDetails({
             />
             {mergedErrors.address && <p className="text-red-500 text-xs">{mergedErrors.address}</p>}
           </div>
+          <div />
         </div>
 
         <div className="pt-4">

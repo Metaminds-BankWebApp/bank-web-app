@@ -12,7 +12,10 @@ export type PersonalDetailsErrors = Partial<
 >;
 
 export type FinancialDataErrors = Partial<
-  Record<"employmentType" | "monthlySalary" | "businessIncome" | "income", string>
+  Record<
+    "incomeType" | "salaryType" | "employmentType" | "contractDurationMonths" | "monthlySalary" | "businessIncome" | "incomeStability" | "income" | "incomes" | "step",
+    string
+  >
 >;
 
 export type LoanDraft = {
@@ -46,9 +49,13 @@ export type CRIBRetrievalErrors = Partial<
 
 export interface SubmissionValidationResult {
   isValid: boolean;
-  firstInvalidStep: 1 | 2 | 3 | 4 | 5 | 7 | null;
+  firstInvalidStep: 1 | 2 | 3 | 4 | 5 | 6 | null;
   message?: string;
 }
+
+type PersonalDetailsValidationOptions = {
+  allowPasswordUnchanged?: boolean;
+};
 
 function sanitizeAmount(value: string): string {
   return value.replace(/,/g, "").trim();
@@ -74,8 +81,12 @@ function isInteger(value: number): boolean {
   return Number.isInteger(value);
 }
 
-export function validatePersonalDetailsStep(formData: CustomerFormData): PersonalDetailsErrors {
+export function validatePersonalDetailsStep(
+  formData: CustomerFormData,
+  options: PersonalDetailsValidationOptions = {}
+): PersonalDetailsErrors {
   const errors: PersonalDetailsErrors = {};
+  const allowPasswordUnchanged = Boolean(options.allowPasswordUnchanged);
 
   if (!formData.firstName.trim()) {
     errors.firstName = "First name is required.";
@@ -144,16 +155,21 @@ export function validatePersonalDetailsStep(formData: CustomerFormData): Persona
     errors.username = "Use 4-20 characters: letters, numbers, dots, underscores, or hyphens.";
   }
 
-  if (!formData.password.trim()) {
-    errors.password = "Password is required.";
-  } else if (!passwordRegex.test(formData.password)) {
-    errors.password = "Use at least 8 chars with uppercase, lowercase, and a number.";
-  }
+  const password = formData.password.trim();
+  const confirmPassword = formData.confirmPassword.trim();
 
-  if (!formData.confirmPassword.trim()) {
-    errors.confirmPassword = "Please confirm the password.";
-  } else if (formData.password !== formData.confirmPassword) {
-    errors.confirmPassword = "Passwords do not match.";
+  if (!(allowPasswordUnchanged && !password && !confirmPassword)) {
+    if (!password) {
+      errors.password = "Password is required.";
+    } else if (!passwordRegex.test(formData.password)) {
+      errors.password = "Use at least 8 chars with uppercase, lowercase, and a number.";
+    }
+
+    if (!confirmPassword) {
+      errors.confirmPassword = "Please confirm the password.";
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match.";
+    }
   }
 
   if (!formData.bankAccount.trim()) {
@@ -169,36 +185,80 @@ export function validatePersonalDetailsStep(formData: CustomerFormData): Persona
 
 export function validateFinancialDataStep(formData: CustomerFormData): FinancialDataErrors {
   const errors: FinancialDataErrors = {};
-  const monthlySalary = formData.monthlySalary.trim();
-  const businessIncome = formData.businessIncome.trim();
+  const incomeType = formData.incomeType.trim();
+  const incomes = Array.isArray(formData.incomes) ? formData.incomes : [];
+  let hasSalaryIncome = false;
+  let hasBusinessIncome = false;
 
-  if (!formData.employmentType.trim()) {
-    errors.employmentType = "Employment type is required.";
+  if (!incomeType) {
+    errors.incomeType = "Customer income type is required.";
   }
 
-  if (monthlySalary) {
-    if (!isCurrencyFormat(monthlySalary)) {
-      errors.monthlySalary = "Enter a valid salary amount.";
-    } else if (toAmount(monthlySalary) <= 0) {
-      errors.monthlySalary = "Salary amount must be greater than 0.";
+  if (incomes.length === 0) {
+    errors.income = "Add at least one income source.";
+    return errors;
+  }
+
+  for (let index = 0; index < incomes.length; index += 1) {
+    const income = incomes[index];
+    const amount = income.amount.trim();
+
+    if (income.type !== "Salary Worker" && income.type !== "Business Person") {
+      errors.incomes = `Income source #${index + 1} has an unsupported type.`;
+      break;
+    }
+
+    if (!amount) {
+      errors.incomes = `Income source #${index + 1} amount is required.`;
+      break;
+    }
+
+    if (!isCurrencyFormat(amount) || toAmount(amount) <= 0) {
+      errors.incomes = `Income source #${index + 1} amount must be greater than 0.`;
+      break;
+    }
+
+    if (income.type === "Salary Worker") {
+      hasSalaryIncome = true;
+
+      if (!income.salaryType?.trim()) {
+        errors.incomes = `Income source #${index + 1} salary type is required.`;
+        break;
+      }
+
+      if (!income.employmentType?.trim()) {
+        errors.incomes = `Income source #${index + 1} employment type is required.`;
+        break;
+      }
+
+      if (income.employmentType === "Contract") {
+        const duration = income.contractDurationMonths?.trim() ?? "";
+        if (!duration) {
+          errors.incomes = `Income source #${index + 1} contract duration is required.`;
+          break;
+        }
+        if (!isInteger(Number(duration)) || Number(duration) <= 0) {
+          errors.incomes = `Income source #${index + 1} contract duration must be a positive whole number.`;
+          break;
+        }
+      }
+
+      continue;
+    }
+
+    hasBusinessIncome = true;
+    if (!income.incomeStability?.trim()) {
+      errors.incomes = `Income source #${index + 1} income stability is required.`;
+      break;
     }
   }
 
-  if (businessIncome) {
-    if (!isCurrencyFormat(businessIncome)) {
-      errors.businessIncome = "Enter a valid business income amount.";
-    } else if (toAmount(businessIncome) <= 0) {
-      errors.businessIncome = "Business income amount must be greater than 0.";
-    }
+  if (!errors.incomes && incomeType === "Salary Worker" && !hasSalaryIncome) {
+    errors.incomeType = "Selected income type is Salary Worker. Add at least one salary income source.";
   }
 
-  if (!monthlySalary && !businessIncome) {
-    errors.income = "Enter at least one income source.";
-  } else if (!errors.monthlySalary && !errors.businessIncome) {
-    const totalIncome = (monthlySalary ? toAmount(monthlySalary) : 0) + (businessIncome ? toAmount(businessIncome) : 0);
-    if (totalIncome <= 0) {
-      errors.income = "Total income must be greater than 0.";
-    }
+  if (!errors.incomes && incomeType === "Business Person" && !hasBusinessIncome) {
+    errors.incomeType = "Selected income type is Business Person. Add at least one business income source.";
   }
 
   return errors;
@@ -327,11 +387,25 @@ export function validateLiabilitiesStep(formData: CustomerFormData): Liabilities
 
 export function validateCRIBRetrievalStep(formData: CustomerFormData): CRIBRetrievalErrors {
   const errors: CRIBRetrievalErrors = {};
+  const requestStatus = (formData.cribRequestStatus || "").trim().toUpperCase();
+  const reportStatus = (formData.cribReportStatus || "").trim().toUpperCase();
+  const isCribReady = requestStatus === "COMPLETED" && reportStatus === "READY";
+  const isCribNotFound = requestStatus === "FAILED" && reportStatus === "FAILED";
 
-  if (formData.creditScore === undefined || formData.creditScore === null) {
-    errors.creditScore = "Retrieve CRIB data before continuing.";
-  } else if (formData.creditScore < 300 || formData.creditScore > 900) {
-    errors.creditScore = "Credit score must be between 300 and 900.";
+  if (formData.cribRequestType && !formData.cribRequestType.trim()) {
+    errors.creditScore = "Complete CRIB linking before continuing.";
+  }
+
+  if (!isCribReady && !isCribNotFound) {
+    errors.creditScore = "Complete CRIB linking before continuing.";
+  }
+
+  if (isCribReady) {
+    if (formData.creditScore === undefined || formData.creditScore === null) {
+      errors.creditScore = "Complete CRIB linking before continuing.";
+    } else if (formData.creditScore < 300 || formData.creditScore > 900) {
+      errors.creditScore = "Credit score must be between 300 and 900.";
+    }
   }
 
   if (formData.inquiryCount !== undefined && (!isInteger(formData.inquiryCount) || formData.inquiryCount < 0)) {
@@ -349,8 +423,13 @@ export function validateCRIBRetrievalStep(formData: CustomerFormData): CRIBRetri
   return errors;
 }
 
-export function validateCustomerSubmission(formData: CustomerFormData): SubmissionValidationResult {
-  const step1Errors = validatePersonalDetailsStep(formData);
+export function validateCustomerSubmission(
+  formData: CustomerFormData,
+  options: PersonalDetailsValidationOptions = {}
+): SubmissionValidationResult {
+  const step1Errors = validatePersonalDetailsStep(formData, {
+    allowPasswordUnchanged: options.allowPasswordUnchanged,
+  });
   if (hasErrors(step1Errors)) {
     return {
       isValid: false,
@@ -359,25 +438,25 @@ export function validateCustomerSubmission(formData: CustomerFormData): Submissi
     };
   }
 
-  const step2Errors = validateFinancialDataStep(formData);
+  const step2Errors = validateCRIBRetrievalStep(formData);
   if (hasErrors(step2Errors)) {
     return {
       isValid: false,
       firstInvalidStep: 2,
-      message: getFirstErrorMessage(step2Errors) ?? "Complete financial data before submitting.",
+      message: getFirstErrorMessage(step2Errors) ?? "Complete CRIB linking before submitting.",
     };
   }
 
-  const step3CollectionError = validateLoanCollection(formData.loans);
-  if (step3CollectionError) {
+  const step3Errors = validateFinancialDataStep(formData);
+  if (hasErrors(step3Errors)) {
     return {
       isValid: false,
       firstInvalidStep: 3,
-      message: step3CollectionError,
+      message: getFirstErrorMessage(step3Errors) ?? "Complete financial data before submitting.",
     };
   }
 
-  const step4CollectionError = validateCreditCardCollection(formData.creditCards);
+  const step4CollectionError = validateLoanCollection(formData.loans);
   if (step4CollectionError) {
     return {
       isValid: false,
@@ -386,16 +465,7 @@ export function validateCustomerSubmission(formData: CustomerFormData): Submissi
     };
   }
 
-  const step5Errors = validateLiabilitiesStep(formData);
-  if (hasErrors(step5Errors)) {
-    return {
-      isValid: false,
-      firstInvalidStep: 5,
-      message: getFirstErrorMessage(step5Errors) ?? "Fix liability details before submitting.",
-    };
-  }
-
-  const step5CollectionError = validateLiabilityCollection(formData.liabilities);
+  const step5CollectionError = validateCreditCardCollection(formData.creditCards);
   if (step5CollectionError) {
     return {
       isValid: false,
@@ -404,12 +474,21 @@ export function validateCustomerSubmission(formData: CustomerFormData): Submissi
     };
   }
 
-  const step7Errors = validateCRIBRetrievalStep(formData);
-  if (hasErrors(step7Errors)) {
+  const step6Errors = validateLiabilitiesStep(formData);
+  if (hasErrors(step6Errors)) {
     return {
       isValid: false,
-      firstInvalidStep: 7,
-      message: getFirstErrorMessage(step7Errors) ?? "Retrieve CRIB data before submitting.",
+      firstInvalidStep: 6,
+      message: getFirstErrorMessage(step6Errors) ?? "Fix liability details before submitting.",
+    };
+  }
+
+  const step6CollectionError = validateLiabilityCollection(formData.liabilities);
+  if (step6CollectionError) {
+    return {
+      isValid: false,
+      firstInvalidStep: 6,
+      message: step6CollectionError,
     };
   }
 

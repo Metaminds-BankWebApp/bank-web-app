@@ -17,9 +17,21 @@ export interface CustomerFormData {
   accountVerificationMessage: string;
   
   // Financial Data
+  incomeType: string;
+  salaryType: string;
   employmentType: string;
+  contractDurationMonths: string;
   monthlySalary: string;
   businessIncome: string;
+  incomeStability: string;
+  incomes: {
+    type: "Salary Worker" | "Business Person";
+    amount: string;
+    salaryType?: string;
+    employmentType?: string;
+    contractDurationMonths?: string;
+    incomeStability?: string;
+  }[];
   
   // Loans
   loans: {
@@ -42,6 +54,9 @@ export interface CustomerFormData {
   }[];
   
   missedPaymentsLast12Months: number;
+  cribRequestType?: string;
+  cribRequestStatus?: string;
+  cribReportStatus?: string;
   creditScore?: number;
   inquiryCount?: number;
   activeLoansCount?: number;
@@ -64,13 +79,21 @@ export const initialFormData: CustomerFormData = {
   isAccountVerified: false,
   accountVerificationStatus: "",
   accountVerificationMessage: "",
+  incomeType: "Salary Worker",
+  salaryType: "Fixed",
   employmentType: "Permanent",
+  contractDurationMonths: "",
   monthlySalary: "",
   businessIncome: "",
+  incomeStability: "Stable",
+  incomes: [],
   loans: [],
   creditCards: [],
   liabilities: [],
   missedPaymentsLast12Months: 0,
+  cribRequestType: "FULL_REPORT",
+  cribRequestStatus: "PENDING",
+  cribReportStatus: "NOT_REQUESTED",
 };
 
 export interface StepProps {
@@ -80,10 +103,21 @@ export interface StepProps {
   onBack: () => void;
   onSaveDraftStepOne?: () => Promise<void>;
   onContinueStepOne?: () => Promise<void>;
+  onLookupCustomerByNic?: () => Promise<void>;
   isSavingDraftStepOne?: boolean;
   isSubmittingStepOne?: boolean;
+  isLookingUpCustomerByNic?: boolean;
+  hasExistingCustomerMatch?: boolean;
   serverStepOneErrors?: Partial<Record<"nic" | "email" | "username", string>>;
-  onClearServerStepOneError?: (field: "nic" | "email" | "username") => void;
+  onClearServerStepOneError?: (field: "nic" | "email" | "username" | "bankAccount") => void;
   onVerifyAccount?: () => Promise<void>;
   isVerifyingAccount?: boolean;
+  onSaveCribLinkingStep?: (requestType: string) => Promise<unknown>;
+  isSavingCribLinkingStep?: boolean;
+  onSaveCribRequestStep?: (requestType: string) => Promise<unknown>;
+  onSaveCribRetrievalStep?: (payload?: { requestStatus?: string; reportStatus?: string }) => Promise<unknown>;
+  onCompleteCribReviewStep?: () => Promise<unknown>;
+  isSavingCribRequestStep?: boolean;
+  isSavingCribRetrievalStep?: boolean;
+  isCompletingCribReviewStep?: boolean;
 }

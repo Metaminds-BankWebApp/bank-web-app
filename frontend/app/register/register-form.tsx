@@ -191,11 +191,11 @@ export function RegisterForm() {
       await registerPublicCustomer({
         firstName: values.firstName,
         lastName: values.lastName,
-        nic: values.nic,
+        nic: values.nic.toUpperCase(),
         dob: values.dob,
         email: values.email,
         mobile: values.phone,
-        bankAccount: Number(values.phone),
+        accountNumber: values.phone,
         province: values.province,
         address: values.address,
         username: values.username,
@@ -214,7 +214,12 @@ export function RegisterForm() {
       if (apiError) {
         setFieldErrors(extractRegisterFieldErrors(apiError));
       }
-      const message = apiError?.message ?? "Unable to register. Please try again.";
+      const responsePath =
+        apiError?.details && typeof apiError.details.path === "string" ? apiError.details.path : null;
+      const isBackendRegisterFailure = apiError?.status === 500 && responsePath === "/api/auth/register";
+      const message = isBackendRegisterFailure
+        ? "Registration service is currently failing on the server (/api/auth/register). Please contact support and try again later."
+        : apiError?.message ?? "Unable to register. Please try again.";
       setError(message);
       showToast({ type: "error", title: "Registration failed", description: message });
     } finally {

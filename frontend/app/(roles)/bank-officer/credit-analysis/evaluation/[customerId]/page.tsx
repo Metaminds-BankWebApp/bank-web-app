@@ -311,9 +311,9 @@ function ReportsTab() {
             />
             <MetricStatTile
               icon={<Landmark size={18} />}
-              label="Loan EMI"
-              value="LKR 40,000"
-              meta=""
+              label="Loan"
+              value="EMI: LKR 40,000"
+              meta="Remaining Balance: LKR 1,925,000"
               tone="bg-amber-400/20 text-amber-300 border-amber-300/30"
             />
             <MetricStatTile

@@ -1,5 +1,42 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## API Integration Prompt
+
+Use this prompt when wiring frontend flows to the backend APIs:
+
+```text
+Integrate the frontend with the backend APIs using role-aware flows.
+
+Use /api/auth/me as the single source of truth after login.
+Do not decode JWT manually for identity or ownership.
+Use the returned domain IDs for data ownership and API requests.
+Use role only for authorization and UI branching.
+
+Public Customer flow:
+- Use publicCustomerId from /api/auth/me.
+- Call public customer application and financial endpoints with that ID.
+
+Bank Officer flow:
+- Use officerId from /api/auth/me.
+- After creating a customer, resolve the created bankCustomerId.
+- Save step 2 to step 5 using bankCustomerId.
+
+Bank Customer flow:
+- Use bankCustomerId from /api/auth/me.
+- Call transact, beneficiary, OTP, and history endpoints with bankCustomerId.
+
+Admin flow:
+- Use roleName and roleId only for permission checks and UI access.
+
+Keep API calls typed, preserve current forms, and handle 401 by refreshing the token once.
+```
+
+Recommended frontend helper flow:
+- Call `GET /api/auth/me` once after login or app bootstrap.
+- Store the resolved identity in the auth store.
+- Use the identity helper to pick the correct owner ID for each role.
+- Keep request/response DTOs in `src/types/dto` and API wrappers in `src/api`.
+
 ## Getting Started
 
 First, run the development server:

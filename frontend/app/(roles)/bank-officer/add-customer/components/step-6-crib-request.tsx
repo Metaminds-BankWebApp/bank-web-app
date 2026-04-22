@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ArrowRight, ArrowLeft, Loader2, Server, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Label } from "@/src/components/ui";
@@ -8,37 +8,41 @@ import { StepProps } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { Checkbox } from "@/src/components/ui/checkbox";
 
-export function CRIBRequest({ formData, onNext, onBack }: StepProps) {
+export function CRIBRequest({
+  formData,
+  onNext,
+  onBack,
+  onSaveCribRequestStep,
+  isSavingCribRequestStep,
+}: StepProps) {
   const [requestStatus, setRequestStatus] = useState<"draft" | "processing" | "sent" | "connected" | "retrieved">("draft");
+  const [requestType, setRequestType] = useState("FULL_REPORT");
   const [consentGiven, setConsentGiven] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
 
-  // Simulate process
-  useEffect(() => {
-    if (requestStatus === "processing") {
-      const timer = setTimeout(() => {
-        setRequestStatus("sent");
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-    if (requestStatus === "sent") {
-      const timer = setTimeout(() => {
-        setRequestStatus("connected");
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-    if (requestStatus === "connected") {
-        const timer = setTimeout(() => {
-          setRequestStatus("retrieved");
-          onNext(); // Auto-advance to retrieval view
-        }, 1500);
-        return () => clearTimeout(timer);
-    }
-  }, [requestStatus, onNext]);
+  const wait = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration));
 
-  const handleInitiateRequest = () => {
-    if (consentGiven) {
-      setRequestStatus("processing");
+  const handleInitiateRequest = async () => {
+    if (!consentGiven || !onSaveCribRequestStep) {
+      return;
+    }
+
+    setErrorMessage("");
+    setRequestStatus("processing");
+
+    try {
+      await onSaveCribRequestStep(requestType);
+      setRequestStatus("sent");
+      await wait(350);
+      setRequestStatus("connected");
+      await wait(350);
+      setRequestStatus("retrieved");
+      await wait(200);
+      onNext();
+    } catch (error) {
+      setRequestStatus("draft");
+      setErrorMessage(error instanceof Error ? error.message : "Failed to save CRIB request.");
     }
   };
 
@@ -74,14 +78,14 @@ export function CRIBRequest({ formData, onNext, onBack }: StepProps) {
              <div className="space-y-4">
                 <div className="space-y-2">
                    <Label className="text-slate-700 font-medium">Request Reason</Label>
-                   <Select defaultValue="new-loan">
+                   <Select value={requestType} onValueChange={setRequestType}>
                       <SelectTrigger className="bg-white border-slate-200 h-10">
                          <SelectValue placeholder="Select Reason" />
                       </SelectTrigger>
                       <SelectContent>
-                         <SelectItem value="new-loan">New Loan Application</SelectItem>
-                         <SelectItem value="periodic-review">Periodic Review</SelectItem>
-                         <SelectItem value="credit-card">Credit Card Issuance</SelectItem>
+                         <SelectItem value="FULL_REPORT">New Loan Application</SelectItem>
+                         <SelectItem value="SUMMARY_ONLY">Periodic Review</SelectItem>
+                         <SelectItem value="REFRESH">Credit Card Issuance</SelectItem>
                       </SelectContent>
                    </Select>
                 </div>
@@ -102,19 +106,25 @@ export function CRIBRequest({ formData, onNext, onBack }: StepProps) {
         </div>
 
         {/* Actions */}
+        {errorMessage && (
+          <div className="mx-8 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+            {errorMessage}
+          </div>
+        )}
+
         <div className="bg-slate-50 px-8 py-4 flex items-center justify-between border-t border-slate-100 mt-auto">
             <Button 
             variant="ghost" 
             onClick={onBack}
             className="gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-            disabled={requestStatus !== "draft"}
+            disabled={requestStatus !== "draft" || Boolean(isSavingCribRequestStep)}
             >
                 <ArrowLeft size={16} /> Back
             </Button>
             
             <Button 
               onClick={handleInitiateRequest}
-              disabled={!consentGiven || requestStatus !== "draft"}
+              disabled={!consentGiven || requestStatus !== "draft" || Boolean(isSavingCribRequestStep)}
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200 min-w-35"
             >
                 {requestStatus === "draft" ? (

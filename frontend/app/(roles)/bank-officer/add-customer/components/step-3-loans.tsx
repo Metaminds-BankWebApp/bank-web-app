@@ -6,6 +6,7 @@ import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
 import { StepProps } from "./types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { LoanDraftErrors, validateLoanCollection, validateLoanDraft } from "./validation";
 
 type LoanStepErrors = LoanDraftErrors & {
@@ -27,7 +28,7 @@ export function Loans({ formData, updateFormData, onNext, onBack }: StepProps) {
     }
 
     updateFormData({
-      loans: [...formData.loans, { type: loanType.trim(), monthlyEmi: monthlyEmi.trim(), remainingBalance: remainingBalance.trim() }]
+      loans: [...formData.loans, { type: loanType.trim(), monthlyEmi: monthlyEmi.trim(), remainingBalance: remainingBalance.trim() }],
     });
     setLoanType("");
     setMonthlyEmi("");
@@ -57,62 +58,70 @@ export function Loans({ formData, updateFormData, onNext, onBack }: StepProps) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="px-8 py-6 border-b border-slate-100">
-        <h2 className="text-xl font-bold text-[#0d3b66]">Add Loan</h2>
-        <p className="text-sm text-slate-500 mt-1">Enter details of any existing loans the customer currently holds.</p>
+        <h2 className="text-xl font-bold text-[#0d3b66]">Add Loan Details</h2>
+        <p className="text-sm text-slate-500 mt-1">Please provide information about any current active loans.</p>
       </div>
-      
+
       <div className="p-8 space-y-8">
         <div className="space-y-3">
           <Label className="text-slate-700 font-medium">Loan Type</Label>
-          <Input 
-             value={loanType}
-             onChange={(e) => {
-               setLoanType(e.target.value);
-               if (errors.type || errors.step) {
-                 setErrors((prev) => ({ ...prev, type: undefined, step: undefined }));
-               }
-             }}
-             placeholder="Select Loan Type"
-             className={`bg-slate-50 border-slate-200 h-11 ${errors.type ? "border-red-500" : ""}`}
-          />
+          <Select
+            value={loanType}
+            onValueChange={(value) => {
+              setLoanType(value);
+              if (errors.type || errors.step) {
+                setErrors((prev) => ({ ...prev, type: undefined, step: undefined }));
+              }
+            }}
+          >
+            <SelectTrigger className={`bg-slate-50 border-slate-200 h-11 ${errors.type ? "border-red-500" : ""}`}>
+              <SelectValue placeholder="Select loan type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Vehicle Loan">Vehicle Loan</SelectItem>
+              <SelectItem value="Personal Loan">Personal Loan</SelectItem>
+              <SelectItem value="Housing Loan">Housing Loan</SelectItem>
+              <SelectItem value="Education Loan">Education Loan</SelectItem>
+            </SelectContent>
+          </Select>
           {errors.type && <p className="text-red-500 text-xs">{errors.type}</p>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-           <div className="space-y-3">
-              <Label className="text-slate-700 font-medium">Monthly EMI (LKR)</Label>
-              <Input 
-                 value={monthlyEmi}
-                 onChange={(e) => {
-                   setMonthlyEmi(e.target.value);
-                   if (errors.monthlyEmi || errors.step) {
-                     setErrors((prev) => ({ ...prev, monthlyEmi: undefined, step: undefined }));
-                   }
-                 }}
-                 placeholder="0.00"
-                 className={`bg-slate-50 border-slate-200 h-11 ${errors.monthlyEmi ? "border-red-500" : ""}`}
-              />
-              {errors.monthlyEmi && <p className="text-red-500 text-xs">{errors.monthlyEmi}</p>}
-           </div>
-           <div className="space-y-3">
-              <Label className="text-slate-700 font-medium">Remaining Balance (LKR)</Label>
-              <Input 
-                 value={remainingBalance}
-                 onChange={(e) => {
-                   setRemainingBalance(e.target.value);
-                   if (errors.remainingBalance || errors.step) {
-                     setErrors((prev) => ({ ...prev, remainingBalance: undefined, step: undefined }));
-                   }
-                 }}
-                 placeholder="0.00"
-                 className={`bg-slate-50 border-slate-200 h-11 ${errors.remainingBalance ? "border-red-500" : ""}`}
-              />
-              {errors.remainingBalance && <p className="text-red-500 text-xs">{errors.remainingBalance}</p>}
-           </div>
+          <div className="space-y-3">
+            <Label className="text-slate-700 font-medium">Monthly EMI (LKR)</Label>
+            <Input
+              value={monthlyEmi}
+              onChange={(e) => {
+                setMonthlyEmi(e.target.value);
+                if (errors.monthlyEmi || errors.step) {
+                  setErrors((prev) => ({ ...prev, monthlyEmi: undefined, step: undefined }));
+                }
+              }}
+              placeholder="0.00"
+              className={`bg-slate-50 border-slate-200 h-11 ${errors.monthlyEmi ? "border-red-500" : ""}`}
+            />
+            {errors.monthlyEmi && <p className="text-red-500 text-xs">{errors.monthlyEmi}</p>}
+          </div>
+          <div className="space-y-3">
+            <Label className="text-slate-700 font-medium">Remaining Balance (LKR)</Label>
+            <Input
+              value={remainingBalance}
+              onChange={(e) => {
+                setRemainingBalance(e.target.value);
+                if (errors.remainingBalance || errors.step) {
+                  setErrors((prev) => ({ ...prev, remainingBalance: undefined, step: undefined }));
+                }
+              }}
+              placeholder="0.00"
+              className={`bg-slate-50 border-slate-200 h-11 ${errors.remainingBalance ? "border-red-500" : ""}`}
+            />
+            {errors.remainingBalance && <p className="text-red-500 text-xs">{errors.remainingBalance}</p>}
+          </div>
         </div>
 
         <Button onClick={handleAddLoan} className="w-full bg-[#3e9fd3] hover:bg-[#328ab8] text-white">
-           + Add Loan to Summary
+          + Add Loan to Summary
         </Button>
 
         {formData.loans.length > 0 && (
@@ -133,23 +142,15 @@ export function Loans({ formData, updateFormData, onNext, onBack }: StepProps) {
         )}
       </div>
 
-      {/* Actions */}
       <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-slate-200 px-8 py-4 flex items-center justify-between z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <Button 
-          variant="ghost" 
-          onClick={onBack}
-          className="gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-        >
-            <ArrowLeft size={16} /> Back
+        <Button variant="ghost" onClick={onBack} className="gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100">
+          <ArrowLeft size={16} /> Back
         </Button>
         <div className="flex items-center gap-4">
-            <span className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600">Save Draft</span>
-            <Button 
-              onClick={handleNext}
-              className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
-            >
-                Continue <ArrowRight size={16} />
-            </Button>
+          <span className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600">Save Draft</span>
+          <Button onClick={handleNext} className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
+            Continue <ArrowRight size={16} />
+          </Button>
         </div>
       </div>
     </div>

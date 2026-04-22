@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AuthGuard } from "@/src/components/auth";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/src/store";
 import {
+   getCurrentPublicCustomerFinancialRecord,
+   getMyPublicCustomerProfile,
    savePublicCustomerCardStep,
    savePublicCustomerIncomeStep,
    savePublicCustomerLiabilityStep,
    savePublicCustomerLoanStep,
 } from "@/src/api/customers/public-customer-financial.service";
+import { createPublicCreditEvaluation } from "@/src/api/creditlens/public-creditlens.service";
 import type {
    PublicCustomerFinancialStepResponse,
+   PublicCustomerFinancialRecordResponse,
    PublicCustomerIncomeStepRequest,
    PublicCustomerLoanStepRequest,
    PublicCustomerCardStepRequest,
@@ -25,7 +28,6 @@ import {
   Plus, 
   ArrowRight,
   ArrowLeft,
-  ChevronDown,
   CreditCard,
   Briefcase,
   Banknote,
@@ -43,6 +45,7 @@ import {
 } from "@/src/components/ui/select";
 import { useToast } from "@/src/components/ui/toast";
 import { cn } from "@/src/lib/utils";
+import { ApiError } from "@/src/types/api-error";
 
 // --- Types ---
 type Income = {
@@ -79,17 +82,305 @@ type Liability = {
   amount: number;
 };
 
+type ApplicationFormData = {
+  incomes: Income[];
+  loans: Loan[];
+  cards: Card[];
+  liabilities: Liability[];
+  missedPayments: number;
+  acceptedTerms: boolean;
+};
+
+type ApplicationStepCode = "INCOME" | "LOANS" | "CARDS" | "LIABILITIES" | "REVIEW";
+type ApplicationStepStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "SKIPPED" | "FAILED";
+
+type ApplicationStepStatusRow = {
+  step: number;
+  code: ApplicationStepCode;
+  label: string;
+  status: ApplicationStepStatus;
+  backendSynced: boolean;
+  recordId: number | null;
+  note: string | null;
+  lastUpdatedAt: string | null;
+};
+
+type PublicCustomerApplicationDraft = {
+  step: number;
+  skippedSteps: number[];
+  financialRecordId: number | null;
+  resolvedPublicCustomerId: number | null;
+  formData: ApplicationFormData;
+  incomeDraft: {
+    incomeType: string;
+    salaryType: string;
+    salaryAmount: string;
+    employmentType: string;
+    contractDuration: string;
+    businessIncomeAmount: string;
+    incomeStability: string;
+  };
+  loanDraft: {
+    loanType: string;
+    loanEMI: string;
+    loanBalance: string;
+  };
+  cardDraft: {
+    cardLimit: string;
+    cardOutstanding: string;
+    cardProvider: string;
+  };
+  liabilityDraft: {
+    liabilityDesc: string;
+    liabilityAmount: string;
+  };
+  accountDraft: {
+    email: string;
+    phone: string;
+    password: string;
+    confirmPassword: string;
+    address: string;
+    city: string;
+    province: string;
+    accountErrors: Record<string, string>;
+  };
+  stepStatusTable: ApplicationStepStatusRow[];
+  updatedAt: string;
+};
+
+const PUBLIC_CUSTOMER_APPLICATION_DRAFT_KEY = "public-customer-application-draft-v1";
+const APPLICATION_STEPS = [
+  { step: 1, code: "INCOME" as const, label: "Income" },
+  { step: 2, code: "LOANS" as const, label: "Loans" },
+  { step: 3, code: "CARDS" as const, label: "Cards" },
+  { step: 4, code: "LIABILITIES" as const, label: "Liabilities" },
+  { step: 5, code: "REVIEW" as const, label: "Review" },
+];
+
+function createDefaultStepStatusTable(): ApplicationStepStatusRow[] {
+  return APPLICATION_STEPS.map((item) => ({
+    step: item.step,
+    code: item.code,
+    label: item.label,
+    status: item.step === 1 ? "IN_PROGRESS" : "PENDING",
+    backendSynced: false,
+    recordId: null,
+    note: null,
+    lastUpdatedAt: null,
+  }));
+}
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function toDisplayToken(value?: string): string {
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .trim()
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
+    .join(" ");
+}
+
+function toInputValue(value?: number): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return "";
+  }
+  return value.toString();
+}
+
+type HydratedPublicCustomerApplicationData = {
+  formData: ApplicationFormData;
+  incomeDraft: {
+    incomeType: string;
+    salaryType: string;
+    salaryAmount: string;
+    employmentType: string;
+    contractDuration: string;
+    businessIncomeAmount: string;
+    incomeStability: string;
+  };
+  loanDraft: {
+    loanType: string;
+    loanEMI: string;
+    loanBalance: string;
+  };
+  cardDraft: {
+    cardLimit: string;
+    cardOutstanding: string;
+    cardProvider: string;
+  };
+  liabilityDraft: {
+    liabilityDesc: string;
+    liabilityAmount: string;
+  };
+  stepStatusTable: ApplicationStepStatusRow[];
+  suggestedStep: number;
+};
+
+function mapPublicCustomerFinancialRecordToDraftState(
+  record: PublicCustomerFinancialRecordResponse,
+): HydratedPublicCustomerApplicationData {
+  type IncomeRecord = PublicCustomerFinancialRecordResponse["incomes"][number];
+  type LoanRecord = PublicCustomerFinancialRecordResponse["loans"][number];
+  type CardRecord = PublicCustomerFinancialRecordResponse["cards"][number];
+  type LiabilityRecord = PublicCustomerFinancialRecordResponse["liabilities"][number];
+
+  const incomes: Income[] = [];
+  for (const income of asArray<IncomeRecord>(record.incomes)) {
+    const category = (income.incomeCategory || "").toUpperCase();
+    const isBusiness = category === "BUSINESS";
+    incomes.push({
+      id: `income-${income.incomeId}`,
+      type: isBusiness ? "Business Person" : "Salary Worker",
+      amount: Number(income.amount) || 0,
+      salaryAmount: isBusiness ? undefined : Number(income.amount) || 0,
+      businessIncomeAmount: isBusiness ? Number(income.amount) || 0 : undefined,
+      salaryType: isBusiness ? undefined : toDisplayToken(income.salaryType) || "Fixed",
+      employmentType: isBusiness ? undefined : toDisplayToken(income.employmentType) || "Permanent",
+      contractDuration:
+        typeof income.contractDurationMonths === "number" && Number.isFinite(income.contractDurationMonths)
+          ? String(income.contractDurationMonths)
+          : undefined,
+      incomeStability: isBusiness ? toDisplayToken(income.incomeStability) || "Stable" : undefined,
+    });
+  }
+
+  const loans: Loan[] = asArray<LoanRecord>(record.loans).map((loan) => ({
+    id: `loan-${loan.loanId}`,
+    type: loan.loanType || "",
+    monthlyEMI: Number(loan.monthlyEmi) || 0,
+    balance: Number(loan.remainingBalance) || 0,
+  }));
+
+  const cards: Card[] = asArray<CardRecord>(record.cards).map((card) => ({
+    id: `card-${card.cardId}`,
+    limit: Number(card.creditLimit) || 0,
+    outstanding: Number(card.outstandingBalance) || 0,
+    provider: card.provider || "Standard Card",
+  }));
+
+  const liabilities: Liability[] = asArray<LiabilityRecord>(record.liabilities).map((liability) => ({
+    id: `liability-${liability.liabilityId}`,
+    description: liability.description || "",
+    amount: Number(liability.monthlyAmount) || 0,
+  }));
+
+  const missedPayments =
+    typeof record.missedPayments === "number" && Number.isFinite(record.missedPayments)
+      ? Math.max(0, Math.trunc(record.missedPayments))
+      : 0;
+
+  const salaryIncome = incomes.find((income) => income.type === "Salary Worker");
+  const businessIncome = incomes.find((income) => income.type === "Business Person");
+
+  let incomeType = "Salary Worker";
+  if (salaryIncome && businessIncome) {
+    incomeType = "Salary Worker + Business Person";
+  } else if (businessIncome) {
+    incomeType = "Business Person";
+  }
+
+  const step1Completed = incomes.length > 0;
+  const step2Completed = loans.length > 0;
+  const step3Completed = cards.length > 0;
+  const step4Completed = liabilities.length > 0 || missedPayments > 0;
+  const completedByStep: Record<number, boolean> = {
+    1: step1Completed,
+    2: step2Completed,
+    3: step3Completed,
+    4: step4Completed,
+  };
+
+  const firstIncomplete = [1, 2, 3, 4].find((stepNumber) => !completedByStep[stepNumber]) ?? 5;
+
+  const stepStatusTable: ApplicationStepStatusRow[] = createDefaultStepStatusTable().map((row): ApplicationStepStatusRow => {
+    if (row.step === 5) {
+      return {
+        ...row,
+        status: (firstIncomplete === 5 ? "IN_PROGRESS" : "PENDING") as ApplicationStepStatus,
+        backendSynced: false,
+        recordId: null,
+        note: firstIncomplete === 5 ? "Review and submit your latest saved data." : null,
+      };
+    }
+
+    if (completedByStep[row.step]) {
+      return {
+        ...row,
+        status: "COMPLETED" as ApplicationStepStatus,
+        backendSynced: true,
+        recordId: record.recordId,
+        note: "Loaded from latest saved server data.",
+      };
+    }
+
+    return {
+      ...row,
+      status: (row.step === firstIncomplete ? "IN_PROGRESS" : "PENDING") as ApplicationStepStatus,
+      backendSynced: false,
+      recordId: null,
+      note: null,
+    };
+  });
+
+  return {
+    formData: {
+      incomes,
+      loans,
+      cards,
+      liabilities,
+      missedPayments,
+      acceptedTerms: false,
+    },
+    incomeDraft: {
+      incomeType,
+      salaryType: salaryIncome?.salaryType || "Fixed",
+      salaryAmount: toInputValue(salaryIncome?.salaryAmount ?? salaryIncome?.amount),
+      employmentType: salaryIncome?.employmentType || "Permanent",
+      contractDuration: salaryIncome?.contractDuration || "",
+      businessIncomeAmount: toInputValue(businessIncome?.businessIncomeAmount ?? businessIncome?.amount),
+      incomeStability: businessIncome?.incomeStability || "Stable",
+    },
+    loanDraft: {
+      loanType: loans[0]?.type || "",
+      loanEMI: toInputValue(loans[0]?.monthlyEMI),
+      loanBalance: toInputValue(loans[0]?.balance),
+    },
+    cardDraft: {
+      cardLimit: toInputValue(cards[0]?.limit),
+      cardOutstanding: toInputValue(cards[0]?.outstanding),
+      cardProvider: cards[0]?.provider || "Standard Card",
+    },
+    liabilityDraft: {
+      liabilityDesc: liabilities[0]?.description || "",
+      liabilityAmount: toInputValue(liabilities[0]?.amount),
+    },
+    stepStatusTable,
+    suggestedStep: firstIncomplete,
+  };
+}
+
 // --- Main Application Component ---
 export default function PublicCustomerApplicationPage() {
   const router = useRouter();
-   const authUser = useAuthStore((state) => state.user);
-   const authToken = useAuthStore((state) => state.token);
+  const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [skippedSteps, setSkippedSteps] = useState<number[]>([]);
-   const [financialRecordId, setFinancialRecordId] = useState<number | null>(null);
-   const [isSavingStep, setIsSavingStep] = useState(false);
-   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [stepStatusTable, setStepStatusTable] = useState<ApplicationStepStatusRow[]>(createDefaultStepStatusTable);
+  const [financialRecordId, setFinancialRecordId] = useState<number | null>(null);
+  const [resolvedPublicCustomerId, setResolvedPublicCustomerId] = useState<number | null>(null);
+  const [hasHydratedLocalDraft, setHasHydratedLocalDraft] = useState(false);
+  const [didRestoreLocalDraft, setDidRestoreLocalDraft] = useState(false);
+  const [isSavingStep, setIsSavingStep] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<ApplicationFormData>({
     incomes: [] as Income[],
     loans: [] as Loan[],
     cards: [] as Card[],
@@ -131,6 +422,350 @@ export default function PublicCustomerApplicationPage() {
       const [city, setCity] = useState("");
       const [province, setProvince] = useState("");
    const [accountErrors, setAccountErrors] = useState<Record<string, string>>({});
+
+  const updateStepStatus = useCallback((targetStep: number, changes: Partial<ApplicationStepStatusRow>) => {
+    const updatedAt = new Date().toISOString();
+    setStepStatusTable((prev) =>
+      prev.map((row) =>
+        row.step === targetStep
+          ? {
+              ...row,
+              ...changes,
+              lastUpdatedAt: changes.lastUpdatedAt ?? updatedAt,
+            }
+          : row,
+      ),
+    );
+  }, []);
+
+  useEffect(() => {
+    let restoredFromLocalDraft = false;
+    try {
+      const rawDraft = window.localStorage.getItem(PUBLIC_CUSTOMER_APPLICATION_DRAFT_KEY);
+      if (!rawDraft) {
+        setDidRestoreLocalDraft(false);
+        return;
+      }
+
+      restoredFromLocalDraft = true;
+
+      const parsedDraft = JSON.parse(rawDraft) as Partial<PublicCustomerApplicationDraft>;
+
+      if (
+        typeof parsedDraft.step === "number" &&
+        Number.isInteger(parsedDraft.step) &&
+        parsedDraft.step >= 1 &&
+        parsedDraft.step <= 5
+      ) {
+        setStep(parsedDraft.step);
+      }
+
+      if (Array.isArray(parsedDraft.skippedSteps)) {
+        const normalizedSkippedSteps = [...new Set(parsedDraft.skippedSteps)]
+          .filter((value): value is number => Number.isInteger(value) && value >= 1 && value <= 4);
+        setSkippedSteps(normalizedSkippedSteps);
+      }
+
+      if (typeof parsedDraft.financialRecordId === "number") {
+        setFinancialRecordId(parsedDraft.financialRecordId);
+      }
+
+      if (typeof parsedDraft.resolvedPublicCustomerId === "number") {
+        setResolvedPublicCustomerId(parsedDraft.resolvedPublicCustomerId);
+      }
+
+      if (parsedDraft.formData && typeof parsedDraft.formData === "object") {
+        const source = parsedDraft.formData as Partial<ApplicationFormData>;
+        setFormData({
+          incomes: asArray<Income>(source.incomes),
+          loans: asArray<Loan>(source.loans),
+          cards: asArray<Card>(source.cards),
+          liabilities: asArray<Liability>(source.liabilities),
+          missedPayments:
+            typeof source.missedPayments === "number" && Number.isFinite(source.missedPayments)
+              ? Math.max(0, Math.trunc(source.missedPayments))
+              : 0,
+          acceptedTerms: Boolean(source.acceptedTerms),
+        });
+      }
+
+      if (parsedDraft.incomeDraft) {
+        setIncomeType(parsedDraft.incomeDraft.incomeType ?? "Salary Worker");
+        setSalaryType(parsedDraft.incomeDraft.salaryType ?? "Fixed");
+        setSalaryAmount(parsedDraft.incomeDraft.salaryAmount ?? "");
+        setEmploymentType(parsedDraft.incomeDraft.employmentType ?? "Permanent");
+        setContractDuration(parsedDraft.incomeDraft.contractDuration ?? "");
+        setBusinessIncomeAmount(parsedDraft.incomeDraft.businessIncomeAmount ?? "");
+        setIncomeStability(parsedDraft.incomeDraft.incomeStability ?? "Stable");
+      }
+
+      if (parsedDraft.loanDraft) {
+        setLoanType(parsedDraft.loanDraft.loanType ?? "");
+        setLoanEMI(parsedDraft.loanDraft.loanEMI ?? "");
+        setLoanBalance(parsedDraft.loanDraft.loanBalance ?? "");
+      }
+
+      if (parsedDraft.cardDraft) {
+        setCardLimit(parsedDraft.cardDraft.cardLimit ?? "");
+        setCardOutstanding(parsedDraft.cardDraft.cardOutstanding ?? "");
+        setCardProvider(parsedDraft.cardDraft.cardProvider ?? "Standard Card");
+      }
+
+      if (parsedDraft.liabilityDraft) {
+        setLiabilityDesc(parsedDraft.liabilityDraft.liabilityDesc ?? "");
+        setLiabilityAmount(parsedDraft.liabilityDraft.liabilityAmount ?? "");
+      }
+
+      if (parsedDraft.accountDraft) {
+        setEmail(parsedDraft.accountDraft.email ?? "");
+        setPhone(parsedDraft.accountDraft.phone ?? "");
+        setPassword(parsedDraft.accountDraft.password ?? "");
+        setConfirmPassword(parsedDraft.accountDraft.confirmPassword ?? "");
+        setAddress(parsedDraft.accountDraft.address ?? "");
+        setCity(parsedDraft.accountDraft.city ?? "");
+        setProvince(parsedDraft.accountDraft.province ?? "");
+        setAccountErrors(parsedDraft.accountDraft.accountErrors ?? {});
+      }
+
+      if (Array.isArray(parsedDraft.stepStatusTable)) {
+        const validStatuses: ApplicationStepStatus[] = ["PENDING", "IN_PROGRESS", "COMPLETED", "SKIPPED", "FAILED"];
+        const sourceRows = parsedDraft.stepStatusTable as Partial<ApplicationStepStatusRow>[];
+        const hydratedRows = APPLICATION_STEPS.map((definition) => {
+          const matchingRow = sourceRows.find((row) => row.step === definition.step);
+          const fallbackRow = createDefaultStepStatusTable().find((row) => row.step === definition.step)!;
+
+          return {
+            ...fallbackRow,
+            status:
+              matchingRow?.status && validStatuses.includes(matchingRow.status)
+                ? matchingRow.status
+                : fallbackRow.status,
+            backendSynced: Boolean(matchingRow?.backendSynced),
+            recordId: typeof matchingRow?.recordId === "number" ? matchingRow.recordId : null,
+            note: typeof matchingRow?.note === "string" ? matchingRow.note : null,
+            lastUpdatedAt: typeof matchingRow?.lastUpdatedAt === "string" ? matchingRow.lastUpdatedAt : null,
+          };
+        });
+        setStepStatusTable(hydratedRows);
+      }
+
+      showToast({
+        title: "Saved draft restored",
+        description: "Your previously entered application details were loaded from local storage.",
+        type: "success",
+      });
+    } catch {
+      // Ignore malformed local draft payloads.
+    } finally {
+      setDidRestoreLocalDraft(restoredFromLocalDraft);
+      setHasHydratedLocalDraft(true);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    if (!hasHydratedLocalDraft) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    (async () => {
+      try {
+        const profile = await getMyPublicCustomerProfile();
+        if (isCancelled) {
+          return;
+        }
+
+        const restoredDifferentCustomerDraft =
+          didRestoreLocalDraft &&
+          typeof resolvedPublicCustomerId === "number" &&
+          resolvedPublicCustomerId > 0 &&
+          resolvedPublicCustomerId !== profile.publicCustomerId;
+
+        if (restoredDifferentCustomerDraft) {
+          window.localStorage.removeItem(PUBLIC_CUSTOMER_APPLICATION_DRAFT_KEY);
+          setStep(1);
+          setSkippedSteps([]);
+          setFinancialRecordId(null);
+          setStepStatusTable(createDefaultStepStatusTable());
+          setFormData({
+            incomes: [],
+            loans: [],
+            cards: [],
+            liabilities: [],
+            missedPayments: 0,
+            acceptedTerms: false,
+          });
+          setIncomeType("Salary Worker");
+          setSalaryType("Fixed");
+          setSalaryAmount("");
+          setEmploymentType("Permanent");
+          setContractDuration("");
+          setBusinessIncomeAmount("");
+          setIncomeStability("Stable");
+          setIncomeErrors({});
+          setLoanType("");
+          setLoanEMI("");
+          setLoanBalance("");
+          setCardLimit("");
+          setCardOutstanding("");
+          setCardProvider("Standard Card");
+          setLiabilityDesc("");
+          setLiabilityAmount("");
+        }
+
+        setResolvedPublicCustomerId(profile.publicCustomerId);
+
+        try {
+          const record = await getCurrentPublicCustomerFinancialRecord(profile.publicCustomerId);
+          if (isCancelled) {
+            return;
+          }
+
+          const hydrated = mapPublicCustomerFinancialRecordToDraftState(record);
+          setFinancialRecordId(record.recordId);
+          setFormData((prev) => ({
+            ...hydrated.formData,
+            acceptedTerms: prev.acceptedTerms,
+          }));
+          setIncomeType(hydrated.incomeDraft.incomeType);
+          setSalaryType(hydrated.incomeDraft.salaryType);
+          setSalaryAmount(hydrated.incomeDraft.salaryAmount);
+          setEmploymentType(hydrated.incomeDraft.employmentType);
+          setContractDuration(hydrated.incomeDraft.contractDuration);
+          setBusinessIncomeAmount(hydrated.incomeDraft.businessIncomeAmount);
+          setIncomeStability(hydrated.incomeDraft.incomeStability);
+          setLoanType(hydrated.loanDraft.loanType);
+          setLoanEMI(hydrated.loanDraft.loanEMI);
+          setLoanBalance(hydrated.loanDraft.loanBalance);
+          setCardLimit(hydrated.cardDraft.cardLimit);
+          setCardOutstanding(hydrated.cardDraft.cardOutstanding);
+          setCardProvider(hydrated.cardDraft.cardProvider);
+          setLiabilityDesc(hydrated.liabilityDraft.liabilityDesc);
+          setLiabilityAmount(hydrated.liabilityDraft.liabilityAmount);
+          setSkippedSteps([]);
+          setStepStatusTable(hydrated.stepStatusTable);
+          setStep(hydrated.suggestedStep);
+
+          showToast({
+            title: "Latest financial data loaded",
+            description: "Your most recently saved financial details are ready to review and update.",
+            type: "success",
+          });
+        } catch (error) {
+          if (error instanceof ApiError && (error.status === 400 || error.status === 404)) {
+            if (restoredDifferentCustomerDraft) {
+              showToast({
+                title: "No saved financial data found",
+                description: "This customer does not have saved backend financial records yet.",
+                type: "info",
+              });
+            }
+            return;
+          }
+          throw error;
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not load saved financial data.";
+        showToast({
+          title: "Could not load previous data",
+          description: message,
+          type: "error",
+        });
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [didRestoreLocalDraft, hasHydratedLocalDraft, resolvedPublicCustomerId, showToast]);
+
+  useEffect(() => {
+    const draft: PublicCustomerApplicationDraft = {
+      step,
+      skippedSteps,
+      financialRecordId,
+      resolvedPublicCustomerId,
+      formData,
+      incomeDraft: {
+        incomeType,
+        salaryType,
+        salaryAmount,
+        employmentType,
+        contractDuration,
+        businessIncomeAmount,
+        incomeStability,
+      },
+      loanDraft: {
+        loanType,
+        loanEMI,
+        loanBalance,
+      },
+      cardDraft: {
+        cardLimit,
+        cardOutstanding,
+        cardProvider,
+      },
+      liabilityDraft: {
+        liabilityDesc,
+        liabilityAmount,
+      },
+      accountDraft: {
+        email,
+        phone,
+        password,
+        confirmPassword,
+        address,
+        city,
+        province,
+        accountErrors,
+      },
+      stepStatusTable,
+      updatedAt: new Date().toISOString(),
+    };
+
+    window.localStorage.setItem(PUBLIC_CUSTOMER_APPLICATION_DRAFT_KEY, JSON.stringify(draft));
+  }, [
+    step,
+    skippedSteps,
+    financialRecordId,
+    resolvedPublicCustomerId,
+    formData,
+    incomeType,
+    salaryType,
+    salaryAmount,
+    employmentType,
+    contractDuration,
+    businessIncomeAmount,
+    incomeStability,
+    loanType,
+    loanEMI,
+    loanBalance,
+    cardLimit,
+    cardOutstanding,
+    cardProvider,
+    liabilityDesc,
+    liabilityAmount,
+    email,
+    phone,
+    password,
+    confirmPassword,
+    address,
+    city,
+    province,
+    accountErrors,
+    stepStatusTable,
+  ]);
+
+  useEffect(() => {
+    const currentStepRow = stepStatusTable.find((row) => row.step === step);
+    if (currentStepRow && currentStepRow.status === "PENDING") {
+      updateStepStatus(step, {
+        status: "IN_PROGRESS",
+        note: null,
+      });
+    }
+  }, [step, stepStatusTable, updateStepStatus]);
 
   // --- Handlers ---
   const includesSalaryDetails = incomeType === "Salary Worker" || incomeType === "Salary Worker + Business Person";
@@ -277,9 +912,68 @@ export default function PublicCustomerApplicationPage() {
     setFormData(prev => ({ ...prev, [category]: (prev[category] as any[]).filter((item: any) => item.id !== id) }));
   };
 
+  const editIncomeItem = (id: string) => {
+    const income = formData.incomes.find((item) => item.id === id);
+    if (!income) {
+      return;
+    }
+
+    if (income.type === "Business Person") {
+      setIncomeType("Business Person");
+      setBusinessIncomeAmount(toInputValue(income.businessIncomeAmount ?? income.amount));
+      setIncomeStability(income.incomeStability || "Stable");
+    } else {
+      setIncomeType("Salary Worker");
+      setSalaryType(income.salaryType || "Fixed");
+      setSalaryAmount(toInputValue(income.salaryAmount ?? income.amount));
+      setEmploymentType(income.employmentType || "Permanent");
+      setContractDuration(income.contractDuration || "");
+    }
+
+    removeItem("incomes", id);
+    setStep(1);
+  };
+
+  const editLoanItem = (id: string) => {
+    const loan = formData.loans.find((item) => item.id === id);
+    if (!loan) {
+      return;
+    }
+
+    setLoanType(loan.type);
+    setLoanEMI(toInputValue(loan.monthlyEMI));
+    setLoanBalance(toInputValue(loan.balance));
+    removeItem("loans", id);
+    setStep(2);
+  };
+
+  const editCardItem = (id: string) => {
+    const card = formData.cards.find((item) => item.id === id);
+    if (!card) {
+      return;
+    }
+
+    setCardProvider(card.provider || "Standard Card");
+    setCardLimit(toInputValue(card.limit));
+    setCardOutstanding(toInputValue(card.outstanding));
+    removeItem("cards", id);
+    setStep(3);
+  };
+
+  const editLiabilityItem = (id: string) => {
+    const liability = formData.liabilities.find((item) => item.id === id);
+    if (!liability) {
+      return;
+    }
+
+    setLiabilityDesc(liability.description);
+    setLiabilityAmount(toInputValue(liability.amount));
+    removeItem("liabilities", id);
+    setStep(4);
+  };
+
   const totalIncome = formData.incomes.reduce((acc, curr) => acc + curr.amount, 0);
   const totalLoanCommitment = formData.loans.reduce((acc, curr) => acc + curr.monthlyEMI, 0);
-  const totalLoanBalance = formData.loans.reduce((acc, curr) => acc + curr.balance, 0);
   const totalCardExposure = formData.cards.reduce((acc, curr) => acc + curr.limit, 0);
   const totalCardOutstanding = formData.cards.reduce((acc, curr) => acc + curr.outstanding, 0);
   const totalLiabilities = formData.liabilities.reduce((acc, curr) => acc + curr.amount, 0);
@@ -297,29 +991,18 @@ export default function PublicCustomerApplicationPage() {
          .replace(/^_+|_+$/g, "");
    };
 
-   const resolvePublicCustomerId = () => {
-      const userId = Number(authUser?.id);
-      if (Number.isFinite(userId) && userId > 0) {
-         return userId;
+   const resolvePublicCustomerId = async () => {
+      if (resolvedPublicCustomerId && resolvedPublicCustomerId > 0) {
+         return resolvedPublicCustomerId;
       }
 
-      if (!authToken) {
-         return null;
+      const me = await getMyPublicCustomerProfile();
+      if (!me.publicCustomerId || me.publicCustomerId <= 0) {
+         throw new Error("Unable to resolve your public customer profile id.");
       }
 
-      try {
-         const payload = authToken.split(".")[1];
-         if (!payload) return null;
-
-         const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-         const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
-         const decoded = JSON.parse(atob(padded)) as Record<string, unknown>;
-         const claimCandidate = decoded.userId ?? decoded.id ?? decoded.uid ?? decoded.sub;
-         const parsed = Number(claimCandidate);
-         return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-      } catch {
-         return null;
-      }
+      setResolvedPublicCustomerId(me.publicCustomerId);
+      return me.publicCustomerId;
    };
 
    const buildIncomePayload = (): PublicCustomerIncomeStepRequest => ({
@@ -360,31 +1043,38 @@ export default function PublicCustomerApplicationPage() {
       missedPayments: formData.missedPayments,
    });
 
-   const saveFinancialStep = async (): Promise<PublicCustomerFinancialStepResponse> => {
-      const publicCustomerId = resolvePublicCustomerId();
+  const saveFinancialStepByStep = async (
+    publicCustomerId: number,
+    targetStep: number,
+  ): Promise<PublicCustomerFinancialStepResponse> => {
+     if (targetStep === 1) {
+        return savePublicCustomerIncomeStep(publicCustomerId, buildIncomePayload());
+     }
 
-      if (!publicCustomerId) {
-         throw new Error("Unable to resolve your customer profile. Please sign in again.");
-      }
+     if (targetStep === 2) {
+        return savePublicCustomerLoanStep(publicCustomerId, buildLoanPayload());
+     }
 
-      if (step === 1) {
-         return savePublicCustomerIncomeStep(publicCustomerId, buildIncomePayload());
-      }
+     if (targetStep === 3) {
+        return savePublicCustomerCardStep(publicCustomerId, buildCardPayload());
+     }
 
-      if (step === 2) {
-         return savePublicCustomerLoanStep(publicCustomerId, buildLoanPayload());
-      }
+     if (targetStep === 4) {
+        return savePublicCustomerLiabilityStep(publicCustomerId, buildLiabilityPayload());
+     }
 
-      if (step === 3) {
-         return savePublicCustomerCardStep(publicCustomerId, buildCardPayload());
-      }
+     throw new Error("This step does not require persistence.");
+  };
 
-      if (step === 4) {
-         return savePublicCustomerLiabilityStep(publicCustomerId, buildLiabilityPayload());
-      }
+  const saveFinancialStep = async (): Promise<PublicCustomerFinancialStepResponse> => {
+     const publicCustomerId = await resolvePublicCustomerId();
 
-      throw new Error("This step does not require persistence.");
-   };
+     if (!publicCustomerId) {
+        throw new Error("Unable to resolve your customer profile. Please sign in again.");
+     }
+
+     return saveFinancialStepByStep(publicCustomerId, step);
+  };
 
    const nextStep = async () => {
       if (isSavingStep || step >= 5) {
@@ -393,12 +1083,36 @@ export default function PublicCustomerApplicationPage() {
 
       try {
          setIsSavingStep(true);
+         updateStepStatus(step, {
+           status: "IN_PROGRESS",
+           backendSynced: false,
+           note: "Saving to server...",
+         });
          const savedStep = await saveFinancialStep();
          setFinancialRecordId(savedStep.recordId);
+         updateStepStatus(step, {
+           status: "COMPLETED",
+           backendSynced: true,
+           recordId: savedStep.recordId,
+           note: savedStep.message ?? "Saved successfully.",
+         });
+
          setSkippedSteps((prev) => prev.filter((skippedStep) => skippedStep !== step));
-         setStep((prev) => Math.min(prev + 1, 5));
+         const next = Math.min(step + 1, 5);
+         if (next <= 5) {
+           updateStepStatus(next, {
+             status: "IN_PROGRESS",
+             note: null,
+           });
+         }
+         setStep(next);
       } catch (error) {
          const message = error instanceof Error ? error.message : "Failed to save your progress.";
+         updateStepStatus(step, {
+           status: "FAILED",
+           backendSynced: false,
+           note: message,
+         });
          showToast({
             title: "Could not save this section",
             description: message,
@@ -413,12 +1127,30 @@ export default function PublicCustomerApplicationPage() {
       if (isSavingStep) {
          return;
       }
+    updateStepStatus(step, {
+      status: "SKIPPED",
+      backendSynced: false,
+      note: "Step skipped by customer.",
+    });
     setSkippedSteps(prev => (prev.includes(step) ? prev : [...prev, step]));
-    setStep(prev => Math.min(prev + 1, 5));
+    const next = Math.min(step + 1, 5);
+    if (next <= 5) {
+      updateStepStatus(next, {
+        status: "IN_PROGRESS",
+        note: null,
+      });
+    }
+    setStep(next);
   };
 
-  const prevStep = () => setStep(prev => Math.max(prev - 1, 1));
-  const { showToast } = useToast();
+  const prevStep = () => {
+    const previous = Math.max(step - 1, 1);
+    updateStepStatus(previous, {
+      status: stepStatusTable.find((row) => row.step === previous)?.status === "COMPLETED" ? "COMPLETED" : "IN_PROGRESS",
+      note: null,
+    });
+    setStep(previous);
+  };
 
   const submitApplication = async () => {
       if (isSubmitting) {
@@ -716,8 +1448,8 @@ export default function PublicCustomerApplicationPage() {
                                   <p className="font-bold text-slate-800 text-sm">{formatCurrency(item.amount)}</p>
                                </div>
                                <div className="w-1/6 flex justify-end gap-2">
-                                  <button className="text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
-                                  <button onClick={() => removeItem("incomes", item.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
+                                 <button onClick={() => editIncomeItem(item.id)} className="text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
+                                 <button onClick={() => removeItem("incomes", item.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
                                </div>
                             </div>
                          ))}
@@ -820,7 +1552,7 @@ export default function PublicCustomerApplicationPage() {
                             <span className="w-1/3">Loan Type</span>
                             <span className="w-1/3 text-right">Monthly EMI</span>
                             <span className="w-1/3 text-right">Balance</span>
-                            <span className="w-10"></span>
+                            <span className="w-16"></span>
                          </div>
                          
                          {formData.loans.map((item) => (
@@ -837,7 +1569,8 @@ export default function PublicCustomerApplicationPage() {
                                <div className="w-1/3 text-right">
                                   <p className="font-semibold text-slate-500 text-xs">{formatCurrency(item.balance)}</p>
                                </div>
-                               <div className="w-10 flex justify-end">
+                              <div className="w-16 flex justify-end gap-2">
+                                 <button onClick={() => editLoanItem(item.id)} className="text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
                                   <button onClick={() => removeItem("loans", item.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
                                </div>
                             </div>
@@ -934,8 +1667,8 @@ export default function PublicCustomerApplicationPage() {
                                <div className="w-1/3 font-bold text-slate-800">{formatCurrency(item.limit)}</div>
                                <div className="w-1/3 font-medium text-slate-600">{formatCurrency(item.outstanding)}</div>
                                <div className="w-1/3 flex justify-end gap-2">
-                                  <button className="text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
-                                  <button onClick={() => removeItem("cards", item.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
+                                 <button onClick={() => editCardItem(item.id)} className="text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
+                                 <button onClick={() => removeItem("cards", item.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
                                </div>
                             </div>
                          ))}
@@ -1066,7 +1799,7 @@ export default function PublicCustomerApplicationPage() {
                          <div className="flex text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">
                             <span className="w-1/2">Description</span>
                             <span className="w-1/3 text-right">Monthly Amount</span>
-                            <span className="w-1/6 text-right">Action</span>
+                            <span className="w-1/6 text-right">Actions</span>
                          </div>
                          
                          {formData.liabilities.map((item) => (
@@ -1078,8 +1811,9 @@ export default function PublicCustomerApplicationPage() {
                                <div className="w-1/3 text-right font-bold text-slate-700 text-sm">
                                   {formatCurrency(item.amount)}
                                </div>
-                               <div className="w-1/6 flex justify-end">
-                                  <button onClick={() => removeItem("liabilities", item.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
+                              <div className="w-1/6 flex justify-end gap-2">
+                                 <button onClick={() => editLiabilityItem(item.id)} className="text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
+                                 <button onClick={() => removeItem("liabilities", item.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
                                </div>
                             </div>
                          ))}

@@ -7,28 +7,70 @@ import { StepProps } from "./types";
 import { Badge } from "@/src/components/ui/badge";
 import { CRIBRetrievalErrors, validateCRIBRetrievalStep } from "./validation";
 
-export function CRIBRetrieval({ formData, updateFormData, onNext, onBack }: StepProps) {
+export function CRIBRetrieval({
+  formData,
+  updateFormData,
+  onNext,
+  onBack,
+  onSaveCribRetrievalStep,
+  isSavingCribRetrievalStep,
+}: StepProps) {
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<CRIBRetrievalErrors>({});
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    // Simulate data parsing
+    let isMounted = true;
+
     const timer = setTimeout(() => {
-      setLoading(false);
-      // Update form data with mock CRIB results if not already present
-      if (!formData.creditScore) {
-        updateFormData({
-            creditScore: 785,
-            missedPaymentsLast12Months: 0,
-            activeLoansCount: 2,
-            totalActiveLoanValue: 4500000
-        });
-      }
+      void (async () => {
+        try {
+          if (onSaveCribRetrievalStep) {
+            await onSaveCribRetrievalStep({ requestStatus: "COMPLETED", reportStatus: "READY" });
+          }
+
+          if (!isMounted) {
+            return;
+          }
+
+          if (!formData.creditScore) {
+            updateFormData({
+                creditScore: 785,
+                missedPaymentsLast12Months: 0,
+                activeLoansCount: 2,
+                totalActiveLoanValue: 4500000,
+                cribRequestStatus: "COMPLETED",
+                cribReportStatus: "READY"
+            });
+          } else {
+            updateFormData({
+              cribRequestStatus: "COMPLETED",
+              cribReportStatus: "READY",
+            });
+          }
+        } catch (error) {
+          if (isMounted) {
+            setErrorMessage(error instanceof Error ? error.message : "Failed to retrieve CRIB data.");
+          }
+        } finally {
+          if (isMounted) {
+            setLoading(false);
+          }
+        }
+      })();
     }, 2000);
-    return () => clearTimeout(timer);
-  }, [formData.creditScore, updateFormData]);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [formData.creditScore, onSaveCribRetrievalStep, updateFormData]);
 
   const handleNext = () => {
+    if (errorMessage) {
+      return;
+    }
+
     const validationErrors = validateCRIBRetrievalStep(formData);
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length === 0) {
@@ -48,6 +90,7 @@ export function CRIBRetrieval({ formData, updateFormData, onNext, onBack }: Step
          </div>
          <h2 className="text-xl font-bold text-[#0d3b66] mb-2">Retrieving Credit Report</h2>
          <p className="text-slate-500 text-sm">Please wait while we fetch data from CRIB securely...</p>
+         {errorMessage && <p className="mt-3 text-sm font-medium text-red-600">{errorMessage}</p>}
       </div>
     );
   }
@@ -146,10 +189,10 @@ export function CRIBRetrieval({ formData, updateFormData, onNext, onBack }: Step
       )}
 
        <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-slate-200 px-8 py-4 flex items-center justify-between z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <Button variant="ghost" onClick={onBack} className="text-slate-500 hover:text-slate-800 hover:bg-slate-100">
+          <Button variant="ghost" onClick={onBack} className="text-slate-500 hover:text-slate-800 hover:bg-slate-100" disabled={Boolean(isSavingCribRetrievalStep)}>
              <ArrowLeft size={16} className="mr-2" /> Back
           </Button>
-          <Button onClick={handleNext} className="bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
+          <Button onClick={handleNext} className="bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200" disabled={Boolean(isSavingCribRetrievalStep)}>
              Proceed to Final Review <ArrowRight size={16} className="ml-2" />
           </Button>
        </div>
