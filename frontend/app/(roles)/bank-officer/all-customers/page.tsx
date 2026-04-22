@@ -5,8 +5,16 @@ import Link from "next/link";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { getBankCustomersForOfficer } from "@/src/api/customers/bank-customer.service";
+import {
+  findOwnedBankCustomerStepOneByNic,
+  getCurrentBankCustomerFinancialRecord,
+} from "@/src/api/customers/bank-customer-financial.service";
 import { ApiError } from "@/src/types/api-error";
 import type { BankCustomerSummaryResponse } from "@/src/types/dto/bank-customer.dto";
+import type {
+  BankCustomerFinancialRecordResponse,
+  BankOfficerCustomerStepOnePrefillResponse,
+} from "@/src/types/dto/bank-customer-financial.dto";
 import { 
   Search, 
   Filter, 
@@ -36,6 +44,7 @@ import {
 } from "@/src/components/ui/select";
 
 type Customer = {
+  userId: number;
   id: string;
   name: string;
   nic: string;
@@ -43,7 +52,7 @@ type Customer = {
   phone: string;
   riskLevel: "LOW" | "MEDIUM" | "HIGH";
   creditScore: number;
-   status: "ACTIVE" | "INACTIVE" | "DRAFT" | "PENDING_STEP_2";
+    status: "ACTIVE" | "INACTIVE" | "DRAFT" | "PENDING_STEP_2" | "PENDING_STEP_3" | "PENDING_STEP_4" | "PENDING_STEP_5" | "PENDING_STEP_6" | "PENDING_STEP_7" | "COMPLETED";
   lastUpdated: string;
 };
 
@@ -82,11 +91,21 @@ function mapApiCustomer(customer: BankCustomerSummaryResponse): Customer {
    const { riskLevel, creditScore } = deriveRiskAndScore(customer);
    const normalizedStatus = customer.status.toUpperCase();
    const status: Customer["status"] =
-      normalizedStatus === "ACTIVE" || normalizedStatus === "INACTIVE" || normalizedStatus === "DRAFT" || normalizedStatus === "PENDING_STEP_2"
+      normalizedStatus === "ACTIVE" ||
+      normalizedStatus === "INACTIVE" ||
+      normalizedStatus === "DRAFT" ||
+      normalizedStatus === "PENDING_STEP_2" ||
+      normalizedStatus === "PENDING_STEP_3" ||
+      normalizedStatus === "PENDING_STEP_4" ||
+      normalizedStatus === "PENDING_STEP_5" ||
+      normalizedStatus === "PENDING_STEP_6" ||
+      normalizedStatus === "PENDING_STEP_7" ||
+      normalizedStatus === "COMPLETED"
          ? (normalizedStatus as Customer["status"])
          : "DRAFT";
 
-   return {
+  return {
+      userId: customer.userId,
       id: customer.customerId,
       name: customer.fullName || customer.email,
       nic: customer.nic,
@@ -99,6 +118,61 @@ function mapApiCustomer(customer: BankCustomerSummaryResponse): Customer {
    };
 }
 
+function toDisplayDateTime(isoDateTime: string | null | undefined): string {
+   if (!isoDateTime) {
+      return "-";
+   }
+
+   const parsed = new Date(isoDateTime);
+   if (Number.isNaN(parsed.getTime())) {
+      return isoDateTime;
+   }
+
+   return parsed.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+   });
+}
+
+function toDisplayToken(value: string | null | undefined): string {
+   if (!value) {
+      return "-";
+   }
+
+   return value
+      .trim()
+      .toLowerCase()
+      .split(/[_\s]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
+}
+
+function toDisplayAmount(value: number | null | undefined): string {
+   if (typeof value !== "number" || Number.isNaN(value)) {
+      return "LKR 0.00";
+   }
+
+   return `LKR ${value.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+   })}`;
+}
+
+type CustomerDetailTab = "personal" | "overview" | "incomes" | "loans" | "cards" | "liabilities";
+
+const customerDetailTabs: Array<{ id: CustomerDetailTab; label: string }> = [
+   { id: "personal", label: "Personal" },
+   { id: "overview", label: "Financial Overview" },
+   { id: "incomes", label: "Incomes" },
+   { id: "loans", label: "Loans" },
+   { id: "cards", label: "Credit Cards" },
+   { id: "liabilities", label: "Liabilities" },
+];
+
 export default function AllCustomersPage() {
   const [searchTerm, setSearchTerm] = useState("");
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -106,11 +180,16 @@ export default function AllCustomersPage() {
     const [loadError, setLoadError] = useState<string | null>(null);
    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
    const [activeRisk, setActiveRisk] = useState<"all" | Customer["riskLevel"]>("all");
-    const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
+   const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
    const [sortBy, setSortBy] = useState<
       "updated-desc" | "updated-asc" | "score-desc" | "score-asc" | "name-asc" | "name-desc"
    >("updated-desc");
    const [showFilters, setShowFilters] = useState(false);
+   const [activeDetailTab, setActiveDetailTab] = useState<CustomerDetailTab>("personal");
+   const [selectedCustomerPersonal, setSelectedCustomerPersonal] = useState<BankOfficerCustomerStepOnePrefillResponse | null>(null);
+   const [selectedCustomerFinancial, setSelectedCustomerFinancial] = useState<BankCustomerFinancialRecordResponse | null>(null);
+   const [isDetailLoading, setIsDetailLoading] = useState(false);
+   const [detailLoadError, setDetailLoadError] = useState<string | null>(null);
 
    useEffect(() => {
       let mounted = true;
@@ -230,37 +309,87 @@ export default function AllCustomersPage() {
       URL.revokeObjectURL(url);
    };
 
-   const customerDetails = useMemo(() => {
+   useEffect(() => {
       if (!selectedCustomer) {
+         setSelectedCustomerPersonal(null);
+         setSelectedCustomerFinancial(null);
+         setDetailLoadError(null);
+         setIsDetailLoading(false);
+         setActiveDetailTab("personal");
+         return;
+      }
+
+      let mounted = true;
+      setActiveDetailTab("personal");
+      setIsDetailLoading(true);
+      setDetailLoadError(null);
+      setSelectedCustomerPersonal(null);
+      setSelectedCustomerFinancial(null);
+
+      const loadSelectedCustomerDetails = async () => {
+         try {
+            const personal = await findOwnedBankCustomerStepOneByNic(selectedCustomer.nic);
+            if (!mounted) {
+               return;
+            }
+            setSelectedCustomerPersonal(personal);
+
+            try {
+               const financial = await getCurrentBankCustomerFinancialRecord(personal.bankCustomerId);
+               if (!mounted) {
+                  return;
+               }
+               setSelectedCustomerFinancial(financial);
+            } catch (financialError) {
+               if (financialError instanceof ApiError && (financialError.status === 400 || financialError.status === 404)) {
+                  if (mounted) {
+                     setSelectedCustomerFinancial(null);
+                  }
+                  return;
+               }
+               throw financialError;
+            }
+         } catch (error) {
+            if (!mounted) {
+               return;
+            }
+            const message = error instanceof ApiError ? error.message : "Failed to load customer details.";
+            setDetailLoadError(message);
+         } finally {
+            if (mounted) {
+               setIsDetailLoading(false);
+            }
+         }
+      };
+
+      void loadSelectedCustomerDetails();
+
+      return () => {
+         mounted = false;
+      };
+   }, [selectedCustomer]);
+
+   const financialOverview = useMemo(() => {
+      if (!selectedCustomerFinancial) {
          return null;
       }
 
-      const profileByRisk = {
-         LOW: {
-            employment: "Permanent",
-            monthlyIncome: "LKR 185,000",
-            debtToIncome: "22%",
-            address: "No. 84, Lake Road, Colombo 08",
-            onboardingSource: "Branch Walk-in",
-         },
-         MEDIUM: {
-            employment: "Contract",
-            monthlyIncome: "LKR 128,000",
-            debtToIncome: "41%",
-            address: "No. 17, Kandy Road, Kadawatha",
-            onboardingSource: "Digital Application",
-         },
-         HIGH: {
-            employment: "Self-employed",
-            monthlyIncome: "LKR 96,000",
-            debtToIncome: "63%",
-            address: "No. 06, Temple Street, Galle",
-            onboardingSource: "Referred Case",
-         },
-      };
+      const totalIncome = selectedCustomerFinancial.incomes.reduce((sum, item) => sum + (item.amount ?? 0), 0);
+      const totalLoanEmi = selectedCustomerFinancial.loans.reduce((sum, item) => sum + (item.monthlyEmi ?? 0), 0);
+      const totalLoanBalance = selectedCustomerFinancial.loans.reduce((sum, item) => sum + (item.remainingBalance ?? 0), 0);
+      const totalCardLimit = selectedCustomerFinancial.cards.reduce((sum, item) => sum + (item.creditLimit ?? 0), 0);
+      const totalCardOutstanding = selectedCustomerFinancial.cards.reduce((sum, item) => sum + (item.outstandingBalance ?? 0), 0);
+      const totalLiabilities = selectedCustomerFinancial.liabilities.reduce((sum, item) => sum + (item.monthlyAmount ?? 0), 0);
 
-      return profileByRisk[selectedCustomer.riskLevel];
-   }, [selectedCustomer]);
+      return {
+         totalIncome,
+         totalLoanEmi,
+         totalLoanBalance,
+         totalCardLimit,
+         totalCardOutstanding,
+         totalLiabilities,
+      };
+   }, [selectedCustomerFinancial]);
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
@@ -313,6 +442,12 @@ export default function AllCustomersPage() {
                                              <SelectItem value="INACTIVE">Inactive</SelectItem>
                                              <SelectItem value="DRAFT">Draft</SelectItem>
                                              <SelectItem value="PENDING_STEP_2">Pending Step 2</SelectItem>
+                                             <SelectItem value="PENDING_STEP_3">Pending Step 3</SelectItem>
+                                             <SelectItem value="PENDING_STEP_4">Pending Step 4</SelectItem>
+                                             <SelectItem value="PENDING_STEP_5">Pending Step 5</SelectItem>
+                                             <SelectItem value="PENDING_STEP_6">Pending Step 6</SelectItem>
+                                             <SelectItem value="PENDING_STEP_7">Pending Step 7</SelectItem>
+                                             <SelectItem value="COMPLETED">Completed</SelectItem>
                             </SelectContent>
                          </Select>
 
@@ -493,62 +628,267 @@ export default function AllCustomersPage() {
                      }
                   }}
                   title={selectedCustomer ? `${selectedCustomer.name} — Customer Profile` : "Customer Profile"}
-                  description="Detailed customer summary for risk and credit review."
+                  description="Detailed personal and financial data grouped into tabs for quick review."
+                  size="xl"
+                  variant="surface"
                   footer={
-                     <>
-                        <Button variant="outline" onClick={() => setSelectedCustomer(null)}>
-                           Close
-                        </Button>
-                        <Button className="bg-[#0d3b66] text-white hover:bg-[#0a2e50]">Mark Reviewed</Button>
-                     </>
+                     <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => setSelectedCustomer(null)}>
+                        Close
+                     </Button>
                   }
                >
-                  {selectedCustomer && customerDetails && (
-                     <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Customer ID</p>
-                           <p className="font-semibold text-slate-800">{selectedCustomer.id}</p>
+                  {selectedCustomer && (
+                     <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                           {customerDetailTabs.map((tab) => (
+                              <button
+                                 key={tab.id}
+                                 type="button"
+                                 onClick={() => setActiveDetailTab(tab.id)}
+                                 className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                    activeDetailTab === tab.id
+                                       ? "bg-[#0d3b66] text-[#f8fafc] shadow-sm"
+                                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                 }`}
+                              >
+                                 {tab.label}
+                              </button>
+                           ))}
                         </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">NIC</p>
-                           <p className="font-semibold text-slate-800">{selectedCustomer.nic}</p>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Risk Level</p>
-                           <p className="font-semibold text-slate-800">{selectedCustomer.riskLevel}</p>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Credit Score</p>
-                           <p className="font-semibold text-slate-800">{selectedCustomer.creditScore}</p>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Email</p>
-                           <p className="font-semibold text-slate-800">{selectedCustomer.email}</p>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Phone</p>
-                           <p className="font-semibold text-slate-800">{selectedCustomer.phone}</p>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Employment Type</p>
-                           <p className="font-semibold text-slate-800">{customerDetails.employment}</p>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Monthly Income</p>
-                           <p className="font-semibold text-slate-800">{customerDetails.monthlyIncome}</p>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Debt-to-Income</p>
-                           <p className="font-semibold text-slate-800">{customerDetails.debtToIncome}</p>
-                        </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Onboarding Source</p>
-                           <p className="font-semibold text-slate-800">{customerDetails.onboardingSource}</p>
-                        </div>
-                        <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                           <p className="text-xs text-slate-500">Address</p>
-                           <p className="font-semibold text-slate-800">{customerDetails.address}</p>
-                        </div>
+
+                        {isDetailLoading && (
+                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                              Loading customer details...
+                           </div>
+                        )}
+
+                        {!isDetailLoading && detailLoadError && (
+                           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                              {detailLoadError}
+                           </div>
+                        )}
+
+                        {!isDetailLoading && !detailLoadError && activeDetailTab === "personal" && (
+                           <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Customer Code</p>
+                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.customerCode ?? selectedCustomer.id}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">NIC</p>
+                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.nic ?? selectedCustomer.nic}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Full Name</p>
+                                 <p className="font-semibold text-slate-800">
+                                    {selectedCustomerPersonal
+                                       ? `${selectedCustomerPersonal.firstName} ${selectedCustomerPersonal.lastName}`.trim()
+                                       : selectedCustomer.name}
+                                 </p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Date of Birth</p>
+                                 <p className="font-semibold text-slate-800">{toDisplayDate(selectedCustomerPersonal?.dob ?? null)}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Email</p>
+                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.email ?? selectedCustomer.email}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Mobile</p>
+                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.mobile ?? selectedCustomer.phone}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Username</p>
+                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.username ?? "-"}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Status</p>
+                                 <p className="font-semibold text-slate-800">{toDisplayToken(selectedCustomer.status)}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Province</p>
+                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.province ?? "-"}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Linked Account</p>
+                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.accountNumber ?? "-"}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Account Type</p>
+                                 <p className="font-semibold text-slate-800">{toDisplayToken(selectedCustomerPersonal?.accountType)}</p>
+                              </div>
+                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Account Status</p>
+                                 <p className="font-semibold text-slate-800">{toDisplayToken(selectedCustomerPersonal?.accountStatus)}</p>
+                              </div>
+                              <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <p className="text-xs text-slate-500">Address</p>
+                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.address ?? "-"}</p>
+                              </div>
+                           </div>
+                        )}
+
+                        {!isDetailLoading && !detailLoadError && activeDetailTab === "overview" && (
+                           <>
+                              {!selectedCustomerFinancial || !financialOverview ? (
+                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                    No financial record has been saved for this customer yet.
+                                 </div>
+                              ) : (
+                                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Financial Record</p>
+                                       <p className="font-semibold text-slate-800">#{selectedCustomerFinancial.bankRecordId}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Created At</p>
+                                       <p className="font-semibold text-slate-800">{toDisplayDateTime(selectedCustomerFinancial.createdAt)}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Updated At</p>
+                                       <p className="font-semibold text-slate-800">{toDisplayDateTime(selectedCustomerFinancial.updatedAt)}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Total Monthly Income</p>
+                                       <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalIncome)}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Total Loan EMI</p>
+                                       <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalLoanEmi)}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Total Loan Balance</p>
+                                       <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalLoanBalance)}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Total Card Limit</p>
+                                       <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalCardLimit)}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Total Card Outstanding</p>
+                                       <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalCardOutstanding)}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Total Other Liabilities</p>
+                                       <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalLiabilities)}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Missed Payments (12M)</p>
+                                       <p className="font-semibold text-slate-800">{selectedCustomerFinancial.missedPayments ?? 0}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Risk Level</p>
+                                       <p className="font-semibold text-slate-800">{selectedCustomer.riskLevel}</p>
+                                    </div>
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Credit Score</p>
+                                       <p className="font-semibold text-slate-800">{selectedCustomer.creditScore}</p>
+                                    </div>
+                                 </div>
+                              )}
+                           </>
+                        )}
+
+                        {!isDetailLoading && !detailLoadError && activeDetailTab === "incomes" && (
+                           <>
+                              {!selectedCustomerFinancial || selectedCustomerFinancial.incomes.length === 0 ? (
+                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                    No income rows available.
+                                 </div>
+                              ) : (
+                                 <div className="space-y-3">
+                                    {selectedCustomerFinancial.incomes.map((income) => (
+                                       <div key={income.incomeId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                          <div className="flex flex-wrap items-center justify-between gap-2">
+                                             <p className="text-sm font-semibold text-slate-800">{toDisplayToken(income.incomeCategory)}</p>
+                                             <p className="text-sm font-semibold text-slate-800">{toDisplayAmount(income.amount)}</p>
+                                          </div>
+                                          <div className="mt-2 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
+                                             <p>Salary Type: <span className="font-medium text-slate-700">{toDisplayToken(income.salaryType)}</span></p>
+                                             <p>Employment Type: <span className="font-medium text-slate-700">{toDisplayToken(income.employmentType)}</span></p>
+                                             <p>Duration Months: <span className="font-medium text-slate-700">{income.durationMonths ?? "-"}</span></p>
+                                             <p>Income Stability: <span className="font-medium text-slate-700">{toDisplayToken(income.incomeStability)}</span></p>
+                                          </div>
+                                       </div>
+                                    ))}
+                                 </div>
+                              )}
+                           </>
+                        )}
+
+                        {!isDetailLoading && !detailLoadError && activeDetailTab === "loans" && (
+                           <>
+                              {!selectedCustomerFinancial || selectedCustomerFinancial.loans.length === 0 ? (
+                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                    No loan rows available.
+                                 </div>
+                              ) : (
+                                 <div className="space-y-3">
+                                    {selectedCustomerFinancial.loans.map((loan) => (
+                                       <div key={loan.loanId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                          <div className="flex flex-wrap items-center justify-between gap-2">
+                                             <p className="text-sm font-semibold text-slate-800">{loan.loanType}</p>
+                                             <p className="text-sm font-semibold text-slate-800">{toDisplayAmount(loan.remainingBalance)}</p>
+                                          </div>
+                                          <p className="mt-1 text-xs text-slate-500">
+                                             Monthly EMI: <span className="font-medium text-slate-700">{toDisplayAmount(loan.monthlyEmi)}</span>
+                                          </p>
+                                       </div>
+                                    ))}
+                                 </div>
+                              )}
+                           </>
+                        )}
+
+                        {!isDetailLoading && !detailLoadError && activeDetailTab === "cards" && (
+                           <>
+                              {!selectedCustomerFinancial || selectedCustomerFinancial.cards.length === 0 ? (
+                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                    No credit card rows available.
+                                 </div>
+                              ) : (
+                                 <div className="space-y-3">
+                                    {selectedCustomerFinancial.cards.map((card) => (
+                                       <div key={card.cardId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                          <div className="flex flex-wrap items-center justify-between gap-2">
+                                             <p className="text-sm font-semibold text-slate-800">{card.provider || "Standard Card"}</p>
+                                             <p className="text-sm font-semibold text-slate-800">{toDisplayAmount(card.creditLimit)}</p>
+                                          </div>
+                                          <p className="mt-1 text-xs text-slate-500">
+                                             Outstanding: <span className="font-medium text-slate-700">{toDisplayAmount(card.outstandingBalance)}</span>
+                                          </p>
+                                       </div>
+                                    ))}
+                                 </div>
+                              )}
+                           </>
+                        )}
+
+                        {!isDetailLoading && !detailLoadError && activeDetailTab === "liabilities" && (
+                           <>
+                              {!selectedCustomerFinancial || selectedCustomerFinancial.liabilities.length === 0 ? (
+                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                    No liability rows available.
+                                 </div>
+                              ) : (
+                                 <div className="space-y-3">
+                                    {selectedCustomerFinancial.liabilities.map((liability) => (
+                                       <div key={liability.liabilityId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                          <div className="flex flex-wrap items-center justify-between gap-2">
+                                             <p className="text-sm font-semibold text-slate-800">{liability.description}</p>
+                                             <p className="text-sm font-semibold text-slate-800">{toDisplayAmount(liability.monthlyAmount)}</p>
+                                          </div>
+                                       </div>
+                                    ))}
+                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <p className="text-xs text-slate-500">Missed Payments (12M)</p>
+                                       <p className="font-semibold text-slate-800">{selectedCustomerFinancial.missedPayments ?? 0}</p>
+                                    </div>
+                                 </div>
+                              )}
+                           </>
+                        )}
                      </div>
                   )}
                </PopupModal>
@@ -557,5 +897,7 @@ export default function AllCustomersPage() {
     </AuthGuard>
   );
 }
+
+
 
 

@@ -14,6 +14,22 @@ export interface StepOneRegistrationRequest {
   accountNumber?: string;
 }
 
+export interface StepOneUpdateRequest {
+  firstName: string;
+  lastName: string;
+  nic: string;
+  dob: string;
+  email: string;
+  mobile: string;
+  province: string;
+  address: string;
+  username: string;
+  password?: string;
+  confirmPassword?: string;
+  bankAccount?: number;
+  accountNumber?: string;
+}
+
 export interface StepOneRegistrationResponse {
   userId: number;
   role: "BANK_CUSTOMER" | "PUBLIC_CUSTOMER" | "BANK_OFFICER" | string;

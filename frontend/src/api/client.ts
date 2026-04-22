@@ -1,6 +1,7 @@
 import axios, { type AxiosError } from "axios";
 import { env } from "@/config/env";
 import { ApiError, type ApiErrorCode } from "@/src/types/api-error";
+import { AUTH_ENDPOINTS } from "@/src/api/endpoints";
 import { useAuthStore } from "@/src/store";
 
 export const apiClient = axios.create({
@@ -22,12 +23,36 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+const PUBLIC_AUTH_ENDPOINTS = [
+  AUTH_ENDPOINTS.login,
+  AUTH_ENDPOINTS.register,
+  AUTH_ENDPOINTS.forgotPassword,
+  AUTH_ENDPOINTS.verifyOtp,
+  AUTH_ENDPOINTS.resetPassword,
+];
+
+function isPublicAuthRequest(url?: string): boolean {
+  if (!url) {
+    return false;
+  }
+
+  return PUBLIC_AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     const axiosError = error as AxiosError;
-    if (axiosError.response?.status === 401) {
+    const status = axiosError.response?.status;
+    const requestUrl = axiosError.config?.url;
+    const shouldHandleUnauthorized = (status === 401 || status === 403) && !isPublicAuthRequest(requestUrl);
+
+    if (shouldHandleUnauthorized) {
       useAuthStore.getState().clearSession();
+
+      if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+        window.location.replace("/login");
+      }
     }
 
     return Promise.reject(error);

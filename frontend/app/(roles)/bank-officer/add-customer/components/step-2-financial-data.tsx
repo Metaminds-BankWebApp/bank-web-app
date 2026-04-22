@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
@@ -9,42 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FinancialDataErrors, validateFinancialDataStep } from "./validation";
 
 export function FinancialData({ formData, updateFormData, onNext, onBack }: StepProps) {
-  const errors: FinancialDataErrors = validateFinancialDataStep(formData);
+  const [errors, setErrors] = useState<FinancialDataErrors>({});
   const incomeType = formData.incomeType || "Salary Worker";
   const salaryType = formData.salaryType || "Fixed";
   const employmentType = formData.employmentType || "Permanent";
   const contractDurationMonths = formData.contractDurationMonths || "";
   const incomeStability = formData.incomeStability || "Stable";
 
-  const includesSalaryDetails = incomeType !== "Business Person";
-  const includesBusinessDetails = incomeType !== "Salary Worker";
+  const includesSalaryDetails = incomeType === "Salary Worker" || incomeType === "Salary Worker + Business Person";
+  const includesBusinessDetails = incomeType === "Business Person" || incomeType === "Salary Worker + Business Person";
 
-  const clearFieldError = (field: keyof FinancialDataErrors) => {
-    if (errors[field]) {
-      // Errors are derived from form state, so a field update naturally clears them on the next render.
-    }
-  };
-
-  const incomeRows = [
-    includesSalaryDetails && formData.monthlySalary.trim()
-      ? {
-          key: "salary",
-          type: "Salary Worker",
-          amount: Number(formData.monthlySalary),
-          meta: `Salary: ${salaryType || "-"}`,
-        }
-      : null,
-    includesBusinessDetails && formData.businessIncome.trim()
-      ? {
-          key: "business",
-          type: "Business Person",
-          amount: Number(formData.businessIncome),
-          meta: `Stability: ${incomeStability || "-"}`,
-        }
-      : null,
-  ].filter((row): row is { key: string; type: string; amount: number; meta: string } => Boolean(row));
-
-  const totalIncome = incomeRows.reduce((sum, row) => sum + (Number.isFinite(row.amount) ? row.amount : 0), 0);
+  const totalIncome = formData.incomes.reduce((sum, row) => sum + Number(row.amount || 0), 0);
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-LK", {
@@ -54,8 +30,125 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
       maximumFractionDigits: 2,
     }).format(value || 0);
 
+  const clearError = (field: keyof FinancialDataErrors) => {
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleAddSalaryIncome = () => {
+    const draftErrors: FinancialDataErrors = {};
+    const amount = formData.monthlySalary.trim();
+    const parsedAmount = Number(amount);
+
+    if (!salaryType.trim()) {
+      draftErrors.salaryType = "Salary type is required.";
+    }
+
+    if (!amount || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      draftErrors.monthlySalary = "Monthly salary amount must be greater than 0.";
+    }
+
+    if (!employmentType.trim()) {
+      draftErrors.employmentType = "Employment type is required.";
+    }
+
+    if (employmentType === "Contract") {
+      const duration = contractDurationMonths.trim();
+      if (!duration) {
+        draftErrors.contractDurationMonths = "Contract duration is required for contract employment.";
+      } else if (!Number.isInteger(Number(duration)) || Number(duration) <= 0) {
+        draftErrors.contractDurationMonths = "Contract duration must be a positive whole number.";
+      }
+    }
+
+    if (Object.keys(draftErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...draftErrors }));
+      return;
+    }
+
+    updateFormData({
+      incomes: [
+        ...formData.incomes,
+        {
+          type: "Salary Worker",
+          amount,
+          salaryType,
+          employmentType,
+          contractDurationMonths: employmentType === "Contract" ? contractDurationMonths.trim() : undefined,
+        },
+      ],
+      monthlySalary: "",
+      contractDurationMonths: "",
+    });
+    setErrors((prev) => ({
+      ...prev,
+      salaryType: undefined,
+      employmentType: undefined,
+      monthlySalary: undefined,
+      contractDurationMonths: undefined,
+      income: undefined,
+      incomes: undefined,
+      step: undefined,
+    }));
+  };
+
+  const handleAddBusinessIncome = () => {
+    const draftErrors: FinancialDataErrors = {};
+    const amount = formData.businessIncome.trim();
+    const parsedAmount = Number(amount);
+
+    if (!amount || Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      draftErrors.businessIncome = "Average monthly business income must be greater than 0.";
+    }
+
+    if (!incomeStability.trim()) {
+      draftErrors.incomeStability = "Income stability is required.";
+    }
+
+    if (Object.keys(draftErrors).length > 0) {
+      setErrors((prev) => ({ ...prev, ...draftErrors }));
+      return;
+    }
+
+    updateFormData({
+      incomes: [
+        ...formData.incomes,
+        {
+          type: "Business Person",
+          amount,
+          incomeStability,
+        },
+      ],
+      businessIncome: "",
+    });
+    setErrors((prev) => ({
+      ...prev,
+      businessIncome: undefined,
+      incomeStability: undefined,
+      income: undefined,
+      incomes: undefined,
+      step: undefined,
+    }));
+  };
+
+  const handleDeleteIncome = (index: number) => {
+    updateFormData({
+      incomes: formData.incomes.filter((_, rowIndex) => rowIndex !== index),
+    });
+  };
+
   const handleNext = () => {
     const validationErrors = validateFinancialDataStep(formData);
+    const hasPendingDraft =
+      (includesSalaryDetails && Boolean(formData.monthlySalary.trim())) ||
+      (includesBusinessDetails && Boolean(formData.businessIncome.trim()));
+
+    if (hasPendingDraft) {
+      validationErrors.step = "Add the current income draft to the summary or clear the amount field before continuing.";
+    }
+
+    setErrors(validationErrors);
     if (Object.keys(validationErrors).length === 0) {
       onNext();
     }
@@ -65,7 +158,7 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="px-8 py-6 border-b border-slate-100">
         <h2 className="text-xl font-bold text-[#0d3b66]">Income Details</h2>
-        <p className="text-sm text-slate-500 mt-1">Use the same income capture model as public-customer application flow.</p>
+        <p className="text-sm text-slate-500 mt-1">Add one or more income sources for this customer.</p>
       </div>
 
       <div className="p-8">
@@ -76,21 +169,8 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
               <Select
                 value={incomeType}
                 onValueChange={(value) => {
-                  const nextState: Partial<typeof formData> = { incomeType: value };
-
-                  if (value === "Business Person") {
-                    nextState.monthlySalary = "";
-                    nextState.salaryType = "Fixed";
-                    nextState.employmentType = "Permanent";
-                    nextState.contractDurationMonths = "";
-                  }
-
-                  if (value === "Salary Worker") {
-                    nextState.businessIncome = "";
-                    nextState.incomeStability = "Stable";
-                  }
-
-                  updateFormData(nextState);
+                  updateFormData({ incomeType: value });
+                  clearError("incomeType");
                 }}
               >
                 <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
@@ -116,7 +196,8 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                       value={salaryType}
                       onValueChange={(value) => {
                         updateFormData({ salaryType: value });
-                        clearFieldError("salaryType");
+                        clearError("salaryType");
+                        clearError("step");
                       }}
                     >
                       <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
@@ -139,10 +220,10 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                         className="h-12 pl-12 bg-slate-50 border-slate-200"
                         placeholder="0.00"
                         value={formData.monthlySalary}
-                        onChange={(e) => {
-                          updateFormData({ monthlySalary: e.target.value });
-                          clearFieldError("monthlySalary");
-                          clearFieldError("income");
+                        onChange={(event) => {
+                          updateFormData({ monthlySalary: event.target.value });
+                          clearError("monthlySalary");
+                          clearError("step");
                         }}
                         error={errors.monthlySalary}
                       />
@@ -161,10 +242,9 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                           employmentType: value,
                           contractDurationMonths: value === "Contract" ? formData.contractDurationMonths : "",
                         });
-                        clearFieldError("employmentType");
-                        if (value !== "Contract") {
-                          clearFieldError("contractDurationMonths");
-                        }
+                        clearError("employmentType");
+                        clearError("contractDurationMonths");
+                        clearError("step");
                       }}
                     >
                       <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
@@ -186,9 +266,10 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                         className="h-12 bg-slate-50 border-slate-200"
                         placeholder="e.g. 12"
                         value={contractDurationMonths}
-                        onChange={(e) => {
-                          updateFormData({ contractDurationMonths: e.target.value });
-                          clearFieldError("contractDurationMonths");
+                        onChange={(event) => {
+                          updateFormData({ contractDurationMonths: event.target.value });
+                          clearError("contractDurationMonths");
+                          clearError("step");
                         }}
                         error={errors.contractDurationMonths}
                       />
@@ -196,6 +277,11 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                     </div>
                   )}
                 </div>
+
+                <Button onClick={handleAddSalaryIncome} className="w-full bg-[#3e9fd3] hover:bg-[#328ab8] text-white">
+                  <Plus size={16} className="mr-2" />
+                  Add Salary Income
+                </Button>
               </div>
             )}
 
@@ -212,10 +298,10 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                       className="h-12 pl-12 bg-slate-50 border-slate-200"
                       placeholder="0.00"
                       value={formData.businessIncome}
-                      onChange={(e) => {
-                        updateFormData({ businessIncome: e.target.value });
-                        clearFieldError("businessIncome");
-                        clearFieldError("income");
+                      onChange={(event) => {
+                        updateFormData({ businessIncome: event.target.value });
+                        clearError("businessIncome");
+                        clearError("step");
                       }}
                       error={errors.businessIncome}
                     />
@@ -229,7 +315,8 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                     value={incomeStability}
                     onValueChange={(value) => {
                       updateFormData({ incomeStability: value });
-                      clearFieldError("incomeStability");
+                      clearError("incomeStability");
+                      clearError("step");
                     }}
                   >
                     <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
@@ -243,12 +330,27 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                   </Select>
                   {errors.incomeStability && <p className="mt-1 text-xs text-red-500">{errors.incomeStability}</p>}
                 </div>
+
+                <Button onClick={handleAddBusinessIncome} className="w-full bg-[#3e9fd3] hover:bg-[#328ab8] text-white">
+                  <Plus size={16} className="mr-2" />
+                  Add Business Income
+                </Button>
               </div>
             )}
 
+            {errors.step && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+                {errors.step}
+              </div>
+            )}
             {errors.income && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
                 {errors.income}
+              </div>
+            )}
+            {errors.incomes && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+                {errors.incomes}
               </div>
             )}
           </div>
@@ -257,10 +359,12 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="font-bold text-slate-900">Added Income Sources</h3>
-                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">{incomeRows.length} Items</span>
+                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">
+                  {formData.incomes.length} Items
+                </span>
               </div>
 
-              {incomeRows.length === 0 ? (
+              {formData.incomes.length === 0 ? (
                 <div className="text-center py-12 text-slate-400">
                   <p>No income sources added yet.</p>
                 </div>
@@ -268,24 +372,39 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                 <div className="space-y-4">
                   <div className="flex text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">
                     <span className="w-1/2">Type</span>
-                    <span className="w-1/2 text-right">Amount</span>
+                    <span className="w-1/3 text-right">Amount</span>
+                    <span className="w-1/6 text-right">Actions</span>
                   </div>
 
-                  {incomeRows.map((row) => (
-                    <div key={row.key} className="bg-white border border-slate-100 rounded-xl p-4 flex items-center shadow-sm">
+                  {formData.incomes.map((income, index) => (
+                    <div key={`${income.type}-${income.amount}-${index}`} className="bg-white border border-slate-100 rounded-xl p-4 flex items-center shadow-sm">
                       <div className="w-1/2">
-                        <p className="font-bold text-slate-800 text-sm">{row.type}</p>
-                        <p className="text-xs text-slate-500">{row.meta}</p>
+                        <p className="font-bold text-slate-800 text-sm">{income.type}</p>
+                        <p className="text-xs text-slate-500">
+                          {income.type === "Business Person"
+                            ? `Stability: ${income.incomeStability ?? "-"}`
+                            : `Salary: ${income.salaryType ?? "-"} | Employment: ${income.employmentType ?? "-"}`}
+                        </p>
                       </div>
-                      <div className="w-1/2 text-right">
-                        <p className="font-bold text-slate-800 text-sm">{formatCurrency(row.amount)}</p>
+                      <div className="w-1/3 text-right">
+                        <p className="font-bold text-slate-800 text-sm">{formatCurrency(Number(income.amount || 0))}</p>
+                      </div>
+                      <div className="w-1/6 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteIncome(index)}
+                          className="text-slate-400 hover:text-red-500"
+                          aria-label={`Delete income source ${index + 1}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
 
-              {incomeRows.length > 0 && (
+              {formData.incomes.length > 0 && (
                 <div className="mt-8 pt-6 border-t border-slate-200 flex justify-between items-center">
                   <span className="text-slate-500 font-medium">Total Monthly Income</span>
                   <span className="text-[#3e9fd3] font-bold text-lg">{formatCurrency(totalIncome)}</span>
@@ -296,19 +415,11 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
         </div>
       </div>
 
-      {/* Actions */}
       <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-slate-200 px-8 py-4 flex items-center justify-between z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          className="gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-        >
+        <Button variant="ghost" onClick={onBack} className="gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100">
           <ArrowLeft size={16} /> Back
         </Button>
-        <Button
-          onClick={handleNext}
-          className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
-        >
+        <Button onClick={handleNext} className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
           Continue <ArrowRight size={16} />
         </Button>
       </div>

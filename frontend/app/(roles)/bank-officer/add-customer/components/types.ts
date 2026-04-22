@@ -24,6 +24,14 @@ export interface CustomerFormData {
   monthlySalary: string;
   businessIncome: string;
   incomeStability: string;
+  incomes: {
+    type: "Salary Worker" | "Business Person";
+    amount: string;
+    salaryType?: string;
+    employmentType?: string;
+    contractDurationMonths?: string;
+    incomeStability?: string;
+  }[];
   
   // Loans
   loans: {
@@ -78,13 +86,14 @@ export const initialFormData: CustomerFormData = {
   monthlySalary: "",
   businessIncome: "",
   incomeStability: "Stable",
+  incomes: [],
   loans: [],
   creditCards: [],
   liabilities: [],
   missedPaymentsLast12Months: 0,
   cribRequestType: "FULL_REPORT",
-  cribRequestStatus: "SUBMITTED",
-  cribReportStatus: "PENDING",
+  cribRequestStatus: "PENDING",
+  cribReportStatus: "NOT_REQUESTED",
 };
 
 export interface StepProps {
@@ -94,15 +103,20 @@ export interface StepProps {
   onBack: () => void;
   onSaveDraftStepOne?: () => Promise<void>;
   onContinueStepOne?: () => Promise<void>;
+  onLookupCustomerByNic?: () => Promise<void>;
   isSavingDraftStepOne?: boolean;
   isSubmittingStepOne?: boolean;
+  isLookingUpCustomerByNic?: boolean;
+  hasExistingCustomerMatch?: boolean;
   serverStepOneErrors?: Partial<Record<"nic" | "email" | "username", string>>;
   onClearServerStepOneError?: (field: "nic" | "email" | "username" | "bankAccount") => void;
   onVerifyAccount?: () => Promise<void>;
   isVerifyingAccount?: boolean;
-  onSaveCribRequestStep?: (requestType: string) => Promise<void>;
-  onSaveCribRetrievalStep?: (payload?: { requestStatus?: string; reportStatus?: string }) => Promise<void>;
-  onCompleteCribReviewStep?: () => Promise<void>;
+  onSaveCribLinkingStep?: (requestType: string) => Promise<unknown>;
+  isSavingCribLinkingStep?: boolean;
+  onSaveCribRequestStep?: (requestType: string) => Promise<unknown>;
+  onSaveCribRetrievalStep?: (payload?: { requestStatus?: string; reportStatus?: string }) => Promise<unknown>;
+  onCompleteCribReviewStep?: () => Promise<unknown>;
   isSavingCribRequestStep?: boolean;
   isSavingCribRetrievalStep?: boolean;
   isCompletingCribReviewStep?: boolean;

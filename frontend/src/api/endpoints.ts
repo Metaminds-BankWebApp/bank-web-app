@@ -12,6 +12,8 @@ export const REGISTRATION_ENDPOINTS = {
   bankCustomer: {
     stepOneDraft: "/bank-officers/customers/step-1/draft",
     stepOneContinue: "/bank-officers/customers/step-1/continue",
+    stepOneUpdateDraft: (bankCustomerId: number) => `/bank-officers/customers/${bankCustomerId}/step-1/draft`,
+    stepOneUpdateContinue: (bankCustomerId: number) => `/bank-officers/customers/${bankCustomerId}/step-1/continue`,
   },
   publicCustomer: "/public-customers",
   bankOfficer: {
@@ -24,6 +26,7 @@ export const CUSTOMER_ENDPOINTS = {
   bankOfficerCustomers: "/bank-officers/customers",
   verifyBankAccount: "/bank-officers/customers/accounts/verify",
   bankOfficerCustomerByUser: (userId: number) => `/bank-officers/customers/user/${userId}`,
+  bankOfficerCustomerStepOneByNic: "/bank-officers/customers/step-1/by-nic",
 } as const;
 
 export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
@@ -35,10 +38,8 @@ export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
     `/bank-officers/customers/${bankCustomerId}/financial-records/steps/cards/continue`,
   saveLiabilityStep: (bankCustomerId: number) =>
     `/bank-officers/customers/${bankCustomerId}/financial-records/steps/liabilities/continue`,
-  saveCribRequestStep: (bankCustomerId: number) =>
-    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/crib-request/continue`,
-  saveCribRetrievalStep: (bankCustomerId: number) =>
-    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/crib-retrieval/continue`,
+  saveCribLinkingStep: (bankCustomerId: number) =>
+    `/bank-officers/customers/${bankCustomerId}/financial-records/steps/crib-linking/continue`,
   completeCribReviewStep: (bankCustomerId: number) =>
     `/bank-officers/customers/${bankCustomerId}/financial-records/steps/review/complete`,
   current: (bankCustomerId: number) =>
