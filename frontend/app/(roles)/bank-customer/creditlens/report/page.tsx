@@ -25,6 +25,7 @@ type ReportSnapshot = {
   month: string;
   income: number;
   loanEmi: number;
+  loanRemainingBalance: number;
   creditCardBalance: number;
   creditCardLimit: number;
   otherLiabilities: number;
@@ -51,6 +52,7 @@ export default function ReportPage() {
         month: "October 2024",
         income: 138000,
         loanEmi: 42500,
+        loanRemainingBalance: 2420000,
         creditCardBalance: 205000,
         creditCardLimit: 250000,
         otherLiabilities: 15000,
@@ -75,6 +77,7 @@ export default function ReportPage() {
         month: "November 2024",
         income: 140000,
         loanEmi: 42000,
+        loanRemainingBalance: 2375000,
         creditCardBalance: 200000,
         creditCardLimit: 250000,
         otherLiabilities: 14500,
@@ -99,6 +102,7 @@ export default function ReportPage() {
         month: "December 2024",
         income: 142000,
         loanEmi: 41800,
+        loanRemainingBalance: 2330000,
         creditCardBalance: 194000,
         creditCardLimit: 250000,
         otherLiabilities: 13800,
@@ -123,6 +127,7 @@ export default function ReportPage() {
         month: "January 2025",
         income: 144000,
         loanEmi: 41000,
+        loanRemainingBalance: 2285000,
         creditCardBalance: 188000,
         creditCardLimit: 250000,
         otherLiabilities: 13000,
@@ -147,6 +152,7 @@ export default function ReportPage() {
         month: "February 2025",
         income: 145000,
         loanEmi: 40500,
+        loanRemainingBalance: 2240000,
         creditCardBalance: 183000,
         creditCardLimit: 250000,
         otherLiabilities: 12500,
@@ -171,6 +177,7 @@ export default function ReportPage() {
         month: "March 2025",
         income: 147000,
         loanEmi: 40200,
+        loanRemainingBalance: 2195000,
         creditCardBalance: 179000,
         creditCardLimit: 250000,
         otherLiabilities: 11800,
@@ -195,6 +202,7 @@ export default function ReportPage() {
         month: "April 2025",
         income: 148000,
         loanEmi: 40000,
+        loanRemainingBalance: 2150000,
         creditCardBalance: 176000,
         creditCardLimit: 250000,
         otherLiabilities: 11200,
@@ -219,6 +227,7 @@ export default function ReportPage() {
         month: "May 2025",
         income: 149000,
         loanEmi: 39800,
+        loanRemainingBalance: 2105000,
         creditCardBalance: 174000,
         creditCardLimit: 250000,
         otherLiabilities: 10800,
@@ -243,6 +252,7 @@ export default function ReportPage() {
         month: "June 2025",
         income: 150000,
         loanEmi: 39700,
+        loanRemainingBalance: 2060000,
         creditCardBalance: 172000,
         creditCardLimit: 250000,
         otherLiabilities: 10600,
@@ -267,6 +277,7 @@ export default function ReportPage() {
         month: "July 2025",
         income: 149000,
         loanEmi: 39500,
+        loanRemainingBalance: 2015000,
         creditCardBalance: 171000,
         creditCardLimit: 250000,
         otherLiabilities: 10800,
@@ -291,6 +302,7 @@ export default function ReportPage() {
         month: "August 2025",
         income: 148500,
         loanEmi: 39200,
+        loanRemainingBalance: 1970000,
         creditCardBalance: 170500,
         creditCardLimit: 250000,
         otherLiabilities: 10900,
@@ -315,6 +327,7 @@ export default function ReportPage() {
         month: "September 2025",
         income: 148000,
         loanEmi: 39000,
+        loanRemainingBalance: 1925000,
         creditCardBalance: 170000,
         creditCardLimit: 250000,
         otherLiabilities: 11000,
@@ -404,8 +417,9 @@ export default function ReportPage() {
           />
 
           <ReportMetricCard
-            title="Loan EMI"
-            value={`LKR ${current.loanEmi.toLocaleString()}`}
+            title="Loan"
+            value={`EMI: LKR ${current.loanEmi.toLocaleString()}`}
+            subValue={`Remaining Balance: LKR ${current.loanRemainingBalance.toLocaleString()}`}
             icon={<ReceiptText className="h-5 w-5" />}
             tone="orange"
           />
@@ -473,6 +487,5 @@ export default function ReportPage() {
     </div>
   );
 }
-
 
 

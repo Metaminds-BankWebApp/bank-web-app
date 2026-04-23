@@ -14,6 +14,13 @@ export function Review({
 }: StepProps) {
    const [errorMessage, setErrorMessage] = useState("");
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
+   const totalMonthlyIncome = formData.incomes.reduce((total, income) => total + (Number(income.amount) || 0), 0);
+   const totalBusinessIncome = formData.incomes
+      .filter((income) => income.type === "Business Person")
+      .reduce((total, income) => total + (Number(income.amount) || 0), 0);
+   const primarySalaryIncome = formData.incomes.find((income) => income.type === "Salary Worker");
+   const primaryEmploymentType = primarySalaryIncome?.employmentType || formData.employmentType || "-";
+   const primarySalaryAmount = primarySalaryIncome?.amount || formData.monthlySalary || "0.00";
 
    const handleSubmit = async () => {
       setErrorMessage("");
@@ -41,8 +48,8 @@ export function Review({
            <div className="relative z-10 space-y-6">
               <div>
                  <p className="text-[10px] text-blue-300 font-bold uppercase tracking-widest mb-1">Total Monthly Income</p>
-                 <p className="text-3xl font-bold text-white">LKR {formData.monthlySalary || "0.00"}</p>
-                 <p className="text-xs text-blue-200/60 mt-1">+ LKR {formData.businessIncome || "0.00"} Business Income</p>
+                 <p className="text-3xl font-bold text-white">LKR {totalMonthlyIncome.toFixed(2)}</p>
+                 <p className="text-xs text-blue-200/60 mt-1">+ LKR {totalBusinessIncome.toFixed(2)} Business Income</p>
               </div>
 
               <div className="flex gap-8">
@@ -109,9 +116,11 @@ export function Review({
               </div>
               <div className="grid grid-cols-2 text-sm gap-y-2">
                  <div className="text-slate-500">Primary Employment</div>
-                 <div className="font-medium text-slate-800 text-right">{formData.employmentType}</div>
+                 <div className="font-medium text-slate-800 text-right">{primaryEmploymentType}</div>
                  <div className="text-slate-500">Monthly Net</div>
-                 <div className="font-medium text-slate-800 text-right">LKR {formData.monthlySalary}</div>
+                 <div className="font-medium text-slate-800 text-right">LKR {primarySalaryAmount}</div>
+                 <div className="text-slate-500">Income Sources</div>
+                 <div className="font-medium text-slate-800 text-right">{formData.incomes.length}</div>
                  <div className="text-slate-500">CRIB Request Status</div>
                  <div className="font-medium text-slate-800 text-right">{formData.cribRequestStatus || "-"}</div>
                  <div className="text-slate-500">CRIB Report Status</div>

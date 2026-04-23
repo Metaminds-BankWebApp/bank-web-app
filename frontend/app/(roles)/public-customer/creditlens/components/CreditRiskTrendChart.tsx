@@ -15,23 +15,31 @@ import { Line } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
-const labels = ["April", "May", "June", "July", "August", "September"];
-const realValues = [80, 50, 90, 70, 60, 55];
+type Props = {
+  labels?: string[];
+  values?: number[];
+};
 
-export default function CreditRiskTrendChart() {
-  const [chartValues, setChartValues] = useState<number[]>(() => realValues.map(() => 0));
+const defaultLabels = ["April", "May", "June", "July", "August", "September"];
+const defaultValues = [80, 50, 90, 70, 60, 55];
+
+export default function CreditRiskTrendChart({
+  labels = defaultLabels,
+  values = defaultValues,
+}: Props) {
+  const [chartValues, setChartValues] = useState<number[]>(() => values.map(() => 0));
 
   useEffect(() => {
     let raf = 0;
     const timer = window.setTimeout(() => {
-      raf = requestAnimationFrame(() => setChartValues([...realValues]));
+      raf = requestAnimationFrame(() => setChartValues([...values]));
     }, 120);
 
     return () => {
       window.clearTimeout(timer);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [values]);
 
   const data = useMemo(
     () => ({
@@ -49,7 +57,7 @@ export default function CreditRiskTrendChart() {
         },
       ],
     }),
-    [chartValues]
+    [chartValues, labels]
   );
 
   const options: ChartOptions<"line"> = {
