@@ -7,6 +7,8 @@ import { Building2 } from "lucide-react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { createAdminBranch } from "@/src/api/admin/branch.service";
+import { ApiError } from "@/src/types/api-error";
 import type { BranchFormData, BranchFormErrors, BranchStatus } from "./types";
 import { isBranchFormComplete, validateBranchForm } from "./validation";
 
@@ -63,34 +65,17 @@ export default function AddBranchPage() {
     };
 
     try {
-      const apiBase =
-        process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") || "http://localhost:8080";
-
-      const token =
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token") ||
-        localStorage.getItem("authToken");
-
-      const response = await fetch(`${apiBase}/api/admin/branches`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(data?.message || "Failed to create branch.");
-      }
+      const data = await createAdminBranch(payload);
 
       alert(`Branch created successfully. Branch ID: ${data.branchCode}`);
       router.push("/admin/branch-management");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Something went wrong while creating the branch.";
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+          ? error.message
+          : "Something went wrong while creating the branch.";
       alert(message);
     } finally {
       setIsSaving(false);
