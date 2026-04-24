@@ -1,5 +1,7 @@
 export type OfficerFormData = {
-  officerName: string;
+  firstName: string;
+  lastName: string;
+  nic: string;
   officerId: string;
   username: string;
   password: string;
@@ -11,5 +13,8 @@ export type OfficerFormData = {
 };
 
 export type OfficerFormErrors = Partial<
-  Record<"officerName" | "contact" | "email" | "assignedBranch" | "username" | "password", string>
+  Record<
+    "firstName" | "lastName" | "nic" | "contact" | "email" | "assignedBranch" | "username" | "password",
+    string
+  >
 >;
