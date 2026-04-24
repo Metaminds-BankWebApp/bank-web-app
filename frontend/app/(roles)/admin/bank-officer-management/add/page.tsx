@@ -18,7 +18,9 @@ const BRANCH_OPTIONS = [
 ];
 
 const getInitialFormData = (): OfficerFormData => ({
-  officerName: "",
+  firstName: "",
+  lastName: "",
+  nic: "",
   officerId: generateOfficerId(),
   username: "",
   password: "",
@@ -37,7 +39,7 @@ export default function AddOfficerPage() {
   const canSubmit = isOfficerFormComplete(formData) && !isSaving;
 
   const handleRequiredFieldChange = (
-    field: keyof Pick<OfficerFormData, "officerName" | "contact" | "email" | "assignedBranch">,
+    field: keyof Pick<OfficerFormData, "firstName" | "lastName" | "nic" | "contact" | "email" | "assignedBranch">,
     value: string
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -47,14 +49,18 @@ export default function AddOfficerPage() {
   };
 
   const handleGenerateUsername = () => {
-    if (!formData.officerName.trim()) {
-      setErrors((prev) => ({ ...prev, officerName: "Officer name is required before generating username." }));
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        firstName: !formData.firstName.trim() ? "First name is required before generating username." : prev.firstName,
+        lastName: !formData.lastName.trim() ? "Last name is required before generating username." : prev.lastName,
+      }));
       return;
     }
 
-    const username = generateOfficerUsername(formData.officerName, formData.officerId);
+    const username = generateOfficerUsername(formData.firstName, formData.lastName, formData.officerId);
     setFormData((prev) => ({ ...prev, username }));
-    setErrors((prev) => ({ ...prev, username: undefined }));
+    setErrors((prev) => ({ ...prev, firstName: undefined, lastName: undefined, username: undefined }));
   };
 
   const handleGeneratePassword = () => {
@@ -76,7 +82,9 @@ export default function AddOfficerPage() {
 
     console.log({
       ...formData,
-      officerName: formData.officerName.trim(),
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      nic: formData.nic.trim(),
       contact: formData.contact.trim(),
       email: formData.email.trim(),
       assignedBranch: formData.assignedBranch.trim(),
@@ -137,18 +145,33 @@ export default function AddOfficerPage() {
               <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
                 <div className="min-w-0 flex-1 space-y-6 rounded-2xl bg-[#e9eef5] p-4 sm:p-6 lg:p-8">
                   <div>
-                    <label className="text-xs font-semibold uppercase text-gray-600">Officer Name</label>
+                    <label className="text-xs font-semibold uppercase text-gray-600">First Name</label>
                     <input
                       type="text"
-                      value={formData.officerName}
-                      onChange={(event) => handleRequiredFieldChange("officerName", event.target.value)}
-                      placeholder="Kamal Sooriyarachchi"
-                      aria-invalid={Boolean(errors.officerName)}
+                      value={formData.firstName}
+                      onChange={(event) => handleRequiredFieldChange("firstName", event.target.value)}
+                      placeholder="Kamal"
+                      aria-invalid={Boolean(errors.firstName)}
                       className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
-                        errors.officerName ? "border-red-500" : "border-gray-300"
+                        errors.firstName ? "border-red-500" : "border-gray-300"
                       } bg-white`}
                     />
-                    {errors.officerName ? <p className="mt-1 text-xs text-red-600">{errors.officerName}</p> : null}
+                    {errors.firstName ? <p className="mt-1 text-xs text-red-600">{errors.firstName}</p> : null}
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold uppercase text-gray-600">Last Name</label>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(event) => handleRequiredFieldChange("lastName", event.target.value)}
+                      placeholder="Sooriyarachchi"
+                      aria-invalid={Boolean(errors.lastName)}
+                      className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
+                        errors.lastName ? "border-red-500" : "border-gray-300"
+                      } bg-white`}
+                    />
+                    {errors.lastName ? <p className="mt-1 text-xs text-red-600">{errors.lastName}</p> : null}
                   </div>
 
                   <div>
@@ -227,6 +250,21 @@ export default function AddOfficerPage() {
                 </div>
 
                 <div className="min-w-0 flex-1 space-y-6 rounded-2xl bg-[#e9eef5] p-4 sm:p-6 lg:p-8">
+                  <div>
+                    <label className="text-xs font-semibold uppercase text-gray-600">NIC Number</label>
+                    <input
+                      type="text"
+                      value={formData.nic}
+                      onChange={(event) => handleRequiredFieldChange("nic", event.target.value)}
+                      placeholder="200012345678"
+                      aria-invalid={Boolean(errors.nic)}
+                      className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
+                        errors.nic ? "border-red-500" : "border-gray-300"
+                      } bg-white`}
+                    />
+                    {errors.nic ? <p className="mt-1 text-xs text-red-600">{errors.nic}</p> : null}
+                  </div>
+
                   <div>
                     <label className="text-xs font-semibold uppercase text-gray-600">Contact Number</label>
                     <input

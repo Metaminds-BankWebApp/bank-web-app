@@ -9,10 +9,11 @@ export function generateOfficerId(date = new Date()): string {
   return `OFF-${year}${month}${day}-${random}`;
 }
 
-export function generateOfficerUsername(officerName: string, officerId: string): string {
-  const normalizedName = officerName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+export function generateOfficerUsername(firstName: string, lastName: string, officerId: string): string {
+  const normalizedFirstName = firstName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const normalizedLastName = lastName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
   const idSeed = officerId.replace(/[^0-9]/g, "").slice(-4);
-  const base = normalizedName || "officer";
+  const base = `${normalizedFirstName}${normalizedLastName}` || normalizedFirstName || normalizedLastName || "officer";
 
   return `${base}${idSeed}`.slice(0, 20);
 }
