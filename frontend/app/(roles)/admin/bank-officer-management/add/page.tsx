@@ -13,7 +13,11 @@ import { ApiError } from "@/src/types/api-error";
 import type { BranchResponse } from "@/src/types/dto/branch.dto";
 import type { OfficerFormData, OfficerFormErrors } from "./types";
 import { generateOfficerPassword, generateOfficerUsername } from "./utils";
-import { isOfficerFormComplete, validateOfficerForm } from "./validation";
+import {
+  isOfficerFormComplete,
+  SRI_LANKA_PROVINCES,
+  validateOfficerForm,
+} from "./validation";
 
 const getInitialFormData = (): OfficerFormData => ({
   firstName: "",
@@ -29,6 +33,66 @@ const getInitialFormData = (): OfficerFormData => ({
   address: "",
   isActive: true,
 });
+
+const BACKEND_FIELD_TO_FORM_FIELD: Record<string, keyof OfficerFormErrors> = {
+  firstName: "firstName",
+  lastName: "lastName",
+  nic: "nic",
+  dob: "dob",
+  province: "province",
+  mobile: "contact",
+  contact: "contact",
+  email: "email",
+  branchId: "assignedBranch",
+  assignedBranch: "assignedBranch",
+  username: "username",
+  password: "password",
+};
+
+function extractOfficerFieldErrors(apiError: ApiError): OfficerFormErrors {
+  const details = apiError.details as { fieldErrors?: unknown } | undefined;
+  const rawFieldErrors = details?.fieldErrors;
+
+  if (!rawFieldErrors || typeof rawFieldErrors !== "object") {
+    return {};
+  }
+
+  const source = rawFieldErrors as Record<string, unknown>;
+  const result: OfficerFormErrors = {};
+
+  for (const [backendField, value] of Object.entries(source)) {
+    if (typeof value !== "string" || !value.trim()) {
+      continue;
+    }
+
+    const mappedField = BACKEND_FIELD_TO_FORM_FIELD[backendField];
+    if (mappedField) {
+      result[mappedField] = value;
+    }
+  }
+
+  return result;
+}
+
+function mapApiMessageToOfficerField(message: string): OfficerFormErrors {
+  const normalized = message.trim().toLowerCase();
+  if (!normalized) {
+    return {};
+  }
+
+  if (normalized.includes("first name")) return { firstName: message };
+  if (normalized.includes("last name")) return { lastName: message };
+  if (normalized.includes("nic")) return { nic: message };
+  if (normalized.includes("date of birth") || normalized.includes("dob")) return { dob: message };
+  if (normalized.includes("contact number") || normalized.includes("mobile")) return { contact: message };
+  if (normalized.includes("email")) return { email: message };
+  if (normalized.includes("province")) return { province: message };
+  if (normalized.includes("branch")) return { assignedBranch: message };
+  if (normalized.includes("username")) return { username: message };
+  if (normalized.includes("password")) return { password: message };
+
+  return {};
+}
 
 export default function AddOfficerPage() {
   const router = useRouter();
@@ -155,12 +219,25 @@ export default function AddOfficerPage() {
       alert("Bank officer created successfully.");
       router.push("/admin/bank-officer-management");
     } catch (error) {
+      if (error instanceof ApiError) {
+        const backendFieldErrors = extractOfficerFieldErrors(error);
+        if (Object.keys(backendFieldErrors).length > 0) {
+          setErrors((prev) => ({ ...prev, ...backendFieldErrors }));
+          return;
+        }
+
+        const messageMappedErrors = mapApiMessageToOfficerField(error.message);
+        if (Object.keys(messageMappedErrors).length > 0) {
+          setErrors((prev) => ({ ...prev, ...messageMappedErrors }));
+          return;
+        }
+
+        alert(error.message);
+        return;
+      }
+
       const message =
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
-          ? error.message
-          : "Failed to create bank officer.";
+        error instanceof Error ? error.message : "Failed to create bank officer.";
       alert(message);
     } finally {
       setIsSaving(false);
@@ -353,26 +430,31 @@ export default function AddOfficerPage() {
 
                   <div>
                     <label className="text-xs font-semibold uppercase text-gray-600">Province</label>
-                    <input
-                      type="text"
+                    <select
                       value={formData.province}
                       onChange={(event) => handleRequiredFieldChange("province", event.target.value)}
-                      placeholder="Western"
                       aria-invalid={Boolean(errors.province)}
                       className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
                         errors.province ? "border-red-500" : "border-gray-300"
                       } bg-white`}
-                    />
+                    >
+                      <option value="">Select Province</option>
+                      {SRI_LANKA_PROVINCES.map((province) => (
+                        <option key={province} value={province}>
+                          {province}
+                        </option>
+                      ))}
+                    </select>
                     {errors.province ? <p className="mt-1 text-xs text-red-600">{errors.province}</p> : null}
                   </div>
 
                   <div>
                     <label className="text-xs font-semibold uppercase text-gray-600">Contact Number</label>
                     <input
-                      type="text"
+                      type="tel"
                       value={formData.contact}
                       onChange={(event) => handleRequiredFieldChange("contact", event.target.value)}
-                      placeholder="+94 XX XXX XXXX"
+                      placeholder="0771234567"
                       aria-invalid={Boolean(errors.contact)}
                       className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
                         errors.contact ? "border-red-500" : "border-gray-300"
