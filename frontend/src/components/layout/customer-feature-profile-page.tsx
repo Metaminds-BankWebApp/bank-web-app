@@ -1,7 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
-import { getMyUserProfile, updateMyUserProfile } from "@/src/api/profile/user-profile.service";
+import {
+  getMyUserProfile,
+  removeMyUserProfileImage,
+  updateMyUserProfile,
+  uploadMyUserProfileImage,
+} from "@/src/api/profile/user-profile.service";
 import { syncCurrentAuthIdentity } from "@/src/api/auth/session.service";
 import {
   buildCustomerProfileView,
@@ -14,6 +20,8 @@ import {
   type ProfileFieldErrors,
   type ProfileFieldItem,
 } from "@/src/components/profile/profile-form-helpers";
+import { ProfileImageUploadDialog } from "@/src/components/profile/profile-image-upload-dialog";
+import { useLocalProfileImage } from "@/src/components/profile/use-local-profile-image";
 import { Badge, useToast } from "@/src/components/ui";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { ApiError } from "@/src/types/api-error";
@@ -47,11 +55,13 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   const [securityValues, setSecurityValues] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [isProfileImageDialogOpen, setIsProfileImageDialogOpen] = useState(false);
 
   const profileView = profile ? buildCustomerProfileView(profile) : null;
   const requiresAddress = profile?.roleName === "PUBLIC_CUSTOMER";
   const displayName = profileView?.displayName ?? "Loading profile";
   const resolvedRoleLabel = profile?.roleDisplayName ?? roleLabel;
+  const { profileImageSrc } = useLocalProfileImage(profile);
 
   useEffect(() => {
     if (!profile) {
@@ -234,6 +244,26 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     setShowPassword((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
   };
 
+  const handleProfileImageUpload = async (file: File) => {
+    const response = await uploadMyUserProfileImage(file);
+    setProfile(response.profile);
+    showToast({
+      type: "success",
+      title: "Profile photo updated",
+      description: response.message,
+    });
+  };
+
+  const handleProfileImageRemove = async () => {
+    const response = await removeMyUserProfileImage();
+    setProfile(response.profile);
+    showToast({
+      type: "success",
+      title: "Profile photo removed",
+      description: response.message,
+    });
+  };
+
   const renderPersonalInformationSection = (wrapperClassName: string) => (
     <section className={wrapperClassName}>
       <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
@@ -375,6 +405,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
           subtitle=""
           name={displayName}
           role={resolvedRoleLabel}
+          avatarSrc={profileImageSrc ?? undefined}
         />
       );
     }
@@ -388,16 +419,35 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
           title="Profile"
           subtitle={`${displayName} - ${resolvedRoleLabel}`}
           name={displayName}
+          avatarSrc={profileImageSrc ?? undefined}
         />
       );
     }
 
     if (featureName === "LoanSense") {
-      return <ModuleHeader theme="loansense" menuMode="feature-layout" title="Profile" />;
+      return (
+        <ModuleHeader
+          theme="loansense"
+          menuMode="feature-layout"
+          title="Profile"
+          name={displayName}
+          role={resolvedRoleLabel}
+          avatarSrc={profileImageSrc ?? undefined}
+        />
+      );
     }
 
     if (featureName === "SpendIQ") {
-      return <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Profile" />;
+      return (
+        <ModuleHeader
+          theme="spendiq"
+          menuMode="feature-layout"
+          title="Profile"
+          name={displayName}
+          role={resolvedRoleLabel}
+          avatarSrc={profileImageSrc ?? undefined}
+        />
+      );
     }
 
     return (
@@ -408,6 +458,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
         subtitle=""
         name={displayName}
         role={resolvedRoleLabel}
+        avatarSrc={profileImageSrc ?? undefined}
       />
     );
   };
@@ -439,6 +490,15 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   return (
     <div className={`min-h-screen p-4 md:p-8 ${isTransact || isLoanSense ? "bg-transparent" : "bg-[#f3f4f6]"}`}>
       {renderFeatureHeader()}
+      <ProfileImageUploadDialog
+        open={isProfileImageDialogOpen}
+        onOpenChange={setIsProfileImageDialogOpen}
+        currentImageSrc={profileImageSrc}
+        initials={profileView?.initials ?? "NA"}
+        displayName={displayName}
+        onUpload={handleProfileImageUpload}
+        onRemove={handleProfileImageRemove}
+      />
 
       <div className="mx-auto my-auto max-h-full w-full max-w-7xl space-y-6 sm:mt-20">
         <div className={isCreditLens ? "grid gap-6 lg:px-2 xl:grid-cols-[1fr_1.6fr] xl:px-3" : "grid gap-6 xl:grid-cols-[1fr_1.6fr]"}>
@@ -449,9 +509,27 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
               <div className="space-y-6">
                 <section className={sectionClassName}>
                   <div className="mb-6 flex items-center gap-4">
-                    <div className="relative grid h-20 w-20 place-items-center rounded-full bg-[#e2edf6] text-3xl font-bold text-[#0d3b66]">
-                      {profileView.initials}
-                      <span className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full border border-slate-200 bg-white text-slate-500">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsProfileImageDialogOpen(true)}
+                        className="group relative h-20 w-20 overflow-hidden rounded-full border border-slate-200 bg-[#e2edf6] text-3xl font-bold text-[#0d3b66] shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d3b66] focus-visible:ring-offset-2"
+                        aria-label="Open profile photo upload"
+                      >
+                        {profileImageSrc ? (
+                          <Image
+                            src={profileImageSrc}
+                            alt={`${profileView.displayName} profile photo`}
+                            fill
+                            sizes="80px"
+                            unoptimized
+                            className="object-cover"
+                          />
+                        ) : (
+                          <span className="grid h-full w-full place-items-center">{profileView.initials}</span>
+                        )}
+                      </button>
+                      <span className="pointer-events-none absolute -right-1 -top-1 z-10 grid h-7 w-7 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm">
                         <Camera size={14} />
                       </span>
                     </div>

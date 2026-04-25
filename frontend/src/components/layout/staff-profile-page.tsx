@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
@@ -14,7 +15,14 @@ import {
   type ProfileFieldErrors,
   type ProfileFieldItem,
 } from "@/src/components/profile/profile-form-helpers";
-import { getMyUserProfile, updateMyUserProfile } from "@/src/api/profile/user-profile.service";
+import { ProfileImageUploadDialog } from "@/src/components/profile/profile-image-upload-dialog";
+import { useLocalProfileImage } from "@/src/components/profile/use-local-profile-image";
+import {
+  getMyUserProfile,
+  removeMyUserProfileImage,
+  updateMyUserProfile,
+  uploadMyUserProfileImage,
+} from "@/src/api/profile/user-profile.service";
 import { syncCurrentAuthIdentity } from "@/src/api/auth/session.service";
 import { Badge, useToast } from "@/src/components/ui";
 import ModuleHeader from "@/src/components/ui/module-header";
@@ -41,11 +49,13 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
   const [securityValues, setSecurityValues] = useState<Record<string, string>>({});
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [isProfileImageDialogOpen, setIsProfileImageDialogOpen] = useState(false);
 
   const profileView = profile ? buildStaffProfileView(profile) : null;
   const displayName = profileView?.displayName ?? "Loading profile";
   const resolvedRoleLabel = profile?.roleDisplayName ?? roleLabel;
-  const avatarSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
+  const { profileImageSrc } = useLocalProfileImage(profile);
+  const avatarSrc = profileImageSrc ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=random`;
 
   useEffect(() => {
     if (!profile) {
@@ -213,6 +223,26 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     setShowPassword((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
   };
 
+  const handleProfileImageUpload = async (file: File) => {
+    const response = await uploadMyUserProfileImage(file);
+    setProfile(response.profile);
+    showToast({
+      type: "success",
+      title: "Profile photo updated",
+      description: response.message,
+    });
+  };
+
+  const handleProfileImageRemove = async () => {
+    const response = await removeMyUserProfileImage();
+    setProfile(response.profile);
+    showToast({
+      type: "success",
+      title: "Profile photo removed",
+      description: response.message,
+    });
+  };
+
   const renderContent = () => {
     if (!profileView) {
       return (
@@ -245,9 +275,27 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
         <div className="space-y-6">
           <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
             <div className="mb-6 flex items-center gap-4">
-              <div className="relative grid h-20 w-20 place-items-center rounded-full bg-[#e2edf6] text-3xl font-bold text-[#0d3b66]">
-                {profileView.initials}
-                <span className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full border border-slate-200 bg-white text-slate-500">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileImageDialogOpen(true)}
+                  className="group relative h-20 w-20 overflow-hidden rounded-full border border-slate-200 bg-[#e2edf6] text-3xl font-bold text-[#0d3b66] shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d3b66] focus-visible:ring-offset-2"
+                  aria-label="Open profile photo upload"
+                >
+                  {profileImageSrc ? (
+                    <Image
+                      src={profileImageSrc}
+                      alt={`${profileView.displayName} profile photo`}
+                      fill
+                      sizes="80px"
+                      unoptimized
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span className="grid h-full w-full place-items-center">{profileView.initials}</span>
+                  )}
+                </button>
+                <span className="pointer-events-none absolute -right-1 -top-1 z-10 grid h-7 w-7 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm">
                   <Camera size={14} />
                 </span>
               </div>
@@ -405,6 +453,15 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
         <Sidebar role={role} className="relative z-10 h-full max-lg:hidden" />
 
         <main className="flex h-full flex-1 flex-col overflow-hidden bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:rounded-l-[28px] lg:p-7">
+          <ProfileImageUploadDialog
+            open={isProfileImageDialogOpen}
+            onOpenChange={setIsProfileImageDialogOpen}
+            currentImageSrc={profileImageSrc}
+            initials={profileView?.initials ?? "NA"}
+            displayName={displayName}
+            onUpload={handleProfileImageUpload}
+            onRemove={handleProfileImageRemove}
+          />
           <ModuleHeader
             theme="staff"
             menuMode="sidebar-overlay"

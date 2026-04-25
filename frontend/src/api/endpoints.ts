@@ -83,6 +83,8 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
 export const USER_PROFILE_ENDPOINTS = {
   current: "/users/profile",
   update: "/users/profile",
+  imageUpload: "/users/profile/image",
+  imageDelete: "/users/profile/image",
 } as const;
 
 export const ADMIN_ENDPOINTS = {
