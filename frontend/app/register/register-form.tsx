@@ -6,10 +6,29 @@ import { useRouter } from "next/navigation";
 import { registerPublicCustomer } from "@/src/api/registration/public-customer-registration.service";
 import { ApiError } from "@/src/types/api-error";
 import { Button, Input, useToast } from "@/src/components/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/select";
 
-type RegisterField = "firstName" | "lastName" | "email" | "phone" | "nic" | "dob" | "username" | "province" | "address" | "password" | "confirmPassword";
+type RegisterField =
+  | "firstName"
+  | "lastName"
+  | "email"
+  | "phone"
+  | "nic"
+  | "dob"
+  | "username"
+  | "province"
+  | "address"
+  | "password"
+  | "confirmPassword";
+
 type RegisterFieldErrors = Partial<Record<RegisterField, string>>;
+
 type RegisterFormValues = {
   firstName: string;
   lastName: string;
@@ -24,12 +43,42 @@ type RegisterFormValues = {
   confirmPassword: string;
 };
 
-const REGISTER_FIELDS: RegisterField[] = ["firstName", "lastName", "email", "phone", "nic", "dob", "username", "province", "address", "password", "confirmPassword"];
-const PROVINCES = ["Western", "Central", "Southern", "Northern", "Eastern", "North Western", "North Central", "Uva", "Sabaragamuwa"];
+// Central list of fields used for reusable validation and field-level error mapping.
+const REGISTER_FIELDS: RegisterField[] = [
+  "firstName",
+  "lastName",
+  "email",
+  "phone",
+  "nic",
+  "dob",
+  "username",
+  "province",
+  "address",
+  "password",
+  "confirmPassword",
+];
 
+// Static province options for the registration dropdown.
+const PROVINCES = [
+  "Western",
+  "Central",
+  "Southern",
+  "Northern",
+  "Eastern",
+  "North Western",
+  "North Central",
+  "Uva",
+  "Sabaragamuwa",
+];
+
+/**
+ * Extract only field-specific backend errors that belong to this form.
+ * This prevents unrelated backend keys from being stored in form error state.
+ */
 function extractRegisterFieldErrors(apiError: ApiError): RegisterFieldErrors {
   const details = apiError.details as { fieldErrors?: unknown } | undefined;
   const rawFieldErrors = details?.fieldErrors;
+
   if (!rawFieldErrors || typeof rawFieldErrors !== "object") {
     return {};
   }
@@ -50,32 +99,40 @@ export function RegisterForm() {
   const router = useRouter();
   const { showToast } = useToast();
 
-  const [firstName, setFirstName] = useState("Demo");
-  const [lastName, setLastName] = useState("User");
-  const [email, setEmail] = useState("demo@primecore.app");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [nic, setNic] = useState("");
   const [dob, setDob] = useState("");
   const [username, setUsername] = useState("");
   const [province, setProvince] = useState("");
   const [address, setAddress] = useState("");
-  const [password, setPassword] = useState("password123");
-  const [confirmPassword, setConfirmPassword] = useState("password123");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
 
+  /**
+   * Clear a single field error as soon as the user starts correcting that field.
+   */
   function clearFieldError(field: RegisterField) {
     setFieldErrors((prev) => {
       if (!prev[field]) {
         return prev;
       }
+
       const next = { ...prev };
       delete next[field];
       return next;
     });
   }
 
+  /**
+   * Build a trimmed snapshot of the current form values.
+   * This keeps validation and submission logic consistent.
+   */
   function getCurrentValues(): RegisterFormValues {
     return {
       firstName: firstName.trim(),
@@ -92,7 +149,14 @@ export function RegisterForm() {
     };
   }
 
-  function validateField(field: RegisterField, values: RegisterFormValues): string | null {
+  /**
+   * Validate one field.
+   * These same rules are reused for blur validation and full form submission.
+   */
+  function validateField(
+    field: RegisterField,
+    values: RegisterFormValues
+  ): string | null {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
     const nicRegex = /^(\d{9}[vVxX]|\d{12})$/;
@@ -101,21 +165,33 @@ export function RegisterForm() {
     switch (field) {
       case "firstName":
         return values.firstName ? null : "First name is required.";
+
       case "lastName":
         return values.lastName ? null : "Last name is required.";
+
       case "email":
         if (!values.email) return "Email is required.";
-        return emailRegex.test(values.email) ? null : "Please enter a valid email address.";
+        return emailRegex.test(values.email)
+          ? null
+          : "Please enter a valid email address.";
+
       case "phone":
         if (!values.phone) return "Phone number is required.";
-        return phoneRegex.test(values.phone) ? null : "Phone number must be exactly 10 digits (numbers only).";
+        return phoneRegex.test(values.phone)
+          ? null
+          : "Phone number must be exactly 10 digits (numbers only).";
+
       case "nic":
         if (!values.nic) return "NIC is required.";
         return nicRegex.test(values.nic) ? null : "Please enter a valid NIC.";
+
       case "dob":
         if (!values.dob) return "Date of birth is required.";
+
+        // Validate the date itself, then check whether the user is at least 18 years old.
         {
           const birthDate = new Date(values.dob);
+
           if (Number.isNaN(birthDate.getTime())) {
             return "Please enter a valid date of birth.";
           }
@@ -123,60 +199,94 @@ export function RegisterForm() {
           const today = new Date();
           let age = today.getFullYear() - birthDate.getFullYear();
           const monthDifference = today.getMonth() - birthDate.getMonth();
-          if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+
+          if (
+            monthDifference < 0 ||
+            (monthDifference === 0 && today.getDate() < birthDate.getDate())
+          ) {
             age -= 1;
           }
 
           return age >= 18 ? null : "Age must be 18 or older.";
         }
+
       case "username":
         if (!values.username) return "Username is required.";
-        return values.username.length >= 4 ? null : "Username must be at least 4 characters.";
+        return values.username.length >= 4
+          ? null
+          : "Username must be at least 4 characters.";
+
       case "province":
         return values.province ? null : "Province is required.";
+
       case "address":
         return values.address ? null : "Address is required.";
+
       case "password":
         if (!values.password) return "Password is required.";
-        return passwordRegex.test(values.password) ? null : "Password must be at least 10 characters and include uppercase, lowercase letters and numbers.";
+        return passwordRegex.test(values.password)
+          ? null
+          : "Password must be at least 10 characters and include uppercase, lowercase letters and numbers.";
+
       case "confirmPassword":
         if (!values.confirmPassword) return "Confirm password is required.";
-        return values.password === values.confirmPassword ? null : "Passwords do not match.";
+        return values.password === values.confirmPassword
+          ? null
+          : "Passwords do not match.";
+
       default:
         return null;
     }
   }
 
+  /**
+   * Validate a single field when the user leaves that input.
+   * This gives immediate feedback without waiting for form submission.
+   */
   function validateSingleField(field: RegisterField) {
     const values = getCurrentValues();
     const message = validateField(field, values);
 
     setFieldErrors((prev) => {
       const next = { ...prev };
+
       if (message) {
         next[field] = message;
       } else {
         delete next[field];
       }
+
       return next;
     });
   }
 
+  /**
+   * Validate the entire form before sending data to the backend.
+   */
   function validateAllFields(values: RegisterFormValues): RegisterFieldErrors {
     const nextErrors: RegisterFieldErrors = {};
+
     for (const field of REGISTER_FIELDS) {
       const message = validateField(field, values);
       if (message) {
         nextErrors[field] = message;
       }
     }
+
     return nextErrors;
   }
 
+  /**
+   * Submit the registration form.
+   * First perform client-side validation, then call the backend API,
+   * and finally map any backend field errors back into the form.
+   */
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     const values = getCurrentValues();
     const nextErrors = validateAllFields(values);
+
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors);
       setError("Please fix the highlighted fields.");
@@ -208,15 +318,24 @@ export function RegisterForm() {
         title: "Account created",
         description: "Your registration step one is saved. Please sign in.",
       });
+
       router.replace("/login");
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
+
       if (apiError) {
         setFieldErrors(extractRegisterFieldErrors(apiError));
       }
-      const message = apiError?.message ?? "Unable to register. Please try again.";
+
+      const message =
+        apiError?.message ?? "Unable to register. Please try again.";
+
       setError(message);
-      showToast({ type: "error", title: "Registration failed", description: message });
+      showToast({
+        type: "error",
+        title: "Registration failed",
+        description: message,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -225,8 +344,12 @@ export function RegisterForm() {
   return (
     <section className="w-full space-y-6 text-(--primecore-foreground)">
       <header className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold text-(--primecore-foreground)">Create your account</h1>
-        <p className="text-sm text-(--primecore-foreground)/70">Set up your profile to access the PrimeCore dashboard and services.</p>
+        <h1 className="text-3xl font-bold text-(--primecore-foreground)">
+          Create your account
+        </h1>
+        <p className="text-sm text-(--primecore-foreground)/70">
+          Set up your profile to access the PrimeCore dashboard and services.
+        </p>
       </header>
 
       <form onSubmit={onSubmit} className="space-y-4">
@@ -260,6 +383,7 @@ export function RegisterForm() {
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
           />
         </div>
+
         <Input
           label="Email Address"
           type="email"
@@ -294,6 +418,7 @@ export function RegisterForm() {
               className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
             />
           </div>
+
           <Input
             label="NIC"
             value={nic}
@@ -325,6 +450,7 @@ export function RegisterForm() {
             labelClassName="text-(--primecore-foreground)/70"
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
           />
+
           <Input
             label="Username"
             value={username}
@@ -343,7 +469,10 @@ export function RegisterForm() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-(--primecore-foreground)/70">Province</label>
+            <label className="text-sm font-medium text-(--primecore-foreground)/70">
+              Province
+            </label>
+
             <Select
               value={province}
               onValueChange={(value) => {
@@ -354,12 +483,15 @@ export function RegisterForm() {
             >
               <SelectTrigger
                 className={`h-14 rounded-2xl bg-(--primecore-surface) text-(--primecore-foreground) ring-offset-background ${
-                  fieldErrors.province ? "border-red-500 focus-visible:ring-red-500" : "border-(--primecore-border)"
+                  fieldErrors.province
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : "border-(--primecore-border)"
                 }`}
                 onBlur={() => validateSingleField("province")}
               >
                 <SelectValue placeholder="Province" />
               </SelectTrigger>
+
               <SelectContent>
                 {PROVINCES.map((provinceName) => (
                   <SelectItem key={provinceName} value={provinceName}>
@@ -368,8 +500,14 @@ export function RegisterForm() {
                 ))}
               </SelectContent>
             </Select>
-            {fieldErrors.province && <p className="text-xs text-red-500 dark:text-red-400">{fieldErrors.province}</p>}
+
+            {fieldErrors.province && (
+              <p className="text-xs text-red-500 dark:text-red-400">
+                {fieldErrors.province}
+              </p>
+            )}
           </div>
+
           <Input
             label="Address"
             value={address}
@@ -406,6 +544,7 @@ export function RegisterForm() {
               className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
             />
           </div>
+
           <Input
             label="Confirm Password"
             type="password"
@@ -423,26 +562,40 @@ export function RegisterForm() {
           />
         </div>
 
-        {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
+        {error && (
+          <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
+        )}
 
-        <Button type="submit" className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-semibold text-black hover:bg-primary/90" loading={isSubmitting}>
+        <Button
+          type="submit"
+          className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-semibold text-black hover:bg-primary/90"
+          loading={isSubmitting}
+        >
           {isSubmitting ? "Creating account..." : "Create account"}
         </Button>
 
         <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-          After sign up, you will be redirected to complete the public customer application form.
+          After sign up, you will be redirected to complete the public customer
+          application form.
         </p>
 
         <div className="space-y-2 text-center text-sm text-(--primecore-foreground)/70">
           <p>
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
+            <Link
+              href="/login"
+              className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline"
+            >
               Sign in
             </Link>
           </p>
+
           <p>
             Need help accessing your account?{" "}
-            <Link href="/forgot-password" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
+            <Link
+              href="/forgot-password"
+              className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline"
+            >
               Reset password
             </Link>
           </p>
