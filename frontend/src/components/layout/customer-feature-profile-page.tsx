@@ -1,8 +1,31 @@
 "use client";
 
-import { useState } from "react";
-import { Badge } from "@/src/components/ui";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import {
+  getMyUserProfile,
+  removeMyUserProfileImage,
+  updateMyUserProfile,
+  uploadMyUserProfileImage,
+} from "@/src/api/profile/user-profile.service";
+import { syncCurrentAuthIdentity } from "@/src/api/auth/session.service";
+import {
+  buildCustomerProfileView,
+  buildInitialFieldValues,
+  extractProfileFieldErrors,
+  mapProfileApiMessageToFieldErrors,
+  validateNewUsername,
+  validatePasswordGroup,
+  validateProfileScalarField,
+  type ProfileFieldErrors,
+  type ProfileFieldItem,
+} from "@/src/components/profile/profile-form-helpers";
+import { ProfileImageUploadDialog } from "@/src/components/profile/profile-image-upload-dialog";
+import { useLocalProfileImage } from "@/src/components/profile/use-local-profile-image";
+import { Badge, useToast } from "@/src/components/ui";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { ApiError } from "@/src/types/api-error";
+import type { UserProfileResponse } from "@/src/types/dto/user-profile.dto";
 import { Camera, Eye, EyeOff, Lock, ShieldCheck, User } from "lucide-react";
 
 type CustomerRoleLabel = "Bank Customer" | "Public Customer";
@@ -12,261 +35,64 @@ type CustomerFeatureProfilePageProps = {
   roleLabel: CustomerRoleLabel;
 };
 
-type SummaryItem = {
-  label: string;
-  value: string;
-};
-
-type FieldValidation = "email" | "phone" | "username" | "password" | "confirmPassword";
-
-type FieldItem = {
-  key: string;
-  label: string;
-  value?: string;
-  placeholder?: string;
-  readOnly?: boolean;
-  fullWidth?: boolean;
-  type?: "text" | "email" | "tel" | "password";
-  validate?: FieldValidation;
-};
-
-type RoleProfileConfig = {
-  badgeText: string;
-  summary: SummaryItem[];
-  personalInfo: FieldItem[];
-  security: FieldItem[];
-};
-
-const ROLE_PROFILE_CONFIG: Record<CustomerRoleLabel, RoleProfileConfig> = {
-  "Public Customer": {
-    badgeText: "PUBLIC CUSTOMER",
-    summary: [
-      { label: "User ID", value: "PC-8821" },
-      { label: "Address", value: "Colombo Central" },
-      { label: "Joined Date", value: "Jan 12, 2021" },
-    ],
-    personalInfo: [
-      { key: "fullName", label: "Full Name", value: "John Doe" },
-      {
-        key: "email",
-        label: "Email Address",
-        value: "john.doe@primecore.bank",
-        type: "email",
-        validate: "email",
-      },
-      {
-        key: "phone",
-        label: "Phone Number",
-        value: "+94 77 123 4567",
-        type: "tel",
-        validate: "phone",
-      },
-      { key: "address", label: "Address", value: "Colombo Central" },
-      { key: "nic", label: "NIC", value: "972346682V", readOnly: true },
-      { key: "dob", label: "DOB", value: "11-09-1997", readOnly: true },
-    ],
-    security: [
-      {
-        key: "currentUsername",
-        label: "Current Username",
-        value: "JohnDoePC1",
-        readOnly: true,
-        fullWidth: true,
-      },
-      {
-        key: "newUsername",
-        label: "New Username",
-        placeholder: "Enter new username",
-        fullWidth: true,
-      },
-      {
-        key: "currentPassword",
-        label: "Current Password",
-        placeholder: "Enter current password",
-        fullWidth: true,
-        type: "password",
-        validate: "password",
-      },
-      {
-        key: "newPassword",
-        label: "New Password",
-        placeholder: "Enter new password",
-        type: "password",
-        validate: "password",
-      },
-      {
-        key: "confirmPassword",
-        label: "Confirm Password",
-        placeholder: "Repeat new password",
-        type: "password",
-        validate: "confirmPassword",
-      },
-    ],
-  },
-  "Bank Customer": {
-    badgeText: "BANK CUSTOMER",
-    summary: [
-      { label: "User ID", value: "CU-8821" },
-      { label: "Branch Location", value: "Colombo Central" },
-      { label: "Joined Date", value: "Jan 12, 2021" },
-    ],
-    personalInfo: [
-      { key: "fullName", label: "Full Name", value: "John Doe" },
-      {
-        key: "email",
-        label: "Email Address",
-        value: "john.doe@primecore.bank",
-        type: "email",
-        validate: "email",
-      },
-      {
-        key: "phone",
-        label: "Phone Number",
-        value: "+94 77 123 4567",
-        type: "tel",
-        validate: "phone",
-      },
-      { key: "accountNumber", label: "Account Number", value: "012345678901", readOnly: true },
-      { key: "branch", label: "Branch (Read-Only)", value: "Colombo Central Branch", readOnly: true },
-      { key: "nic", label: "NIC", value: "972346682V", readOnly: true },
-      { key: "dob", label: "DOB", value: "11-09-1997", readOnly: true },
-    ],
-    security: [
-      {
-        key: "currentUsername",
-        label: "Current Username",
-        value: "JohnDoeBC1",
-        readOnly: true,
-        fullWidth: true,
-      },
-      { key: "newUsername", label: "New Username", placeholder: "Enter new username", fullWidth: true },
-      {
-        key: "currentPassword",
-        label: "Current Password",
-        placeholder: "Enter current password",
-        fullWidth: true,
-        type: "password",
-        validate: "password",
-      },
-      {
-        key: "newPassword",
-        label: "New Password",
-        placeholder: "Enter new password",
-        type: "password",
-        validate: "password",
-      },
-      {
-        key: "confirmPassword",
-        label: "Confirm Password",
-        placeholder: "Repeat new password",
-        type: "password",
-        validate: "confirmPassword",
-      },
-    ],
-  },
-};
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const PHONE_ALLOWED_REGEX = /^\+?[0-9()\s-]+$/;
-const FULL_NAME_REGEX = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
-const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
-
-function buildInitialFieldValues(fields: FieldItem[]): Record<string, string> {
-  return fields.reduce<Record<string, string>>((acc, field) => {
-    acc[field.key] = field.value ?? "";
-    return acc;
-  }, {});
-}
-
-function validatePublicScalarField(key: string, rawValue: string): string | undefined {
-  const value = rawValue.trim();
-
-  if (key === "fullName") {
-    if (!value) return "Full name is required.";
-    if (!FULL_NAME_REGEX.test(value)) return "Full name can contain letters and spaces only.";
-    return undefined;
-  }
-
-  if (key === "email") {
-    if (!value) return "Email address is required.";
-    if (!EMAIL_REGEX.test(value)) return "Enter a valid email address.";
-    return undefined;
-  }
-
-  if (key === "phone") {
-    const digitsOnly = value.replace(/\D/g, "");
-    if (!value) return "Phone number is required.";
-    if (!PHONE_ALLOWED_REGEX.test(value)) return "Use only digits, spaces, +, -, or parentheses.";
-    if (digitsOnly.length < 10 || digitsOnly.length > 15) return "Phone number must be 10 to 15 digits.";
-    return undefined;
-  }
-
-  return undefined;
-}
-
-function validateNewUsername(currentUsername: string, newUsername: string): string | undefined {
-  const current = currentUsername.trim();
-  const next = newUsername.trim();
-
-  if (!next) return undefined;
-  if (next.toLowerCase() === current.toLowerCase()) {
-    return "New username must be different from current username.";
-  }
-
-  return undefined;
-}
-
-function validatePasswordGroup(values: Record<string, string>): Record<string, string> {
-  const currentPassword = values.currentPassword?.trim() ?? "";
-  const newPassword = values.newPassword?.trim() ?? "";
-  const confirmPassword = values.confirmPassword?.trim() ?? "";
-
-  const hasPasswordIntent = Boolean(currentPassword || newPassword || confirmPassword);
-  if (!hasPasswordIntent) {
-    return {};
-  }
-
-  const errors: Record<string, string> = {};
-
-  if (!currentPassword) {
-    errors.currentPassword = "Current password is required to change password.";
-  }
-
-  if (!newPassword) {
-    errors.newPassword = "New password is required.";
-  } else if (!PASSWORD_REGEX.test(newPassword)) {
-    errors.newPassword = "Use 10+ chars with uppercase, lowercase, and number.";
-  }
-
-  if (!confirmPassword) {
-    errors.confirmPassword = "Please confirm your new password.";
-  } else if (newPassword && confirmPassword !== newPassword) {
-    errors.confirmPassword = "Confirm password does not match.";
-  }
-
-  return errors;
-}
-
 export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerFeatureProfilePageProps) {
   const isCreditLens = featureName === "CreditLens";
   const isTransact = featureName === "Transact";
   const isLoanSense = featureName === "LoanSense";
-  const enableCustomerValidation = roleLabel === "Public Customer" || roleLabel === "Bank Customer";
-  const profileConfig = ROLE_PROFILE_CONFIG[roleLabel];
-  const [personalValues, setPersonalValues] = useState<Record<string, string>>(() =>
-    buildInitialFieldValues(profileConfig.personalInfo)
-  );
-  const [securityValues, setSecurityValues] = useState<Record<string, string>>(() =>
-    buildInitialFieldValues(profileConfig.security)
-  );
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
-
   const sectionClassName = isTransact
     ? "transact-card transact-card-hover transact-creditlens-shade rounded-2xl p-6"
     : isLoanSense
-    ? "loansense-card loansense-card-hover loansense-creditlens-shade rounded-2xl p-6"
-    : "rounded-2xl border border-slate-100 bg-white p-6 shadow-sm";
+      ? "loansense-card loansense-card-hover loansense-creditlens-shade rounded-2xl p-6"
+      : "rounded-2xl border border-slate-100 bg-white p-6 shadow-sm";
+
+  const { showToast } = useToast();
+  const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [loadRequestId, setLoadRequestId] = useState(0);
+  const [personalValues, setPersonalValues] = useState<Record<string, string>>({});
+  const [securityValues, setSecurityValues] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+  const [isProfileImageDialogOpen, setIsProfileImageDialogOpen] = useState(false);
+
+  const profileView = profile ? buildCustomerProfileView(profile) : null;
+  const requiresAddress = profile?.roleName === "PUBLIC_CUSTOMER";
+  const displayName = profileView?.displayName ?? "Loading profile";
+  const resolvedRoleLabel = profile?.roleDisplayName ?? roleLabel;
+  const { profileImageSrc } = useLocalProfileImage(profile);
+
+  useEffect(() => {
+    if (!profile) {
+      return;
+    }
+
+    const nextView = buildCustomerProfileView(profile);
+    setPersonalValues(buildInitialFieldValues(nextView.personalInfo));
+    setSecurityValues(buildInitialFieldValues(nextView.security));
+    setFieldErrors({});
+    setShowPassword({});
+  }, [profile]);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      setIsLoading(true);
+      setLoadError("");
+
+      try {
+        const data = await getMyUserProfile();
+        setProfile(data);
+      } catch (unknownError) {
+        const message = unknownError instanceof ApiError ? unknownError.message : "Failed to load profile.";
+        setLoadError(message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadProfile();
+  }, [loadRequestId]);
 
   const updateFieldError = (fieldKey: string, errorMessage?: string) => {
     setFieldErrors((prev) => {
@@ -281,8 +107,6 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   };
 
   const applyPasswordErrors = (nextSecurityValues: Record<string, string>) => {
-    if (!enableCustomerValidation) return;
-
     const passwordErrors = validatePasswordGroup(nextSecurityValues);
     setFieldErrors((prev) => {
       const next = { ...prev };
@@ -293,25 +117,26 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     });
   };
 
-  const handlePersonalChange = (field: FieldItem, value: string) => {
+  const handlePersonalChange = (field: ProfileFieldItem, value: string) => {
     if (field.readOnly) return;
 
     setPersonalValues((prev) => ({ ...prev, [field.key]: value }));
 
-    if (!enableCustomerValidation) return;
-
     if (field.key === "fullName" || field.key === "email" || field.key === "phone") {
-      updateFieldError(field.key, validatePublicScalarField(field.key, value));
+      updateFieldError(field.key, validateProfileScalarField(field.key, value));
+      return;
+    }
+
+    if (field.key === "address" && requiresAddress) {
+      updateFieldError(field.key, validateProfileScalarField(field.key, value, { requireAddress: true }));
     }
   };
 
-  const handleSecurityChange = (field: FieldItem, value: string) => {
+  const handleSecurityChange = (field: ProfileFieldItem, value: string) => {
     if (field.readOnly) return;
 
     const nextSecurityValues = { ...securityValues, [field.key]: value };
     setSecurityValues(nextSecurityValues);
-
-    if (!enableCustomerValidation) return;
 
     if (field.key === "newUsername") {
       updateFieldError(field.key, validateNewUsername(nextSecurityValues.currentUsername ?? "", value));
@@ -323,38 +148,120 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   };
 
   const handleCancel = () => {
-    setPersonalValues(buildInitialFieldValues(profileConfig.personalInfo));
-    setSecurityValues(buildInitialFieldValues(profileConfig.security));
+    if (!profile) {
+      return;
+    }
+
+    const nextView = buildCustomerProfileView(profile);
+    setPersonalValues(buildInitialFieldValues(nextView.personalInfo));
+    setSecurityValues(buildInitialFieldValues(nextView.security));
     setFieldErrors({});
     setShowPassword({});
   };
 
-  const handleSave = () => {
-    if (!enableCustomerValidation) return;
+  const handleSave = async () => {
+    if (!profile) {
+      return;
+    }
 
-    const nextErrors: Record<string, string> = {};
+    const nextErrors: ProfileFieldErrors = {};
 
-    const fullNameError = validatePublicScalarField("fullName", personalValues.fullName ?? "");
+    const fullNameError = validateProfileScalarField("fullName", personalValues.fullName ?? "");
     if (fullNameError) nextErrors.fullName = fullNameError;
 
-    const emailError = validatePublicScalarField("email", personalValues.email ?? "");
+    const emailError = validateProfileScalarField("email", personalValues.email ?? "");
     if (emailError) nextErrors.email = emailError;
 
-    const phoneError = validatePublicScalarField("phone", personalValues.phone ?? "");
+    const phoneError = validateProfileScalarField("phone", personalValues.phone ?? "");
     if (phoneError) nextErrors.phone = phoneError;
+
+    if (requiresAddress) {
+      const addressError = validateProfileScalarField("address", personalValues.address ?? "", {
+        requireAddress: true,
+      });
+      if (addressError) nextErrors.address = addressError;
+    }
 
     const usernameError = validateNewUsername(
       securityValues.currentUsername ?? "",
-      securityValues.newUsername ?? ""
+      securityValues.newUsername ?? "",
     );
     if (usernameError) nextErrors.newUsername = usernameError;
 
     Object.assign(nextErrors, validatePasswordGroup(securityValues));
     setFieldErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const response = await updateMyUserProfile({
+        fullName: personalValues.fullName?.trim() ?? "",
+        email: personalValues.email?.trim() ?? "",
+        phone: personalValues.phone?.trim() ?? "",
+        address: requiresAddress ? (personalValues.address?.trim() ?? "") : null,
+        newUsername: securityValues.newUsername?.trim() || null,
+        currentPassword: securityValues.currentPassword?.trim() || null,
+        newPassword: securityValues.newPassword?.trim() || null,
+        confirmPassword: securityValues.confirmPassword?.trim() || null,
+      });
+
+      setProfile(response.profile);
+      await syncCurrentAuthIdentity().catch(() => undefined);
+      showToast({
+        type: "success",
+        title: "Profile updated",
+        description: response.message,
+      });
+    } catch (unknownError) {
+      const apiError = unknownError instanceof ApiError ? unknownError : null;
+      const message = apiError?.message ?? "Failed to update profile.";
+      const serverFieldErrors = apiError
+        ? {
+            ...extractProfileFieldErrors(apiError),
+            ...mapProfileApiMessageToFieldErrors(message),
+          }
+        : {};
+
+      if (Object.keys(serverFieldErrors).length > 0) {
+        setFieldErrors((prev) => ({ ...prev, ...serverFieldErrors }));
+      }
+
+      showToast({
+        type: "error",
+        title: "Profile update failed",
+        description: message,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const togglePasswordVisibility = (fieldKey: string) => {
     setShowPassword((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
+  };
+
+  const handleProfileImageUpload = async (file: File) => {
+    const response = await uploadMyUserProfileImage(file);
+    setProfile(response.profile);
+    showToast({
+      type: "success",
+      title: "Profile photo updated",
+      description: response.message,
+    });
+  };
+
+  const handleProfileImageRemove = async () => {
+    const response = await removeMyUserProfileImage();
+    setProfile(response.profile);
+    showToast({
+      type: "success",
+      title: "Profile photo removed",
+      description: response.message,
+    });
   };
 
   const renderPersonalInformationSection = (wrapperClassName: string) => (
@@ -364,7 +271,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
         <h3 className="text-sm font-semibold uppercase tracking-wider">Personal Information</h3>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {profileConfig.personalInfo.map((field) => (
+        {profileView?.personalInfo.map((field) => (
           <div key={field.label} className={field.fullWidth ? "md:col-span-2" : undefined}>
             <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
             <input
@@ -372,17 +279,22 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
               type={field.type ?? "text"}
               placeholder={field.placeholder}
               readOnly={field.readOnly}
+              disabled={isSaving && !field.readOnly}
               onChange={(event) => handlePersonalChange(field, event.target.value)}
               onBlur={(event) => {
-                if (
-                  enableCustomerValidation &&
-                  (field.key === "fullName" || field.key === "email" || field.key === "phone")
-                ) {
-                  updateFieldError(field.key, validatePublicScalarField(field.key, event.target.value));
+                if (field.key === "fullName" || field.key === "email" || field.key === "phone") {
+                  updateFieldError(field.key, validateProfileScalarField(field.key, event.target.value));
+                }
+
+                if (field.key === "address" && requiresAddress) {
+                  updateFieldError(
+                    field.key,
+                    validateProfileScalarField(field.key, event.target.value, { requireAddress: true }),
+                  );
                 }
               }}
               aria-invalid={Boolean(fieldErrors[field.key])}
-              className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
+              className={`h-11 w-full rounded-lg border px-3 text-sm outline-none disabled:cursor-not-allowed ${
                 field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
               } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"}`}
             />
@@ -402,39 +314,35 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
         <h3 className="text-sm font-semibold uppercase tracking-wider">Security Settings</h3>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {profileConfig.security.map((field) => (
+        {profileView?.security.map((field) => (
           <div key={field.label} className={field.fullWidth ? "md:col-span-2" : undefined}>
             <p className="mb-1 text-xs font-semibold uppercase text-slate-400">{field.label}</p>
             <div className="relative">
               <input
                 value={securityValues[field.key] ?? ""}
                 type={
-                  enableCustomerValidation && field.type === "password"
-                    ? showPassword[field.key]
-                      ? "text"
-                      : "password"
-                    : (field.type ?? "text")
+                  field.type === "password" ? (showPassword[field.key] ? "text" : "password") : (field.type ?? "text")
                 }
                 placeholder={field.placeholder}
                 readOnly={field.readOnly}
+                disabled={isSaving && !field.readOnly}
                 onChange={(event) => handleSecurityChange(field, event.target.value)}
                 onBlur={(event) => {
-                  if (!enableCustomerValidation) return;
                   if (field.key === "newUsername") {
                     updateFieldError(
                       field.key,
-                      validateNewUsername(securityValues.currentUsername ?? "", event.target.value)
+                      validateNewUsername(securityValues.currentUsername ?? "", event.target.value),
                     );
                   }
                 }}
                 aria-invalid={Boolean(fieldErrors[field.key])}
-                className={`h-11 w-full rounded-lg border px-3 text-sm outline-none ${
+                className={`h-11 w-full rounded-lg border px-3 text-sm outline-none disabled:cursor-not-allowed ${
                   field.readOnly ? "bg-slate-100 text-slate-500" : "bg-slate-50 text-slate-700"
                 } ${fieldErrors[field.key] ? "border-red-500" : "border-slate-200"} ${
-                  enableCustomerValidation && field.type === "password" && !field.readOnly ? "pr-10" : ""
+                  field.type === "password" && !field.readOnly ? "pr-10" : ""
                 }`}
               />
-              {enableCustomerValidation && field.type === "password" && !field.readOnly ? (
+              {field.type === "password" && !field.readOnly ? (
                 <button
                   type="button"
                   onClick={() => togglePasswordVisibility(field.key)}
@@ -462,16 +370,25 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
           <button
             type="button"
             onClick={handleCancel}
-            className="rounded-full border border-slate-200 px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            disabled={isSaving}
+            className="rounded-full border border-slate-200 px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={handleSave}
-            className="rounded-full bg-[#0d3b66] px-6 py-2 text-sm font-semibold text-white hover:bg-[#0a2e50]"
+            onClick={() => void handleSave()}
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 rounded-full bg-[#0d3b66] px-6 py-2 text-sm font-semibold text-white hover:bg-[#0a2e50] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Save Changes
+            {isSaving ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </button>
         </div>
       ) : null}
@@ -480,7 +397,17 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
 
   const renderFeatureHeader = () => {
     if (featureName === "CreditLens") {
-      return <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Profile" subtitle="" name="John Doe" role={roleLabel} />;
+      return (
+        <ModuleHeader
+          theme="creditlens"
+          menuMode="feature-layout"
+          title="Profile"
+          subtitle=""
+          name={displayName}
+          role={resolvedRoleLabel}
+          avatarSrc={profileImageSrc ?? undefined}
+        />
+      );
     }
 
     if (featureName === "Transact") {
@@ -488,88 +415,181 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
         <ModuleHeader
           theme="transact"
           menuMode="feature-layout"
-          role="Bank Customer"
+          role={resolvedRoleLabel}
           title="Profile"
-          subtitle={`John Doe - ${roleLabel}`}
-          name={`John Doe - ${roleLabel}`}
+          subtitle={`${displayName} - ${resolvedRoleLabel}`}
+          name={displayName}
+          avatarSrc={profileImageSrc ?? undefined}
         />
       );
     }
 
     if (featureName === "LoanSense") {
-      return <ModuleHeader theme="loansense" menuMode="feature-layout" title="Profile" />;
+      return (
+        <ModuleHeader
+          theme="loansense"
+          menuMode="feature-layout"
+          title="Profile"
+          name={displayName}
+          role={resolvedRoleLabel}
+          avatarSrc={profileImageSrc ?? undefined}
+        />
+      );
     }
 
     if (featureName === "SpendIQ") {
-      return <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Profile" />;
+      return (
+        <ModuleHeader
+          theme="spendiq"
+          menuMode="feature-layout"
+          title="Profile"
+          name={displayName}
+          role={resolvedRoleLabel}
+          avatarSrc={profileImageSrc ?? undefined}
+        />
+      );
     }
 
-    return <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Profile" subtitle="" name="John Doe" role={roleLabel} />;
+    return (
+      <ModuleHeader
+        theme="creditlens"
+        menuMode="feature-layout"
+        title="Profile"
+        subtitle=""
+        name={displayName}
+        role={resolvedRoleLabel}
+        avatarSrc={profileImageSrc ?? undefined}
+      />
+    );
   };
+
+  const renderEmptyState = () => (
+    <section className={`${sectionClassName} xl:col-span-2`}>
+      <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">
+        {isLoading ? (
+          <>
+            <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-[#0d3b66] border-r-transparent" />
+            <p className="text-sm font-medium text-[#0d3b66]">Loading profile...</p>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-medium text-red-600">{loadError || "Unable to load profile."}</p>
+            <button
+              type="button"
+              onClick={() => setLoadRequestId((current) => current + 1)}
+              className="rounded-full border border-slate-200 px-5 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              Retry
+            </button>
+          </>
+        )}
+      </div>
+    </section>
+  );
 
   return (
     <div className={`min-h-screen p-4 md:p-8 ${isTransact || isLoanSense ? "bg-transparent" : "bg-[#f3f4f6]"}`}>
       {renderFeatureHeader()}
+      <ProfileImageUploadDialog
+        open={isProfileImageDialogOpen}
+        onOpenChange={setIsProfileImageDialogOpen}
+        currentImageSrc={profileImageSrc}
+        initials={profileView?.initials ?? "NA"}
+        displayName={displayName}
+        onUpload={handleProfileImageUpload}
+        onRemove={handleProfileImageRemove}
+      />
 
-      <div className="mx-auto my-auto w-full max-h-full max-w-7xl space-y-6 sm:mt-20">
-        
-
+      <div className="mx-auto my-auto max-h-full w-full max-w-7xl space-y-6 sm:mt-20">
         <div className={isCreditLens ? "grid gap-6 lg:px-2 xl:grid-cols-[1fr_1.6fr] xl:px-3" : "grid gap-6 xl:grid-cols-[1fr_1.6fr]"}>
-          <div className="space-y-6">
-            <section className={sectionClassName}>
-              <div className="mb-6 flex items-center gap-4">
-                <div className="relative grid h-20 w-20 place-items-center rounded-full bg-[#e2edf6] text-3xl font-bold text-[#0d3b66]">
-                  JD
-                  <span className="absolute bottom-0 right-0 grid h-7 w-7 place-items-center rounded-full border border-slate-200 bg-white text-slate-500">
-                    <Camera size={14} />
-                  </span>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-semibold text-[#0d3b66]">John Doe</h2>
-                  <Badge className="mt-2 rounded-full bg-[#ecfdf5] text-[#059669] hover:bg-[#ecfdf5]">{profileConfig.badgeText}</Badge>
-                </div>
-              </div>
-
-              <div className="space-y-3 text-sm">
-                {profileConfig.summary.map((item) => (
-                  <div key={item.label} className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                    <span className="text-slate-500">{item.label}</span>
-                    <span className="font-semibold text-[#0d3b66]">{item.value}</span>
+          {!profileView ? (
+            renderEmptyState()
+          ) : (
+            <>
+              <div className="space-y-6">
+                <section className={sectionClassName}>
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setIsProfileImageDialogOpen(true)}
+                        className="group relative h-20 w-20 overflow-hidden rounded-full border border-slate-200 bg-[#e2edf6] text-3xl font-bold text-[#0d3b66] shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0d3b66] focus-visible:ring-offset-2"
+                        aria-label="Open profile photo upload"
+                      >
+                        {profileImageSrc ? (
+                          <Image
+                            src={profileImageSrc}
+                            alt={`${profileView.displayName} profile photo`}
+                            fill
+                            sizes="80px"
+                            unoptimized
+                            className="object-cover"
+                          />
+                        ) : (
+                          <span className="grid h-full w-full place-items-center">{profileView.initials}</span>
+                        )}
+                      </button>
+                      <span className="pointer-events-none absolute -right-1 -top-1 z-10 grid h-7 w-7 place-items-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm">
+                        <Camera size={14} />
+                      </span>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-semibold text-[#0d3b66]">{profileView.displayName}</h2>
+                      <Badge className="mt-2 rounded-full bg-[#ecfdf5] text-[#059669] hover:bg-[#ecfdf5]">
+                        {profileView.badgeText}
+                      </Badge>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </section>
-          </div>
 
-          <div className="space-y-6">
-            <section className={sectionClassName}>
-              <div className="space-y-5">
-                {renderPersonalInformationSection("rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5")}
-                {renderSecuritySettingsSection("rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5", false)}
+                  <div className="space-y-3 text-sm">
+                    {profileView.summary.map((item) => (
+                      <div key={item.label} className="flex items-center justify-between gap-4 rounded-lg bg-slate-50 px-4 py-3">
+                        <span className="text-slate-500">{item.label}</span>
+                        <span className="max-w-[60%] text-right font-semibold text-[#0d3b66]">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="rounded-full border border-slate-200 px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  className="rounded-full bg-[#0d3b66] px-6 py-2 text-sm font-semibold text-white hover:bg-[#0a2e50]"
-                >
-                  Save Changes
-                </button>
+              <div className="space-y-6">
+                <section className={sectionClassName}>
+                  <div className="space-y-5">
+                    {renderPersonalInformationSection("rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5")}
+                    {renderSecuritySettingsSection("rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 sm:p-5", false)}
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      disabled={isSaving}
+                      className="rounded-full border border-slate-200 px-6 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleSave()}
+                      disabled={isSaving}
+                      className="inline-flex items-center gap-2 rounded-full bg-[#0d3b66] px-6 py-2 text-sm font-semibold text-white hover:bg-[#0a2e50] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSaving ? (
+                        <>
+                          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
+                          Saving...
+                        </>
+                      ) : (
+                        "Save Changes"
+                      )}
+                    </button>
+                  </div>
+                </section>
               </div>
-            </section>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-
