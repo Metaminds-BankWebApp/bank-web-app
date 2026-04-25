@@ -127,35 +127,33 @@ function toCurrencyInputValue(value: number | null | undefined): string {
 function mapFinancialRecordToFormData(record: BankCustomerFinancialRecordResponse): Partial<CustomerFormData> {
    const salaryIncome = record.incomes.find((income) => (income.incomeCategory || "").toUpperCase() === "SALARY");
    const businessIncome = record.incomes.find((income) => (income.incomeCategory || "").toUpperCase() === "BUSINESS");
-   const incomes: CustomerFormData["incomes"] = Array.isArray(record.incomes)
-      ? record.incomes.flatMap((income) => {
-           const normalizedCategory = (income.incomeCategory || "").toUpperCase();
-           if (normalizedCategory === "SALARY") {
-              return [
-                 {
-                    type: "Salary Worker" as const,
-                    amount: toCurrencyInputValue(income.amount),
-                    salaryType: toDisplayToken(income.salaryType) || "Fixed",
-                    employmentType: toDisplayToken(income.employmentType) || "Permanent",
-                    contractDurationMonths:
-                       typeof income.durationMonths === "number" && Number.isFinite(income.durationMonths)
-                          ? String(income.durationMonths)
-                          : undefined,
-                 },
-              ];
-           }
-           if (normalizedCategory === "BUSINESS") {
-              return [
-                 {
-                    type: "Business Person" as const,
-                    amount: toCurrencyInputValue(income.amount),
-                    incomeStability: toDisplayToken(income.incomeStability) || "Stable",
-                 },
-              ];
-           }
-           return [];
-        })
-      : [];
+   const incomes: CustomerFormData["incomes"] = [];
+   if (Array.isArray(record.incomes)) {
+      for (const income of record.incomes) {
+         const normalizedCategory = (income.incomeCategory || "").toUpperCase();
+         if (normalizedCategory === "SALARY") {
+            incomes.push({
+               type: "Salary Worker",
+               amount: toCurrencyInputValue(income.amount),
+               salaryType: toDisplayToken(income.salaryType) || "Fixed",
+               employmentType: toDisplayToken(income.employmentType) || "Permanent",
+               contractDurationMonths:
+                  typeof income.durationMonths === "number" && Number.isFinite(income.durationMonths)
+                     ? String(income.durationMonths)
+                     : undefined,
+            });
+            continue;
+         }
+
+         if (normalizedCategory === "BUSINESS") {
+            incomes.push({
+               type: "Business Person",
+               amount: toCurrencyInputValue(income.amount),
+               incomeStability: toDisplayToken(income.incomeStability) || "Stable",
+            });
+         }
+      }
+   }
 
    let incomeType = "Salary Worker";
    if (salaryIncome && businessIncome) {

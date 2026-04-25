@@ -227,10 +227,16 @@ type HydratedPublicCustomerApplicationData = {
 function mapPublicCustomerFinancialRecordToDraftState(
   record: PublicCustomerFinancialRecordResponse,
 ): HydratedPublicCustomerApplicationData {
-  const incomes: Income[] = asArray(record.incomes).map((income) => {
+  type IncomeRecord = PublicCustomerFinancialRecordResponse["incomes"][number];
+  type LoanRecord = PublicCustomerFinancialRecordResponse["loans"][number];
+  type CardRecord = PublicCustomerFinancialRecordResponse["cards"][number];
+  type LiabilityRecord = PublicCustomerFinancialRecordResponse["liabilities"][number];
+
+  const incomes: Income[] = [];
+  for (const income of asArray<IncomeRecord>(record.incomes)) {
     const category = (income.incomeCategory || "").toUpperCase();
     const isBusiness = category === "BUSINESS";
-    return {
+    incomes.push({
       id: `income-${income.incomeId}`,
       type: isBusiness ? "Business Person" : "Salary Worker",
       amount: Number(income.amount) || 0,
@@ -243,24 +249,24 @@ function mapPublicCustomerFinancialRecordToDraftState(
           ? String(income.contractDurationMonths)
           : undefined,
       incomeStability: isBusiness ? toDisplayToken(income.incomeStability) || "Stable" : undefined,
-    };
-  });
+    });
+  }
 
-  const loans: Loan[] = asArray(record.loans).map((loan) => ({
+  const loans: Loan[] = asArray<LoanRecord>(record.loans).map((loan) => ({
     id: `loan-${loan.loanId}`,
     type: loan.loanType || "",
     monthlyEMI: Number(loan.monthlyEmi) || 0,
     balance: Number(loan.remainingBalance) || 0,
   }));
 
-  const cards: Card[] = asArray(record.cards).map((card) => ({
+  const cards: Card[] = asArray<CardRecord>(record.cards).map((card) => ({
     id: `card-${card.cardId}`,
     limit: Number(card.creditLimit) || 0,
     outstanding: Number(card.outstandingBalance) || 0,
     provider: card.provider || "Standard Card",
   }));
 
-  const liabilities: Liability[] = asArray(record.liabilities).map((liability) => ({
+  const liabilities: Liability[] = asArray<LiabilityRecord>(record.liabilities).map((liability) => ({
     id: `liability-${liability.liabilityId}`,
     description: liability.description || "",
     amount: Number(liability.monthlyAmount) || 0,
@@ -294,11 +300,11 @@ function mapPublicCustomerFinancialRecordToDraftState(
 
   const firstIncomplete = [1, 2, 3, 4].find((stepNumber) => !completedByStep[stepNumber]) ?? 5;
 
-  const stepStatusTable = createDefaultStepStatusTable().map((row) => {
+  const stepStatusTable: ApplicationStepStatusRow[] = createDefaultStepStatusTable().map((row): ApplicationStepStatusRow => {
     if (row.step === 5) {
       return {
         ...row,
-        status: firstIncomplete === 5 ? "IN_PROGRESS" : "PENDING",
+        status: (firstIncomplete === 5 ? "IN_PROGRESS" : "PENDING") as ApplicationStepStatus,
         backendSynced: false,
         recordId: null,
         note: firstIncomplete === 5 ? "Review and submit your latest saved data." : null,
@@ -308,7 +314,7 @@ function mapPublicCustomerFinancialRecordToDraftState(
     if (completedByStep[row.step]) {
       return {
         ...row,
-        status: "COMPLETED",
+        status: "COMPLETED" as ApplicationStepStatus,
         backendSynced: true,
         recordId: record.recordId,
         note: "Loaded from latest saved server data.",
@@ -317,7 +323,7 @@ function mapPublicCustomerFinancialRecordToDraftState(
 
     return {
       ...row,
-      status: row.step === firstIncomplete ? "IN_PROGRESS" : "PENDING",
+      status: (row.step === firstIncomplete ? "IN_PROGRESS" : "PENDING") as ApplicationStepStatus,
       backendSynced: false,
       recordId: null,
       note: null,
