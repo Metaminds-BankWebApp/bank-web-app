@@ -1,7 +1,22 @@
 import type { OfficerFormData, OfficerFormErrors } from "./types";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const contactRegex = /^\+?[0-9][0-9\s-]{7,20}$/;
+export const SRI_LANKA_PROVINCES = [
+  "Western",
+  "Central",
+  "Southern",
+  "Northern",
+  "Eastern",
+  "North Western",
+  "North Central",
+  "Uva",
+  "Sabaragamuwa",
+] as const;
+
+const provinceSet = new Set(
+  SRI_LANKA_PROVINCES.map((province) => province.toLowerCase())
+);
+const emailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;
+const contactRegex = /^(?:077|076|078|070|072|074|075|071)\d{7}$/;
 const nicRegex = /^(?:\d{9}[VvXx]|\d{12})$/;
 const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -30,18 +45,21 @@ export function validateOfficerForm(formData: OfficerFormData): OfficerFormError
 
   if (!formData.province.trim()) {
     errors.province = "Province is required.";
+  } else if (!provinceSet.has(formData.province.trim().toLowerCase())) {
+    errors.province = "Please select a valid Sri Lankan province.";
   }
 
   if (!formData.contact.trim()) {
     errors.contact = "Contact number is required.";
   } else if (!contactRegex.test(formData.contact.trim())) {
-    errors.contact = "Enter a valid contact number.";
+    errors.contact =
+      "Contact number must be 10 digits and start with 077, 076, 078, 070, 072, 074, 075, or 071.";
   }
 
   if (!formData.email.trim()) {
     errors.email = "Email address is required.";
   } else if (!emailRegex.test(formData.email.trim())) {
-    errors.email = "Enter a valid email address.";
+    errors.email = "Email must be in the format name@primecore.com.";
   }
 
   if (!formData.assignedBranch.trim()) {
