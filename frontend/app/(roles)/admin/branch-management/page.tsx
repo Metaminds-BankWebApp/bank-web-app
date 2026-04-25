@@ -3,14 +3,18 @@
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Pencil, Trash2, Search } from "lucide-react";
 import Link from "next/link";
+import { getAdminBranches } from "@/src/api/admin/branch.service";
+import { ApiError } from "@/src/types/api-error";
+import type { BranchResponse } from "@/src/types/dto/branch.dto";
 
 type StatusType = "Active" | "Inactive" | "Maintenance";
 
 type BranchData = {
-  id: string; // display this as branchCode in the frontend table
+  internalId: number;
+  id: string;
   name: string;
   address: string;
   contact: string;
@@ -41,7 +45,9 @@ function SummaryCard({
     variant === "dark" || variant === "medium" ? "text-white/75" : "text-[#15375f]/80";
 
   return (
-    <div className={`rounded-2xl p-6 shadow-[0_16px_26px_-20px_rgba(11,43,89,0.85)] flex flex-col justify-between ${classes}`}>
+    <div
+      className={`rounded-2xl p-6 shadow-[0_16px_26px_-20px_rgba(11,43,89,0.85)] flex flex-col justify-between ${classes}`}
+    >
       <span className={`text-xs font-semibold tracking-wide ${titleClass}`}>{label}</span>
       <span className="mt-3 text-2xl font-bold leading-none">{value}</span>
     </div>
@@ -56,73 +62,95 @@ function StatusBadge({ status }: { status: StatusType }) {
       ? "bg-red-100 text-red-700"
       : "bg-yellow-100 text-yellow-700";
 
-  return <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${classes}`}>{status}</span>;
-}
-
-function OfficerAvatars({ count }: { count: number }) {
-  const display = Math.min(3, count);
-  const extra = count > 3 ? count - 3 : 0;
-
   return (
-    <div className="flex items-center">
-      <div className="flex -space-x-2">
-        {Array.from({ length: display }).map((_, i) => (
-          <div
-            key={i}
-            className="w-8 h-8 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center border-2 border-white"
-          >
-            {String.fromCharCode(65 + i)}
-          </div>
-        ))}
-      </div>
-      {extra > 0 && <span className="ml-2 text-xs text-gray-500 font-medium">+{extra}</span>}
-    </div>
+    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${classes}`}>
+      {status}
+    </span>
   );
 }
 
-const branchData: BranchData[] = [
-  {
-    id: "BR-250421-321",
-    name: "Ratnapura Branch",
-    address: "123 Main Street, Ratnapura",
-    contact: "+94 71 123 4567",
-    officers: 12,
-    customers: 2856,
-    status: "Active",
-  },
-  {
-    id: "BR-250421-654",
-    name: "Colombo Branch",
-    address: "456 Park Avenue, Colombo",
-    contact: "+94 72 234 5678",
-    officers: 8,
-    customers: 1945,
-    status: "Inactive",
-  },
-  {
-    id: "BR-250421-789",
-    name: "Galle Branch",
-    address: "789 Fifth Avenue, Galle",
-    contact: "+94 77 345 6789",
-    officers: 10,
-    customers: 2245,
-    status: "Maintenance",
-  },
-];
+function toDisplayStatus(status: BranchResponse["status"]): StatusType {
+  const normalized = (status ?? "").toString().trim().toUpperCase();
+
+  if (normalized === "ACTIVE") {
+    return "Active";
+  }
+  if (normalized === "MAINTENANCE") {
+    return "Maintenance";
+  }
+  return "Inactive";
+}
+
+function mapApiBranch(branch: BranchResponse): BranchData {
+  return {
+    internalId: branch.branchId,
+    id: branch.branchCode || `BR-${String(branch.branchId).padStart(4, "0")}`,
+    name: branch.branchName || "-",
+    address: branch.address?.trim() || "-",
+    contact: branch.branchPhone?.trim() || "-",
+    officers: 0,
+    customers: 0,
+    status: toDisplayStatus(branch.status),
+  };
+}
 
 export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
-  const branchesPerPage = 5;
   const [searchQuery, setSearchQuery] = useState("");
+  const [branches, setBranches] = useState<BranchData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const branchesPerPage = 5;
 
-  const filteredBranches = branchData
-    .filter(
-      (b) =>
-        b.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        b.address.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => a.id.localeCompare(b.id));
+  useEffect(() => {
+    let mounted = true;
+
+    const loadBranches = async () => {
+      setIsLoading(true);
+      setLoadError(null);
+
+      try {
+        const data = await getAdminBranches();
+        if (!mounted) {
+          return;
+        }
+
+        setBranches(data.map(mapApiBranch));
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        const message =
+          error instanceof ApiError ? error.message : "Failed to load branches from server.";
+        setLoadError(message);
+        setBranches([]);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadBranches();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const filteredBranches = useMemo(() => {
+    const normalized = searchQuery.toLowerCase();
+
+    return [...branches]
+      .filter(
+        (branch) =>
+          branch.id.toLowerCase().includes(normalized) ||
+          branch.name.toLowerCase().includes(normalized) ||
+          branch.address.toLowerCase().includes(normalized)
+      )
+      .sort((a, b) => a.id.localeCompare(b.id));
+  }, [branches, searchQuery]);
 
   const totalPages = Math.ceil(filteredBranches.length / branchesPerPage);
   const paginatedBranches = filteredBranches.slice(
@@ -130,9 +158,35 @@ export default function Page() {
     currentPage * branchesPerPage
   );
 
+  const showingFrom =
+    filteredBranches.length === 0 ? 0 : (currentPage - 1) * branchesPerPage + 1;
+  const showingTo =
+    filteredBranches.length === 0
+      ? 0
+      : Math.min(currentPage * branchesPerPage, filteredBranches.length);
+
+  const summary = useMemo(() => {
+    const activeBranches = branches.filter((branch) => branch.status === "Active").length;
+    const totalOfficers = branches.reduce((sum, branch) => sum + branch.officers, 0);
+    const totalCustomers = branches.reduce((sum, branch) => sum + branch.customers, 0);
+
+    return {
+      totalBranches: branches.length,
+      activeBranches,
+      totalOfficers,
+      totalCustomers,
+    };
+  }, [branches]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <AuthGuard requiredRole="ADMIN">
@@ -157,15 +211,18 @@ export default function Page() {
 
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-6 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <SummaryCard label="TOTAL BRANCHES" value={48} variant="dark" />
-              <SummaryCard label="ACTIVE BRANCHES" value={32} variant="medium" />
-              <SummaryCard label="NO OF OFFICERS" value={546} />
-              <SummaryCard label="TOTAL CUSTOMERS" value="124,596" />
+              <SummaryCard label="TOTAL BRANCHES" value={summary.totalBranches} variant="dark" />
+              <SummaryCard label="ACTIVE BRANCHES" value={summary.activeBranches} variant="medium" />
+              <SummaryCard label="NO OF OFFICERS" value={summary.totalOfficers} />
+              <SummaryCard label="TOTAL CUSTOMERS" value={summary.totalCustomers.toLocaleString()} />
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Search
+                  size={18}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   placeholder="Search Branches by ID, Name or Address..."
@@ -187,49 +244,77 @@ export default function Page() {
                 <table className="w-full min-w-[900px] text-sm">
                   <thead className="bg-gray-50 border-b">
                     <tr>
-                      {["ID", "Branch Name", "Address", "Contact", "Officers", "Customers", "Status", "Actions"].map((h) => (
-                        <th key={h} className="px-6 py-4 text-left font-semibold text-gray-700">
-                          {h}
+                      {[
+                        "ID",
+                        "Branch Name",
+                        "Address",
+                        "Contact",
+                        "Officers",
+                        "Customers",
+                        "Status",
+                        "Actions",
+                      ].map((header) => (
+                        <th
+                          key={header}
+                          className="px-6 py-4 text-left font-semibold text-gray-700"
+                        >
+                          {header}
                         </th>
                       ))}
                     </tr>
                   </thead>
 
                   <tbody className="divide-y">
-                    {paginatedBranches.map((b) => (
-                      <tr key={b.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 font-medium">{b.id}</td>
-                        <td className="px-6 py-4 flex items-center gap-2">
-                          <span>🏢</span> {b.name}
-                        </td>
-                        <td className="px-6 py-4 text-gray-600">{b.address}</td>
-                        <td className="px-6 py-4">{b.contact}</td>
-                        <td className="px-6 py-4">
-                          <OfficerAvatars count={b.officers} />
-                        </td>
-                        <td className="px-6 py-4 font-semibold">{b.customers.toLocaleString()}</td>
-                        <td className="px-6 py-4">
-                          <StatusBadge status={b.status} />
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => console.log("Edit:", b.id)}
-                              className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                            >
-                              <Pencil size={16} />
-                            </button>
-
-                            <button
-                              onClick={() => console.log("Delete:", b.id)}
-                              className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+                    {isLoading ? (
+                      <tr>
+                        <td className="px-6 py-10 text-center text-gray-500" colSpan={8}>
+                          Loading branches...
                         </td>
                       </tr>
-                    ))}
+                    ) : loadError ? (
+                      <tr>
+                        <td className="px-6 py-10 text-center text-red-600" colSpan={8}>
+                          {loadError}
+                        </td>
+                      </tr>
+                    ) : paginatedBranches.length === 0 ? (
+                      <tr>
+                        <td className="px-6 py-10 text-center text-gray-500" colSpan={8}>
+                          No branches found.
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedBranches.map((branch) => (
+                        <tr key={branch.internalId} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 font-medium">{branch.id}</td>
+                          <td className="px-6 py-4">{branch.name}</td>
+                          <td className="px-6 py-4 text-gray-600">{branch.address}</td>
+                          <td className="px-6 py-4">{branch.contact}</td>
+                          <td className="px-6 py-4 font-semibold">{branch.officers.toLocaleString()}</td>
+                          <td className="px-6 py-4 font-semibold">{branch.customers.toLocaleString()}</td>
+                          <td className="px-6 py-4">
+                            <StatusBadge status={branch.status} />
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <button
+                                onClick={() => console.log("Edit:", branch.internalId)}
+                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
+                              >
+                                <Pencil size={16} />
+                              </button>
+
+                              <button
+                                onClick={() => console.log("Delete:", branch.internalId)}
+                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -237,26 +322,28 @@ export default function Page() {
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
               <div className="text-sm text-gray-600">
-                Showing {(currentPage - 1) * branchesPerPage + 1} to {Math.min(currentPage * branchesPerPage, filteredBranches.length)} of {filteredBranches.length} branches
+                Showing {showingFrom} to {showingTo} of {filteredBranches.length} branches
               </div>
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((previous) => Math.max(previous - 1, 1))}
+                  disabled={currentPage === 1 || totalPages === 0}
                   className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40"
                 >
                   &lt;
                 </button>
 
-                {Array.from({ length: totalPages }).map((_, i) => {
-                  const page = i + 1;
+                {Array.from({ length: totalPages }).map((_, index) => {
+                  const page = index + 1;
                   return (
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
                       className={`px-3 py-2 rounded-lg ${
-                        currentPage === page ? "bg-[#0B3B66] text-white" : "border text-gray-700 hover:bg-gray-100"
+                        currentPage === page
+                          ? "bg-[#0B3B66] text-white"
+                          : "border text-gray-700 hover:bg-gray-100"
                       }`}
                     >
                       {page}
@@ -265,8 +352,10 @@ export default function Page() {
                 })}
 
                 <button
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
+                  onClick={() =>
+                    setCurrentPage((previous) => Math.min(previous + 1, Math.max(totalPages, 1)))
+                  }
+                  disabled={totalPages === 0 || currentPage === totalPages}
                   className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40"
                 >
                   &gt;

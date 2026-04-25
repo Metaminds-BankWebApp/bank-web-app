@@ -191,11 +191,11 @@ export function RegisterForm() {
       await registerPublicCustomer({
         firstName: values.firstName,
         lastName: values.lastName,
-        nic: values.nic.toUpperCase(),
+        nic: values.nic,
         dob: values.dob,
         email: values.email,
         mobile: values.phone,
-        accountNumber: values.phone,
+        bankAccount: Number(values.phone),
         province: values.province,
         address: values.address,
         username: values.username,
@@ -214,12 +214,7 @@ export function RegisterForm() {
       if (apiError) {
         setFieldErrors(extractRegisterFieldErrors(apiError));
       }
-      const responsePath =
-        apiError?.details && typeof apiError.details.path === "string" ? apiError.details.path : null;
-      const isBackendRegisterFailure = apiError?.status === 500 && responsePath === "/api/auth/register";
-      const message = isBackendRegisterFailure
-        ? "Registration service is currently failing on the server (/api/auth/register). Please contact support and try again later."
-        : apiError?.message ?? "Unable to register. Please try again.";
+      const message = apiError?.message ?? "Unable to register. Please try again.";
       setError(message);
       showToast({ type: "error", title: "Registration failed", description: message });
     } finally {
@@ -396,7 +391,6 @@ export function RegisterForm() {
             <Input
               label="Password"
               type="password"
-              enablePasswordToggle
               value={password}
               error={fieldErrors.password}
               onChange={(event) => {
@@ -415,7 +409,6 @@ export function RegisterForm() {
           <Input
             label="Confirm Password"
             type="password"
-            enablePasswordToggle
             value={confirmPassword}
             error={fieldErrors.confirmPassword}
             onChange={(event) => {

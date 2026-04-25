@@ -1,20 +1,12 @@
 const PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789@#$%&*!";
 
-export function generateOfficerId(date = new Date()): string {
-  const year = String(date.getFullYear()).slice(-2);
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const random = Math.floor(100 + Math.random() * 900);
+export function generateOfficerUsername(firstName: string, lastName: string): string {
+  const normalizedFirstName = firstName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const normalizedLastName = lastName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const randomSeed = String(Math.floor(100 + Math.random() * 900));
+  const base = `${normalizedFirstName}${normalizedLastName}` || normalizedFirstName || normalizedLastName || "officer";
 
-  return `OFF-${year}${month}${day}-${random}`;
-}
-
-export function generateOfficerUsername(officerName: string, officerId: string): string {
-  const normalizedName = officerName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
-  const idSeed = officerId.replace(/[^0-9]/g, "").slice(-4);
-  const base = normalizedName || "officer";
-
-  return `${base}${idSeed}`.slice(0, 20);
+  return `${base}${randomSeed}`.slice(0, 20);
 }
 
 export function generateOfficerPassword(length = 10): string {

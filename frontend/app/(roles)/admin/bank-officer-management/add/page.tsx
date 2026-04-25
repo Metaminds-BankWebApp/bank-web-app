@@ -1,25 +1,26 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Building2 } from "lucide-react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { getAdminBranches } from "@/src/api/admin/branch.service";
+import { registerBankOfficer } from "@/src/api/registration/bank-officer-registration.service";
+import { useAuthStore } from "@/src/store";
+import { ApiError } from "@/src/types/api-error";
+import type { BranchResponse } from "@/src/types/dto/branch.dto";
 import type { OfficerFormData, OfficerFormErrors } from "./types";
-import { generateOfficerId, generateOfficerPassword, generateOfficerUsername } from "./utils";
+import { generateOfficerPassword, generateOfficerUsername } from "./utils";
 import { isOfficerFormComplete, validateOfficerForm } from "./validation";
 
-const BRANCH_OPTIONS = [
-  "Kandy Branch",
-  "Main Street Branch",
-  "Downtown Branch",
-  "Colombo Branch",
-];
-
 const getInitialFormData = (): OfficerFormData => ({
-  officerName: "",
-  officerId: generateOfficerId(),
+  firstName: "",
+  lastName: "",
+  nic: "",
+  dob: "",
+  province: "",
   username: "",
   password: "",
   contact: "",
@@ -31,13 +32,57 @@ const getInitialFormData = (): OfficerFormData => ({
 
 export default function AddOfficerPage() {
   const router = useRouter();
+  const loggedInUser = useAuthStore((state) => state.user);
   const [formData, setFormData] = useState<OfficerFormData>(getInitialFormData);
   const [errors, setErrors] = useState<OfficerFormErrors>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [branches, setBranches] = useState<BranchResponse[]>([]);
+  const [isLoadingBranches, setIsLoadingBranches] = useState(true);
+  const [branchLoadError, setBranchLoadError] = useState<string | null>(null);
   const canSubmit = isOfficerFormComplete(formData) && !isSaving;
 
+  useEffect(() => {
+    let mounted = true;
+
+    const loadBranches = async () => {
+      setIsLoadingBranches(true);
+      setBranchLoadError(null);
+
+      try {
+        const data = await getAdminBranches();
+        if (!mounted) {
+          return;
+        }
+
+        setBranches(data);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        const message =
+          error instanceof ApiError ? error.message : "Failed to load branches.";
+        setBranches([]);
+        setBranchLoadError(message);
+      } finally {
+        if (mounted) {
+          setIsLoadingBranches(false);
+        }
+      }
+    };
+
+    void loadBranches();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   const handleRequiredFieldChange = (
-    field: keyof Pick<OfficerFormData, "officerName" | "contact" | "email" | "assignedBranch">,
+    field: keyof Pick<
+      OfficerFormData,
+      "firstName" | "lastName" | "nic" | "dob" | "province" | "contact" | "email" | "assignedBranch"
+    >,
     value: string
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -47,14 +92,22 @@ export default function AddOfficerPage() {
   };
 
   const handleGenerateUsername = () => {
-    if (!formData.officerName.trim()) {
-      setErrors((prev) => ({ ...prev, officerName: "Officer name is required before generating username." }));
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        firstName: !formData.firstName.trim()
+          ? "First name is required before generating username."
+          : prev.firstName,
+        lastName: !formData.lastName.trim()
+          ? "Last name is required before generating username."
+          : prev.lastName,
+      }));
       return;
     }
 
-    const username = generateOfficerUsername(formData.officerName, formData.officerId);
+    const username = generateOfficerUsername(formData.firstName, formData.lastName);
     setFormData((prev) => ({ ...prev, username }));
-    setErrors((prev) => ({ ...prev, username: undefined }));
+    setErrors((prev) => ({ ...prev, firstName: undefined, lastName: undefined, username: undefined }));
   };
 
   const handleGeneratePassword = () => {
@@ -63,7 +116,7 @@ export default function AddOfficerPage() {
     setErrors((prev) => ({ ...prev, password: undefined }));
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     const nextErrors = validateOfficerForm(formData);
@@ -72,19 +125,46 @@ export default function AddOfficerPage() {
       return;
     }
 
+    const parsedBranchId = Number(formData.assignedBranch);
+    if (Number.isNaN(parsedBranchId) || parsedBranchId <= 0) {
+      setErrors((prev) => ({ ...prev, assignedBranch: "Please select a valid branch." }));
+      return;
+    }
+
     setIsSaving(true);
 
-    console.log({
-      ...formData,
-      officerName: formData.officerName.trim(),
-      contact: formData.contact.trim(),
-      email: formData.email.trim(),
-      assignedBranch: formData.assignedBranch.trim(),
-      address: formData.address.trim(),
-    });
+    const parsedAdminUserId = Number(loggedInUser?.id);
 
-    // connect backend 
-    router.push("/admin/bank-officer-management");
+    try {
+      await registerBankOfficer({
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        nic: formData.nic.trim(),
+        dob: formData.dob.trim(),
+        email: formData.email.trim().toLowerCase(),
+        mobile: formData.contact.trim(),
+        province: formData.province.trim(),
+        address: formData.address.trim(),
+        username: formData.username.trim(),
+        password: formData.password,
+        confirmPassword: formData.password,
+        branchId: parsedBranchId,
+        createdByAdminUserId: Number.isNaN(parsedAdminUserId) ? undefined : parsedAdminUserId,
+      });
+
+      alert("Bank officer created successfully.");
+      router.push("/admin/bank-officer-management");
+    } catch (error) {
+      const message =
+        error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+          ? error.message
+          : "Failed to create bank officer.";
+      alert(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -137,25 +217,40 @@ export default function AddOfficerPage() {
               <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
                 <div className="min-w-0 flex-1 space-y-6 rounded-2xl bg-[#e9eef5] p-4 sm:p-6 lg:p-8">
                   <div>
-                    <label className="text-xs font-semibold uppercase text-gray-600">Officer Name</label>
+                    <label className="text-xs font-semibold uppercase text-gray-600">First Name</label>
                     <input
                       type="text"
-                      value={formData.officerName}
-                      onChange={(event) => handleRequiredFieldChange("officerName", event.target.value)}
-                      placeholder="Kamal Sooriyarachchi"
-                      aria-invalid={Boolean(errors.officerName)}
+                      value={formData.firstName}
+                      onChange={(event) => handleRequiredFieldChange("firstName", event.target.value)}
+                      placeholder="Kamal"
+                      aria-invalid={Boolean(errors.firstName)}
                       className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
-                        errors.officerName ? "border-red-500" : "border-gray-300"
+                        errors.firstName ? "border-red-500" : "border-gray-300"
                       } bg-white`}
                     />
-                    {errors.officerName ? <p className="mt-1 text-xs text-red-600">{errors.officerName}</p> : null}
+                    {errors.firstName ? <p className="mt-1 text-xs text-red-600">{errors.firstName}</p> : null}
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold uppercase text-gray-600">Last Name</label>
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(event) => handleRequiredFieldChange("lastName", event.target.value)}
+                      placeholder="Sooriyarachchi"
+                      aria-invalid={Boolean(errors.lastName)}
+                      className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
+                        errors.lastName ? "border-red-500" : "border-gray-300"
+                      } bg-white`}
+                    />
+                    {errors.lastName ? <p className="mt-1 text-xs text-red-600">{errors.lastName}</p> : null}
                   </div>
 
                   <div>
                     <label className="text-xs font-semibold uppercase text-gray-600">Officer ID</label>
                     <input
                       type="text"
-                      value={formData.officerId}
+                      value="Auto-generated by system"
                       readOnly
                       className="mt-2 w-full cursor-not-allowed rounded-lg border border-gray-300 bg-gray-100 px-4 py-3 text-gray-500"
                     />
@@ -228,6 +323,50 @@ export default function AddOfficerPage() {
 
                 <div className="min-w-0 flex-1 space-y-6 rounded-2xl bg-[#e9eef5] p-4 sm:p-6 lg:p-8">
                   <div>
+                    <label className="text-xs font-semibold uppercase text-gray-600">NIC Number</label>
+                    <input
+                      type="text"
+                      value={formData.nic}
+                      onChange={(event) => handleRequiredFieldChange("nic", event.target.value)}
+                      placeholder="200012345678"
+                      aria-invalid={Boolean(errors.nic)}
+                      className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
+                        errors.nic ? "border-red-500" : "border-gray-300"
+                      } bg-white`}
+                    />
+                    {errors.nic ? <p className="mt-1 text-xs text-red-600">{errors.nic}</p> : null}
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold uppercase text-gray-600">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={formData.dob}
+                      onChange={(event) => handleRequiredFieldChange("dob", event.target.value)}
+                      aria-invalid={Boolean(errors.dob)}
+                      className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
+                        errors.dob ? "border-red-500" : "border-gray-300"
+                      } bg-white`}
+                    />
+                    {errors.dob ? <p className="mt-1 text-xs text-red-600">{errors.dob}</p> : null}
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold uppercase text-gray-600">Province</label>
+                    <input
+                      type="text"
+                      value={formData.province}
+                      onChange={(event) => handleRequiredFieldChange("province", event.target.value)}
+                      placeholder="Western"
+                      aria-invalid={Boolean(errors.province)}
+                      className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
+                        errors.province ? "border-red-500" : "border-gray-300"
+                      } bg-white`}
+                    />
+                    {errors.province ? <p className="mt-1 text-xs text-red-600">{errors.province}</p> : null}
+                  </div>
+
+                  <div>
                     <label className="text-xs font-semibold uppercase text-gray-600">Contact Number</label>
                     <input
                       type="text"
@@ -263,18 +402,26 @@ export default function AddOfficerPage() {
                       value={formData.assignedBranch}
                       onChange={(event) => handleRequiredFieldChange("assignedBranch", event.target.value)}
                       aria-invalid={Boolean(errors.assignedBranch)}
+                      disabled={isLoadingBranches}
                       className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
                         errors.assignedBranch ? "border-red-500" : "border-gray-300"
-                      } bg-white`}
+                      } bg-white disabled:bg-gray-100 disabled:text-gray-500`}
                     >
-                      <option value="">Select Branch</option>
-                      {BRANCH_OPTIONS.map((branch) => (
-                        <option key={branch} value={branch}>
-                          {branch}
+                      <option value="">
+                        {isLoadingBranches ? "Loading branches..." : "Select Branch"}
+                      </option>
+                      {branches.map((branch) => (
+                        <option key={branch.branchId} value={String(branch.branchId)}>
+                          {branch.branchName}
                         </option>
                       ))}
                     </select>
-                    {errors.assignedBranch ? <p className="mt-1 text-xs text-red-600">{errors.assignedBranch}</p> : null}
+                    {errors.assignedBranch ? (
+                      <p className="mt-1 text-xs text-red-600">{errors.assignedBranch}</p>
+                    ) : null}
+                    {!errors.assignedBranch && branchLoadError ? (
+                      <p className="mt-1 text-xs text-red-600">{branchLoadError}</p>
+                    ) : null}
                   </div>
 
                   <div>
@@ -305,7 +452,7 @@ export default function AddOfficerPage() {
                           : "cursor-not-allowed bg-[#0B3B66]/50 text-white"
                       }`}
                     >
-                      Save Officer
+                      {isSaving ? "Saving..." : "Save Officer"}
                     </button>
                   </div>
                 </div>

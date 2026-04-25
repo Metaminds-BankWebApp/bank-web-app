@@ -12,6 +12,13 @@ export interface StepOneRegistrationRequest {
   confirmPassword: string;
   bankAccount?: number;
   accountNumber?: string;
+  branchId?: number;
+  officerId?: number;
+  employeeCode?: string;
+  createdByAdminUserId?: number;
+  customerCode?: string;
+  accountType?: string;
+  openingBalance?: number;
 }
 
 export interface StepOneUpdateRequest {
@@ -28,6 +35,13 @@ export interface StepOneUpdateRequest {
   confirmPassword?: string;
   bankAccount?: number;
   accountNumber?: string;
+  branchId?: number;
+  officerId?: number;
+  employeeCode?: string;
+  createdByAdminUserId?: number;
+  customerCode?: string;
+  accountType?: string;
+  openingBalance?: number;
 }
 
 export interface StepOneRegistrationResponse {

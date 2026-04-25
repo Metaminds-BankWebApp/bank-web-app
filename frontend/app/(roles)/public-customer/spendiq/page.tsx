@@ -6,41 +6,88 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
+import { getSpendIqBudgets, getSpendIqExpenses } from "@/src/api/spendiq/spendiq.service";
+import { toApiError } from "@/src/api/client";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { useToast } from "@/src/components/ui/toast";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function SpendIQDashboard() {
-  const expenseData = [
-    { name: "Utilities", value: 20000 },
-    { name: "Food & Dining", value: 15000 },
-    { name: "Shopping", value: 10000 },
-    { name: "Healthcare", value: 5000 },
-    { name: "Entertainment", value: 2000 },
-    { name: "Transportation", value: 6000 },
-  ];
+  const { showToast } = useToast();
+  const [categoryExpenses, setCategoryExpenses] = useState<Array<{ name: string; value: number }>>([]);
+  const [budgetUsageRows, setBudgetUsageRows] = useState<Array<{ name: string; used: number; total: number }>>([]);
 
-  const total = expenseData.reduce((acc, item) => acc + item.value, 0);
+  const loadExpenseByCategory = useCallback(async () => {
+    try {
+      const now = new Date();
+      const month = now.getMonth() + 1;
+      const year = now.getFullYear();
+      const fromDate = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1)).toISOString().slice(0, 10);
+      const toDate = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0)).toISOString().slice(0, 10);
 
-  const data = {
-    labels: expenseData.map((item) => item.name),
-    datasets: [
-      {
-        data: expenseData.map((item) => item.value),
-        backgroundColor: [
-          "#0a234c",
-          "#163d7a",
-          "#1f4f9c",
-          "#2962c9",
-          "#3b82f6",
-          "#60a5fa",
-        ],
-        borderWidth: 0,
-        hoverOffset: 8,
-      },
-    ],
-  };
+      const [expenses, budgets] = await Promise.all([
+        getSpendIqExpenses({ fromDate, toDate }),
+        getSpendIqBudgets({ month, year }),
+      ]);
+      const byCategory = new Map<string, number>();
+      for (const expense of expenses) {
+        byCategory.set(expense.categoryName, (byCategory.get(expense.categoryName) ?? 0) + Number(expense.amount));
+      }
+
+      const budgetByCategory = new Map<string, number>();
+      for (const budget of budgets) {
+        budgetByCategory.set(budget.categoryName, (budgetByCategory.get(budget.categoryName) ?? 0) + Number(budget.budgetAmount));
+      }
+
+      const rows = Array.from(byCategory.entries())
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+      const usageRows = Array.from(new Set([...byCategory.keys(), ...budgetByCategory.keys()]))
+        .map((name) => ({
+          name,
+          used: byCategory.get(name) ?? 0,
+          total: budgetByCategory.get(name) ?? 0,
+        }))
+        .filter((row) => row.used > 0 || row.total > 0)
+        .sort((a, b) => b.used - a.used)
+        .slice(0, 5);
+
+      setCategoryExpenses(rows);
+      setBudgetUsageRows(usageRows);
+    } catch (error) {
+      const apiError = toApiError(error);
+      showToast({ type: "error", title: "Failed to load dashboard data", description: apiError.message });
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadExpenseByCategory();
+  }, [loadExpenseByCategory]);
+
+  const total = useMemo(
+    () => categoryExpenses.reduce((acc, item) => acc + item.value, 0),
+    [categoryExpenses],
+  );
+
+  const data = useMemo(() => {
+    const colors = ["#0a234c", "#163d7a", "#1f4f9c", "#2962c9", "#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe"];
+    return {
+      labels: categoryExpenses.map((item) => item.name),
+      datasets: [
+        {
+          data: categoryExpenses.map((item) => item.value),
+          backgroundColor: categoryExpenses.map((_, index) => colors[index % colors.length]),
+          borderWidth: 0,
+          hoverOffset: 8,
+        },
+      ],
+    };
+  }, [categoryExpenses]);
 
   const options = {
     responsive: true,
@@ -59,13 +106,6 @@ export default function SpendIQDashboard() {
       },
     },
   };
-
-  const budgetCategories = [
-    { name: "Food & Dining", used: 156.75, total: 400 },
-    { name: "Transportation", used: 120, total: 300 },
-    { name: "Shopping", used: 200, total: 500 },
-    { name: "Entertainment", used: 80, total: 250 },
-  ];
 
   const recentExpenses = [
     {
@@ -125,7 +165,11 @@ export default function SpendIQDashboard() {
           </h2>
 
           <div className="relative h-80 flex items-center justify-center">
-            <Doughnut data={data} options={options} />
+            {categoryExpenses.length > 0 ? (
+              <Doughnut data={data} options={options} />
+            ) : (
+              <p className="text-sm text-slate-500">No expense data for this month.</p>
+            )}
             <div className="absolute text-center">
               <p className="text-xs text-gray-600">Total</p>
               <p className="text-lg font-bold text-[#0a234c]">
@@ -144,31 +188,37 @@ export default function SpendIQDashboard() {
             Budget Usage by Category
           </h2>
 
-          <div className="space-y-6">
-            {budgetCategories.map((cat) => {
-              const percent = (cat.used / cat.total) * 100;
+          {budgetUsageRows.length === 0 ? (
+            <p className="text-sm text-slate-500">No budget usage data for this month.</p>
+          ) : (
+            <div className="space-y-6">
+              {budgetUsageRows.map((cat) => {
+                const percent = cat.total > 0 ? (cat.used / cat.total) * 100 : 0;
+                const progress = Math.max(0, Math.min(percent, 100));
+                const barColor = cat.total <= 0 ? "bg-slate-500" : percent > 100 ? "bg-red-500" : "bg-[#0a234c]";
 
-              return (
-                <div key={cat.name}>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="font-medium text-gray-800">
-                      {cat.name}
-                    </span>
-                    <span className="text-gray-600">
-                      {cat.used} / {cat.total} LKR
-                    </span>
-                  </div>
+                return (
+                  <div key={cat.name}>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-medium text-gray-800">
+                        {cat.name}
+                      </span>
+                      <span className="text-gray-600">
+                        {cat.used.toLocaleString(undefined, { maximumFractionDigits: 2 })} / {cat.total.toLocaleString(undefined, { maximumFractionDigits: 2 })} LKR
+                      </span>
+                    </div>
 
-                  <div className="h-3 bg-white/60 rounded-full overflow-hidden">
-                    <div
-                      className="h-3 bg-[#0a234c] rounded-full transition-all duration-1000 ease-out"
-                      style={{ width: `${percent}%` }}
-                    />
+                    <div className="h-3 bg-white/60 rounded-full overflow-hidden">
+                      <div
+                        className={`h-3 rounded-full transition-all duration-1000 ease-out ${barColor}`}
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -233,4 +283,3 @@ function GlassCard({
     </div>
   );
 }
-

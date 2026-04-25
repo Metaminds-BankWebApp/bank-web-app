@@ -21,6 +21,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { type SidebarItem, type UserRole, getSidebarRoleConfig } from "@/config/site";
+import { authService } from "@/src/api/auth/auth.service";
 import { cn } from "@/src/lib/utils";
 import { useAuthStore } from "@/src/store";
 import { ModeToggle } from "@/src/components/mode-toggle";
@@ -51,6 +52,17 @@ export function Sidebar({ role, className, hideCollapse }: SidebarProps) {
   const pathname = usePathname();
   const logout = useAuthStore((state) => state.logout);
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch {
+      // Local logout should still happen even if backend call fails.
+    } finally {
+      logout();
+      window.location.replace("/");
+    }
+  };
 
   useEffect(() => {
     if (hideCollapse) return;
@@ -88,10 +100,7 @@ export function Sidebar({ role, className, hideCollapse }: SidebarProps) {
         <button
           key={item.title}
           type="button"
-          onClick={() => {
-            logout();
-            window.location.replace("/");
-          }}
+          onClick={handleLogout}
           className={cn(
             "relative flex w-full items-center gap-3 rounded-lg px-6 py-3 text-left text-sm font-semibold text-white/90 transition-colors hover:bg-white/12",
             isCollapsed && "justify-center px-2"
