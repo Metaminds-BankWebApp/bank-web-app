@@ -159,7 +159,13 @@ export default function Page() {
     }
 
     setFormErrors(nextErrors)
-    return !nextErrors.accountNumber && !nextErrors.amount && !nextErrors.beneficiary && !nextErrors.remark
+    const hasErrors = Boolean(nextErrors.accountNumber || nextErrors.amount || nextErrors.beneficiary || nextErrors.remark)
+    if (hasErrors) {
+      const firstError = nextErrors.accountNumber || nextErrors.beneficiary || nextErrors.amount || nextErrors.remark
+      setSubmitError(firstError)
+    }
+
+    return !hasErrors
   }
 
   const handleTransfer = async () => {
@@ -228,7 +234,8 @@ export default function Page() {
       }
 
       setFormErrors((prev) => ({ ...prev, ...nextErrors }))
-      setSubmitError(message)
+      const firstFieldError = nextErrors.accountNumber || nextErrors.beneficiary || nextErrors.amount || nextErrors.remark
+      setSubmitError(firstFieldError || message)
     } finally {
       setIsSubmittingTransfer(false)
     }
@@ -352,9 +359,6 @@ export default function Page() {
                   onChange={(event) => handleAccountNumberChange(event.target.value)}
                   aria-invalid={Boolean(formErrors.accountNumber)}
                 />
-                {formErrors.accountNumber && (
-                  <p className="text-sm text-red-500">{formErrors.accountNumber}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -365,9 +369,6 @@ export default function Page() {
                   onChange={(event) => handleBeneficiaryChange(event.target.value)}
                   aria-invalid={Boolean(formErrors.beneficiary)}
                 />
-                {formErrors.beneficiary && (
-                  <p className="text-sm text-red-500">{formErrors.beneficiary}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -381,9 +382,6 @@ export default function Page() {
                   onChange={(event) => handleAmountChange(event.target.value)}
                   aria-invalid={Boolean(formErrors.amount)}
                 />
-                {formErrors.amount && (
-                  <p className="text-sm text-red-500">{formErrors.amount}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -397,9 +395,6 @@ export default function Page() {
                   onChange={(event) => handleRemarkChange(event.target.value)}
                   className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
                 />
-                {formErrors.remark && (
-                  <p className="text-sm text-red-500">{formErrors.remark}</p>
-                )}
               </div>
 
               <div className="pt-1">

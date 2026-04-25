@@ -35,8 +35,18 @@ export async function resendTransactionOtp(payload: ResendTransactionOtpRequest)
   }
 }
 
+export async function getTransactionHistory(): Promise<TransactionResponse[]> {
+  try {
+    const { data } = await apiClient.get<TransactionResponse[]>(TRANSACT_ENDPOINTS.transactionsHistory);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export const transactionService = {
   initiateTransaction,
   verifyTransactionOtp,
   resendTransactionOtp,
+  getTransactionHistory,
 };
