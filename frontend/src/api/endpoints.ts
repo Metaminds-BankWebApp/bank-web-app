@@ -94,3 +94,13 @@ export const TRANSACT_ENDPOINTS = {
   beneficiaries: "/bank-customers/transact/beneficiaries",
   beneficiaryById: (beneficiaryId: number) => `/bank-customers/transact/beneficiaries/${beneficiaryId}`,
 } as const;
+
+export const SPENDIQ_ENDPOINTS = {
+  categories: "/spendiq/categories",
+  expenses: "/spendiq/expenses",
+  incomes: "/spendiq/incomes",
+  budgets: "/spendiq/budgets",
+  summary: "/spendiq/summary",
+  expenseById: (expenseId: number) => `/spendiq/expenses/${expenseId}`,
+  incomeById: (incomeId: number) => `/spendiq/incomes/${incomeId}`,
+} as const;
