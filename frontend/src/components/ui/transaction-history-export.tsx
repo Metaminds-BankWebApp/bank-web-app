@@ -13,7 +13,7 @@ import {
 	SelectValue,
 } from "@/src/components/ui/select"
 
-type TransactionStatus = "success" | "failed"
+type TransactionStatus = "success" | "failed" | "pending" | "cancelled"
 type ReportFileType = "csv" | "json" | "txt" | "pdf"
 type ReportRange = "last7" | "last30" | "yearToDate"
 type ReportStatusFilter = "all" | TransactionStatus
@@ -55,6 +55,8 @@ const reportStatusLabels: Record<ReportStatusFilter, string> = {
 	all: "All transactions",
 	success: "Success only",
 	failed: "Failed only",
+	pending: "Pending only",
+	cancelled: "Cancelled only",
 }
 
 const reportFileTypeMeta: Record<ReportFileType, { label: string; extension: string; mimeType: string }> = {
@@ -378,6 +380,8 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 									<SelectItem value="all">All transactions</SelectItem>
 									<SelectItem value="success">Success only</SelectItem>
 									<SelectItem value="failed">Failed only</SelectItem>
+									<SelectItem value="pending">Pending only</SelectItem>
+									<SelectItem value="cancelled">Cancelled only</SelectItem>
 								</SelectContent>
 							</Select>
 						</div>
