@@ -4,9 +4,11 @@ import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, CheckCircle2, Info, Menu, Plus, TriangleAlert, X } from "lucide-react";
+import { getMyUserProfile, resolveUserProfileImageUrl } from "@/src/api/profile/user-profile.service";
 import { Sidebar, useFeatureLayout } from "@/src/components/layout";
 import { cn } from "@/src/lib/utils";
 import type { UserRole } from "@/config/site";
+import { useAuthStore } from "@/src/store";
 import {
   type NotificationItem,
   getNotificationsForContext,
@@ -50,6 +52,19 @@ const NOTIFICATION_KIND_ICON: Record<NotificationItem["kind"], React.ReactNode> 
   alert: <TriangleAlert size={14} className="text-rose-400" />,
 };
 
+function formatRoleLabel(roleName?: string | null): string | null {
+  const normalized = roleName?.trim() ?? "";
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized
+    .toLowerCase()
+    .split("_")
+    .map((part) => (part ? part.charAt(0).toUpperCase() + part.slice(1) : part))
+    .join(" ");
+}
+
 function NotificationBadge({ show, value }: { show: boolean; value: BadgeValue }) {
   if (!show) return null;
 
@@ -71,8 +86,8 @@ function NotificationBadge({ show, value }: { show: boolean; value: BadgeValue }
 export default function ModuleHeader({
   title = "Dashboard",
   subtitle,
-  name = "Kamal Edirisinghe",
-  role = "User",
+  name,
+  role,
   theme = "creditlens",
   className,
   showBadges = true,
@@ -87,9 +102,34 @@ export default function ModuleHeader({
   const pathname = usePathname();
   const router = useRouter();
   const featureLayout = useFeatureLayout();
+  const token = useAuthStore((state) => state.token);
+  const authUser = useAuthStore((state) => state.user);
+  const authIdentity = useAuthStore((state) => state.identity);
+  const authProfile = useAuthStore((state) => state.profile);
+  const setAuthProfile = useAuthStore((state) => state.setProfile);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!token || authProfile) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    void getMyUserProfile()
+      .then((profileData) => {
+        if (!isCancelled) {
+          setAuthProfile(profileData);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [authProfile, setAuthProfile, token]);
 
   useEffect(() => {
     const raf = requestAnimationFrame(() => {
@@ -178,6 +218,12 @@ export default function ModuleHeader({
   const unreadCount = useMemo(() => notifications.filter((item) => item.unread).length, [notifications]);
   const profilePath = routeContext.profilePath;
   const notificationsPath = routeContext.notificationsPath;
+  const resolvedUserName = authProfile?.fullName?.trim() || authIdentity?.fullName?.trim() || authUser?.fullName?.trim() || null;
+  const resolvedUserRole = authProfile?.roleDisplayName?.trim() || formatRoleLabel(authIdentity?.roleName) || null;
+  const resolvedAvatarSrc = resolveUserProfileImageUrl(authProfile?.profilePictureUrl)
+    ?? (resolvedUserName ? `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedUserName)}&background=random` : avatarSrc);
+  const resolvedName = resolvedUserName || name || "User";
+  const resolvedRole = resolvedUserRole || role || "User";
 
   const handleRemoveNotification = (id: string) => {
     setDismissedByRoute((prev) => {
@@ -193,8 +239,8 @@ export default function ModuleHeader({
   const profileContent = (
     <>
       <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/20">
-        {avatarSrc ? (
-          <Image src={avatarSrc} alt="User" fill className="object-cover" sizes="32px" unoptimized />
+        {resolvedAvatarSrc ? (
+          <Image src={resolvedAvatarSrc} alt="User" fill className="object-cover" sizes="32px" unoptimized />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-slate-400 to-slate-600" />
         )}
@@ -203,8 +249,8 @@ export default function ModuleHeader({
         ) : null}
       </div>
       <div className="hidden min-w-0 text-sm leading-tight sm:block">
-        <p className="truncate text-base font-medium">{name}</p>
-        <p className="truncate text-xs text-white/60">{role}</p>
+        <p className="truncate text-base font-medium">{resolvedName}</p>
+        <p className="truncate text-xs text-white/60">{resolvedRole}</p>
       </div>
     </>
   );
