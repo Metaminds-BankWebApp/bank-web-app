@@ -24,6 +24,7 @@ import { ProfileImageUploadDialog } from "@/src/components/profile/profile-image
 import { useLocalProfileImage } from "@/src/components/profile/use-local-profile-image";
 import { Badge, useToast } from "@/src/components/ui";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { useAuthStore } from "@/src/store";
 import { ApiError } from "@/src/types/api-error";
 import type { UserProfileResponse } from "@/src/types/dto/user-profile.dto";
 import { Camera, Eye, EyeOff, Lock, ShieldCheck, User } from "lucide-react";
@@ -46,6 +47,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
       : "rounded-2xl border border-slate-100 bg-white p-6 shadow-sm";
 
   const { showToast } = useToast();
+  const setAuthProfile = useAuthStore((state) => state.setProfile);
   const [profile, setProfile] = useState<UserProfileResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -83,6 +85,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
       try {
         const data = await getMyUserProfile();
         setProfile(data);
+        setAuthProfile(data);
       } catch (unknownError) {
         const message = unknownError instanceof ApiError ? unknownError.message : "Failed to load profile.";
         setLoadError(message);
@@ -92,7 +95,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     };
 
     void loadProfile();
-  }, [loadRequestId]);
+  }, [loadRequestId, setAuthProfile]);
 
   const updateFieldError = (fieldKey: string, errorMessage?: string) => {
     setFieldErrors((prev) => {
@@ -210,6 +213,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
       });
 
       setProfile(response.profile);
+      setAuthProfile(response.profile);
       await syncCurrentAuthIdentity().catch(() => undefined);
       showToast({
         type: "success",
@@ -247,6 +251,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   const handleProfileImageUpload = async (file: File) => {
     const response = await uploadMyUserProfileImage(file);
     setProfile(response.profile);
+    setAuthProfile(response.profile);
     showToast({
       type: "success",
       title: "Profile photo updated",
@@ -257,6 +262,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   const handleProfileImageRemove = async () => {
     const response = await removeMyUserProfileImage();
     setProfile(response.profile);
+    setAuthProfile(response.profile);
     showToast({
       type: "success",
       title: "Profile photo removed",
