@@ -373,6 +373,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
                       <div className="relative">
                         <input
                           value={securityValues[field.key] ?? ""}
+                          name={`profile-${field.key}`}
                           type={
                             field.type === "password"
                               ? (showPassword[field.key] ? "text" : "password")
@@ -381,6 +382,17 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
                           placeholder={field.placeholder}
                           readOnly={field.readOnly}
                           disabled={isSaving && !field.readOnly}
+                          autoComplete={
+                            field.key === "currentUsername"
+                              ? "username"
+                              : field.key === "newUsername"
+                                ? "off"
+                                : field.type === "password"
+                                  ? "new-password"
+                                  : "off"
+                          }
+                          data-lpignore={field.type === "password" ? "true" : undefined}
+                          data-1p-ignore={field.type === "password" ? "true" : undefined}
                           onChange={(event) => handleSecurityChange(field, event.target.value)}
                           onBlur={(event) => {
                             if (field.key === "newUsername") {
