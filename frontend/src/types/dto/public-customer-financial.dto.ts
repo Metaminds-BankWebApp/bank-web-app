@@ -48,6 +48,10 @@ export interface PublicCustomerMeResponse {
   customerCode: string;
 }
 
+export interface PublicCustomerCardProviderOptionResponse {
+  provider: string;
+}
+
 export interface PublicCustomerFinancialRecordSummaryResponse {
   recordId: number;
   publicCustomerId: number;

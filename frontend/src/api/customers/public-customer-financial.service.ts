@@ -2,6 +2,7 @@ import apiClient, { toApiError } from "@/src/api/client";
 import { PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS } from "@/src/api/endpoints";
 import type {
   PublicCustomerCardStepRequest,
+  PublicCustomerCardProviderOptionResponse,
   PublicCustomerMeResponse,
   PublicCustomerFinancialRecordResponse,
   PublicCustomerFinancialRecordSummaryResponse,
@@ -14,6 +15,17 @@ import type {
 export async function getMyPublicCustomerProfile(): Promise<PublicCustomerMeResponse> {
   try {
     const { data } = await apiClient.get<PublicCustomerMeResponse>(PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.me);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getPublicCustomerCardProviderOptions(): Promise<PublicCustomerCardProviderOptionResponse[]> {
+  try {
+    const { data } = await apiClient.get<PublicCustomerCardProviderOptionResponse[]>(
+      PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.cardProviders,
+    );
     return data;
   } catch (error) {
     throw toApiError(error);
