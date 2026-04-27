@@ -2,17 +2,19 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Search, MoreHorizontal } from "lucide-react";
+import { Pencil, Trash2, Search } from "lucide-react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 import {
   getAdminBankOfficers,
   type AdminBankOfficerSummaryResponse,
+  type AdminBankOfficerStatus,
+  updateAdminBankOfficerStatus,
 } from "@/src/api/admin/bank-officer.service";
 import { ApiError } from "@/src/types/api-error";
 
-type StatusType = "Active" | "Inactive" | "Pending";
+type StatusType = "Active" | "Inactive" | "Locked" | "Pending";
 
 type OfficerData = {
   userId: number;
@@ -23,7 +25,7 @@ type OfficerData = {
   contact: string;
   assigned: string;
   status: StatusType;
-  lastUpdatedAt: string | null;
+  createdAt: string | null;
 };
 
 function SummaryCard({
@@ -63,6 +65,8 @@ function StatusBadge({ status }: { status: StatusType }) {
       ? "bg-green-100 text-green-700"
       : status === "Inactive"
       ? "bg-red-100 text-red-700"
+      : status === "Locked"
+      ? "bg-slate-200 text-slate-700"
       : "bg-yellow-100 text-yellow-700";
 
   return (
@@ -97,6 +101,9 @@ function toDisplayStatus(status: string): StatusType {
   }
   if (normalized === "INACTIVE") {
     return "Inactive";
+  }
+  if (normalized === "LOCKED") {
+    return "Locked";
   }
   return "Pending";
 }
@@ -134,14 +141,14 @@ function getInitials(name: string): string {
 function mapApiOfficer(officer: AdminBankOfficerSummaryResponse): OfficerData {
   return {
     userId: officer.userId,
-    id: officer.employeeCode?.trim() || officer.customerId?.trim() || "-",
+    id: officer.employeeCode?.trim() || "-",
     name: officer.fullName?.trim() || officer.email || `User ${officer.userId}`,
     branch: officer.branchName?.trim() || "-",
     email: officer.email || "-",
     contact: officer.phone?.trim() || "-",
     assigned: toDisplayDate(officer.lastUpdated),
     status: toDisplayStatus(officer.status || ""),
-    lastUpdatedAt: officer.lastUpdated,
+    createdAt: officer.createdAt,
   };
 }
 
@@ -151,6 +158,7 @@ export default function Page() {
   const [officers, setOfficers] = useState<OfficerData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
   const officersPerPage = 5;
 
   const router = useRouter();
@@ -192,6 +200,50 @@ export default function Page() {
     };
   }, []);
 
+  const applyOfficerUpdate = (updated: AdminBankOfficerSummaryResponse) => {
+    setOfficers((prev) =>
+      prev.map((entry) =>
+        entry.userId === updated.userId ? mapApiOfficer(updated) : entry
+      )
+    );
+  };
+
+  const handleToggleActive = async (officer: OfficerData) => {
+    const nextStatus: AdminBankOfficerStatus =
+      officer.status === "Active" ? "INACTIVE" : "ACTIVE";
+
+    setUpdatingUserId(officer.userId);
+
+    try {
+      const updated = await updateAdminBankOfficerStatus(officer.userId, nextStatus);
+      applyOfficerUpdate(updated);
+    } catch (error) {
+      const message =
+        error instanceof ApiError ? error.message : "Failed to update officer status.";
+      alert(message);
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
+  const handleToggleLock = async (officer: OfficerData) => {
+    const nextStatus: AdminBankOfficerStatus =
+      officer.status === "Locked" ? "ACTIVE" : "LOCKED";
+
+    setUpdatingUserId(officer.userId);
+
+    try {
+      const updated = await updateAdminBankOfficerStatus(officer.userId, nextStatus);
+      applyOfficerUpdate(updated);
+    } catch (error) {
+      const message =
+        error instanceof ApiError ? error.message : "Failed to update lock status.";
+      alert(message);
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
   const filteredOfficers = useMemo(() => {
     const normalized = searchQuery.toLowerCase();
 
@@ -219,7 +271,7 @@ export default function Page() {
   const summary = useMemo(() => {
     const activeCount = officers.filter((officer) => officer.status === "Active").length;
     const inactiveCount = officers.filter((officer) => officer.status === "Inactive").length;
-    const recentCount = officers.filter((officer) => isRecentDate(officer.lastUpdatedAt, 30)).length;
+    const recentCount = officers.filter((officer) => isRecentDate(officer.createdAt, 7)).length;
 
     return {
       totalOfficers: officers.length,
@@ -336,49 +388,49 @@ export default function Page() {
                         </td>
                       </tr>
                     ) : (
-                      paginatedOfficers.map((officer) => (
-                        <tr key={officer.userId} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 font-medium">{officer.id}</td>
-                          <td className="px-6 py-4 flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-base font-semibold text-[#0B3B66] border border-gray-300">
-                              {getInitials(officer.name)}
-                            </div>
-                            <span className="font-semibold text-gray-900">{officer.name}</span>
-                          </td>
-                          <td className="px-6 py-4 text-gray-600">{officer.branch}</td>
-                          <td className="px-6 py-4">{officer.email}</td>
-                          <td className="px-6 py-4">{officer.contact}</td>
-                          <td className="px-6 py-4">{officer.assigned}</td>
-                          <td className="px-6 py-4">
-                            <StatusBadge status={officer.status} />
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <button
-                                onClick={() => console.log("Edit:", officer.userId)}
-                                className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition"
-                              >
-                                <Pencil size={16} />
-                              </button>
+                      paginatedOfficers.map((officer) => {
+                        const isUpdating = updatingUserId === officer.userId;
 
-                              <button
-                                onClick={() => console.log("Delete:", officer.userId)}
-                                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition"
-                              >
-                                <Trash2 size={16} />
-                              </button>
+                        return (
+                          <tr key={officer.userId} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 font-medium">{officer.id}</td>
+                            <td className="px-6 py-4 flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-base font-semibold text-[#0B3B66] border border-gray-300">
+                                {getInitials(officer.name)}
+                              </div>
+                              <span className="font-semibold text-gray-900">{officer.name}</span>
+                            </td>
+                            <td className="px-6 py-4 text-gray-600">{officer.branch}</td>
+                            <td className="px-6 py-4">{officer.email}</td>
+                            <td className="px-6 py-4">{officer.contact}</td>
+                            <td className="px-6 py-4">{officer.assigned}</td>
+                            <td className="px-6 py-4">
+                              <StatusBadge status={officer.status} />
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => handleToggleActive(officer)}
+                                  disabled={isUpdating}
+                                  title={officer.status === "Active" ? "Set Inactive" : "Set Active"}
+                                  className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <Pencil size={16} />
+                                </button>
 
-                              <button
-                                onClick={() => console.log("More:", officer.userId)}
-                                className="p-2 rounded-lg hover:bg-gray-50 text-gray-600 transition"
-                                title="More actions"
-                              >
-                                <MoreHorizontal size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                                <button
+                                  onClick={() => handleToggleLock(officer)}
+                                  disabled={isUpdating}
+                                  title={officer.status === "Locked" ? "Unlock Officer" : "Lock Officer"}
+                                  className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
