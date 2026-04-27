@@ -52,6 +52,7 @@ export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
 
 export const PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS = {
   me: "/public-customers/me",
+  cardProviders: "/public-customers/card-providers",
   base: (publicCustomerId: number) => `/public-customers/${publicCustomerId}/financial-records`,
   saveIncomeStep: (publicCustomerId: number) =>
     `/public-customers/${publicCustomerId}/financial-records/steps/income`,
