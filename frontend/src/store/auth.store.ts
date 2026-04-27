@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { LoginResponse, UserRole } from "@/src/types/dto/auth.dto";
 import type { AuthMeResponse } from "@/src/types/dto/auth-me.dto";
+import type { UserProfileResponse } from "@/src/types/dto/user-profile.dto";
 import { authPersistence } from "@/src/store/auth.storage";
 
 export const LOGOUT_INTENT_KEY = "logout_intent";
@@ -30,8 +31,10 @@ type AuthState = {
   role: UserRole | null;
   user: AuthUser | null;
   identity: AuthMeResponse | null;
+  profile: UserProfileResponse | null;
   login: (payload: LoginResponse) => RoleRedirectPath;
   setIdentity: (identity: AuthMeResponse | null) => void;
+  setProfile: (profile: UserProfileResponse | null) => void;
   clearSession: () => void;
   logout: () => void;
 };
@@ -43,6 +46,7 @@ export const useAuthStore = create<AuthState>()(
       role: null,
       user: null,
       identity: null,
+      profile: null,
       login: (payload) => {
         const rawRole = payload.user.role;
         if (!isUserRole(rawRole)) {
@@ -56,12 +60,16 @@ export const useAuthStore = create<AuthState>()(
           role: nextRole,
           user: payload.user,
           identity: null,
+          profile: null,
         });
 
         return getRoleRedirectPath(nextRole);
       },
       setIdentity: (identity) => {
         set({ identity });
+      },
+      setProfile: (profile) => {
+        set({ profile });
       },
       clearSession: () => {
         if (typeof window !== "undefined") {
@@ -73,6 +81,7 @@ export const useAuthStore = create<AuthState>()(
           role: null,
           user: null,
           identity: null,
+          profile: null,
         });
       },
       logout: () => {
@@ -85,6 +94,7 @@ export const useAuthStore = create<AuthState>()(
           role: null,
           user: null,
           identity: null,
+          profile: null,
         });
       },
     }),
