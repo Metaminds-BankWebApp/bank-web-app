@@ -81,6 +81,16 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
   byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
 } as const;
 
+export const BANK_CREDITLENS_ENDPOINTS = {
+  current: "/creditlens/bank/current",
+  dashboard: "/creditlens/bank/dashboard",
+  trends: "/creditlens/bank/trends",
+  insights: "/creditlens/bank/insights",
+  report: "/creditlens/bank/report",
+  history: "/creditlens/bank/history",
+  byId: (bankEvaluationId: number) => `/creditlens/bank/evaluations/${bankEvaluationId}`,
+} as const;
+
 export const USER_PROFILE_ENDPOINTS = {
   current: "/users/profile",
   update: "/users/profile",

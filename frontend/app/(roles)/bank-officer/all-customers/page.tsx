@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { getBankCustomersForOfficer } from "@/src/api/customers/bank-customer.service";
 import {
-  findOwnedBankCustomerStepOneByNic,
-  getCurrentBankCustomerFinancialRecord,
+   findOwnedBankCustomerStepOneByNic,
+   getCurrentBankCustomerFinancialRecord,
+   getOwnedBankCustomerIdentityByUserId,
 } from "@/src/api/customers/bank-customer-financial.service";
 import { ApiError } from "@/src/types/api-error";
 import type { BankCustomerSummaryResponse } from "@/src/types/dto/bank-customer.dto";
@@ -174,6 +176,7 @@ const customerDetailTabs: Array<{ id: CustomerDetailTab; label: string }> = [
 ];
 
 export default function AllCustomersPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -190,6 +193,7 @@ export default function AllCustomersPage() {
    const [selectedCustomerFinancial, setSelectedCustomerFinancial] = useState<BankCustomerFinancialRecordResponse | null>(null);
    const [isDetailLoading, setIsDetailLoading] = useState(false);
    const [detailLoadError, setDetailLoadError] = useState<string | null>(null);
+   const [creditLensLoadingUserId, setCreditLensLoadingUserId] = useState<number | null>(null);
 
    useEffect(() => {
       let mounted = true;
@@ -391,6 +395,24 @@ export default function AllCustomersPage() {
       };
    }, [selectedCustomerFinancial]);
 
+   const openCustomerCreditLens = async (customer: Customer) => {
+      try {
+         setCreditLensLoadingUserId(customer.userId);
+         setLoadError(null);
+         const identity = await getOwnedBankCustomerIdentityByUserId(customer.userId);
+         router.push(
+            `/bank-officer/credit-analysis/evaluation/${identity.bankCustomerId}?name=${encodeURIComponent(customer.name)}`,
+         );
+      } catch (error) {
+         const message = error instanceof ApiError
+            ? error.message
+            : "Unable to open the CreditLens view for this customer.";
+         setLoadError(message);
+      } finally {
+         setCreditLensLoadingUserId(null);
+      }
+   };
+
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
          <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
@@ -571,14 +593,25 @@ export default function AllCustomersPage() {
                          </TableCell>
                          <TableCell className="text-xs text-slate-500">{customer.lastUpdated}</TableCell>
                          <TableCell>
-                            <Button
-                               variant="outline"
-                               size="sm"
-                               className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
-                               onClick={() => setSelectedCustomer(customer)}
-                            >
-                               View
-                            </Button>
+                            <div className="flex justify-end gap-2">
+                               <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                                  onClick={() => void openCustomerCreditLens(customer)}
+                                  disabled={creditLensLoadingUserId === customer.userId}
+                               >
+                                  {creditLensLoadingUserId === customer.userId ? "Opening..." : "CreditLens"}
+                               </Button>
+                               <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                                  onClick={() => setSelectedCustomer(customer)}
+                               >
+                                  View
+                               </Button>
+                            </div>
                          </TableCell>
                       </TableRow>
                             ))}
@@ -897,7 +930,6 @@ export default function AllCustomersPage() {
     </AuthGuard>
   );
 }
-
 
 
 
