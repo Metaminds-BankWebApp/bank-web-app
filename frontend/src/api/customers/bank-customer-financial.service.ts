@@ -3,6 +3,7 @@ import { BANK_CUSTOMER_FINANCIAL_ENDPOINTS, CUSTOMER_ENDPOINTS } from "@/src/api
 import type {
   BankCustomerCardStepRequest,
   BankCustomerFinancialRecordResponse,
+  BankCustomerFinancialRecordSummaryResponse,
   BankCustomerCribRequestStepRequest,
   BankCustomerCribStepResponse,
   BankCustomerFinancialStepResponse,
@@ -50,6 +51,33 @@ export async function getCurrentBankCustomerFinancialRecord(
   try {
     const { data } = await apiClient.get<BankCustomerFinancialRecordResponse>(
       BANK_CUSTOMER_FINANCIAL_ENDPOINTS.current(bankCustomerId),
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getBankCustomerFinancialRecordHistory(
+  bankCustomerId: number,
+): Promise<BankCustomerFinancialRecordSummaryResponse[]> {
+  try {
+    const { data } = await apiClient.get<BankCustomerFinancialRecordSummaryResponse[]>(
+      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.history(bankCustomerId),
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getBankCustomerFinancialRecordById(
+  bankCustomerId: number,
+  bankRecordId: number,
+): Promise<BankCustomerFinancialRecordResponse> {
+  try {
+    const { data } = await apiClient.get<BankCustomerFinancialRecordResponse>(
+      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.byId(bankCustomerId, bankRecordId),
     );
     return data;
   } catch (error) {

@@ -5,6 +5,7 @@ import { AuthGuard } from "@/src/components/auth";
 import { useRouter } from "next/navigation";
 import {
    getCurrentPublicCustomerFinancialRecord,
+   getPublicCustomerCardProviderOptions,
    getMyPublicCustomerProfile,
    savePublicCustomerCardStep,
    savePublicCustomerIncomeStep,
@@ -157,6 +158,24 @@ const APPLICATION_STEPS = [
   { step: 5, code: "REVIEW" as const, label: "Review" },
 ];
 
+const DEFAULT_CARD_PROVIDER_OPTIONS = [
+  "Bank of Ceylon",
+  "People's Bank",
+  "Commercial Bank",
+  "Sampath Bank",
+  "Hatton National Bank",
+  "Nations Trust Bank",
+  "DFCC Bank",
+  "NDB Bank",
+  "Seylan Bank",
+  "Union Bank",
+  "Pan Asia Bank",
+  "Cargills Bank",
+  "Standard Chartered Bank",
+  "HSBC",
+  "Standard Card",
+];
+
 function createDefaultStepStatusTable(): ApplicationStepStatusRow[] {
   return APPLICATION_STEPS.map((item) => ({
     step: item.step,
@@ -263,7 +282,7 @@ function mapPublicCustomerFinancialRecordToDraftState(
     id: `card-${card.cardId}`,
     limit: Number(card.creditLimit) || 0,
     outstanding: Number(card.outstandingBalance) || 0,
-    provider: card.provider || "Standard Card",
+    provider: card.provider || DEFAULT_CARD_PROVIDER_OPTIONS[0],
   }));
 
   const liabilities: Liability[] = asArray<LiabilityRecord>(record.liabilities).map((liability) => ({
@@ -356,7 +375,7 @@ function mapPublicCustomerFinancialRecordToDraftState(
     cardDraft: {
       cardLimit: toInputValue(cards[0]?.limit),
       cardOutstanding: toInputValue(cards[0]?.outstanding),
-      cardProvider: cards[0]?.provider || "Standard Card",
+      cardProvider: cards[0]?.provider || DEFAULT_CARD_PROVIDER_OPTIONS[0],
     },
     liabilityDraft: {
       liabilityDesc: liabilities[0]?.description || "",
@@ -407,7 +426,9 @@ export default function PublicCustomerApplicationPage() {
   // --- Step 3 State (Cards) ---
   const [cardLimit, setCardLimit] = useState("");
   const [cardOutstanding, setCardOutstanding] = useState("");
-  const [cardProvider, setCardProvider] = useState("Standard Card");
+  const [cardProvider, setCardProvider] = useState(DEFAULT_CARD_PROVIDER_OPTIONS[0]);
+  const [cardProviderOptions, setCardProviderOptions] = useState<string[]>(DEFAULT_CARD_PROVIDER_OPTIONS);
+  const [cardValidationError, setCardValidationError] = useState("");
 
   // --- Step 4 State (Liabilities) ---
   const [liabilityDesc, setLiabilityDesc] = useState("");
@@ -421,7 +442,49 @@ export default function PublicCustomerApplicationPage() {
       const [address, setAddress] = useState("");
       const [city, setCity] = useState("");
       const [province, setProvince] = useState("");
-   const [accountErrors, setAccountErrors] = useState<Record<string, string>>({});
+  const [accountErrors, setAccountErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    (async () => {
+      try {
+        const providers = await getPublicCustomerCardProviderOptions();
+        if (isCancelled) {
+          return;
+        }
+
+        const providerList = [
+          ...providers.map((item) => (item.provider ?? "").trim()).filter((item) => item.length > 0),
+          ...DEFAULT_CARD_PROVIDER_OPTIONS,
+        ];
+        const uniqueProviders = Array.from(new Set(providerList));
+        const nextOptions = uniqueProviders.length > 0 ? uniqueProviders : DEFAULT_CARD_PROVIDER_OPTIONS;
+
+        setCardProviderOptions(nextOptions);
+        setCardProvider((prev) => {
+          const current = (prev ?? "").trim();
+          if (current.length > 0 && nextOptions.includes(current)) {
+            return current;
+          }
+          return nextOptions[0];
+        });
+      } catch {
+        if (isCancelled) {
+          return;
+        }
+        setCardProviderOptions(DEFAULT_CARD_PROVIDER_OPTIONS);
+        setCardProvider((prev) => {
+          const current = (prev ?? "").trim();
+          return current.length > 0 ? current : DEFAULT_CARD_PROVIDER_OPTIONS[0];
+        });
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const updateStepStatus = useCallback((targetStep: number, changes: Partial<ApplicationStepStatusRow>) => {
     const updatedAt = new Date().toISOString();
@@ -508,7 +571,7 @@ export default function PublicCustomerApplicationPage() {
       if (parsedDraft.cardDraft) {
         setCardLimit(parsedDraft.cardDraft.cardLimit ?? "");
         setCardOutstanding(parsedDraft.cardDraft.cardOutstanding ?? "");
-        setCardProvider(parsedDraft.cardDraft.cardProvider ?? "Standard Card");
+        setCardProvider(parsedDraft.cardDraft.cardProvider ?? DEFAULT_CARD_PROVIDER_OPTIONS[0]);
       }
 
       if (parsedDraft.liabilityDraft) {
@@ -609,7 +672,7 @@ export default function PublicCustomerApplicationPage() {
           setLoanBalance("");
           setCardLimit("");
           setCardOutstanding("");
-          setCardProvider("Standard Card");
+          setCardProvider(DEFAULT_CARD_PROVIDER_OPTIONS[0]);
           setLiabilityDesc("");
           setLiabilityAmount("");
         }
@@ -882,13 +945,45 @@ export default function PublicCustomerApplicationPage() {
     setLoanBalance("");
   };
 
+  const validateCardDraftInput = (providerValue: string, limitValue: string, outstandingValue: string): string | null => {
+    if (!providerValue.trim()) {
+      return "Please select a card provider bank name.";
+    }
+    if (!limitValue.trim() || !outstandingValue.trim()) {
+      return "Please fill both credit limit and outstanding balance.";
+    }
+
+    const parsedLimit = Number(limitValue);
+    const parsedOutstanding = Number(outstandingValue);
+
+    if (!Number.isFinite(parsedLimit) || parsedLimit < 0) {
+      return "Credit limit must be a valid number greater than or equal to 0.";
+    }
+    if (!Number.isFinite(parsedOutstanding) || parsedOutstanding < 0) {
+      return "Outstanding balance must be a valid number greater than or equal to 0.";
+    }
+    if (parsedOutstanding > parsedLimit) {
+      return "Outstanding balance cannot be greater than credit limit.";
+    }
+
+    return null;
+  };
+
   const handleAddCard = () => {
-    if (!cardLimit || !cardOutstanding) return;
+    const validationMessage = validateCardDraftInput(cardProvider, cardLimit, cardOutstanding);
+    if (validationMessage) {
+      setCardValidationError(validationMessage);
+      return;
+    }
+
+    setCardValidationError("");
+    const parsedLimit = Number(cardLimit);
+    const parsedOutstanding = Number(cardOutstanding);
     const newCard: Card = {
       id: Math.random().toString(36).substr(2, 9),
-      limit: parseFloat(cardLimit),
-      outstanding: parseFloat(cardOutstanding),
-      provider: cardProvider
+      limit: parsedLimit,
+      outstanding: parsedOutstanding,
+      provider: cardProvider.trim(),
     };
     setFormData(prev => ({ ...prev, cards: [...prev.cards, newCard] }));
     setCardLimit("");
@@ -953,7 +1048,7 @@ export default function PublicCustomerApplicationPage() {
       return;
     }
 
-    setCardProvider(card.provider || "Standard Card");
+    setCardProvider(card.provider || DEFAULT_CARD_PROVIDER_OPTIONS[0]);
     setCardLimit(toInputValue(card.limit));
     setCardOutstanding(toInputValue(card.outstanding));
     removeItem("cards", id);
@@ -1027,8 +1122,8 @@ export default function PublicCustomerApplicationPage() {
       })),
    });
 
-   const buildCardPayload = (): PublicCustomerCardStepRequest => ({
-      cards: formData.cards.map((card) => ({
+   const buildCardPayload = (cards: Card[] = formData.cards): PublicCustomerCardStepRequest => ({
+      cards: cards.map((card) => ({
          provider: card.provider,
          creditLimit: card.limit,
          outstandingBalance: card.outstanding,
@@ -1056,7 +1151,40 @@ export default function PublicCustomerApplicationPage() {
      }
 
      if (targetStep === 3) {
-        return savePublicCustomerCardStep(publicCustomerId, buildCardPayload());
+        const hasCardDraft = cardLimit.trim().length > 0 || cardOutstanding.trim().length > 0;
+        let cardsForSave = formData.cards;
+
+        if (hasCardDraft) {
+          const validationMessage = validateCardDraftInput(cardProvider, cardLimit, cardOutstanding);
+          if (validationMessage) {
+            throw new Error(validationMessage);
+          }
+
+          const parsedLimit = Number(cardLimit);
+          const parsedOutstanding = Number(cardOutstanding);
+          const provider = cardProvider.trim();
+
+          const duplicateDraft = formData.cards.some(
+            (card) => card.provider === provider && card.limit === parsedLimit && card.outstanding === parsedOutstanding,
+          );
+
+          if (!duplicateDraft) {
+            cardsForSave = [
+              ...formData.cards,
+              {
+                id: Math.random().toString(36).substr(2, 9),
+                provider,
+                limit: parsedLimit,
+                outstanding: parsedOutstanding,
+              },
+            ];
+            setFormData((prev) => ({ ...prev, cards: cardsForSave }));
+            setCardLimit("");
+            setCardOutstanding("");
+          }
+        }
+
+        return savePublicCustomerCardStep(publicCustomerId, buildCardPayload(cardsForSave));
      }
 
      if (targetStep === 4) {
@@ -1079,6 +1207,22 @@ export default function PublicCustomerApplicationPage() {
    const nextStep = async () => {
       if (isSavingStep || step >= 5) {
          return;
+      }
+
+      if (step === 3) {
+        const hasCardDraft = cardLimit.trim().length > 0 || cardOutstanding.trim().length > 0;
+        if (hasCardDraft) {
+          const validationMessage = validateCardDraftInput(cardProvider, cardLimit, cardOutstanding);
+          if (validationMessage) {
+            setCardValidationError(validationMessage);
+            updateStepStatus(step, {
+              status: "FAILED",
+              backendSynced: false,
+              note: validationMessage,
+            });
+            return;
+          }
+        }
       }
 
       try {
@@ -1599,6 +1743,30 @@ export default function PublicCustomerApplicationPage() {
                 <p className="text-slate-500 mb-8 text-sm">Please provide details of your current active credit cards.</p>
                 
                 <div className="space-y-6">
+                   <div>
+                     <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Card Provider (Bank Name)</label>
+                     <Select
+                       value={cardProvider}
+                       onValueChange={(value) => {
+                         setCardProvider(value);
+                         if (cardValidationError) {
+                           setCardValidationError("");
+                         }
+                       }}
+                     >
+                       <SelectTrigger className="h-12 bg-slate-50 border-slate-200">
+                         <SelectValue placeholder="Select bank name" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {cardProviderOptions.map((providerName) => (
+                           <SelectItem key={providerName} value={providerName}>
+                             {providerName}
+                           </SelectItem>
+                         ))}
+                       </SelectContent>
+                     </Select>
+                   </div>
+
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Credit Limit (LKR)</label>
@@ -1609,10 +1777,16 @@ export default function PublicCustomerApplicationPage() {
                               className="h-12 pl-12 bg-slate-50 border-slate-200" 
                               placeholder="500,000" 
                               value={cardLimit}
-                              onChange={(e) => setCardLimit(e.target.value)}
+                              onChange={(e) => {
+                                setCardLimit(e.target.value);
+                                if (cardValidationError) {
+                                  setCardValidationError("");
+                                }
+                              }}
                            />
                         </div>
                         <p className="text-[10px] text-slate-400 mt-1">Total sanctioned limit of your card.</p>
+                        {cardValidationError && <p className="mt-1 text-xs text-red-500">{cardValidationError}</p>}
                       </div>
                       <div>
                         <label className="text-xs font-bold text-slate-700 uppercase mb-2 block">Outstanding Balance (LKR)</label>
@@ -1623,7 +1797,12 @@ export default function PublicCustomerApplicationPage() {
                               className="h-12 pl-12 bg-slate-50 border-slate-200" 
                               placeholder="25,000" 
                               value={cardOutstanding}
-                              onChange={(e) => setCardOutstanding(e.target.value)}
+                              onChange={(e) => {
+                                setCardOutstanding(e.target.value);
+                                if (cardValidationError) {
+                                  setCardValidationError("");
+                                }
+                              }}
                            />
                         </div>
                         <p className="text-[10px] text-slate-400 mt-1">Current amount due as per latest statement.</p>
@@ -1657,16 +1836,18 @@ export default function PublicCustomerApplicationPage() {
                    ) : (
                       <div className="space-y-4">
                          <div className="flex text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">
-                            <span className="w-1/3">Limit</span>
-                            <span className="w-1/3">Balance</span>
-                            <span className="w-1/3 text-right">Actions</span>
+                            <span className="w-1/3">Provider</span>
+                            <span className="w-1/4 text-right">Limit</span>
+                            <span className="w-1/4 text-right">Balance</span>
+                            <span className="w-1/6 text-right">Actions</span>
                          </div>
                          
                          {formData.cards.map((item) => (
                             <div key={item.id} className="bg-white border border-slate-100 rounded-xl p-4 flex items-center shadow-sm text-sm">
-                               <div className="w-1/3 font-bold text-slate-800">{formatCurrency(item.limit)}</div>
-                               <div className="w-1/3 font-medium text-slate-600">{formatCurrency(item.outstanding)}</div>
-                               <div className="w-1/3 flex justify-end gap-2">
+                               <div className="w-1/3 font-bold text-slate-800">{item.provider}</div>
+                               <div className="w-1/4 text-right font-bold text-slate-800">{formatCurrency(item.limit)}</div>
+                               <div className="w-1/4 text-right font-medium text-slate-600">{formatCurrency(item.outstanding)}</div>
+                               <div className="w-1/6 flex justify-end gap-2">
                                  <button onClick={() => editCardItem(item.id)} className="text-slate-400 hover:text-blue-500"><Edit2 size={14} /></button>
                                  <button onClick={() => removeItem("cards", item.id)} className="text-slate-400 hover:text-red-500"><Trash2 size={14} /></button>
                                </div>
