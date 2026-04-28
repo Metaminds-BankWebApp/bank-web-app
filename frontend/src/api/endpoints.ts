@@ -52,6 +52,7 @@ export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
 
 export const PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS = {
   me: "/public-customers/me",
+  cardProviders: "/public-customers/card-providers",
   base: (publicCustomerId: number) => `/public-customers/${publicCustomerId}/financial-records`,
   saveIncomeStep: (publicCustomerId: number) =>
     `/public-customers/${publicCustomerId}/financial-records/steps/income`,
@@ -78,6 +79,16 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
   report: "/creditlens/public/report",
   history: "/creditlens/public/history",
   byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
+} as const;
+
+export const BANK_CREDITLENS_ENDPOINTS = {
+  current: "/creditlens/bank/current",
+  dashboard: "/creditlens/bank/dashboard",
+  trends: "/creditlens/bank/trends",
+  insights: "/creditlens/bank/insights",
+  report: "/creditlens/bank/report",
+  history: "/creditlens/bank/history",
+  byId: (bankEvaluationId: number) => `/creditlens/bank/evaluations/${bankEvaluationId}`,
 } as const;
 
 export const USER_PROFILE_ENDPOINTS = {

@@ -5,7 +5,15 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/src/components/ui/button";
 import fullReportBg from "../image/creditlens-full-report-bg.svg";
 
-export default function FullReportBanner() {
+export default function FullReportBanner({
+  title = "View Full Report",
+  description = "Get a complete summary of your credit profile, risk factors, and recommended next actions.",
+  actionLabel = "Learn More",
+}: {
+  title?: string;
+  description?: string;
+  actionLabel?: string;
+}) {
   const router = useRouter();
 
   return (
@@ -23,17 +31,15 @@ export default function FullReportBanner() {
 
       <div className="relative flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div className="min-w-0">
-          <div className="text-lg font-semibold sm:text-xl md:text-2xl">View Full Report</div>
-          <p className="mt-1 max-w-3xl text-sm text-white/85 sm:text-base">
-            Get a complete summary of your credit profile, risk factors, and recommended next actions.
-          </p>
+          <div className="text-lg font-semibold sm:text-xl md:text-2xl">{title}</div>
+          <p className="mt-1 max-w-3xl text-sm text-white/85 sm:text-base">{description}</p>
         </div>
 
         <Button
           onClick={() => router.push("/bank-customer/creditlens/report")}
           className="h-11 w-full rounded-xl bg-white px-6 text-[#0b2447] hover:bg-white/90 sm:h-12 sm:w-auto sm:shrink-0"
         >
-          Learn More
+          {actionLabel}
         </Button>
       </div>
     </div>

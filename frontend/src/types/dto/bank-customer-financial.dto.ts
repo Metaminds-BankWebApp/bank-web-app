@@ -63,13 +63,22 @@ export interface BankCustomerFinancialRecordResponse {
   missedPayments: number;
 }
 
+export interface BankCustomerFinancialRecordSummaryResponse {
+  bankRecordId: number;
+  bankCustomerId: number;
+  verifiedByOfficerId: number;
+  dataSource: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BankCustomerIncomeStepRequest {
   incomes: Array<{
     incomeCategory: "SALARY" | "BUSINESS";
     amount: number;
     salaryType?: string;
     employmentType?: string;
-    contractDurationMonths?: number;
+    durationMonths?: number;
     incomeStability?: string;
   }>;
 }
