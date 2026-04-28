@@ -44,9 +44,19 @@ export async function getTransactionHistory(): Promise<TransactionResponse[]> {
   }
 }
 
+export async function getBankOfficerTransactionHistory(): Promise<TransactionResponse[]> {
+  try {
+    const { data } = await apiClient.get<TransactionResponse[]>(TRANSACT_ENDPOINTS.bankOfficerTransactionsHistory);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export const transactionService = {
   initiateTransaction,
   verifyTransactionOtp,
   resendTransactionOtp,
   getTransactionHistory,
+  getBankOfficerTransactionHistory,
 };

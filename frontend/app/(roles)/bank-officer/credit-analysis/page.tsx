@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
@@ -24,26 +24,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
+import { officerCreditLensService } from "@/src/api/creditlens/officer-creditlens.service";
+import { ApiError } from "@/src/types/api-error";
+import type { BankCreditAnalysisDashboardResponse } from "@/src/types/dto/creditlens-officer.dto";
 
 type RiskType = "low" | "medium" | "high";
 
 type CustomerRow = {
-  id: string;
+  bankCustomerId: number;
+  customerCode: string;
   name: string;
   score: number;
   risk: RiskType;
   date: string;
   initials: string;
   avatarClass: string;
+  email: string;
+  phone: string;
+  bankEvaluationId: number;
 };
-
-const customerRows: CustomerRow[] = [
-  { id: "C-48292", name: "Amila Silva", score: 82, risk: "low", date: "Oct 24, 2023", initials: "AS", avatarClass: "bg-cyan-100 text-cyan-600" },
-  { id: "C-48293", name: "Kasun Perera", score: 65, risk: "medium", date: "Oct 24, 2023", initials: "KP", avatarClass: "bg-amber-100 text-amber-600" },
-  { id: "C-48294", name: "Ruwan Fernando", score: 45, risk: "high", date: "Oct 23, 2023", initials: "RF", avatarClass: "bg-red-100 text-red-600" },
-  { id: "C-48295", name: "Malani Jayasinghe", score: 90, risk: "low", date: "Oct 23, 2023", initials: "MJ", avatarClass: "bg-purple-100 text-purple-600" },
-  { id: "C-48296", name: "Sunil Gunawardena", score: 72, risk: "medium", date: "Oct 22, 2023", initials: "SG", avatarClass: "bg-blue-100 text-blue-600" },
-];
 
 const tabOptions: Array<{ key: "all" | RiskType; label: string }> = [
   { key: "all", label: "All Customers" },
@@ -52,18 +51,111 @@ const tabOptions: Array<{ key: "all" | RiskType; label: string }> = [
   { key: "high", label: "High Risk" },
 ];
 
+const riskPalette: Record<RiskType, string> = {
+  low: "bg-cyan-100 text-cyan-600",
+  medium: "bg-amber-100 text-amber-600",
+  high: "bg-red-100 text-red-600",
+};
+
+function toRiskType(value: string): RiskType {
+  const normalized = (value ?? "").trim().toUpperCase();
+  if (normalized === "LOW") return "low";
+  if (normalized === "MEDIUM") return "medium";
+  return "high";
+}
+
+function toDateLabel(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "-";
+  }
+
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  });
+}
+
+function buildInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "--";
+}
+
+function mapDashboardCustomer(row: BankCreditAnalysisDashboardResponse["customers"][number]): CustomerRow {
+  return {
+    bankCustomerId: row.bankCustomerId,
+    customerCode: row.customerCode,
+    name: row.fullName,
+    score: row.totalRiskPoints,
+    risk: toRiskType(row.riskLevel),
+    date: toDateLabel(row.evaluationDate),
+    initials: buildInitials(row.fullName),
+    avatarClass: riskPalette[toRiskType(row.riskLevel)],
+    email: row.email,
+    phone: row.phone,
+    bankEvaluationId: row.bankEvaluationId,
+  };
+}
+
 export default function CreditAnalysisPage() {
   const [activeTab, setActiveTab] = useState<"all" | RiskType>("all");
   const [query, setQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [scoreFilter, setScoreFilter] = useState<"all" | "high" | "medium" | "low">("all");
   const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "score-desc" | "score-asc" | "name-asc" | "name-desc">("date-desc");
+  const [dashboard, setDashboard] = useState<BankCreditAnalysisDashboardResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadDashboard = async () => {
+      setIsLoading(true);
+      setLoadError("");
+
+      try {
+        const response = await officerCreditLensService.getOfficerCreditDashboard();
+        if (!mounted) {
+          return;
+        }
+        setDashboard(response);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        let message = "Unable to load credit analysis dashboard.";
+        if (error instanceof ApiError) {
+          message = error.message || message;
+        } else if (error instanceof Error && error.message) {
+          message = error.message;
+        }
+
+        setLoadError(message);
+        setDashboard(null);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const customerRows = useMemo(() => dashboard?.customers.map(mapDashboardCustomer) ?? [], [dashboard]);
 
   const filteredRows = useMemo(() => {
     const filtered = customerRows.filter((item) => {
       const byTab = activeTab === "all" ? true : item.risk === activeTab;
-      const byQuery = `${item.id} ${item.name}`.toLowerCase().includes(query.toLowerCase());
+      const byQuery = `${item.customerCode} ${item.name} ${item.email} ${item.phone}`.toLowerCase().includes(query.toLowerCase());
       const byScore =
         scoreFilter === "all"
           ? true
@@ -96,10 +188,12 @@ export default function CreditAnalysisPage() {
   }, [activeTab, query, scoreFilter, sortBy]);
 
   const handleExport = () => {
-    const header = ["Customer ID", "Name", "Credit Score", "Risk", "Evaluation Date"];
+    const header = ["Customer ID", "Name", "Email", "Phone", "Credit Score", "Risk", "Evaluation Date"];
     const rows = filteredRows.map((customer) => [
-      customer.id,
+      customer.customerCode,
       customer.name,
+      customer.email,
+      customer.phone,
       customer.score.toString(),
       customer.risk,
       customer.date,
@@ -126,13 +220,17 @@ export default function CreditAnalysisPage() {
           <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Credit Analysis" className="mb-6 shrink-0" />
 
           <div className="flex-1 overflow-y-auto min-h-0">
-          
+            {loadError && (
+              <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {loadError}
+              </div>
+            )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 creditlens-stagger-4">
-             <div className="creditlens-card creditlens-card-hover creditlens-delay-1"><StatCard title="TOTAL CUSTOMERS" value="2,450" trend="+2.5%" highlight /></div>
-             <div className="creditlens-card creditlens-card-hover creditlens-delay-2"><StatCard title="LOW RISK" value="1,820" trend="+1.2%" /></div>
-             <div className="creditlens-card creditlens-card-hover creditlens-delay-3"><StatCard title="MEDIUM RISK" value="420" trend="-0.8%" trendClass="text-amber-500" /></div>
-             <div className="creditlens-card creditlens-card-hover creditlens-delay-4"><StatCard title="HIGH RISK" value="210" trend="+4.1%" trendClass="text-red-500" /></div>
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-1"><StatCard title="TOTAL CUSTOMERS" value={String(dashboard?.totalCustomers ?? 0)} trend="Live data" highlight /></div>
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-2"><StatCard title="LOW RISK" value={String(dashboard?.lowRiskCount ?? 0)} trend="Live data" /></div>
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-3"><StatCard title="MEDIUM RISK" value={String(dashboard?.mediumRiskCount ?? 0)} trend="Live data" trendClass="text-amber-500" /></div>
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-4"><StatCard title="HIGH RISK" value={String(dashboard?.highRiskCount ?? 0)} trend="Live data" trendClass="text-red-500" /></div>
           </div>
 
           <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -224,7 +322,7 @@ export default function CreditAnalysisPage() {
             <Table>
               <TableHeader className="bg-sky-50/70">
                 <TableRow>
-                  <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Customer</TableHead>
+                  <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Customer Code</TableHead>
                   <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Customer Name</TableHead>
                   <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Credit Score</TableHead>
                   <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Risk Badge</TableHead>
@@ -233,9 +331,15 @@ export default function CreditAnalysisPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRows.map((customer) => (
-                  <TableRow key={customer.id} className="hover:bg-slate-50/70">
-                    <TableCell className="font-semibold text-[#0d3b66]">#{customer.id}</TableCell>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
+                      Loading credit analysis dashboard...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredRows.map((customer) => (
+                  <TableRow key={customer.bankCustomerId} className="hover:bg-slate-50/70">
+                    <TableCell className="font-semibold text-[#0d3b66]">{customer.customerCode}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${customer.avatarClass}`}>
@@ -270,7 +374,7 @@ export default function CreditAnalysisPage() {
                           className="h-8 text-xs bg-sky-50 text-[#0d3b66] border-sky-100"
                           onClick={() =>
                             router.push(
-                              `/bank-officer/credit-analysis/evaluation/${customer.id}?name=${encodeURIComponent(customer.name)}`,
+                              `/bank-officer/credit-analysis/evaluation/${customer.bankCustomerId}?name=${encodeURIComponent(customer.name)}&code=${encodeURIComponent(customer.customerCode)}`,
                             )
                           }
                         >
@@ -282,7 +386,7 @@ export default function CreditAnalysisPage() {
                   </TableRow>
                 ))}
 
-                {filteredRows.length === 0 && (
+                {!isLoading && filteredRows.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
                       No customers found for the selected filters.

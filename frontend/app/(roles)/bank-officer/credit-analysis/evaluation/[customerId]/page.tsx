@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
@@ -33,13 +33,81 @@ import {
   type ReportFileType,
 } from "@/src/components/ui/report-download-modal";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { officerCreditLensService } from "@/src/api/creditlens/officer-creditlens.service";
+import { ApiError } from "@/src/types/api-error";
+import type {
+  BankCreditAnalysisCustomerProfileResponse,
+  BankCreditEvaluationResponse,
+} from "@/src/types/dto/creditlens-officer.dto";
 
 export default function CreditAnalysisEvaluationPage() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [profile, setProfile] = useState<BankCreditAnalysisCustomerProfileResponse | null>(null);
+  const [evaluation, setEvaluation] = useState<BankCreditEvaluationResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const params = useParams<{ customerId: string }>();
   const searchParams = useSearchParams();
-  const customerName = searchParams.get("name") || "Amila Silva";
+  const customerName = profile?.fullName || searchParams.get("name") || "Customer";
+  const customerCode = profile?.customerCode || searchParams.get("code") || `#${params.customerId || "-"}`;
   const customerId = params.customerId || "C-48292";
+
+  useEffect(() => {
+    let mounted = true;
+
+    const bankCustomerId = Number(params.customerId);
+    if (Number.isNaN(bankCustomerId)) {
+      setLoadError("Invalid customer identifier.");
+      setIsLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    const loadCustomer = async () => {
+      setIsLoading(true);
+      setLoadError("");
+
+      try {
+        const [profileResponse, evaluationResponse] = await Promise.all([
+          officerCreditLensService.getOfficerCustomerProfile(bankCustomerId),
+          officerCreditLensService.getOfficerCustomerCurrentEvaluation(bankCustomerId),
+        ]);
+
+        if (!mounted) {
+          return;
+        }
+
+        setProfile(profileResponse);
+        setEvaluation(evaluationResponse);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        let message = "Unable to load customer credit analysis.";
+        if (error instanceof ApiError) {
+          message = error.message || message;
+        } else if (error instanceof Error && error.message) {
+          message = error.message;
+        }
+
+        setLoadError(message);
+        setProfile(null);
+        setEvaluation(null);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadCustomer();
+
+    return () => {
+      mounted = false;
+    };
+  }, [params.customerId]);
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
@@ -62,7 +130,15 @@ export default function CreditAnalysisEvaluationPage() {
           />
 
           
-          <div className="mb-8 text-xs text-slate-500">Customer ID: {customerId}</div>
+          {loadError && (
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {loadError}
+            </div>
+          )}
+
+          <div className="mb-8 text-xs text-slate-500">
+            Customer ID: {customerCode} {profile?.email ? `• ${profile.email}` : ""}
+          </div>
 
           <div className="mb-8 grid grid-cols-4 rounded-xl border border-white/10 bg-[#173f6d]/80 p-1">
             {["Overview", "Trends", "Credit Insights", "Reports"].map((tab) => {
@@ -84,7 +160,14 @@ export default function CreditAnalysisEvaluationPage() {
           </div>
 
           <div className="flex-1 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            {activeTab === "overview" && <ModernOverview customerName={customerName} />}
+            {activeTab === "overview" && (
+              <ModernOverview
+                customerName={customerName}
+                score={evaluation?.totalRiskPoints ?? profile?.latestRiskPoints ?? 0}
+                riskLabel={evaluation?.riskLabel ?? profile?.latestRiskLabel ?? "Unknown"}
+                remarks={evaluation?.remarks ?? null}
+              />
+            )}
             {activeTab === "trends" && <TrendsTab />}
             {activeTab === "credit-insights" && <CreditInsightsTab />}
             {activeTab === "reports" && <ReportsTab />}
@@ -97,9 +180,7 @@ export default function CreditAnalysisEvaluationPage() {
   );
 }
 
-function ModernOverview({ customerName }: { customerName: string }) {
-  // Score constants
-  const score = 55;
+function ModernOverview({ customerName, score, riskLabel, remarks }: { customerName: string; score: number; riskLabel: string; remarks: string | null; }) {
   const maxScore = 100;
   // Calculate needle rotation based on score (0 to 100 maps to -90 to 90 degrees)
   const rotation = (score / maxScore) * 180 - 90;
@@ -116,14 +197,14 @@ function ModernOverview({ customerName }: { customerName: string }) {
           <div className="inline-flex flex-col items-center rounded-2xl border border-white/15 bg-white/5 p-6 backdrop-blur-sm lg:items-start">
              <div className="mb-1 text-sm text-slate-200">Risk Category</div>
              <div className="text-2xl font-bold text-[#fbbf24] flex items-center gap-2">
-               Medium Risk
+               {riskLabel}
                <span className="flex h-3 w-3 relative">
                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#fbbf24] opacity-75"></span>
                  <span className="relative inline-flex rounded-full h-3 w-3 bg-[#fbbf24]"></span>
                </span>
              </div>
              <p className="mt-3 max-w-xs text-xs text-slate-300">
-                Score indicates moderate creditworthiness. Review outstanding liabilities before increasing limits.
+                {remarks || "Score indicates moderate creditworthiness. Review outstanding liabilities before increasing limits."}
              </p>
           </div>
         </div>
@@ -273,9 +354,9 @@ function ReportsTab() {
       <CreditLensTabShell title="Credit Reports" subtitle="Monthly Evaluation Snapshot">
         <div className="flex h-full flex-col gap-6">
           <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="w-full sm:w-[220px]">
+            <div className="w-full sm:w-55">
               <Select value={selectedReportMonth} onValueChange={setSelectedReportMonth}>
-                <SelectTrigger className="h-10 border-white/20 bg-white/10 text-slate-100 data-[placeholder]:text-slate-300">
+                <SelectTrigger className="h-10 border-white/20 bg-white/10 text-slate-100 data-placeholder:text-slate-300">
                   <SelectValue placeholder="Select Month" />
                 </SelectTrigger>
                 <SelectContent className="border-white/20 bg-[#14345f] text-slate-100">
@@ -552,7 +633,7 @@ function TrendsTab() {
             </div>
             <div className="flex items-center gap-3">
               <Select value={range} onValueChange={(value) => setRange(value === "12" ? "12" : "6")}>
-                <SelectTrigger className="h-8 w-28 border-white/20 bg-white/10 text-slate-100 data-[placeholder]:text-slate-300">
+                <SelectTrigger className="h-8 w-28 border-white/20 bg-white/10 text-slate-100 data-placeholder:text-slate-300">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="border-white/20 bg-[#14345f] text-slate-100">
@@ -599,8 +680,8 @@ function TrendsTab() {
                   <div
                     className={`w-full max-w-11 rounded-t-md ${
                       hoveredIndex === idx
-                        ? "bg-gradient-to-t from-emerald-500 to-emerald-300"
-                        : "bg-gradient-to-t from-[#7f8bff] to-[#a9b2ff]"
+                        ? "bg-linear-to-t from-emerald-500 to-emerald-300"
+                        : "bg-linear-to-t from-[#7f8bff] to-[#a9b2ff]"
                     }`}
                     style={{
                       height: `${Math.max(12, val * 2.2)}px`,

@@ -80,6 +80,15 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
   byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
 } as const;
 
+export const CREDITLENS_OFFICER_ENDPOINTS = {
+  dashboard: "/creditlens/officer/dashboard",
+  customerProfile: (bankCustomerId: number) => `/creditlens/officer/customers/${bankCustomerId}/profile`,
+  customerCurrentEvaluation: (bankCustomerId: number) => `/creditlens/officer/customers/${bankCustomerId}/current`,
+  customerHistory: (bankCustomerId: number) => `/creditlens/officer/customers/${bankCustomerId}/history`,
+  customerEvaluationById: (bankCustomerId: number, bankEvaluationId: number) =>
+    `/creditlens/officer/customers/${bankCustomerId}/evaluations/${bankEvaluationId}`,
+} as const;
+
 export const USER_PROFILE_ENDPOINTS = {
   current: "/users/profile",
   update: "/users/profile",
@@ -98,6 +107,7 @@ export const TRANSACT_ENDPOINTS = {
   transactionsVerifyOtp: "/bank-customers/transact/transactions/verify-otp",
   transactionsResendOtp: "/bank-customers/transact/transactions/resend-otp",
   transactionsHistory: "/bank-customers/transact/transactions/history",
+  bankOfficerTransactionsHistory: "/bank-officers/transact/transactions",
   transactionByReference: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}`,
   beneficiaries: "/bank-customers/transact/beneficiaries",
   beneficiaryById: (beneficiaryId: number) => `/bank-customers/transact/beneficiaries/${beneficiaryId}`,

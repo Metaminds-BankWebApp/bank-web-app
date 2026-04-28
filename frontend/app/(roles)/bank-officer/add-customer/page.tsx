@@ -709,7 +709,7 @@ export default function AddCustomerPage() {
                      amount: parseCurrency(income.amount),
                      salaryType: toEnumToken(income.salaryType),
                      employmentType: toEnumToken(income.employmentType),
-                     contractDurationMonths: income.contractDurationMonths?.trim()
+                     durationMonths: income.contractDurationMonths?.trim()
                         ? Number(income.contractDurationMonths)
                         : undefined,
                      incomeStability: toEnumToken(income.incomeStability),
@@ -729,7 +729,7 @@ export default function AddCustomerPage() {
                amount: parseCurrency(formData.monthlySalary),
                salaryType: toEnumToken(formData.salaryType),
                employmentType: toEnumToken(formData.employmentType),
-               contractDurationMonths:
+               durationMonths:
                   formData.employmentType === "Contract" && formData.contractDurationMonths.trim()
                      ? Number(formData.contractDurationMonths)
                      : undefined,

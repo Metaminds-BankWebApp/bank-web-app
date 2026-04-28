@@ -34,19 +34,7 @@ export async function register(payload: RegisterRequest): Promise<LoginResponse>
     const { data } = await apiClient.post<LoginResponse>(AUTH_ENDPOINTS.register, payload);
     return data;
   } catch (error) {
-    // Fallback to mock if API is unreachable (for demo purposes)
-    console.warn("Registration API failed, using mock response", error);
-    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate delay
-    
-    return {
-      accessToken: "mock-jwt-token-" + Math.random().toString(36).substring(2),
-      user: {
-        id: "mock-user-id",
-        email: payload.email,
-        fullName: `${payload.firstName} ${payload.lastName}`,
-        role: "PUBLIC_CUSTOMER",
-      }
-    };
+    throw toApiError(error);
   }
 }
 
@@ -63,14 +51,7 @@ export async function forgotPassword(payload: ForgotPasswordRequest): Promise<Au
     const { data } = await apiClient.post<AuthActionResponse>(AUTH_ENDPOINTS.forgotPassword, payload);
     return data;
   } catch (error) {
-    const apiError = toApiError(error);
-
-    if (["NETWORK_ERROR", "TIMEOUT", "NOT_FOUND"].includes(apiError.code)) {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      return { message: "Mock OTP sent." };
-    }
-
-    throw apiError;
+    throw toApiError(error);
   }
 }
 
@@ -79,14 +60,7 @@ export async function verifyOtp(payload: VerifyOtpRequest): Promise<AuthActionRe
     const { data } = await apiClient.post<AuthActionResponse>(AUTH_ENDPOINTS.verifyOtp, payload);
     return data;
   } catch (error) {
-    const apiError = toApiError(error);
-
-    if (["NETWORK_ERROR", "TIMEOUT", "NOT_FOUND"].includes(apiError.code)) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return { message: "Mock OTP verified." };
-    }
-
-    throw apiError;
+    throw toApiError(error);
   }
 }
 
@@ -95,14 +69,7 @@ export async function resetPassword(payload: ResetPasswordRequest): Promise<Auth
     const { data } = await apiClient.post<AuthActionResponse>(AUTH_ENDPOINTS.resetPassword, payload);
     return data;
   } catch (error) {
-    const apiError = toApiError(error);
-
-    if (["NETWORK_ERROR", "TIMEOUT", "NOT_FOUND"].includes(apiError.code)) {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      return { message: "Mock password reset complete." };
-    }
-
-    throw apiError;
+    throw toApiError(error);
   }
 }
 

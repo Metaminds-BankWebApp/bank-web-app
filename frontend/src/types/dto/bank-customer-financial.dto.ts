@@ -69,7 +69,7 @@ export interface BankCustomerIncomeStepRequest {
     amount: number;
     salaryType?: string;
     employmentType?: string;
-    contractDurationMonths?: number;
+    durationMonths?: number;
     incomeStability?: string;
   }>;
 }
