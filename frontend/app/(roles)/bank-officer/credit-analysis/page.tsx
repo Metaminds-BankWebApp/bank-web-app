@@ -46,12 +46,6 @@ const tabOptions: Array<{ key: "all" | RiskType; label: string }> = [
   { key: "high", label: "High Risk" },
 ];
 
-const riskPalette: Record<RiskType, string> = {
-  low: "bg-cyan-100 text-cyan-600",
-  medium: "bg-amber-100 text-amber-600",
-  high: "bg-red-100 text-red-600",
-};
-
 function toRiskType(value: string): RiskType {
   const normalized = (value ?? "").trim().toUpperCase();
   if (normalized === "LOW") return "low";
@@ -59,38 +53,9 @@ function toRiskType(value: string): RiskType {
   return "high";
 }
 
-function toDateLabel(value: string): string {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "-";
-  }
-
-  return parsed.toLocaleDateString("en-US", {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-  });
-}
-
 function buildInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "--";
-}
-
-function mapDashboardCustomer(row: BankCreditAnalysisDashboardResponse["customers"][number]): CustomerRow {
-  return {
-    bankCustomerId: row.bankCustomerId,
-    customerCode: row.customerCode,
-    name: row.fullName,
-    score: row.totalRiskPoints,
-    risk: toRiskType(row.riskLevel),
-    date: toDateLabel(row.evaluationDate),
-    initials: buildInitials(row.fullName),
-    avatarClass: riskPalette[toRiskType(row.riskLevel)],
-    email: row.email,
-    phone: row.phone,
-    bankEvaluationId: row.bankEvaluationId,
-  };
 }
 
 export default function CreditAnalysisPage() {
@@ -136,48 +101,7 @@ export default function CreditAnalysisPage() {
     };
   }, []);
 
-  useEffect(() => {
-    let mounted = true;
-
-    const loadDashboard = async () => {
-      setIsLoading(true);
-      setLoadError("");
-
-      try {
-        const response = await officerCreditLensService.getOfficerCreditDashboard();
-        if (!mounted) {
-          return;
-        }
-        setDashboard(response);
-      } catch (error) {
-        if (!mounted) {
-          return;
-        }
-
-        let message = "Unable to load credit analysis dashboard.";
-        if (error instanceof ApiError) {
-          message = error.message || message;
-        } else if (error instanceof Error && error.message) {
-          message = error.message;
-        }
-
-        setLoadError(message);
-        setDashboard(null);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    loadDashboard();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const customerRows = useMemo(() => dashboard?.customers.map(mapDashboardCustomer) ?? [], [dashboard]);
+  // dashboard is loaded in the primary effect above; no duplicate loader here
 
   const filteredRows = useMemo(() => {
     const sourceRows = dashboard?.customers ?? [];
@@ -511,17 +435,6 @@ function StateCard({
   );
 }
 
-function toRiskType(value?: string): RiskType {
-  const normalized = (value ?? "").trim().toLowerCase();
-  if (normalized === "low") {
-    return "low";
-  }
-  if (normalized === "high") {
-    return "high";
-  }
-  return "medium";
-}
-
 function badgeClasses(risk: RiskType): string {
   if (risk === "low") {
     return "bg-emerald-100 text-emerald-700";
@@ -550,11 +463,6 @@ function indicatorClasses(risk: RiskType): string {
     return "bg-red-500";
   }
   return "bg-amber-500";
-}
-
-function buildInitials(fullName: string): string {
-  const tokens = fullName.split(/\s+/).filter(Boolean);
-  return tokens.slice(0, 2).map((token) => token[0]?.toUpperCase() ?? "").join("") || "NA";
 }
 
 function formatDate(value: string): string {

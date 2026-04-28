@@ -45,6 +45,7 @@ import {
   getOfficerCreditReport,
   getOfficerCreditTrends,
 } from "@/src/api/creditlens/officer-creditlens.service";
+import { ApiError } from "@/src/types/api-error";
 import { getBankCustomerFinancialRecordById } from "@/src/api/customers/bank-customer-financial.service";
 import type {
   BankCreditAnalysisCustomerProfileResponse,
@@ -385,21 +386,21 @@ export default function CreditAnalysisEvaluationPage() {
 
     const bankCustomerId = Number(params.customerId);
     if (Number.isNaN(bankCustomerId)) {
-      setLoadError("Invalid customer identifier.");
-      setIsLoading(false);
+      setBaseError("Invalid customer identifier.");
+      setIsBaseLoading(false);
       return () => {
         mounted = false;
       };
     }
 
     const loadCustomer = async () => {
-      setIsLoading(true);
-      setLoadError("");
+      setIsBaseLoading(true);
+      setBaseError("");
 
       try {
         const [profileResponse, evaluationResponse] = await Promise.all([
-          officerCreditLensService.getOfficerCustomerProfile(bankCustomerId),
-          officerCreditLensService.getOfficerCustomerCurrentEvaluation(bankCustomerId),
+          getOfficerCreditCustomerProfile(bankCustomerId),
+          getOfficerCreditCurrentEvaluation(bankCustomerId),
         ]);
 
         if (!mounted) {
@@ -407,7 +408,7 @@ export default function CreditAnalysisEvaluationPage() {
         }
 
         setProfile(profileResponse);
-        setEvaluation(evaluationResponse);
+        setCurrentEvaluation(evaluationResponse);
       } catch (error) {
         if (!mounted) {
           return;
@@ -420,13 +421,13 @@ export default function CreditAnalysisEvaluationPage() {
           message = error.message;
         }
 
-        setLoadError(message);
+        setBaseError(message);
         setProfile(null);
-        setEvaluation(null);
+        setCurrentEvaluation(null);
       } finally {
         if (mounted) {
-          setIsLoading(false);
-        }
+            setIsBaseLoading(false);
+          }
       }
     };
 
