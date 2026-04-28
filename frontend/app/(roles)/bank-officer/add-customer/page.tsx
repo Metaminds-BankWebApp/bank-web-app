@@ -50,6 +50,8 @@ import type {
 } from "@/src/types/dto/bank-customer-financial.dto";
 import type { StepOneRegistrationRequest, StepOneUpdateRequest } from "@/src/types/dto/registration.dto";
 import { ApiError } from "@/src/types/api-error";
+import { getOfficerCreditCurrentEvaluation } from "@/src/api/creditlens/officer-creditlens.service";
+import { useToast } from "@/src/components/ui/toast";
 
 type StepOneConflictField = "nic" | "email" | "username" | "bankAccount";
 type StepOneFieldErrors = Partial<Record<StepOneConflictField, string>>;
@@ -488,6 +490,7 @@ function formatAmount(value: string | number | null | undefined): string {
 }
 
 export default function AddCustomerPage() {
+   const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
@@ -1120,6 +1123,28 @@ export default function AddCustomerPage() {
             cribRequestStatus: response.requestStatus ?? "COMPLETED",
             cribReportStatus: response.reportStatus ?? "READY",
          });
+         // fetch the newly created bank credit evaluation and update the review UI
+         try {
+            const evalResp = await getOfficerCreditCurrentEvaluation(createdBankCustomerId);
+            updateFormData({
+               creditScore: evalResp.totalRiskPoints,
+               missedPaymentsLast12Months: evalResp.missedPaymentsCount ?? formData.missedPaymentsLast12Months,
+            });
+            // show success toast with evaluation info
+             showToast({
+                title: "Onboarding completed",
+                description: `Credit evaluation created (score: ${evalResp.totalRiskPoints ?? "N/A"})`,
+                type: "success",
+             });
+         } catch (evalErr) {
+            // non-fatal: leave form data as-is
+            console.warn("Failed to fetch credit evaluation after onboarding:", evalErr);
+             showToast({
+                title: "Onboarding completed",
+                description: "Onboarding completed but credit evaluation could not be fetched.",
+                type: "info",
+             });
+         }
          return response;
       } finally {
          setIsCompletingCribReviewStep(false);
