@@ -4,9 +4,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import { Pencil, Search, Trash2 } from "lucide-react";
+import { ConfirmationModal, useToast } from "@/src/components/ui";
+import { Pencil, Search, Trash2, X } from "lucide-react";
 import {
+  deleteAdminUser,
   getAdminUsers,
+  updateAdminUserDetails,
   updateAdminUserStatus,
 } from "@/src/api/admin/user-management.service";
 import { ApiError } from "@/src/types/api-error";
@@ -65,13 +68,47 @@ function resolveAvatar(user: AdminUserManagementUserResponse): string {
 function resolveCustomerId(user: AdminUserManagementUserResponse): string {
   const value = user.customerId?.trim();
   if (!value) {
-    return `#${user.userId}`;
+    return String(user.userId);
   }
 
-  return value.startsWith("#") ? value : `#${value}`;
+  return value.startsWith("#") ? value.slice(1) : value;
 }
 
+function splitName(fullName: string): { firstName: string; lastName: string } {
+  const parts = fullName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return { firstName: "", lastName: "" };
+  }
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: "" };
+  }
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
+type UserEditForm = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  contactNumber: string;
+  status: AdminUserStatus;
+};
+
+type UserEditErrors = Partial<
+  Record<"firstName" | "lastName" | "email" | "contactNumber", string>
+>;
+
+const userEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+const userContactRegex = /^\+?[0-9()\-.\s]{7,20}$/;
+
 export default function UserManagementPage() {
+  const { showToast } = useToast();
   const [filter, setFilter] = useState<AdminCustomerType>("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -81,6 +118,19 @@ export default function UserManagementPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
+  const [editingUser, setEditingUser] =
+    useState<AdminUserManagementUserResponse | null>(null);
+  const [userToDelete, setUserToDelete] =
+    useState<AdminUserManagementUserResponse | null>(null);
+  const [editForm, setEditForm] = useState<UserEditForm>({
+    firstName: "",
+    lastName: "",
+    email: "",
+    contactNumber: "",
+    status: "ACTIVE",
+  });
+  const [editErrors, setEditErrors] = useState<UserEditErrors>({});
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const hasLoadedOnceRef = useRef(false);
 
   useEffect(() => {
@@ -126,6 +176,11 @@ export default function UserManagementPage() {
             : "Failed to load users.";
         setUsers([]);
         setError(message);
+        showToast({
+          type: "error",
+          title: "Load failed",
+          description: message,
+        });
       } finally {
         if (mounted) {
           hasLoadedOnceRef.current = true;
@@ -140,7 +195,7 @@ export default function UserManagementPage() {
     return () => {
       mounted = false;
     };
-  }, [filter, searchQuery]);
+  }, [filter, searchQuery, showToast]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -159,60 +214,148 @@ export default function UserManagementPage() {
     return users.slice(start, start + usersPerPage);
   }, [currentPage, users]);
 
-  const handleToggleStatus = async (user: AdminUserManagementUserResponse) => {
-    const nextStatus: AdminUserStatus =
-      user.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+  const applyUserUpdate = (updated: AdminUserManagementUserResponse) => {
+    setUsers((prev) =>
+      prev.map((entry) => (entry.userId === updated.userId ? updated : entry))
+    );
+  };
 
-    setUpdatingUserId(user.userId);
+  const openEditModal = (user: AdminUserManagementUserResponse) => {
+    const split = splitName(user.fullName ?? "");
+    setEditingUser(user);
+    setEditForm({
+      firstName: split.firstName,
+      lastName: split.lastName,
+      email: user.email ?? "",
+      contactNumber: user.contactNumber ?? "",
+      status: user.status,
+    });
+    setEditErrors({});
+  };
 
+  const closeEditModal = () => {
+    if (isSavingEdit) {
+      return;
+    }
+    setEditingUser(null);
+    setEditErrors({});
+  };
+
+  const validateUserEditForm = (formData: UserEditForm): UserEditErrors => {
+    const errors: UserEditErrors = {};
+
+    if (!formData.firstName.trim()) {
+      errors.firstName = "First name is required.";
+    }
+    if (!formData.lastName.trim()) {
+      errors.lastName = "Last name is required.";
+    }
+    if (!formData.email.trim()) {
+      errors.email = "Email address is required.";
+    } else if (!userEmailRegex.test(formData.email.trim())) {
+      errors.email = "Enter a valid email address.";
+    }
+    if (!formData.contactNumber.trim()) {
+      errors.contactNumber = "Contact number is required.";
+    } else if (!userContactRegex.test(formData.contactNumber.trim())) {
+      errors.contactNumber = "Contact number format is invalid.";
+    }
+
+    return errors;
+  };
+
+  const handleSaveEditedUser = async () => {
+    if (!editingUser) {
+      return;
+    }
+
+    const normalizedForm: UserEditForm = {
+      firstName: editForm.firstName.trim(),
+      lastName: editForm.lastName.trim(),
+      email: editForm.email.trim().toLowerCase(),
+      contactNumber: editForm.contactNumber.trim(),
+      status: editForm.status,
+    };
+
+    const nextErrors = validateUserEditForm(normalizedForm);
+    setEditErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+
+    setIsSavingEdit(true);
     try {
-      const updated = await updateAdminUserStatus(user.userId, nextStatus);
-      setUsers((prev) =>
-        prev.map((entry) =>
-          entry.userId === updated.userId ? updated : entry
-        )
-      );
+      let updated = await updateAdminUserDetails(editingUser.userId, {
+        firstName: normalizedForm.firstName,
+        lastName: normalizedForm.lastName,
+        email: normalizedForm.email,
+        contactNumber: normalizedForm.contactNumber,
+      });
+      if ((updated.status || "").toUpperCase() !== normalizedForm.status) {
+        updated = await updateAdminUserStatus(editingUser.userId, normalizedForm.status);
+      }
+      applyUserUpdate(updated);
+      setEditingUser(null);
+      showToast({
+        type: "success",
+        title: "User updated",
+        description: `${updated.fullName} was updated successfully.`,
+      });
     } catch (unknownError) {
       const message =
         unknownError instanceof ApiError
           ? unknownError.message
-          : "Failed to update user status.";
-      alert(message);
+          : "Failed to update user details.";
+      showToast({
+        type: "error",
+        title: "Update failed",
+        description: message,
+      });
     } finally {
-      setUpdatingUserId(null);
+      setIsSavingEdit(false);
     }
   };
 
-  const handleLockUser = async (user: AdminUserManagementUserResponse) => {
-    if (user.status === "LOCKED") {
+  const openDeleteUserModal = (user: AdminUserManagementUserResponse) => {
+    setUserToDelete(user);
+  };
+
+  const closeDeleteUserModal = () => {
+    if (updatingUserId !== null) {
       return;
     }
+    setUserToDelete(null);
+  };
 
-    const confirmed = window.confirm(
-      `Lock user "${user.fullName}"? This action can be reversed later by setting ACTIVE or INACTIVE status.`
-    );
-
-    if (!confirmed) {
+  const handleDeleteUser = async () => {
+    if (!userToDelete) {
       return;
     }
+    const user = userToDelete;
 
     setUpdatingUserId(user.userId);
 
     try {
-      const updated = await updateAdminUserStatus(user.userId, "LOCKED");
-      setUsers((prev) =>
-        prev.map((entry) =>
-          entry.userId === updated.userId ? updated : entry
-        )
-      );
+      const deleted = await deleteAdminUser(user.userId);
+      setUsers((prev) => prev.filter((entry) => entry.userId !== user.userId));
+      showToast({
+        type: "success",
+        title: "User deleted",
+        description: `${deleted.fullName} was permanently deleted.`,
+      });
     } catch (unknownError) {
       const message =
         unknownError instanceof ApiError
           ? unknownError.message
-          : "Failed to lock user.";
-      alert(message);
+          : "Failed to delete user permanently.";
+      showToast({
+        type: "error",
+        title: "Delete failed",
+        description: message,
+      });
     } finally {
       setUpdatingUserId(null);
+      setUserToDelete(null);
     }
   };
 
@@ -393,21 +536,17 @@ export default function UserManagementPage() {
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <button
-                                  onClick={() => handleToggleStatus(user)}
-                                  disabled={isUpdating || user.status === "LOCKED"}
-                                  title={
-                                    user.status === "ACTIVE"
-                                      ? "Set inactive"
-                                      : "Set active"
-                                  }
+                                  onClick={() => openEditModal(user)}
+                                  disabled={isUpdating}
+                                  title="Edit user details"
                                   className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                   <Pencil size={16} />
                                 </button>
                                 <button
-                                  onClick={() => handleLockUser(user)}
-                                  disabled={isUpdating || user.status === "LOCKED"}
-                                  title="Lock user"
+                                  onClick={() => openDeleteUserModal(user)}
+                                  disabled={isUpdating}
+                                  title="Delete user permanently"
                                   className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                   <Trash2 size={16} />
@@ -464,6 +603,161 @@ export default function UserManagementPage() {
             </div>
           </div>
         </main>
+
+        {editingUser ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+            <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl">
+              <button
+                type="button"
+                onClick={closeEditModal}
+                disabled={isSavingEdit}
+                title="Close"
+                className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+              <h3 className="text-xl font-semibold text-gray-900">Edit User</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Update user details and save your changes.
+              </p>
+
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-xs font-semibold uppercase text-gray-600">First Name</label>
+                  <input
+                    type="text"
+                    value={editForm.firstName}
+                    onChange={(event) => {
+                      setEditForm((prev) => ({ ...prev, firstName: event.target.value }));
+                      if (editErrors.firstName) {
+                        setEditErrors((prev) => ({ ...prev, firstName: undefined }));
+                      }
+                    }}
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                      editErrors.firstName ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {editErrors.firstName ? (
+                    <p className="mt-1 text-xs text-red-600">{editErrors.firstName}</p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold uppercase text-gray-600">Last Name</label>
+                  <input
+                    type="text"
+                    value={editForm.lastName}
+                    onChange={(event) => {
+                      setEditForm((prev) => ({ ...prev, lastName: event.target.value }));
+                      if (editErrors.lastName) {
+                        setEditErrors((prev) => ({ ...prev, lastName: undefined }));
+                      }
+                    }}
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                      editErrors.lastName ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {editErrors.lastName ? (
+                    <p className="mt-1 text-xs text-red-600">{editErrors.lastName}</p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold uppercase text-gray-600">Email Address</label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(event) => {
+                      setEditForm((prev) => ({ ...prev, email: event.target.value }));
+                      if (editErrors.email) {
+                        setEditErrors((prev) => ({ ...prev, email: undefined }));
+                      }
+                    }}
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                      editErrors.email ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {editErrors.email ? (
+                    <p className="mt-1 text-xs text-red-600">{editErrors.email}</p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold uppercase text-gray-600">Contact Number</label>
+                  <input
+                    type="text"
+                    value={editForm.contactNumber}
+                    onChange={(event) => {
+                      setEditForm((prev) => ({
+                        ...prev,
+                        contactNumber: event.target.value,
+                      }));
+                      if (editErrors.contactNumber) {
+                        setEditErrors((prev) => ({
+                          ...prev,
+                          contactNumber: undefined,
+                        }));
+                      }
+                    }}
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm ${
+                      editErrors.contactNumber ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {editErrors.contactNumber ? (
+                    <p className="mt-1 text-xs text-red-600">{editErrors.contactNumber}</p>
+                  ) : null}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-xs font-semibold uppercase text-gray-600">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(event) => {
+                      setEditForm((prev) => ({
+                        ...prev,
+                        status: event.target.value as AdminUserStatus,
+                      }));
+                    }}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="LOCKED">Locked</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  disabled={isSavingEdit}
+                  className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEditedUser}
+                  disabled={isSavingEdit}
+                  className="rounded-lg bg-[#0B3B66] px-5 py-2 text-sm font-medium text-white hover:bg-[#082d4a] disabled:opacity-50"
+                >
+                  {isSavingEdit ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <ConfirmationModal
+          open={Boolean(userToDelete)}
+          title="Delete User"
+          message={`Are you sure you want to permanently delete "${userToDelete?.fullName ?? "this user"}"? This action cannot be undone.`}
+          confirmLabel="Delete User"
+          isProcessing={updatingUserId === userToDelete?.userId}
+          onCancel={closeDeleteUserModal}
+          onConfirm={handleDeleteUser}
+        />
       </div>
     </AuthGuard>
   );

@@ -6,6 +6,7 @@ import { Building2 } from "lucide-react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { useToast } from "@/src/components/ui";
 import { getAdminBranches } from "@/src/api/admin/branch.service";
 import { registerBankOfficer } from "@/src/api/registration/bank-officer-registration.service";
 import { useAuthStore } from "@/src/store";
@@ -95,6 +96,7 @@ function mapApiMessageToOfficerField(message: string): OfficerFormErrors {
 }
 
 export default function AddOfficerPage() {
+  const { showToast } = useToast();
   const router = useRouter();
   const loggedInUser = useAuthStore((state) => state.user);
   const [formData, setFormData] = useState<OfficerFormData>(getInitialFormData);
@@ -216,7 +218,11 @@ export default function AddOfficerPage() {
         createdByAdminUserId: Number.isNaN(parsedAdminUserId) ? undefined : parsedAdminUserId,
       });
 
-      alert("Bank officer created successfully.");
+      showToast({
+        type: "success",
+        title: "Officer created",
+        description: "Bank officer created successfully.",
+      });
       router.push("/admin/bank-officer-management");
     } catch (error) {
       if (error instanceof ApiError) {
@@ -232,13 +238,21 @@ export default function AddOfficerPage() {
           return;
         }
 
-        alert(error.message);
+        showToast({
+          type: "error",
+          title: "Create failed",
+          description: error.message,
+        });
         return;
       }
 
       const message =
         error instanceof Error ? error.message : "Failed to create bank officer.";
-      alert(message);
+      showToast({
+        type: "error",
+        title: "Create failed",
+        description: message,
+      });
     } finally {
       setIsSaving(false);
     }

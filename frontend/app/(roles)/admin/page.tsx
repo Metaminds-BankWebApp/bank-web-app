@@ -331,7 +331,7 @@ const chartOptions = {
                 </div>
               </div>
               <div className="rounded-3xl bg-[linear-gradient(180deg,#0b3a63_0%,#0a3157_70%,#0a4b67_100%)] p-4 sm:p-6 text-white shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold leading-tight">Quick Management</h3>
+                <h3 className="text-lg sm:text-xl font-semibold leading-tight">Quick Access</h3>
                 <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {quickActions.map((action) => {
                     const Icon = action.icon;
