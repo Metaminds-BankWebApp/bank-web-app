@@ -20,6 +20,21 @@ export async function createAdminBranch(payload: BranchRequest): Promise<BranchR
   }
 }
 
+export async function updateAdminBranch(
+  branchId: number,
+  payload: BranchRequest
+): Promise<BranchResponse> {
+  try {
+    const { data } = await apiClient.put<BranchResponse>(
+      `${ADMIN_ENDPOINTS.branches}/${branchId}`,
+      payload
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export async function updateAdminBranchStatus(
   branchId: number,
   status: BranchStatus
@@ -31,6 +46,17 @@ export async function updateAdminBranchStatus(
       {
         params: { status },
       }
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function deleteAdminBranch(branchId: number): Promise<BranchResponse> {
+  try {
+    const { data } = await apiClient.delete<BranchResponse>(
+      `${ADMIN_ENDPOINTS.branches}/${branchId}`
     );
     return data;
   } catch (error) {

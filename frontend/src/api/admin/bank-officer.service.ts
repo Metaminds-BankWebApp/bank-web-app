@@ -16,6 +16,14 @@ export interface AdminBankOfficerSummaryResponse {
   branchName: string;
 }
 
+export interface AdminBankOfficerUpdateRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  contactNumber: string;
+  branchId: number;
+}
+
 export async function getAdminBankOfficers(): Promise<AdminBankOfficerSummaryResponse[]> {
   try {
     const { data } = await apiClient.get<AdminBankOfficerSummaryResponse[]>(ADMIN_ENDPOINTS.bankOfficers);
@@ -43,7 +51,22 @@ export async function updateAdminBankOfficerStatus(
   }
 }
 
-export async function deactivateAdminBankOfficer(
+export async function updateAdminBankOfficer(
+  userId: number,
+  payload: AdminBankOfficerUpdateRequest
+): Promise<AdminBankOfficerSummaryResponse> {
+  try {
+    const { data } = await apiClient.put<AdminBankOfficerSummaryResponse>(
+      `${ADMIN_ENDPOINTS.bankOfficers}/${userId}`,
+      payload
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function deleteAdminBankOfficer(
   userId: number
 ): Promise<AdminBankOfficerSummaryResponse> {
   try {
@@ -55,3 +78,5 @@ export async function deactivateAdminBankOfficer(
     throw toApiError(error);
   }
 }
+
+export const deactivateAdminBankOfficer = deleteAdminBankOfficer;

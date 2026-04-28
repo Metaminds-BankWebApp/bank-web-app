@@ -10,4 +10,5 @@ export * from "./skeleton";
 export * from "./switch";
 export * from "./table";
 export * from "./toast";
+export * from "./confirmation-modal";
 export { default as ModuleHeader } from "./module-header";
