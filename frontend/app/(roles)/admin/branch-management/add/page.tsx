@@ -26,6 +26,55 @@ const getInitialFormData = (): BranchFormData => ({
   status: "ACTIVE",
 });
 
+const BACKEND_FIELD_TO_FORM_FIELD: Record<string, keyof BranchFormErrors> = {
+  branchName: "branchName",
+  branchPhone: "contact",
+  contact: "contact",
+  branchEmail: "email",
+  email: "email",
+  address: "address",
+};
+
+function extractBranchFieldErrors(apiError: ApiError): BranchFormErrors {
+  const details = apiError.details as { fieldErrors?: unknown } | undefined;
+  const rawFieldErrors = details?.fieldErrors;
+
+  if (!rawFieldErrors || typeof rawFieldErrors !== "object") {
+    return {};
+  }
+
+  const source = rawFieldErrors as Record<string, unknown>;
+  const result: BranchFormErrors = {};
+
+  for (const [backendField, value] of Object.entries(source)) {
+    if (typeof value !== "string" || !value.trim()) {
+      continue;
+    }
+
+    const mappedField = BACKEND_FIELD_TO_FORM_FIELD[backendField];
+    if (mappedField) {
+      result[mappedField] = value;
+    }
+  }
+
+  return result;
+}
+
+function mapApiMessageToBranchField(message: string): BranchFormErrors {
+  const normalized = message.trim().toLowerCase();
+
+  if (!normalized) {
+    return {};
+  }
+
+  if (normalized.includes("branch name")) return { branchName: message };
+  if (normalized.includes("contact") || normalized.includes("phone")) return { contact: message };
+  if (normalized.includes("email")) return { email: message };
+  if (normalized.includes("address")) return { address: message };
+
+  return {};
+}
+
 export default function AddBranchPage() {
   const [formData, setFormData] = useState<BranchFormData>(getInitialFormData);
   const [errors, setErrors] = useState<BranchFormErrors>({});
@@ -58,7 +107,7 @@ export default function AddBranchPage() {
 
     const payload = {
       branchName: formData.branchName.trim(),
-      branchEmail: formData.email.trim(),
+      branchEmail: formData.email.trim().toLowerCase(),
       branchPhone: formData.contact.trim(),
       address: formData.address.trim(),
       status: formData.status,
@@ -70,10 +119,25 @@ export default function AddBranchPage() {
       alert(`Branch created successfully. Branch ID: ${data.branchCode}`);
       router.push("/admin/branch-management");
     } catch (error) {
+      if (error instanceof ApiError) {
+        const backendFieldErrors = extractBranchFieldErrors(error);
+        if (Object.keys(backendFieldErrors).length > 0) {
+          setErrors((prev) => ({ ...prev, ...backendFieldErrors }));
+          return;
+        }
+
+        const messageMappedErrors = mapApiMessageToBranchField(error.message);
+        if (Object.keys(messageMappedErrors).length > 0) {
+          setErrors((prev) => ({ ...prev, ...messageMappedErrors }));
+          return;
+        }
+
+        alert(error.message);
+        return;
+      }
+
       const message =
-        error instanceof ApiError
-          ? error.message
-          : error instanceof Error
+        error instanceof Error
           ? error.message
           : "Something went wrong while creating the branch.";
       alert(message);
@@ -181,7 +245,7 @@ export default function AddBranchPage() {
                       type="text"
                       value={formData.contact}
                       onChange={(e) => handleRequiredFieldChange("contact", e.target.value)}
-                      placeholder="+94 XX XXX XXXX"
+                      placeholder="0771234567 or 0112345678"
                       aria-invalid={Boolean(errors.contact)}
                       className={`w-full px-4 py-3 rounded-lg border text-sm ${
                         errors.contact ? "border-red-500" : "border-gray-300"
