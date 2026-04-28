@@ -45,6 +45,7 @@ import {
   getOfficerCreditReport,
   getOfficerCreditTrends,
 } from "@/src/api/creditlens/officer-creditlens.service";
+import { ApiError } from "@/src/types/api-error";
 import { getBankCustomerFinancialRecordById } from "@/src/api/customers/bank-customer-financial.service";
 import type {
   BankCreditAnalysisCustomerProfileResponse,
@@ -379,6 +380,63 @@ export default function CreditAnalysisEvaluationPage() {
       .replace(/^-+|-+$/g, "");
     return `credit-analysis-report-${safeMonthLabel}-${reportDateStamp}`;
   }, [currentReportSnapshot?.month, reportDateStamp, selectedMonth]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const bankCustomerId = Number(params.customerId);
+    if (Number.isNaN(bankCustomerId)) {
+      setBaseError("Invalid customer identifier.");
+      setIsBaseLoading(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    const loadCustomer = async () => {
+      setIsBaseLoading(true);
+      setBaseError("");
+
+      try {
+        const [profileResponse, evaluationResponse] = await Promise.all([
+          getOfficerCreditCustomerProfile(bankCustomerId),
+          getOfficerCreditCurrentEvaluation(bankCustomerId),
+        ]);
+
+        if (!mounted) {
+          return;
+        }
+
+        setProfile(profileResponse);
+        setCurrentEvaluation(evaluationResponse);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        let message = "Unable to load customer credit analysis.";
+        if (error instanceof ApiError) {
+          message = error.message || message;
+        } else if (error instanceof Error && error.message) {
+          message = error.message;
+        }
+
+        setBaseError(message);
+        setProfile(null);
+        setCurrentEvaluation(null);
+      } finally {
+        if (mounted) {
+            setIsBaseLoading(false);
+          }
+      }
+    };
+
+    void loadCustomer();
+
+    return () => {
+      mounted = false;
+    };
+  }, [params.customerId]);
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">

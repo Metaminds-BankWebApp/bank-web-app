@@ -663,7 +663,6 @@ export default function AllCustomersPage() {
                   title={selectedCustomer ? `${selectedCustomer.name} — Customer Profile` : "Customer Profile"}
                   description="Detailed personal and financial data grouped into tabs for quick review."
                   size="xl"
-                  variant="surface"
                   footer={
                      <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => setSelectedCustomer(null)}>
                         Close
