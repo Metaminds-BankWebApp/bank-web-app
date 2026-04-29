@@ -14,6 +14,7 @@ export function Review({
 }: StepProps) {
    const [errorMessage, setErrorMessage] = useState("");
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
+   const creditScore = typeof formData.creditScore === "number" ? formData.creditScore : null;
    const totalMonthlyIncome = formData.incomes.reduce((total, income) => total + (Number(income.amount) || 0), 0);
    const totalBusinessIncome = formData.incomes
       .filter((income) => income.type === "Business Person")
@@ -68,12 +69,12 @@ export function Review({
               <div>
                  <div className="flex justify-between items-end mb-2">
                     <p className="text-[10px] text-blue-300 font-bold uppercase tracking-widest">CRIB Credit Score</p>
-                    <p className="text-xl font-bold text-emerald-400">{formData.creditScore || "N/A"}</p>
+                    <p className="text-xl font-bold text-emerald-400">{creditScore ?? "N/A"}</p>
                  </div>
                  <div className="h-1.5 w-full bg-blue-900/50 rounded-full overflow-hidden">
                     <div 
                         className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-                        style={{ width: `${formData.creditScore ? (formData.creditScore / 900) * 100 : 0}%` }}
+                        style={{ width: `${creditScore !== null ? (creditScore / 900) * 100 : 0}%` }}
                     ></div>
                  </div>
               </div>

@@ -27,6 +27,7 @@ export const CUSTOMER_ENDPOINTS = {
   verifyBankAccount: "/bank-officers/customers/accounts/verify",
   bankOfficerCustomerByUser: (userId: number) => `/bank-officers/customers/user/${userId}`,
   bankOfficerCustomerStepOneByNic: "/bank-officers/customers/step-1/by-nic",
+  bankOfficerCustomerGeneratedCredentials: "/bank-officers/customers/credentials/generate",
 } as const;
 
 export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
@@ -102,6 +103,7 @@ export const ADMIN_ENDPOINTS = {
   bankOfficers: "/admin/bank-officers",
   branches: "/admin/branches",
   users: "/admin/users",
+  dashboardSummary: "/admin/dashboard/summary",
 } as const;
 
 export const TRANSACT_ENDPOINTS = {

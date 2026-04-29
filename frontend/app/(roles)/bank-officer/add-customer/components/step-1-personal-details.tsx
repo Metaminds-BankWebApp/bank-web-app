@@ -4,6 +4,9 @@ import { useState } from "react";
 import { 
   CheckCircle2, 
   Search,
+  ClipboardCopy,
+  Eye,
+  EyeOff,
   ArrowRight, 
   ArrowLeft 
 } from "lucide-react";
@@ -23,14 +26,19 @@ export function PersonalDetails({
   onSaveDraftStepOne,
   onContinueStepOne,
   onLookupCustomerByNic,
+  onGenerateCredentials,
   isSavingDraftStepOne,
   isSubmittingStepOne,
   isLookingUpCustomerByNic,
+  isGeneratingCredentials,
   hasExistingCustomerMatch,
   serverStepOneErrors,
   onClearServerStepOneError,
 }: StepProps) {
   const [errors, setErrors] = useState<PersonalDetailsErrors>({});
+  const [isCopyingPassword, setIsCopyingPassword] = useState(false);
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const mergedErrors: PersonalDetailsErrors = {
     ...errors,
     ...serverStepOneErrors,
@@ -85,6 +93,28 @@ export function PersonalDetails({
 
     if (id === "nic" || id === "email" || id === "username" || id === "bankAccount") {
       onClearServerStepOneError?.(id);
+    }
+  };
+
+  const handleEditVerifiedAccount = () => {
+    updateFormData({
+      isAccountVerified: false,
+      accountVerificationStatus: "",
+      accountVerificationMessage: "Account number unlocked. Update and verify again.",
+    });
+    onClearServerStepOneError?.("bankAccount");
+  };
+
+  const handleCopyPassword = async () => {
+    if (!formData.password.trim()) {
+      return;
+    }
+
+    setIsCopyingPassword(true);
+    try {
+      await navigator.clipboard.writeText(formData.password);
+    } finally {
+      setTimeout(() => setIsCopyingPassword(false), 400);
     }
   };
 
@@ -223,6 +253,27 @@ export function PersonalDetails({
         <div className="pt-4">
           <h3 className="text-lg font-bold text-[#0d3b66] mb-4">Account Credentials</h3>
           <p className="text-sm text-slate-500 mb-6">Set up the digital banking access credentials.</p>
+          <div className="mb-4 flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void onGenerateCredentials?.()}
+              disabled={Boolean(isGeneratingCredentials || !formData.firstName.trim() || !formData.lastName.trim())}
+              className="border-slate-200 text-slate-700 hover:bg-slate-100"
+            >
+              {isGeneratingCredentials ? "Generating..." : "Generate Username"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleCopyPassword()}
+              disabled={Boolean(!formData.password.trim())}
+              className="border-slate-200 text-slate-700 hover:bg-slate-100"
+            >
+              <ClipboardCopy size={16} className="mr-2" />
+              {isCopyingPassword ? "Copied" : "Copy Password"}
+            </Button>
+          </div>
             
             <div className="space-y-3 mb-6">
               <Label htmlFor="username" className="text-slate-700 font-medium">Username</Label>
@@ -239,24 +290,48 @@ export function PersonalDetails({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
                   <Label htmlFor="password" className="text-slate-700 font-medium">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.password ? "border-red-500" : ""}`}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={isPasswordVisible ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`bg-slate-50 border-slate-200 h-11 pr-11 ${mergedErrors.password ? "border-red-500" : ""}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsPasswordVisible((visible) => !visible)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                      aria-label={isPasswordVisible ? "Hide password" : "Show password"}
+                    >
+                      {isPasswordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </Button>
+                  </div>
                   {mergedErrors.password && <p className="text-red-500 text-xs">{mergedErrors.password}</p>}
               </div>
               <div className="space-y-3">
                   <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.confirmPassword ? "border-red-500" : ""}`}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={isConfirmPasswordVisible ? "text" : "password"}
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={`bg-slate-50 border-slate-200 h-11 pr-11 ${mergedErrors.confirmPassword ? "border-red-500" : ""}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsConfirmPasswordVisible((visible) => !visible)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                      aria-label={isConfirmPasswordVisible ? "Hide confirm password" : "Show confirm password"}
+                    >
+                      {isConfirmPasswordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </Button>
+                  </div>
                   {mergedErrors.confirmPassword && <p className="text-red-500 text-xs">{mergedErrors.confirmPassword}</p>}
               </div>
             </div>
@@ -293,6 +368,16 @@ export function PersonalDetails({
                       <><CheckCircle2 size={16} className="mr-2" /> Verified</>
                    ) : isVerifyingAccount ? "Verifying..." : "Verify Account"}
                  </Button>
+                 {formData.isAccountVerified && (
+                   <Button
+                     type="button"
+                     variant="outline"
+                     className="h-11 px-6 whitespace-nowrap"
+                     onClick={handleEditVerifiedAccount}
+                   >
+                     Edit
+                   </Button>
+                 )}
               </div>
               {mergedErrors.bankAccount && <p className="text-red-500 text-xs">{mergedErrors.bankAccount}</p>}
                 {!mergedErrors.bankAccount && formData.accountVerificationMessage && (

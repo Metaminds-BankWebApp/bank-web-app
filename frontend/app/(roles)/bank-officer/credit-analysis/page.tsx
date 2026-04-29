@@ -304,7 +304,6 @@ export default function CreditAnalysisPage() {
                   <Table>
                     <TableHeader className="bg-sky-50/70">
                       <TableRow>
-                        <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Customer</TableHead>
                         <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Customer Name</TableHead>
                         <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Risk Score</TableHead>
                         <TableHead className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">Risk Badge</TableHead>
@@ -319,7 +318,6 @@ export default function CreditAnalysisPage() {
 
                         return (
                           <TableRow key={`${customer.bankCustomerId}-${customer.bankEvaluationId}`} className="hover:bg-slate-50/70">
-                            <TableCell className="font-semibold text-[#0d3b66]">#{customer.customerCode}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-3">
                                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${avatarClasses(normalizedRisk)}`}>
@@ -362,7 +360,7 @@ export default function CreditAnalysisPage() {
 
                       {filteredRows.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
+                            <TableCell colSpan={5} className="py-10 text-center text-sm text-slate-500">
                             No customers found for the selected filters.
                           </TableCell>
                         </TableRow>

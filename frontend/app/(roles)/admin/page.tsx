@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -16,7 +16,7 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,32 +24,29 @@ import {
   BarElement,
   Tooltip,
   Legend,
+  TooltipItem,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
+import { useToast } from "@/src/components/ui";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { cn } from "@/src/lib/utils";
+import { getAdminDashboardSummary } from "@/src/api/admin/dashboard.service";
+import { ApiError } from "@/src/types/api-error";
+import type { AdminDashboardSummaryResponse } from "@/src/types/dto/admin-dashboard.dto";
 
 type MetricCard = {
+  key: keyof AdminDashboardSummaryResponse;
   title: string;
-  value: string;
-  delta: string;
   icon: LucideIcon;
   cardClassName: string;
   titleClassName: string;
   valueClassName: string;
   deltaClassName: string;
   iconClassName: string;
-};
-
-type GrowthBar = {
-  month: string;
-  back: number;
-  front: number;
-  active?: boolean;
 };
 
 type QuickAction = {
@@ -74,11 +71,10 @@ type LoanRate = {
   icon: LucideIcon;
 };
 
-const metricCards: MetricCard[] = [
+const metricCardConfig: MetricCard[] = [
   {
+    key: "totalUsers",
     title: "TOTAL USERS",
-    value: "128.4k",
-    delta: "+12%",
     icon: Users,
     cardClassName: "bg-[#0d3b66]",
     titleClassName: "text-white/70",
@@ -87,9 +83,8 @@ const metricCards: MetricCard[] = [
     iconClassName: "bg-white/20 text-white",
   },
   {
+    key: "totalBranches",
     title: "TOTAL BRANCHES",
-    value: "42",
-    delta: "+2 new",
     icon: Building2,
     cardClassName: "bg-[#446892]",
     titleClassName: "text-white/75",
@@ -98,9 +93,8 @@ const metricCards: MetricCard[] = [
     iconClassName: "bg-[#4c89a5] text-[#5be0ca]",
   },
   {
+    key: "totalOfficers",
     title: "TOTAL OFFICERS",
-    value: "542",
-    delta: "+2 new",
     icon: UserPlus,
     cardClassName: "bg-[#6f8fb6]",
     titleClassName: "text-white/80",
@@ -109,9 +103,8 @@ const metricCards: MetricCard[] = [
     iconClassName: "bg-[#6a9bb4] text-[#44d3be]",
   },
   {
+    key: "totalTransactions",
     title: "TRANSACTION",
-    value: "456",
-    delta: "+8.2%",
     icon: Wallet,
     cardClassName: "bg-[#9fb1c9]",
     titleClassName: "text-white/85",
@@ -119,15 +112,6 @@ const metricCards: MetricCard[] = [
     deltaClassName: "text-[#16b186]",
     iconClassName: "bg-[#d4dde9] text-[#f59e0b]",
   },
-];
-
-const growthData: GrowthBar[] = [
-  { month: "JAN", back: 56, front: 30 },
-  { month: "FEB", back: 70, front: 48 },
-  { month: "MAR", back: 84, front: 62 },
-  { month: "APR", back: 96, front: 100, active: true },
-  { month: "MAY", back: 90, front: 72 },
-  { month: "JUN", back: 76, front: 52 },
 ];
 
 const quickActions: QuickAction[] = [
@@ -140,19 +124,19 @@ const quickActions: QuickAction[] = [
 const adminActions: AdminAction[] = [
   {
     title: 'Approved Branch Creation: "North Wing Capital"',
-    meta: "2 hours ago • by Kamal Edirisinghe",
+    meta: "2 hours ago â€¢ by Kamal Edirisinghe",
     icon: CheckCircle2,
     tone: "success",
   },
   {
     title: 'Flagged User Account: "ID-12451" for suspicious activity',
-    meta: "5 hours ago • System Audit",
+    meta: "5 hours ago â€¢ System Audit",
     icon: AlertTriangle,
     tone: "warning",
   },
   {
     title: "Updated System Security Protocols",
-    meta: "Yesterday at 4:30 PM • Maintenance Team",
+    meta: "Yesterday at 4:30 PM â€¢ Maintenance Team",
     icon: ShieldCheck,
     tone: "info",
   },
@@ -172,65 +156,120 @@ const actionToneClass: Record<ActionTone, string> = {
 };
 
 export default function DashboardPage() {
-   const [customerType, setCustomerType] = useState<"ALL" | "BANK" | "PUBLIC">(
-  "ALL"
-);
+  const { showToast } = useToast();
+  const [customerType, setCustomerType] = useState<"ALL" | "BANK" | "PUBLIC">("ALL");
+  const [dashboardSummary, setDashboardSummary] = useState<AdminDashboardSummaryResponse | null>(
+    null
+  );
+  const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+  const customerTypes: Array<"ALL" | "BANK" | "PUBLIC"> = ["ALL", "BANK", "PUBLIC"];
 
-const chartValues = {
-  ALL: [30, 48, 62, 100, 72, 52],
-  BANK: [20, 35, 50, 80, 60, 40],
-  PUBLIC: [10, 25, 40, 60, 50, 30],
-};
+  useEffect(() => {
+    let mounted = true;
 
-const chartData = {
-  labels: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"],
-  datasets: [
-    {
-      label: "Users",
-      data: chartValues[customerType],
-      backgroundColor: [
-        "#8fa3b7",
-        "#8fa3b7",
-        "#8fa3b7",
-        "#0d3b66", // Active month highlight (APR)
-        "#8fa3b7",
-        "#8fa3b7",
-      ],
-      borderRadius: 6,
-      barThickness: 30,
-    },
-  ],
-};
+    const loadDashboardSummary = async () => {
+      setIsSummaryLoading(true);
+      try {
+        const data = await getAdminDashboardSummary();
+        if (!mounted) {
+          return;
+        }
+        setDashboardSummary(data);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : "Failed to load admin dashboard summary.";
+        showToast({
+          type: "error",
+          title: "Dashboard load failed",
+          description: message,
+        });
+      } finally {
+        if (mounted) {
+          setIsSummaryLoading(false);
+        }
+      }
+    };
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      backgroundColor: "#0d3b66",
-      titleColor: "#fff",
-      bodyColor: "#fff",
-      padding: 10,
-      displayColors: false,
-      callbacks: {
-        label: function (context: any) {
-          return `Users: ${context.raw}`;
+    void loadDashboardSummary();
+
+    return () => {
+      mounted = false;
+    };
+  }, [showToast]);
+
+  const metricCards = useMemo(
+    () =>
+      metricCardConfig.map((card) => {
+        const rawValue = dashboardSummary?.[card.key];
+        const value = isSummaryLoading
+          ? "..."
+          : typeof rawValue === "number"
+          ? rawValue.toLocaleString()
+          : "-";
+
+        return {
+          ...card,
+          value,
+          delta: isSummaryLoading ? "Syncing..." : "Live",
+        };
+      }),
+    [dashboardSummary, isSummaryLoading]
+  );
+
+  const chartValues = {
+    ALL: [30, 48, 62, 100, 72, 52],
+    BANK: [20, 35, 50, 80, 60, 40],
+    PUBLIC: [10, 25, 40, 60, 50, 30],
+  };
+
+  const chartData = {
+    labels: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"],
+    datasets: [
+      {
+        label: "Users",
+        data: chartValues[customerType],
+        backgroundColor: ["#8fa3b7", "#8fa3b7", "#8fa3b7", "#0d3b66", "#8fa3b7", "#8fa3b7"],
+        borderRadius: 6,
+        barThickness: 30,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: "#0d3b66",
+        titleColor: "#fff",
+        bodyColor: "#fff",
+        padding: 10,
+        displayColors: false,
+        callbacks: {
+          label: function (context: TooltipItem<"bar">) {
+            return `Users: ${context.raw}`;
+          },
         },
       },
     },
-  },
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: { color: "#95a4b8" },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: { color: "#95a4b8" },
+      },
+      y: {
+        grid: { color: "#e7ebf2" },
+        ticks: { display: false },
+      },
     },
-    y: {
-      grid: { color: "#e7ebf2" },
-      ticks: { display: false },
-    },
-  },
-};
+  };
+
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex flex-col lg:flex-row h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
@@ -312,10 +351,10 @@ const chartOptions = {
                   <div className="xl:border-l xl:border-[#edf1f6] xl:pl-6">
                     <h4 className="text-lg sm:text-xl font-semibold leading-tight text-[#111111]">Customer Type</h4>
                     <div className="mt-8 sm:mt-12 space-y-3 sm:space-y-4">
-                      {["ALL", "BANK", "PUBLIC"].map((type) => (
+                      {customerTypes.map((type) => (
                         <button
                           key={type}
-                          onClick={() => setCustomerType(type as any)}
+                          onClick={() => setCustomerType(type)}
                           className={cn(
                             "w-full rounded-full py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition",
                             customerType === type
@@ -331,7 +370,7 @@ const chartOptions = {
                 </div>
               </div>
               <div className="rounded-3xl bg-[linear-gradient(180deg,#0b3a63_0%,#0a3157_70%,#0a4b67_100%)] p-4 sm:p-6 text-white shadow-lg">
-                <h3 className="text-lg sm:text-xl font-semibold leading-tight">Quick Management</h3>
+                <h3 className="text-lg sm:text-xl font-semibold leading-tight">Quick Access</h3>
                 <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {quickActions.map((action) => {
                     const Icon = action.icon;
@@ -403,3 +442,4 @@ const chartOptions = {
     </AuthGuard>
   );
 }
+

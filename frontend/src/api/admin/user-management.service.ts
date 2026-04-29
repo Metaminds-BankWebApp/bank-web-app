@@ -2,6 +2,7 @@ import apiClient, { toApiError } from "@/src/api/client";
 import { ADMIN_ENDPOINTS } from "@/src/api/endpoints";
 import type {
   AdminCustomerType,
+  AdminUserManagementUpdateRequest,
   AdminUserManagementUserResponse,
   AdminUserStatus,
 } from "@/src/types/dto/admin-user-management.dto";
@@ -37,6 +38,34 @@ export async function updateAdminUserStatus(
       {
         params: { status },
       }
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function updateAdminUserDetails(
+  userId: number,
+  payload: AdminUserManagementUpdateRequest
+): Promise<AdminUserManagementUserResponse> {
+  try {
+    const { data } = await apiClient.put<AdminUserManagementUserResponse>(
+      `${ADMIN_ENDPOINTS.users}/${userId}`,
+      payload
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function deleteAdminUser(
+  userId: number
+): Promise<AdminUserManagementUserResponse> {
+  try {
+    const { data } = await apiClient.delete<AdminUserManagementUserResponse>(
+      `${ADMIN_ENDPOINTS.users}/${userId}`
     );
     return data;
   } catch (error) {

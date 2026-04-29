@@ -23,6 +23,11 @@ export interface BankOfficerCustomerStepOnePrefillResponse {
   accountType: string | null;
 }
 
+export interface GeneratedBankCustomerCredentialsResponse {
+  username: string;
+  password: string;
+}
+
 export interface BankCustomerFinancialRecordResponse {
   bankRecordId: number;
   bankCustomerId: number;
@@ -185,4 +190,6 @@ export interface BankCustomerCribStepResponse {
   cribData?: BankCustomerCribDataBlock | null;
   report?: BankCustomerCribDataBlock | null;
   data?: BankCustomerCribDataBlock | null;
+  bankEvaluationId?: number | null;
+  bankEvaluationTotalRiskPoints?: number | null;
 }
