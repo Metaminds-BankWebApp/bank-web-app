@@ -103,6 +103,7 @@ export const ADMIN_ENDPOINTS = {
   bankOfficers: "/admin/bank-officers",
   branches: "/admin/branches",
   users: "/admin/users",
+  dashboardSummary: "/admin/dashboard/summary",
 } as const;
 
 export const TRANSACT_ENDPOINTS = {

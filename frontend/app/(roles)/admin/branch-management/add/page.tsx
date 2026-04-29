@@ -7,6 +7,7 @@ import { Building2 } from "lucide-react";
 import { AuthGuard } from "@/src/components/auth";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { useToast } from "@/src/components/ui";
 import { createAdminBranch } from "@/src/api/admin/branch.service";
 import { ApiError } from "@/src/types/api-error";
 import type { BranchFormData, BranchFormErrors, BranchStatus } from "./types";
@@ -76,6 +77,7 @@ function mapApiMessageToBranchField(message: string): BranchFormErrors {
 }
 
 export default function AddBranchPage() {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState<BranchFormData>(getInitialFormData);
   const [errors, setErrors] = useState<BranchFormErrors>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -116,7 +118,11 @@ export default function AddBranchPage() {
     try {
       const data = await createAdminBranch(payload);
 
-      alert(`Branch created successfully. Branch ID: ${data.branchCode}`);
+      showToast({
+        type: "success",
+        title: "Branch created",
+        description: `Branch ID: ${data.branchCode}`,
+      });
       router.push("/admin/branch-management");
     } catch (error) {
       if (error instanceof ApiError) {
@@ -132,7 +138,11 @@ export default function AddBranchPage() {
           return;
         }
 
-        alert(error.message);
+        showToast({
+          type: "error",
+          title: "Create failed",
+          description: error.message,
+        });
         return;
       }
 
@@ -140,7 +150,11 @@ export default function AddBranchPage() {
         error instanceof Error
           ? error.message
           : "Something went wrong while creating the branch.";
-      alert(message);
+      showToast({
+        type: "error",
+        title: "Create failed",
+        description: message,
+      });
     } finally {
       setIsSaving(false);
     }

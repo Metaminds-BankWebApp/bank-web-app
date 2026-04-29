@@ -16,9 +16,54 @@ export interface AdminBankOfficerSummaryResponse {
   branchName: string;
 }
 
+export interface AdminBankOfficerUpdateRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  contactNumber: string;
+  branchId: number;
+}
+
+export interface AdminBankOfficerGeneratedUsernameResponse {
+  username: string;
+}
+
+export interface AdminBankOfficerGeneratedPasswordResponse {
+  password: string;
+}
+
 export async function getAdminBankOfficers(): Promise<AdminBankOfficerSummaryResponse[]> {
   try {
     const { data } = await apiClient.get<AdminBankOfficerSummaryResponse[]>(ADMIN_ENDPOINTS.bankOfficers);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function generateAdminBankOfficerUsername(
+  firstName: string,
+  lastName: string
+): Promise<AdminBankOfficerGeneratedUsernameResponse> {
+  try {
+    const { data } = await apiClient.post<AdminBankOfficerGeneratedUsernameResponse>(
+      `${ADMIN_ENDPOINTS.bankOfficers}/credentials/username`,
+      {
+        firstName,
+        lastName,
+      }
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function generateAdminBankOfficerPassword(): Promise<AdminBankOfficerGeneratedPasswordResponse> {
+  try {
+    const { data } = await apiClient.get<AdminBankOfficerGeneratedPasswordResponse>(
+      `${ADMIN_ENDPOINTS.bankOfficers}/credentials/password`
+    );
     return data;
   } catch (error) {
     throw toApiError(error);
@@ -43,7 +88,22 @@ export async function updateAdminBankOfficerStatus(
   }
 }
 
-export async function deactivateAdminBankOfficer(
+export async function updateAdminBankOfficer(
+  userId: number,
+  payload: AdminBankOfficerUpdateRequest
+): Promise<AdminBankOfficerSummaryResponse> {
+  try {
+    const { data } = await apiClient.put<AdminBankOfficerSummaryResponse>(
+      `${ADMIN_ENDPOINTS.bankOfficers}/${userId}`,
+      payload
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function deleteAdminBankOfficer(
   userId: number
 ): Promise<AdminBankOfficerSummaryResponse> {
   try {
@@ -55,3 +115,5 @@ export async function deactivateAdminBankOfficer(
     throw toApiError(error);
   }
 }
+
+export const deactivateAdminBankOfficer = deleteAdminBankOfficer;
