@@ -8,12 +8,15 @@ import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { useToast } from "@/src/components/ui";
 import { getAdminBranches } from "@/src/api/admin/branch.service";
+import {
+  generateAdminBankOfficerPassword,
+  generateAdminBankOfficerUsername,
+} from "@/src/api/admin/bank-officer.service";
 import { registerBankOfficer } from "@/src/api/registration/bank-officer-registration.service";
 import { useAuthStore } from "@/src/store";
 import { ApiError } from "@/src/types/api-error";
 import type { BranchResponse } from "@/src/types/dto/branch.dto";
 import type { OfficerFormData, OfficerFormErrors } from "./types";
-import { generateOfficerPassword, generateOfficerUsername } from "./utils";
 import {
   isOfficerFormComplete,
   SRI_LANKA_PROVINCES,
@@ -105,6 +108,8 @@ export default function AddOfficerPage() {
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(true);
   const [branchLoadError, setBranchLoadError] = useState<string | null>(null);
+  const [isGeneratingUsername, setIsGeneratingUsername] = useState(false);
+  const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
   const canSubmit = isOfficerFormComplete(formData) && !isSaving;
 
   useEffect(() => {
@@ -157,7 +162,7 @@ export default function AddOfficerPage() {
     }
   };
 
-  const handleGenerateUsername = () => {
+  const handleGenerateUsername = async () => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
       setErrors((prev) => ({
         ...prev,
@@ -171,15 +176,41 @@ export default function AddOfficerPage() {
       return;
     }
 
-    const username = generateOfficerUsername(formData.firstName, formData.lastName);
-    setFormData((prev) => ({ ...prev, username }));
-    setErrors((prev) => ({ ...prev, firstName: undefined, lastName: undefined, username: undefined }));
+    setIsGeneratingUsername(true);
+    try {
+      const response = await generateAdminBankOfficerUsername(
+        formData.firstName.trim(),
+        formData.lastName.trim()
+      );
+      setFormData((prev) => ({ ...prev, username: response.username }));
+      setErrors((prev) => ({
+        ...prev,
+        firstName: undefined,
+        lastName: undefined,
+        username: undefined,
+      }));
+    } catch (error) {
+      const message =
+        error instanceof ApiError ? error.message : "Failed to generate username.";
+      setErrors((prev) => ({ ...prev, username: message }));
+    } finally {
+      setIsGeneratingUsername(false);
+    }
   };
 
-  const handleGeneratePassword = () => {
-    const password = generateOfficerPassword();
-    setFormData((prev) => ({ ...prev, password }));
-    setErrors((prev) => ({ ...prev, password: undefined }));
+  const handleGeneratePassword = async () => {
+    setIsGeneratingPassword(true);
+    try {
+      const response = await generateAdminBankOfficerPassword();
+      setFormData((prev) => ({ ...prev, password: response.password }));
+      setErrors((prev) => ({ ...prev, password: undefined }));
+    } catch (error) {
+      const message =
+        error instanceof ApiError ? error.message : "Failed to generate password.";
+      setErrors((prev) => ({ ...prev, password: message }));
+    } finally {
+      setIsGeneratingPassword(false);
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -363,9 +394,10 @@ export default function AddOfficerPage() {
                       <button
                         type="button"
                         onClick={handleGenerateUsername}
-                        className="w-full shrink-0 whitespace-nowrap rounded-b-lg border border-gray-300 border-t-0 bg-gray-300 px-5 sm:w-auto sm:rounded-bl-none sm:rounded-r-lg sm:border-l-0 sm:border-t"
+                        disabled={isGeneratingUsername}
+                        className="w-full shrink-0 whitespace-nowrap rounded-b-lg border border-gray-300 border-t-0 bg-gray-300 px-5 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:rounded-bl-none sm:rounded-r-lg sm:border-l-0 sm:border-t"
                       >
-                        Create
+                        {isGeneratingUsername ? "Creating..." : "Create"}
                       </button>
                     </div>
                     {errors.username ? <p className="mt-1 text-xs text-red-600">{errors.username}</p> : null}
@@ -387,9 +419,10 @@ export default function AddOfficerPage() {
                       <button
                         type="button"
                         onClick={handleGeneratePassword}
-                        className="w-full shrink-0 whitespace-nowrap rounded-b-lg border border-gray-300 border-t-0 bg-gray-300 px-5 sm:w-auto sm:rounded-bl-none sm:rounded-r-lg sm:border-l-0 sm:border-t"
+                        disabled={isGeneratingPassword}
+                        className="w-full shrink-0 whitespace-nowrap rounded-b-lg border border-gray-300 border-t-0 bg-gray-300 px-5 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:rounded-bl-none sm:rounded-r-lg sm:border-l-0 sm:border-t"
                       >
-                        Create
+                        {isGeneratingPassword ? "Creating..." : "Create"}
                       </button>
                     </div>
                     {errors.password ? <p className="mt-1 text-xs text-red-600">{errors.password}</p> : null}
