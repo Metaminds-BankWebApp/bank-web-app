@@ -253,7 +253,12 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
-          <Button type="button" onClick={handleDownloadReport} disabled={isLoading}>
+          <Button
+            type="button"
+            onClick={handleDownloadReport}
+            disabled={isLoading}
+            className="bg-[#0b1a3a] text-white shadow-sm hover:bg-[#102653] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
+          >
             <Download className="h-4 w-4" />
             Download CSV
           </Button>
