@@ -33,6 +33,7 @@ import {
    findOwnedBankCustomerStepOneByNic,
    getCurrentBankCustomerFinancialRecord,
    getOwnedBankCustomerIdentityByUserId,
+   generateBankCustomerCredentials,
    saveBankCustomerCardStep,
    saveBankCustomerCribLinkingStep,
    saveBankCustomerIncomeStep,
@@ -50,7 +51,6 @@ import type {
 } from "@/src/types/dto/bank-customer-financial.dto";
 import type { StepOneRegistrationRequest, StepOneUpdateRequest } from "@/src/types/dto/registration.dto";
 import { ApiError } from "@/src/types/api-error";
-import { getOfficerCreditCurrentEvaluation } from "@/src/api/creditlens/officer-creditlens.service";
 import { useToast } from "@/src/components/ui/toast";
 
 type StepOneConflictField = "nic" | "email" | "username" | "bankAccount";
@@ -505,6 +505,9 @@ export default function AddCustomerPage() {
    const [isVerifyingAccount, setIsVerifyingAccount] = useState(false);
    const [isSavingCribLinkingStep, setIsSavingCribLinkingStep] = useState(false);
    const [isCompletingCribReviewStep, setIsCompletingCribReviewStep] = useState(false);
+   const [isGeneratingCredentials, setIsGeneratingCredentials] = useState(false);
+   const [editingIncomeIndex, setEditingIncomeIndex] = useState<number | null>(null);
+   const [editingIncomeDraft, setEditingIncomeDraft] = useState<CustomerFormData["incomes"][number] | null>(null);
    const [editingLoanIndex, setEditingLoanIndex] = useState<number | null>(null);
    const [editingLoanDraft, setEditingLoanDraft] = useState<LoanDraftState>(emptyLoanDraft);
    const [editingCardIndex, setEditingCardIndex] = useState<number | null>(null);
@@ -512,6 +515,7 @@ export default function AddCustomerPage() {
    const [editingLiabilityIndex, setEditingLiabilityIndex] = useState<number | null>(null);
    const [editingLiabilityDraft, setEditingLiabilityDraft] = useState<LiabilityDraftState>(emptyLiabilityDraft);
    const [liveSummaryError, setLiveSummaryError] = useState("");
+   const [hasAutoLoadedNicEdit, setHasAutoLoadedNicEdit] = useState(false);
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
 
    useEffect(() => {
@@ -567,6 +571,13 @@ export default function AddCustomerPage() {
    }, [editingLoanIndex, formData.loans.length]);
 
    useEffect(() => {
+      if (editingIncomeIndex !== null && editingIncomeIndex >= formData.incomes.length) {
+         setEditingIncomeIndex(null);
+         setEditingIncomeDraft(null);
+      }
+   }, [editingIncomeIndex, formData.incomes.length]);
+
+   useEffect(() => {
       if (editingCardIndex !== null && editingCardIndex >= formData.creditCards.length) {
          setEditingCardIndex(null);
          setEditingCardDraft(emptyCardDraft);
@@ -583,6 +594,43 @@ export default function AddCustomerPage() {
    useEffect(() => {
       setLiveSummaryError("");
    }, [step]);
+
+   const startIncomeEdit = (index: number) => {
+      const selected = formData.incomes[index];
+      if (!selected) {
+         return;
+      }
+
+      setEditingIncomeIndex(index);
+      setEditingIncomeDraft({ ...selected });
+   };
+
+   const cancelIncomeEdit = () => {
+      setEditingIncomeIndex(null);
+      setEditingIncomeDraft(null);
+   };
+
+   const saveIncomeEdit = () => {
+      if (editingIncomeIndex === null || !editingIncomeDraft) {
+         return;
+      }
+
+      const updatedIncomes = formData.incomes.map((income, index) =>
+         index === editingIncomeIndex ? { ...editingIncomeDraft } : income,
+      );
+
+      updateFormData({ incomes: updatedIncomes });
+      cancelIncomeEdit();
+   };
+
+   const deleteIncome = (index: number) => {
+      updateFormData({
+         incomes: formData.incomes.filter((_, rowIndex) => rowIndex !== index),
+      });
+      if (editingIncomeIndex === index) {
+         cancelIncomeEdit();
+      }
+   };
   
   const steps = [
     { id: 1, label: "Personal Details" },
@@ -895,8 +943,8 @@ export default function AddCustomerPage() {
       }
    };
 
-   const lookupCustomerByNic = async () => {
-      const nic = formData.nic.trim();
+   const lookupCustomerByNic = async (nicOverride?: string) => {
+      const nic = (nicOverride ?? formData.nic).trim();
       if (!nic) {
          setSubmitError("NIC number is required.");
          return;
@@ -970,6 +1018,21 @@ export default function AddCustomerPage() {
       }
    };
 
+   useEffect(() => {
+      if (hasAutoLoadedNicEdit || typeof window === "undefined") {
+         return;
+      }
+
+      const nicFromQuery = new URLSearchParams(window.location.search).get("nic")?.trim() || "";
+      if (!nicFromQuery) {
+         return;
+      }
+
+      setHasAutoLoadedNicEdit(true);
+      setFormData((prev) => ({ ...prev, nic: nicFromQuery }));
+      void lookupCustomerByNic(nicFromQuery);
+   }, [hasAutoLoadedNicEdit]);
+
    const verifyStepOneAccount = async () => {
       const accountNumber = formData.bankAccount.replace(/\s+/g, "").trim();
       if (!accountNumber) {
@@ -1013,6 +1076,34 @@ export default function AddCustomerPage() {
          }
       } finally {
          setIsVerifyingAccount(false);
+      }
+   };
+
+   const generateStepOneCredentials = async () => {
+      if (!formData.firstName.trim() || !formData.lastName.trim()) {
+         setSubmitError("First name and last name are required before generating credentials.");
+         return;
+      }
+
+      setIsGeneratingCredentials(true);
+      setSubmitError("");
+      try {
+         const credentials = await generateBankCustomerCredentials(formData.firstName, formData.lastName);
+         updateFormData({
+            username: credentials.username,
+            password: credentials.password,
+            confirmPassword: credentials.password,
+         });
+         showToast({
+            title: "Credentials generated",
+            description: `Username ${credentials.username} is ready to use.`,
+            type: "success",
+         });
+      } catch (error) {
+         const message = error instanceof ApiError ? error.message : "Failed to generate credentials.";
+         setSubmitError(message);
+      } finally {
+         setIsGeneratingCredentials(false);
       }
    };
 
@@ -1119,32 +1210,20 @@ export default function AddCustomerPage() {
       setIsCompletingCribReviewStep(true);
       try {
          const response = await completeBankCustomerCribReviewStep(createdBankCustomerId);
+         const createdEvaluationScore = response.bankEvaluationTotalRiskPoints;
          updateFormData({
             cribRequestStatus: response.requestStatus ?? "COMPLETED",
             cribReportStatus: response.reportStatus ?? "READY",
+            creditScore: typeof createdEvaluationScore === "number" ? createdEvaluationScore : formData.creditScore,
          });
-         // fetch the newly created bank credit evaluation and update the review UI
-         try {
-            const evalResp = await getOfficerCreditCurrentEvaluation(createdBankCustomerId);
-            updateFormData({
-               creditScore: evalResp.totalRiskPoints,
-               missedPaymentsLast12Months: evalResp.missedPaymentsCount ?? formData.missedPaymentsLast12Months,
-            });
-            // show success toast with evaluation info
-             showToast({
-                title: "Onboarding completed",
-                description: `Credit evaluation created (score: ${evalResp.totalRiskPoints ?? "N/A"})`,
-                type: "success",
-             });
-         } catch (evalErr) {
-            // non-fatal: leave form data as-is
-            console.warn("Failed to fetch credit evaluation after onboarding:", evalErr);
-             showToast({
-                title: "Onboarding completed",
-                description: "Onboarding completed but credit evaluation could not be fetched.",
-                type: "info",
-             });
-         }
+         showToast({
+            title: "Onboarding completed",
+            description:
+               typeof createdEvaluationScore === "number"
+                  ? `Credit evaluation created (score: ${createdEvaluationScore})`
+                  : "Onboarding completed and credit evaluation was saved.",
+            type: "success",
+         });
          return response;
       } finally {
          setIsCompletingCribReviewStep(false);
@@ -1392,29 +1471,175 @@ export default function AddCustomerPage() {
                         No income sources added yet.
                      </p>
                   ) : (
-                     <div className="space-y-2">
-                        {formData.incomes.slice(0, 3).map((income, index) => (
-                           <div
-                              key={`${income.type}-${income.amount}-${index}`}
-                              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs"
-                           >
-                              <div className="flex items-center justify-between gap-3">
-                                 <span className="font-semibold text-slate-700">{income.type}</span>
-                                 <span className="font-semibold text-slate-700">{formatAmount(income.amount)}</span>
-                              </div>
+                     <div className="space-y-3">
+                        {formData.incomes.map((income, index) => (
+                           <div key={`${income.type}-${income.amount}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-3">
+                              {editingIncomeIndex === index && editingIncomeDraft ? (
+                                 <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                       <div>
+                                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Income Type</label>
+                                          <select
+                                             value={editingIncomeDraft.type}
+                                             onChange={(event) => {
+                                                const nextType = event.target.value as CustomerFormData["incomes"][number]["type"];
+                                                setEditingIncomeDraft((prev) => {
+                                                   if (!prev) return prev;
+                                                   if (nextType === "Business Person") {
+                                                      return { type: nextType, amount: prev.amount, incomeStability: prev.incomeStability || "Stable" };
+                                                   }
+                                                   return {
+                                                      type: nextType,
+                                                      amount: prev.amount,
+                                                      salaryType: prev.salaryType || "Fixed",
+                                                      employmentType: prev.employmentType || "Permanent",
+                                                      contractDurationMonths: prev.contractDurationMonths,
+                                                   };
+                                                });
+                                             }}
+                                             className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-xs font-medium text-slate-700"
+                                          >
+                                             <option value="Salary Worker">Salary Worker</option>
+                                             <option value="Business Person">Business Person</option>
+                                          </select>
+                                       </div>
+                                       <div>
+                                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Amount (LKR)</label>
+                                          <input
+                                             type="text"
+                                             value={editingIncomeDraft.amount}
+                                             onChange={(event) => setEditingIncomeDraft((prev) => (prev ? { ...prev, amount: event.target.value } : prev))}
+                                             className="w-full rounded-md border border-slate-300 px-2 py-2 text-xs font-medium text-slate-700"
+                                          />
+                                       </div>
+                                    </div>
+
+                                    {editingIncomeDraft.type === "Business Person" ? (
+                                       <div>
+                                          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Income Stability</label>
+                                          <select
+                                             value={editingIncomeDraft.incomeStability || "Stable"}
+                                             onChange={(event) =>
+                                                setEditingIncomeDraft((prev) => (prev ? { ...prev, incomeStability: event.target.value } : prev))
+                                             }
+                                             className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-xs font-medium text-slate-700"
+                                          >
+                                             <option value="Stable">Stable</option>
+                                             <option value="Medium Fluctuation">Medium Fluctuation</option>
+                                             <option value="High Fluctuation">High Fluctuation</option>
+                                          </select>
+                                       </div>
+                                    ) : (
+                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                          <div>
+                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Salary Type</label>
+                                             <select
+                                                value={editingIncomeDraft.salaryType || "Fixed"}
+                                                onChange={(event) =>
+                                                   setEditingIncomeDraft((prev) => (prev ? { ...prev, salaryType: event.target.value } : prev))
+                                                }
+                                                className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-xs font-medium text-slate-700"
+                                             >
+                                                <option value="Fixed">Fixed</option>
+                                                <option value="Average (Variable)">Average (Variable)</option>
+                                             </select>
+                                          </div>
+                                          <div>
+                                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Employment Type</label>
+                                             <select
+                                                value={editingIncomeDraft.employmentType || "Permanent"}
+                                                onChange={(event) =>
+                                                   setEditingIncomeDraft((prev) => (prev ? { ...prev, employmentType: event.target.value } : prev))
+                                                }
+                                                className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-xs font-medium text-slate-700"
+                                             >
+                                                <option value="Permanent">Permanent</option>
+                                                <option value="Contract">Contract</option>
+                                             </select>
+                                          </div>
+                                          {editingIncomeDraft.employmentType === "Contract" && (
+                                             <div className="md:col-span-2">
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Contract Duration (Months)</label>
+                                                <input
+                                                   type="text"
+                                                   value={editingIncomeDraft.contractDurationMonths || ""}
+                                                   onChange={(event) =>
+                                                      setEditingIncomeDraft((prev) =>
+                                                         prev ? { ...prev, contractDurationMonths: event.target.value } : prev,
+                                                      )
+                                                   }
+                                                   className="w-full rounded-md border border-slate-300 px-2 py-2 text-xs font-medium text-slate-700"
+                                                />
+                                             </div>
+                                          )}
+                                       </div>
+                                    )}
+
+                                    <div className="flex items-center justify-end gap-2 pt-1">
+                                       <button
+                                          type="button"
+                                          onClick={cancelIncomeEdit}
+                                          className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
+                                       >
+                                          <X size={12} />
+                                          Cancel
+                                       </button>
+                                       <button
+                                          type="button"
+                                          onClick={saveIncomeEdit}
+                                          className="rounded-md bg-[#3e9fd3] px-2 py-1 text-[11px] font-semibold text-white hover:bg-[#328ab8]"
+                                       >
+                                          Save
+                                       </button>
+                                    </div>
+                                 </>
+                              ) : (
+                                 <>
+                                    <div className="flex items-start justify-between gap-3">
+                                       <div>
+                                          <p className="font-bold text-slate-800 text-sm">{income.type}</p>
+                                          <p className="text-xs text-slate-500">
+                                             {income.type === "Business Person"
+                                                ? `Stability: ${income.incomeStability ?? "-"}`
+                                                : `Salary: ${income.salaryType ?? "-"} | Employment: ${income.employmentType ?? "-"}`}
+                                          </p>
+                                       </div>
+                                       <div className="flex items-center gap-2">
+                                          <button
+                                             type="button"
+                                             onClick={() => startIncomeEdit(index)}
+                                             className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
+                                          >
+                                             <Pencil size={12} />
+                                             Edit
+                                          </button>
+                                          <button
+                                             type="button"
+                                             onClick={() => deleteIncome(index)}
+                                             className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
+                                             aria-label={`Delete income source ${index + 1}`}
+                                          >
+                                             <Trash2 size={12} />
+                                             Delete
+                                          </button>
+                                       </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs text-slate-600 border-t border-slate-100 pt-3">
+                                       <span>Amount</span>
+                                       <span className="font-semibold text-slate-800">{formatAmount(Number(income.amount || 0))}</span>
+                                    </div>
+                                 </>
+                              )}
                            </div>
                         ))}
-                        {formData.incomes.length > 3 && (
-                           <p className="text-[11px] text-slate-500">+{formData.incomes.length - 3} more income sources</p>
-                        )}
+                        <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
+                           <div className="flex justify-between items-center">
+                              <span className="text-xs text-blue-600 font-semibold">Total Monthly Income</span>
+                              <span className="text-sm font-bold text-blue-700">{formatAmount(totalMonthlyIncome)}</span>
+                           </div>
+                        </div>
                      </div>
                   )}
-                  <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
-                     <div className="flex justify-between items-center">
-                        <span className="text-xs text-blue-600 font-semibold">Total Monthly Income</span>
-                        <span className="text-sm font-bold text-blue-700">{formatAmount(totalMonthlyIncome)}</span>
-                     </div>
-                  </div>
                </div>
             );
 
@@ -1801,7 +2026,9 @@ export default function AddCustomerPage() {
                   onContinueStepOne={continueStepOne}
                   onLookupCustomerByNic={lookupCustomerByNic}
                   onVerifyAccount={verifyStepOneAccount}
+                  onGenerateCredentials={generateStepOneCredentials}
                   isVerifyingAccount={isVerifyingAccount}
+                  isGeneratingCredentials={isGeneratingCredentials}
                   isSavingDraftStepOne={isSavingDraftStepOne}
                   isSubmittingStepOne={isSubmittingStepOne}
                   isLookingUpCustomerByNic={isLookingUpCustomerByNic}

@@ -471,11 +471,6 @@ export default function CreditAnalysisEvaluationPage() {
             />
           ) : (
             <>
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
-                <span>Customer Code: {profile?.customerCode || `BANK-CUSTOMER-${bankCustomerId}`}</span>
-                <span>Bank Customer ID: {bankCustomerId}</span>
-              </div>
-
               <div className="mb-8 grid grid-cols-2 rounded-xl border border-white/10 bg-[#173f6d]/80 p-1 md:grid-cols-4">
                 {TABS.map((tab) => (
                   <button

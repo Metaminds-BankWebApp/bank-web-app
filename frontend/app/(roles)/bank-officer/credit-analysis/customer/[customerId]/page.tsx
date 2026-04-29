@@ -12,7 +12,6 @@ export default function CreditAnalysisCustomerPage() {
   const params = useParams<{ customerId: string }>();
   const searchParams = useSearchParams();
   const customerName = searchParams.get("name") || "Amila Silva";
-  const customerId = params.customerId || "C-48292";
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
@@ -54,7 +53,6 @@ export default function CreditAnalysisCustomerPage() {
                     .toUpperCase()}
                 </div>
                 <h2 className="text-xl font-bold text-slate-800">{customerName}</h2>
-                <p className="text-sm text-slate-500 mt-1">ID: {customerId}</p>
               </CardContent>
             </Card>
 

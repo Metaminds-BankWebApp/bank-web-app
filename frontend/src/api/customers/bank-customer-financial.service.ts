@@ -12,6 +12,7 @@ import type {
   BankCustomerLoanStepRequest,
   BankOfficerCustomerIdentityResponse,
   BankOfficerCustomerStepOnePrefillResponse,
+  GeneratedBankCustomerCredentialsResponse,
 } from "@/src/types/dto/bank-customer-financial.dto";
 
 export async function getOwnedBankCustomerIdentityByUserId(
@@ -36,6 +37,26 @@ export async function findOwnedBankCustomerStepOneByNic(
       {
         params: {
           nic,
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function generateBankCustomerCredentials(
+  firstName: string,
+  lastName: string,
+): Promise<GeneratedBankCustomerCredentialsResponse> {
+  try {
+    const { data } = await apiClient.get<GeneratedBankCustomerCredentialsResponse>(
+      CUSTOMER_ENDPOINTS.bankOfficerCustomerGeneratedCredentials,
+      {
+        params: {
+          firstName,
+          lastName,
         },
       },
     );

@@ -23,6 +23,11 @@ export interface BankOfficerCustomerStepOnePrefillResponse {
   accountType: string | null;
 }
 
+export interface GeneratedBankCustomerCredentialsResponse {
+  username: string;
+  password: string;
+}
+
 export interface BankCustomerFinancialRecordResponse {
   bankRecordId: number;
   bankCustomerId: number;

@@ -1,19 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
 import { StepProps } from "./types";
-import type { CustomerFormData } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { FinancialDataErrors, validateFinancialDataStep } from "./validation";
 
 export function FinancialData({ formData, updateFormData, onNext, onBack }: StepProps) {
   const [errors, setErrors] = useState<FinancialDataErrors>({});
-  const [editingIncomeIndex, setEditingIncomeIndex] = useState<number | null>(null);
-  const [editingIncomeDraft, setEditingIncomeDraft] = useState<CustomerFormData["incomes"][number] | null>(null);
   const incomeType = formData.incomeType || "Salary Worker";
   const salaryType = formData.salaryType || "Fixed";
   const employmentType = formData.employmentType || "Permanent";
@@ -37,35 +34,6 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
-  };
-
-  const startIncomeEdit = (index: number) => {
-    const selected = formData.incomes[index];
-    if (!selected) {
-      return;
-    }
-
-    setEditingIncomeIndex(index);
-    setEditingIncomeDraft({ ...selected });
-  };
-
-  const cancelIncomeEdit = () => {
-    setEditingIncomeIndex(null);
-    setEditingIncomeDraft(null);
-  };
-
-  const saveIncomeEdit = () => {
-    if (editingIncomeIndex === null || !editingIncomeDraft) {
-      return;
-    }
-
-    const updatedIncomes = formData.incomes.map((income, index) =>
-      index === editingIncomeIndex ? { ...editingIncomeDraft } : income,
-    );
-
-    updateFormData({ incomes: updatedIncomes });
-    setEditingIncomeIndex(null);
-    setEditingIncomeDraft(null);
   };
 
   const handleAddSalaryIncome = () => {
@@ -164,15 +132,6 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
     }));
   };
 
-  const handleDeleteIncome = (index: number) => {
-    updateFormData({
-      incomes: formData.incomes.filter((_, rowIndex) => rowIndex !== index),
-    });
-    if (editingIncomeIndex === index) {
-      cancelIncomeEdit();
-    }
-  };
-
   const handleNext = () => {
     const validationErrors = validateFinancialDataStep(formData);
     const hasPendingDraft =
@@ -197,8 +156,7 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
       </div>
 
       <div className="p-8">
-        <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-8">
-          <div className="space-y-8">
+        <div className="space-y-8">
             <div>
               <Label className="text-slate-700 font-medium mb-3 block">Customer Income Type</Label>
               <Select
@@ -388,212 +346,11 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                 {errors.incomes}
               </div>
             )}
-          </div>
-
-          <div className="h-fit space-y-6">
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-slate-900">Added Income Sources</h3>
-                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">
-                  {formData.incomes.length} Items
-                </span>
-              </div>
-
-              {formData.incomes.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                  <p>No income sources added yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">
-                    <span className="w-1/2">Type</span>
-                    <span className="w-1/3 text-right">Amount</span>
-                    <span className="w-1/6 text-right">Actions</span>
-                  </div>
-
-                  {formData.incomes.map((income, index) => (
-                    <div key={`${income.type}-${income.amount}-${index}`} className="bg-white border border-slate-100 rounded-xl p-4 shadow-sm space-y-3">
-                      {editingIncomeIndex === index && editingIncomeDraft ? (
-                        <>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Income Type</label>
-                              <Select
-                                value={editingIncomeDraft.type}
-                                onValueChange={(value) => {
-                                  const nextType = value as CustomerFormData["incomes"][number]["type"];
-                                  setEditingIncomeDraft((prev) => {
-                                    if (!prev) return prev;
-                                    if (nextType === "Business Person") {
-                                      return { type: nextType, amount: prev.amount, incomeStability: prev.incomeStability || "Stable" };
-                                    }
-                                    return {
-                                      type: nextType,
-                                      amount: prev.amount,
-                                      salaryType: prev.salaryType || "Fixed",
-                                      employmentType: prev.employmentType || "Permanent",
-                                      contractDurationMonths: prev.contractDurationMonths,
-                                    };
-                                  });
-                                }}
-                              >
-                                <SelectTrigger className="h-10 bg-slate-50 border-slate-200">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Salary Worker">Salary Worker</SelectItem>
-                                  <SelectItem value="Business Person">Business Person</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Amount (LKR)</label>
-                              <Input
-                                type="text"
-                                value={editingIncomeDraft.amount}
-                                onChange={(event) => setEditingIncomeDraft((prev) => (prev ? { ...prev, amount: event.target.value } : prev))}
-                                className="h-10 bg-slate-50 border-slate-200"
-                              />
-                            </div>
-                          </div>
-
-                          {editingIncomeDraft.type === "Business Person" ? (
-                            <div>
-                              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Income Stability</label>
-                              <Select
-                                value={editingIncomeDraft.incomeStability || "Stable"}
-                                onValueChange={(value) => setEditingIncomeDraft((prev) => (prev ? { ...prev, incomeStability: value } : prev))}
-                              >
-                                <SelectTrigger className="h-10 bg-slate-50 border-slate-200">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Stable">Stable</SelectItem>
-                                  <SelectItem value="Medium Fluctuation">Medium Fluctuation</SelectItem>
-                                  <SelectItem value="High Fluctuation">High Fluctuation</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Salary Type</label>
-                                <Select
-                                  value={editingIncomeDraft.salaryType || "Fixed"}
-                                  onValueChange={(value) => setEditingIncomeDraft((prev) => (prev ? { ...prev, salaryType: value } : prev))}
-                                >
-                                  <SelectTrigger className="h-10 bg-slate-50 border-slate-200">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Fixed">Fixed</SelectItem>
-                                    <SelectItem value="Average (Variable)">Average (Variable)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Employment Type</label>
-                                <Select
-                                  value={editingIncomeDraft.employmentType || "Permanent"}
-                                  onValueChange={(value) =>
-                                    setEditingIncomeDraft((prev) => (prev ? { ...prev, employmentType: value } : prev))
-                                  }
-                                >
-                                  <SelectTrigger className="h-10 bg-slate-50 border-slate-200">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Permanent">Permanent</SelectItem>
-                                    <SelectItem value="Contract">Contract</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              {editingIncomeDraft.employmentType === "Contract" && (
-                                <div className="md:col-span-2">
-                                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">Contract Duration (Months)</label>
-                                  <Input
-                                    type="text"
-                                    value={editingIncomeDraft.contractDurationMonths || ""}
-                                    onChange={(event) =>
-                                      setEditingIncomeDraft((prev) =>
-                                        prev ? { ...prev, contractDurationMonths: event.target.value } : prev,
-                                      )
-                                    }
-                                    className="h-10 bg-slate-50 border-slate-200"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          <div className="flex items-center justify-end gap-2 pt-1">
-                            <button
-                              type="button"
-                              onClick={cancelIncomeEdit}
-                              className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
-                            >
-                              <X size={12} />
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              onClick={saveIncomeEdit}
-                              className="rounded-md bg-[#3e9fd3] px-2 py-1 text-[11px] font-semibold text-white hover:bg-[#328ab8]"
-                            >
-                              Save
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="font-bold text-slate-800 text-sm">{income.type}</p>
-                              <p className="text-xs text-slate-500">
-                                {income.type === "Business Person"
-                                  ? `Stability: ${income.incomeStability ?? "-"}`
-                                  : `Salary: ${income.salaryType ?? "-"} | Employment: ${income.employmentType ?? "-"}`}
-                              </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => startIncomeEdit(index)}
-                                className="inline-flex items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100"
-                              >
-                                <Pencil size={12} />
-                                Edit
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteIncome(index)}
-                                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2 py-1 text-[11px] font-semibold text-red-600 hover:bg-red-50"
-                                aria-label={`Delete income source ${index + 1}`}
-                              >
-                                <Trash2 size={12} />
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-slate-600 border-t border-slate-100 pt-3">
-                            <span>Amount</span>
-                            <span className="font-semibold text-slate-800">{formatCurrency(Number(income.amount || 0))}</span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {formData.incomes.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-between items-center">
-                  <span className="text-slate-500 font-medium">Total Monthly Income</span>
-                  <span className="text-[#3e9fd3] font-bold text-lg">{formatCurrency(totalIncome)}</span>
-                </div>
-              )}
-            </div>
-          </div>
+            {formData.incomes.length > 0 && (
+              <p className="text-xs font-medium text-emerald-700">
+                {formData.incomes.length} income source{formData.incomes.length > 1 ? "s" : ""} added to the live summary.
+              </p>
+            )}
         </div>
       </div>
 
