@@ -42,6 +42,17 @@ type BranchData = {
   statusCode: BranchStatus;
 };
 
+type BranchSearchField =
+  | "ALL"
+  | "ID"
+  | "NAME"
+  | "ADDRESS"
+  | "EMAIL"
+  | "CONTACT"
+  | "OFFICERS"
+  | "CUSTOMERS"
+  | "STATUS";
+
 const branchEmailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;
 const branchContactRegex =
   /^(?:070|071|072|074|075|076|077|078|011|021|023|024|025|026|027|031|032|033|034|035|036|037|038|041|045|047|051|052|054|055|057|063|065|066|067|081|091)\d{7}$/;
@@ -50,6 +61,19 @@ const branchStatusOptions: Array<{ value: BranchStatus; label: string }> = [
   { value: "INACTIVE", label: "Inactive" },
   { value: "MAINTENANCE", label: "Maintenance" },
 ];
+
+const branchSearchOptions: Array<{ value: BranchSearchField; label: string }> = [
+  { value: "ALL", label: "All Fields" },
+  { value: "ID", label: "ID" },
+  { value: "NAME", label: "Branch Name" },
+  { value: "ADDRESS", label: "Address" },
+  { value: "EMAIL", label: "Email" },
+  { value: "CONTACT", label: "Contact" },
+  { value: "OFFICERS", label: "Officers" },
+  { value: "CUSTOMERS", label: "Customers" },
+  { value: "STATUS", label: "Status" },
+];
+const branchStatusKeywords = new Set(["active", "inactive", "maintenance"]);
 
 function SummaryCard({
   label,
@@ -120,6 +144,14 @@ function toStatusCode(status: BranchResponse["status"]): BranchStatus {
   return "ACTIVE";
 }
 
+function matchesBranchStatus(status: StatusType, normalizedQuery: string): boolean {
+  const normalizedStatus = status.toLowerCase();
+  if (branchStatusKeywords.has(normalizedQuery)) {
+    return normalizedStatus === normalizedQuery;
+  }
+  return normalizedStatus.includes(normalizedQuery);
+}
+
 function mapApiBranch(branch: BranchResponse): BranchData {
   const statusCode = toStatusCode(branch.status);
   const officerCount =
@@ -149,6 +181,7 @@ export default function Page() {
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<BranchSearchField>("ALL");
   const [branches, setBranches] = useState<BranchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -342,17 +375,52 @@ export default function Page() {
   };
 
   const filteredBranches = useMemo(() => {
-    const normalized = searchQuery.toLowerCase();
+    const normalized = searchQuery.trim().toLowerCase();
 
-    return [...branches]
-      .filter(
-        (branch) =>
-          branch.id.toLowerCase().includes(normalized) ||
-          branch.name.toLowerCase().includes(normalized) ||
-          branch.address.toLowerCase().includes(normalized)
-      )
-      .sort((a, b) => a.id.localeCompare(b.id));
-  }, [branches, searchQuery]);
+    if (!normalized) {
+      return branches;
+    }
+
+    return branches.filter((branch) => {
+      const matches = (value: string | number) =>
+        String(value).toLowerCase().includes(normalized);
+
+      if (searchField === "ALL") {
+        return (
+          matches(branch.id) ||
+          matches(branch.name) ||
+          matches(branch.address) ||
+          matches(branch.email) ||
+          matches(branch.contact) ||
+          matches(branch.officers) ||
+          matches(branch.customers) ||
+          matchesBranchStatus(branch.status, normalized)
+        );
+      }
+      if (searchField === "ID") {
+        return matches(branch.id);
+      }
+      if (searchField === "NAME") {
+        return matches(branch.name);
+      }
+      if (searchField === "ADDRESS") {
+        return matches(branch.address);
+      }
+      if (searchField === "EMAIL") {
+        return matches(branch.email);
+      }
+      if (searchField === "CONTACT") {
+        return matches(branch.contact);
+      }
+      if (searchField === "OFFICERS") {
+        return matches(branch.officers);
+      }
+      if (searchField === "CUSTOMERS") {
+        return matches(branch.customers);
+      }
+      return matchesBranchStatus(branch.status, normalized);
+    });
+  }, [branches, searchField, searchQuery]);
 
   const totalPages = Math.ceil(filteredBranches.length / branchesPerPage);
   const paginatedBranches = filteredBranches.slice(
@@ -382,7 +450,7 @@ export default function Page() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, searchField]);
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
@@ -420,18 +488,34 @@ export default function Page() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Search Branches by ID, Name or Address..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
-                />
+              <div className="flex flex-1 flex-col sm:flex-row gap-3">
+                <select
+                  value={searchField}
+                  onChange={(event) =>
+                    setSearchField(event.target.value as BranchSearchField)
+                  }
+                  className="h-12 rounded-full border border-gray-300 bg-white px-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
+                >
+                  {branchSearchOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      Search by {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="relative flex-1">
+                  <Search
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search branches..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-12 w-full pl-12 pr-4 rounded-full border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
+                  />
+                </div>
               </div>
 
               <Link href="/admin/branch-management/add">
@@ -496,8 +580,12 @@ export default function Page() {
                             <td className="px-6 py-4 text-gray-600">{branch.address}</td>
                             <td className="px-6 py-4">{branch.email}</td>
                             <td className="px-6 py-4">{branch.contact}</td>
-                            <td className="px-6 py-4 font-semibold">{branch.officers.toLocaleString()}</td>
-                            <td className="px-6 py-4 font-semibold">{branch.customers.toLocaleString()}</td>
+                            <td className="px-6 py-4 font-semibold">
+                              {branch.officers.toLocaleString()}
+                            </td>
+                            <td className="px-6 py-4 font-semibold">
+                              {branch.customers.toLocaleString()}
+                            </td>
                             <td className="px-6 py-4">
                               <StatusBadge status={branch.status} />
                             </td>

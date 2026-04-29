@@ -104,14 +104,44 @@ type UserEditErrors = Partial<
   Record<"firstName" | "lastName" | "email" | "contactNumber", string>
 >;
 
+type UserSearchField =
+  | "ALL"
+  | "ID"
+  | "NAME"
+  | "EMAIL"
+  | "CONTACT"
+  | "JOINED_DATE"
+  | "CUSTOMER_TYPE"
+  | "STATUS";
+
 const userEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 const userContactRegex = /^\+?[0-9()\-.\s]{7,20}$/;
+const userSearchOptions: Array<{ value: UserSearchField; label: string }> = [
+  { value: "ALL", label: "All Fields" },
+  { value: "ID", label: "ID" },
+  { value: "NAME", label: "Name" },
+  { value: "EMAIL", label: "Email" },
+  { value: "CONTACT", label: "Contact Number" },
+  { value: "JOINED_DATE", label: "Joined Date" },
+  { value: "CUSTOMER_TYPE", label: "Customer Type" },
+  { value: "STATUS", label: "Status" },
+];
+const userStatusKeywords = new Set(["active", "inactive", "locked"]);
+
+function matchesUserStatus(statusLabel: string, normalizedQuery: string): boolean {
+  const normalizedStatus = statusLabel.toLowerCase();
+  if (userStatusKeywords.has(normalizedQuery)) {
+    return normalizedStatus === normalizedQuery;
+  }
+  return normalizedStatus.includes(normalizedQuery);
+}
 
 export default function UserManagementPage() {
   const { showToast } = useToast();
   const [filter, setFilter] = useState<AdminCustomerType>("ALL");
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<UserSearchField>("ALL");
   const [users, setUsers] = useState<AdminUserManagementUserResponse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,7 +187,6 @@ export default function UserManagementPage() {
       try {
         const data = await getAdminUsers({
           customerType: filter,
-          search: searchQuery || undefined,
         });
 
         if (!mounted) {
@@ -195,13 +224,64 @@ export default function UserManagementPage() {
     return () => {
       mounted = false;
     };
-  }, [filter, searchQuery, showToast]);
+  }, [filter, showToast]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filter, searchQuery]);
+  }, [filter, searchField, searchQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(users.length / usersPerPage));
+  const filteredUsers = useMemo(() => {
+    const normalized = searchQuery.trim().toLowerCase();
+    if (!normalized) {
+      return users;
+    }
+
+    return users.filter((user) => {
+      const id = resolveCustomerId(user);
+      const name = user.fullName || "-";
+      const email = user.email || "-";
+      const contact = user.contactNumber || "-";
+      const joinedDate = formatJoinedDate(user.joinedDate);
+      const customerTypeLabel = getCustomerTypeLabel(user.customerType);
+      const statusLabel = getStatusLabel(user.status);
+
+      const matches = (value: string | number) =>
+        String(value).toLowerCase().includes(normalized);
+
+      if (searchField === "ALL") {
+        return (
+          matches(id) ||
+          matches(name) ||
+          matches(email) ||
+          matches(contact) ||
+          matches(joinedDate) ||
+          matches(customerTypeLabel) ||
+          matchesUserStatus(statusLabel, normalized)
+        );
+      }
+      if (searchField === "ID") {
+        return matches(id);
+      }
+      if (searchField === "NAME") {
+        return matches(name);
+      }
+      if (searchField === "EMAIL") {
+        return matches(email);
+      }
+      if (searchField === "CONTACT") {
+        return matches(contact);
+      }
+      if (searchField === "JOINED_DATE") {
+        return matches(joinedDate);
+      }
+      if (searchField === "CUSTOMER_TYPE") {
+        return matches(customerTypeLabel);
+      }
+      return matchesUserStatus(statusLabel, normalized);
+    });
+  }, [searchField, searchQuery, users]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -211,8 +291,8 @@ export default function UserManagementPage() {
 
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * usersPerPage;
-    return users.slice(start, start + usersPerPage);
-  }, [currentPage, users]);
+    return filteredUsers.slice(start, start + usersPerPage);
+  }, [currentPage, filteredUsers]);
 
   const applyUserUpdate = (updated: AdminUserManagementUserResponse) => {
     setUsers((prev) =>
@@ -359,9 +439,12 @@ export default function UserManagementPage() {
     }
   };
 
-  const fromIndex = users.length === 0 ? 0 : (currentPage - 1) * usersPerPage + 1;
+  const fromIndex =
+    filteredUsers.length === 0 ? 0 : (currentPage - 1) * usersPerPage + 1;
   const toIndex =
-    users.length === 0 ? 0 : Math.min(currentPage * usersPerPage, users.length);
+    filteredUsers.length === 0
+      ? 0
+      : Math.min(currentPage * usersPerPage, filteredUsers.length);
 
   return (
     <AuthGuard requiredRole="ADMIN">
@@ -384,53 +467,72 @@ export default function UserManagementPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-6 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-4 flex flex-col sm:flex-row items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 text-sm">Filter by:</span>
-                <button
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold ${
-                    filter === "ALL"
-                      ? "bg-[#0B3B66] text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                  onClick={() => setFilter("ALL")}
-                >
-                  All Customers
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold ${
-                    filter === "BANK"
-                      ? "bg-[#0B3B66] text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                  onClick={() => setFilter("BANK")}
-                >
-                  Bank Customers
-                </button>
-                <button
-                  className={`px-4 py-2 rounded-lg text-sm font-semibold ${
-                    filter === "PUBLIC"
-                      ? "bg-[#0B3B66] text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                  onClick={() => setFilter("PUBLIC")}
-                >
-                  Public Customers
-                </button>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-medium text-gray-600">Customer Type:</span>
+              <button
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  filter === "ALL"
+                    ? "bg-[#0B3B66] text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+                onClick={() => setFilter("ALL")}
+              >
+                All Customers
+              </button>
+              <button
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  filter === "BANK"
+                    ? "bg-[#0B3B66] text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+                onClick={() => setFilter("BANK")}
+              >
+                Bank Customers
+              </button>
+              <button
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
+                  filter === "PUBLIC"
+                    ? "bg-[#0B3B66] text-white"
+                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                }`}
+                onClick={() => setFilter("PUBLIC")}
+              >
+                Public Customers
+              </button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm p-4 flex items-center">
-              <Search size={18} className="text-gray-400 mr-3" />
-              <input
-                type="text"
-                placeholder="Search users by ID, name, email, contact, or status..."
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                className="w-full bg-transparent border-none text-sm focus:outline-none"
-              />
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-1 flex-col sm:flex-row gap-3">
+                <select
+                  value={searchField}
+                  onChange={(event) =>
+                    setSearchField(event.target.value as UserSearchField)
+                  }
+                  className="h-12 rounded-full border border-gray-300 bg-white px-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
+                >
+                  {userSearchOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      Search by {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="relative flex-1">
+                  <Search
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    value={searchInput}
+                    onChange={(event) => setSearchInput(event.target.value)}
+                    className="h-12 w-full pl-12 pr-4 rounded-full border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
+                  />
+                </div>
+              </div>
               {isRefreshing ? (
-                <span className="ml-3 text-xs text-gray-400">Refreshing...</span>
+                <span className="self-center text-xs text-gray-400">Refreshing...</span>
               ) : null}
             </div>
 
@@ -564,7 +666,7 @@ export default function UserManagementPage() {
 
             <div className="flex flex-col sm:flex-row items-center justify-between mt-4">
               <div className="text-sm text-gray-600">
-                Showing {fromIndex} to {toIndex} of {users.length} customers
+                Showing {fromIndex} to {toIndex} of {filteredUsers.length} customers
               </div>
 
               <div className="flex items-center gap-2 mt-3 sm:mt-0">
