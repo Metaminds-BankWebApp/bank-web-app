@@ -46,6 +46,18 @@ const tabOptions: Array<{ key: "all" | RiskType; label: string }> = [
   { key: "high", label: "High Risk" },
 ];
 
+function toRiskType(value: string): RiskType {
+  const normalized = (value ?? "").trim().toUpperCase();
+  if (normalized === "LOW") return "low";
+  if (normalized === "MEDIUM") return "medium";
+  return "high";
+}
+
+function buildInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "--";
+}
+
 export default function CreditAnalysisPage() {
   const router = useRouter();
   const [dashboard, setDashboard] = useState<BankCreditAnalysisDashboardResponse | null>(null);
@@ -88,6 +100,8 @@ export default function CreditAnalysisPage() {
       isActive = false;
     };
   }, []);
+
+  // dashboard is loaded in the primary effect above; no duplicate loader here
 
   const filteredRows = useMemo(() => {
     const sourceRows = dashboard?.customers ?? [];
@@ -421,17 +435,6 @@ function StateCard({
   );
 }
 
-function toRiskType(value?: string): RiskType {
-  const normalized = (value ?? "").trim().toLowerCase();
-  if (normalized === "low") {
-    return "low";
-  }
-  if (normalized === "high") {
-    return "high";
-  }
-  return "medium";
-}
-
 function badgeClasses(risk: RiskType): string {
   if (risk === "low") {
     return "bg-emerald-100 text-emerald-700";
@@ -460,11 +463,6 @@ function indicatorClasses(risk: RiskType): string {
     return "bg-red-500";
   }
   return "bg-amber-500";
-}
-
-function buildInitials(fullName: string): string {
-  const tokens = fullName.split(/\s+/).filter(Boolean);
-  return tokens.slice(0, 2).map((token) => token[0]?.toUpperCase() ?? "").join("") || "NA";
 }
 
 function formatDate(value: string): string {

@@ -185,4 +185,6 @@ export interface BankCustomerCribStepResponse {
   cribData?: BankCustomerCribDataBlock | null;
   report?: BankCustomerCribDataBlock | null;
   data?: BankCustomerCribDataBlock | null;
+  bankEvaluationId?: number | null;
+  bankEvaluationTotalRiskPoints?: number | null;
 }

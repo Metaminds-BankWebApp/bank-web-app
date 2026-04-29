@@ -109,6 +109,7 @@ export const TRANSACT_ENDPOINTS = {
   transactionsVerifyOtp: "/bank-customers/transact/transactions/verify-otp",
   transactionsResendOtp: "/bank-customers/transact/transactions/resend-otp",
   transactionsHistory: "/bank-customers/transact/transactions/history",
+  bankOfficerTransactionsHistory: "/bank-officers/transact/transactions",
   transactionByReference: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}`,
   beneficiaries: "/bank-customers/transact/beneficiaries",
   beneficiaryById: (beneficiaryId: number) => `/bank-customers/transact/beneficiaries/${beneficiaryId}`,
