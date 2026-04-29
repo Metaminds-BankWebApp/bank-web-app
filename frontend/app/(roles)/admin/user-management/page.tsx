@@ -462,7 +462,7 @@ export default function UserManagementPage() {
               avatarStatusDot
               name="Kamal Edirisinghe"
               role="Admin"
-              title="User Management"
+              title="Customer Management"
             />
           </div>
 

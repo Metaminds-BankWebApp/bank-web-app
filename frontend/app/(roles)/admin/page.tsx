@@ -35,8 +35,13 @@ import { useToast } from "@/src/components/ui";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { cn } from "@/src/lib/utils";
 import { getAdminDashboardSummary } from "@/src/api/admin/dashboard.service";
+import { getAdminLoanPolicies } from "@/src/api/admin/loan-policy.service";
 import { ApiError } from "@/src/types/api-error";
 import type { AdminDashboardSummaryResponse } from "@/src/types/dto/admin-dashboard.dto";
+import type {
+  AdminLoanPolicyResponse,
+  AdminLoanPolicyType,
+} from "@/src/types/dto/admin-loan-policy.dto";
 
 type MetricCard = {
   key: keyof AdminDashboardSummaryResponse;
@@ -66,8 +71,10 @@ type AdminAction = {
 };
 
 type LoanRate = {
+  loanType: AdminLoanPolicyType;
   title: string;
   rate: string;
+  sinceLabel: string;
   icon: LucideIcon;
 };
 
@@ -142,12 +149,76 @@ const adminActions: AdminAction[] = [
   },
 ];
 
-const loanRates: LoanRate[] = [
-  { title: "Personal Loan", rate: "17%", icon: User },
-  { title: "Vehicle Loan", rate: "15%", icon: Car },
-  { title: "Educational Loan", rate: "12%", icon: GraduationCap },
-  { title: "Housing Loan", rate: "10%", icon: Home },
+const loanTypeOrder: AdminLoanPolicyType[] = [
+  "PERSONAL",
+  "VEHICLE",
+  "EDUCATION",
+  "HOUSING",
 ];
+
+const loanTypeTitleMap: Record<AdminLoanPolicyType, string> = {
+  PERSONAL: "Personal Loan",
+  VEHICLE: "Vehicle Loan",
+  EDUCATION: "Educational Loan",
+  HOUSING: "Housing Loan",
+};
+
+const loanTypeIconMap: Record<AdminLoanPolicyType, LucideIcon> = {
+  PERSONAL: User,
+  VEHICLE: Car,
+  EDUCATION: GraduationCap,
+  HOUSING: Home,
+};
+
+function formatInterestRate(value: number): string {
+  if (Number.isNaN(value)) {
+    return "-";
+  }
+
+  const hasFraction = Math.abs(value % 1) > 0;
+  return `${value.toLocaleString("en-US", {
+    minimumFractionDigits: hasFraction ? 2 : 0,
+    maximumFractionDigits: 2,
+  })}%`;
+}
+
+function formatPolicySinceDate(createdAt: string | null, updatedAt: string | null): string {
+  const source = createdAt ?? updatedAt;
+  if (!source) {
+    return "Since -";
+  }
+
+  const parsed = new Date(source);
+  if (Number.isNaN(parsed.getTime())) {
+    return `Since ${source}`;
+  }
+
+  const formatted = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(parsed);
+
+  return `Since ${formatted}`;
+}
+
+function mapLoanPoliciesToRates(policies: AdminLoanPolicyResponse[]): LoanRate[] {
+  const policyMap = new Map<AdminLoanPolicyType, AdminLoanPolicyResponse>();
+  policies.forEach((policy) => {
+    policyMap.set(policy.loanType, policy);
+  });
+
+  return loanTypeOrder.map((loanType) => {
+    const policy = policyMap.get(loanType);
+    return {
+      loanType,
+      title: loanTypeTitleMap[loanType],
+      rate: policy ? formatInterestRate(Number(policy.baseInterestRate)) : "-",
+      sinceLabel: policy ? formatPolicySinceDate(policy.createdAt, policy.updatedAt) : "Since -",
+      icon: loanTypeIconMap[loanType],
+    };
+  });
+}
 
 const actionToneClass: Record<ActionTone, string> = {
   success: "bg-[#d8f4e7] text-[#1c8c69]",
@@ -162,6 +233,10 @@ export default function DashboardPage() {
     null
   );
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+  const [loanRates, setLoanRates] = useState<LoanRate[]>(() =>
+    mapLoanPoliciesToRates([])
+  );
+  const [isLoanRatesLoading, setIsLoanRatesLoading] = useState(true);
   const customerTypes: Array<"ALL" | "BANK" | "PUBLIC"> = ["ALL", "BANK", "PUBLIC"];
 
   useEffect(() => {
@@ -196,6 +271,45 @@ export default function DashboardPage() {
     };
 
     void loadDashboardSummary();
+
+    return () => {
+      mounted = false;
+    };
+  }, [showToast]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadLoanPolicies = async () => {
+      setIsLoanRatesLoading(true);
+      try {
+        const data = await getAdminLoanPolicies();
+        if (!mounted) {
+          return;
+        }
+        setLoanRates(mapLoanPoliciesToRates(data));
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : "Failed to load loan policy interest rates.";
+        showToast({
+          type: "error",
+          title: "Loan rate load failed",
+          description: message,
+        });
+        setLoanRates(mapLoanPoliciesToRates([]));
+      } finally {
+        if (mounted) {
+          setIsLoanRatesLoading(false);
+        }
+      }
+    };
+
+    void loadLoanPolicies();
 
     return () => {
       mounted = false;
@@ -421,15 +535,19 @@ export default function DashboardPage() {
                   {loanRates.map((item) => {
                     const Icon = item.icon;
                     return (
-                      <div key={item.title} className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4">
+                      <div key={item.loanType} className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-4">
                         <div className="flex items-start gap-2 sm:gap-3">
                           <Icon size={19} className="mt-1 text-[#111111]" />
                           <div>
                             <p className="text-xs sm:text-sm font-medium leading-tight text-[#1e4169]">{item.title}</p>
-                            <p className="text-xs sm:text-sm text-[#a4afbe]">Since 16th of September 2025</p>
+                            <p className="text-xs sm:text-sm text-[#a4afbe]">
+                              {isLoanRatesLoading ? "Syncing..." : item.sinceLabel}
+                            </p>
                           </div>
                         </div>
-                        <p className="text-lg sm:text-xl font-semibold text-[#24486f]">{item.rate}</p>
+                        <p className="text-lg sm:text-xl font-semibold text-[#24486f]">
+                          {isLoanRatesLoading ? "..." : item.rate}
+                        </p>
                       </div>
                     );
                   })}
