@@ -25,6 +25,7 @@ export default function TrendsPage() {
   const [trendData, setTrendData] = useState<CreditTrendResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasSufficientTrendHistory = (trendData?.points.length ?? 0) >= 2;
 
   useEffect(() => {
     let isActive = true;
@@ -116,6 +117,9 @@ export default function TrendsPage() {
                   biggestDriver={trendData.summary.biggestDriver}
                   momentumText={trendData.summary.momentumText}
                   nextTarget={trendData.summary.nextTarget}
+                  hasSufficientHistory={hasSufficientTrendHistory}
+                  insufficientHistoryTitle="Not enough trend history yet"
+                  insufficientHistoryDescription="At least 2 monthly evaluations are needed before CreditLens can show score movement, biggest drivers, and monthly momentum."
                 />
               </div>
             </div>

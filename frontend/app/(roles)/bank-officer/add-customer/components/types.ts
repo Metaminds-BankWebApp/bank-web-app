@@ -104,9 +104,11 @@ export interface StepProps {
   onSaveDraftStepOne?: () => Promise<void>;
   onContinueStepOne?: () => Promise<void>;
   onLookupCustomerByNic?: () => Promise<void>;
+  onGenerateCredentials?: () => Promise<void>;
   isSavingDraftStepOne?: boolean;
   isSubmittingStepOne?: boolean;
   isLookingUpCustomerByNic?: boolean;
+  isGeneratingCredentials?: boolean;
   hasExistingCustomerMatch?: boolean;
   serverStepOneErrors?: Partial<Record<"nic" | "email" | "username", string>>;
   onClearServerStepOneError?: (field: "nic" | "email" | "username" | "bankAccount") => void;

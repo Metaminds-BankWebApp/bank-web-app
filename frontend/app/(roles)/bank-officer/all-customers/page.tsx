@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { getBankCustomersForOfficer } from "@/src/api/customers/bank-customer.service";
 import {
-  findOwnedBankCustomerStepOneByNic,
-  getCurrentBankCustomerFinancialRecord,
+   findOwnedBankCustomerStepOneByNic,
+   getCurrentBankCustomerFinancialRecord,
 } from "@/src/api/customers/bank-customer-financial.service";
 import { ApiError } from "@/src/types/api-error";
 import type { BankCustomerSummaryResponse } from "@/src/types/dto/bank-customer.dto";
@@ -25,6 +26,7 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
+import { useToast } from "@/src/components/ui/toast";
 import PopupModal from "@/src/components/ui/popup-modal";
 import {
   Table,
@@ -174,6 +176,8 @@ const customerDetailTabs: Array<{ id: CustomerDetailTab; label: string }> = [
 ];
 
 export default function AllCustomersPage() {
+  const router = useRouter();
+   const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -190,6 +194,10 @@ export default function AllCustomersPage() {
    const [selectedCustomerFinancial, setSelectedCustomerFinancial] = useState<BankCustomerFinancialRecordResponse | null>(null);
    const [isDetailLoading, setIsDetailLoading] = useState(false);
    const [detailLoadError, setDetailLoadError] = useState<string | null>(null);
+   const [deleteRequestTarget, setDeleteRequestTarget] = useState<Customer | null>(null);
+   const [deleteRequestReason, setDeleteRequestReason] = useState("CUSTOMER_REQUEST");
+   const [deleteRequestNote, setDeleteRequestNote] = useState("");
+   const [isSubmittingDeleteRequest, setIsSubmittingDeleteRequest] = useState(false);
 
    useEffect(() => {
       let mounted = true;
@@ -272,26 +280,13 @@ export default function AllCustomersPage() {
    }, [activeRisk, customers, searchTerm, sortBy, statusFilter]);
 
    const handleExport = () => {
-      const header = [
-         "Customer ID",
-         "Name",
-         "NIC",
-         "Email",
-         "Phone",
-         "Risk Level",
-         "Credit Score",
-         "Status",
-         "Last Updated",
-      ];
+      const header = ["Name", "NIC", "Email", "Phone", "Status", "Last Updated"];
 
       const rows = visibleCustomers.map((customer) => [
-         customer.id,
          customer.name,
          customer.nic,
          customer.email,
          customer.phone,
-         customer.riskLevel,
-         customer.creditScore.toString(),
          customer.status,
          customer.lastUpdated,
       ]);
@@ -391,6 +386,37 @@ export default function AllCustomersPage() {
       };
    }, [selectedCustomerFinancial]);
 
+   const submitDeleteRequest = async () => {
+      if (!deleteRequestTarget) {
+         return;
+      }
+
+      setIsSubmittingDeleteRequest(true);
+      try {
+         const requestId = `DEL-${Date.now().toString().slice(-6)}`;
+         console.info("Delete request submitted for admin review", {
+            requestId,
+            userId: deleteRequestTarget.userId,
+            customerCode: deleteRequestTarget.id,
+            nic: deleteRequestTarget.nic,
+            reason: deleteRequestReason,
+            note: deleteRequestNote,
+         });
+
+         showToast({
+            title: "Delete request sent",
+            description: `Request ${requestId} was sent to admin for ${deleteRequestTarget.name}.`,
+            type: "success",
+         });
+
+         setDeleteRequestTarget(null);
+         setDeleteRequestReason("CUSTOMER_REQUEST");
+         setDeleteRequestNote("");
+      } finally {
+         setIsSubmittingDeleteRequest(false);
+      }
+   };
+
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
          <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
@@ -404,7 +430,7 @@ export default function AllCustomersPage() {
                 <div className="relative max-w-sm flex-1">
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                    <Input 
-                      placeholder="Search by ID, name, NIC..." 
+                      placeholder="Search by name, NIC..." 
                       className="pl-10 bg-slate-50 border-slate-200"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -522,12 +548,9 @@ export default function AllCustomersPage() {
                 <TableHeader className="bg-sky-50/70 sticky top-0 z-10">
                    <TableRow>
                       <TableHead className="w-12.5 pl-6"><Checkbox /></TableHead>
-                      <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Customer ID</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Name</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">NIC</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contact Info</TableHead>
-                      <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Risk Level</TableHead>
-                      <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Credit Score</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Last Updated</TableHead>
                       <TableHead className="text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</TableHead>
@@ -537,7 +560,6 @@ export default function AllCustomersPage() {
                    {visibleCustomers.map((customer) => (
                       <TableRow key={customer.id} className="hover:bg-slate-50/50">
                          <TableCell className="pl-6"><Checkbox /></TableCell>
-                         <TableCell className="font-semibold text-slate-700">{customer.id}</TableCell>
                          <TableCell>
                             <div className="flex items-center gap-3">
                                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
@@ -554,16 +576,6 @@ export default function AllCustomersPage() {
                             </div>
                          </TableCell>
                          <TableCell>
-                            <Badge className={
-                               customer.riskLevel === "LOW" ? "bg-green-100 text-green-700 hover:bg-green-100" :
-                               customer.riskLevel === "MEDIUM" ? "bg-amber-100 text-amber-700 hover:bg-amber-100" :
-                               "bg-red-100 text-red-700 hover:bg-red-100"
-                            }>
-                               {customer.riskLevel}
-                            </Badge>
-                         </TableCell>
-                         <TableCell className="font-bold text-slate-700">{customer.creditScore}</TableCell>
-                         <TableCell>
                             <div className="flex items-center gap-2">
                                <div className={`h-2 w-2 rounded-full ${customer.status === "ACTIVE" ? "bg-green-500" : "bg-slate-300"}`} />
                                <span className="text-xs font-semibold text-slate-600">{customer.status}</span>
@@ -571,21 +583,39 @@ export default function AllCustomersPage() {
                          </TableCell>
                          <TableCell className="text-xs text-slate-500">{customer.lastUpdated}</TableCell>
                          <TableCell>
-                            <Button
-                               variant="outline"
-                               size="sm"
-                               className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
-                               onClick={() => setSelectedCustomer(customer)}
-                            >
-                               View
-                            </Button>
+                            <div className="flex justify-end gap-2">
+                               <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                                  onClick={() => setSelectedCustomer(customer)}
+                               >
+                                  View
+                               </Button>
+                               <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                                  onClick={() => router.push(`/bank-officer/add-customer?nic=${encodeURIComponent(customer.nic)}`)}
+                               >
+                                  Edit
+                               </Button>
+                               <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 border-red-200 text-xs text-red-700 hover:bg-red-50"
+                                  onClick={() => setDeleteRequestTarget(customer)}
+                               >
+                                  Delete
+                               </Button>
+                            </div>
                          </TableCell>
                       </TableRow>
                             ))}
 
                             {!isLoading && visibleCustomers.length === 0 && (
                                <TableRow>
-                                  <TableCell colSpan={10} className="py-10 text-center text-sm text-slate-500">
+                                  <TableCell colSpan={7} className="py-10 text-center text-sm text-slate-500">
                                      No customers found for the selected filters.
                                   </TableCell>
                                </TableRow>
@@ -593,7 +623,7 @@ export default function AllCustomersPage() {
 
                             {isLoading && (
                                <TableRow>
-                                  <TableCell colSpan={10} className="py-10 text-center text-sm text-slate-500">
+                                     <TableCell colSpan={7} className="py-10 text-center text-sm text-slate-500">
                                      Loading customers...
                                   </TableCell>
                                </TableRow>
@@ -629,8 +659,7 @@ export default function AllCustomersPage() {
                   }}
                   title={selectedCustomer ? `${selectedCustomer.name} — Customer Profile` : "Customer Profile"}
                   description="Detailed personal and financial data grouped into tabs for quick review."
-                  size="xl"
-                  variant="surface"
+                   size="lg"
                   footer={
                      <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => setSelectedCustomer(null)}>
                         Close
@@ -639,15 +668,58 @@ export default function AllCustomersPage() {
                >
                   {selectedCustomer && (
                      <div className="space-y-4">
-                        <div className="flex flex-wrap gap-2">
+                        <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
+                           <div className="grid gap-0 lg:grid-cols-[1.1fr_0.9fr]">
+                              <div className="relative overflow-hidden rounded-t-3xl bg-[linear-gradient(135deg,#0d3b66_0%,#125f99_56%,#3e9fd3_100%)] p-5 text-white lg:rounded-l-3xl lg:rounded-tr-none">
+                                 <div className="pointer-events-none absolute -right-8 -top-10 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+                                 <div className="relative flex items-start gap-4">
+                                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-xl font-bold shadow-lg backdrop-blur-sm">
+                                       {selectedCustomer.name
+                                          .split(" ")
+                                          .map((part) => part[0])
+                                          .join("")
+                                          .slice(0, 2)
+                                          .toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                       <p className="text-xs uppercase tracking-[0.22em] text-sky-100/85">Customer Profile</p>
+                                       <h4 className="mt-1 truncate text-[1.35rem] font-semibold leading-tight">{selectedCustomer.name}</h4>
+                                       <p className="mt-1 text-xs leading-5 text-sky-50/85 sm:text-sm">Quick review of personal identity and financial history in one place.</p>
+                                       <div className="mt-3 flex flex-wrap gap-2">
+                                          <span className="rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm">{selectedCustomer.id}</span>
+                                          <span className="rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm">{selectedCustomer.status}</span>
+                                          <span className="rounded-full bg-white/12 px-2.5 py-1 text-[11px] font-semibold backdrop-blur-sm">Score {selectedCustomer.creditScore}</span>
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-2.5 bg-slate-50 p-4 lg:rounded-r-3xl">
+                                 <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Credit Score</p>
+                                    <p className="mt-1.5 text-sm font-semibold text-slate-800">{selectedCustomer.creditScore}</p>
+                                 </div>
+                                 <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Risk Level</p>
+                                    <p className="mt-1.5 text-sm font-semibold text-slate-800">{selectedCustomer.riskLevel ?? "-"}</p>
+                                 </div>
+                                 <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Customer Code</p>
+                                    <p className="mt-1.5 text-sm font-semibold text-slate-800">{selectedCustomerPersonal?.customerCode ?? selectedCustomer.id}</p>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
                            {customerDetailTabs.map((tab) => (
                               <button
                                  key={tab.id}
                                  type="button"
                                  onClick={() => setActiveDetailTab(tab.id)}
-                                 className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                                 className={`rounded-full px-3.5 py-1.5 text-[11px] font-semibold transition-all ${
                                     activeDetailTab === tab.id
-                                       ? "bg-[#0d3b66] text-[#f8fafc] shadow-sm"
+                                       ? "bg-[#0d3b66] text-white shadow-md shadow-[#0d3b66]/20"
                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                  }`}
                               >
@@ -657,28 +729,28 @@ export default function AllCustomersPage() {
                         </div>
 
                         {isDetailLoading && (
-                           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600 shadow-sm">
                               Loading customer details...
                            </div>
                         )}
 
                         {!isDetailLoading && detailLoadError && (
-                           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
                               {detailLoadError}
                            </div>
                         )}
 
                         {!isDetailLoading && !detailLoadError && activeDetailTab === "personal" && (
-                           <div className="grid gap-3 sm:grid-cols-2">
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Customer Code</p>
                                  <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.customerCode ?? selectedCustomer.id}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">NIC</p>
                                  <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.nic ?? selectedCustomer.nic}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Full Name</p>
                                  <p className="font-semibold text-slate-800">
                                     {selectedCustomerPersonal
@@ -686,43 +758,43 @@ export default function AllCustomersPage() {
                                        : selectedCustomer.name}
                                  </p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Date of Birth</p>
                                  <p className="font-semibold text-slate-800">{toDisplayDate(selectedCustomerPersonal?.dob ?? null)}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Email</p>
                                  <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.email ?? selectedCustomer.email}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Mobile</p>
                                  <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.mobile ?? selectedCustomer.phone}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Username</p>
                                  <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.username ?? "-"}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Status</p>
                                  <p className="font-semibold text-slate-800">{toDisplayToken(selectedCustomer.status)}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Province</p>
                                  <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.province ?? "-"}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Linked Account</p>
                                  <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.accountNumber ?? "-"}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Account Type</p>
                                  <p className="font-semibold text-slate-800">{toDisplayToken(selectedCustomerPersonal?.accountType)}</p>
                               </div>
-                              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Account Status</p>
                                  <p className="font-semibold text-slate-800">{toDisplayToken(selectedCustomerPersonal?.accountStatus)}</p>
                               </div>
-                              <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <div className="sm:col-span-2 xl:col-span-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Address</p>
                                  <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.address ?? "-"}</p>
                               </div>
@@ -732,56 +804,56 @@ export default function AllCustomersPage() {
                         {!isDetailLoading && !detailLoadError && activeDetailTab === "overview" && (
                            <>
                               {!selectedCustomerFinancial || !financialOverview ? (
-                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600 shadow-sm">
                                     No financial record has been saved for this customer yet.
                                  </div>
                               ) : (
-                                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Financial Record</p>
                                        <p className="font-semibold text-slate-800">#{selectedCustomerFinancial.bankRecordId}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Created At</p>
                                        <p className="font-semibold text-slate-800">{toDisplayDateTime(selectedCustomerFinancial.createdAt)}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Updated At</p>
                                        <p className="font-semibold text-slate-800">{toDisplayDateTime(selectedCustomerFinancial.updatedAt)}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Total Monthly Income</p>
                                        <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalIncome)}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Total Loan EMI</p>
                                        <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalLoanEmi)}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Total Loan Balance</p>
                                        <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalLoanBalance)}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Total Card Limit</p>
                                        <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalCardLimit)}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Total Card Outstanding</p>
                                        <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalCardOutstanding)}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Total Other Liabilities</p>
                                        <p className="font-semibold text-slate-800">{toDisplayAmount(financialOverview.totalLiabilities)}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Missed Payments (12M)</p>
                                        <p className="font-semibold text-slate-800">{selectedCustomerFinancial.missedPayments ?? 0}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Risk Level</p>
                                        <p className="font-semibold text-slate-800">{selectedCustomer.riskLevel}</p>
                                     </div>
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Credit Score</p>
                                        <p className="font-semibold text-slate-800">{selectedCustomer.creditScore}</p>
                                     </div>
@@ -793,13 +865,13 @@ export default function AllCustomersPage() {
                         {!isDetailLoading && !detailLoadError && activeDetailTab === "incomes" && (
                            <>
                               {!selectedCustomerFinancial || selectedCustomerFinancial.incomes.length === 0 ? (
-                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600 shadow-sm">
                                     No income rows available.
                                  </div>
                               ) : (
                                  <div className="space-y-3">
                                     {selectedCustomerFinancial.incomes.map((income) => (
-                                       <div key={income.incomeId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <div key={income.incomeId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                           <div className="flex flex-wrap items-center justify-between gap-2">
                                              <p className="text-sm font-semibold text-slate-800">{toDisplayToken(income.incomeCategory)}</p>
                                              <p className="text-sm font-semibold text-slate-800">{toDisplayAmount(income.amount)}</p>
@@ -820,13 +892,13 @@ export default function AllCustomersPage() {
                         {!isDetailLoading && !detailLoadError && activeDetailTab === "loans" && (
                            <>
                               {!selectedCustomerFinancial || selectedCustomerFinancial.loans.length === 0 ? (
-                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600 shadow-sm">
                                     No loan rows available.
                                  </div>
                               ) : (
                                  <div className="space-y-3">
                                     {selectedCustomerFinancial.loans.map((loan) => (
-                                       <div key={loan.loanId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <div key={loan.loanId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                           <div className="flex flex-wrap items-center justify-between gap-2">
                                              <p className="text-sm font-semibold text-slate-800">{loan.loanType}</p>
                                              <p className="text-sm font-semibold text-slate-800">{toDisplayAmount(loan.remainingBalance)}</p>
@@ -844,13 +916,13 @@ export default function AllCustomersPage() {
                         {!isDetailLoading && !detailLoadError && activeDetailTab === "cards" && (
                            <>
                               {!selectedCustomerFinancial || selectedCustomerFinancial.cards.length === 0 ? (
-                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600 shadow-sm">
                                     No credit card rows available.
                                  </div>
                               ) : (
                                  <div className="space-y-3">
                                     {selectedCustomerFinancial.cards.map((card) => (
-                                       <div key={card.cardId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <div key={card.cardId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                           <div className="flex flex-wrap items-center justify-between gap-2">
                                              <p className="text-sm font-semibold text-slate-800">{card.provider || "Standard Card"}</p>
                                              <p className="text-sm font-semibold text-slate-800">{toDisplayAmount(card.creditLimit)}</p>
@@ -868,20 +940,20 @@ export default function AllCustomersPage() {
                         {!isDetailLoading && !detailLoadError && activeDetailTab === "liabilities" && (
                            <>
                               {!selectedCustomerFinancial || selectedCustomerFinancial.liabilities.length === 0 ? (
-                                 <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-600">
+                                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-6 text-sm text-slate-600 shadow-sm">
                                     No liability rows available.
                                  </div>
                               ) : (
                                  <div className="space-y-3">
                                     {selectedCustomerFinancial.liabilities.map((liability) => (
-                                       <div key={liability.liabilityId} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                       <div key={liability.liabilityId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                           <div className="flex flex-wrap items-center justify-between gap-2">
                                              <p className="text-sm font-semibold text-slate-800">{liability.description}</p>
                                              <p className="text-sm font-semibold text-slate-800">{toDisplayAmount(liability.monthlyAmount)}</p>
                                           </div>
                                        </div>
                                     ))}
-                                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                                        <p className="text-xs text-slate-500">Missed Payments (12M)</p>
                                        <p className="font-semibold text-slate-800">{selectedCustomerFinancial.missedPayments ?? 0}</p>
                                     </div>
@@ -892,12 +964,82 @@ export default function AllCustomersPage() {
                      </div>
                   )}
                </PopupModal>
+
+               <PopupModal
+                  open={deleteRequestTarget !== null}
+                  onOpenChange={(open) => {
+                     if (!open) {
+                        setDeleteRequestTarget(null);
+                     }
+                  }}
+                  title={deleteRequestTarget ? `Delete Request — ${deleteRequestTarget.name}` : "Delete Request"}
+                  description="Send a request to admin to review and approve account deletion."
+                  size="md"
+                  footer={
+                     <>
+                        <Button
+                           type="button"
+                           variant="outline"
+                           className="border-white/30 text-white hover:bg-white/10"
+                           onClick={() => setDeleteRequestTarget(null)}
+                           disabled={isSubmittingDeleteRequest}
+                        >
+                           Cancel
+                        </Button>
+                        <Button
+                           type="button"
+                           className="bg-red-500 hover:bg-red-600 text-white"
+                           onClick={() => void submitDeleteRequest()}
+                           disabled={isSubmittingDeleteRequest}
+                        >
+                           {isSubmittingDeleteRequest ? "Sending..." : "Send Request"}
+                        </Button>
+                     </>
+                  }
+               >
+                  <div className="space-y-4">
+                     <div className="rounded-lg border border-white/20 bg-white/5 p-3 text-sm">
+                        <p><span className="font-semibold">Customer:</span> {deleteRequestTarget?.name ?? "-"}</p>
+                        <p><span className="font-semibold">NIC:</span> {deleteRequestTarget?.nic ?? "-"}</p>
+                        <p><span className="font-semibold">Customer Code:</span> {deleteRequestTarget?.id ?? "-"}</p>
+                     </div>
+
+                     <div>
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-sky-100/90">
+                           Reason
+                        </label>
+                        <Select value={deleteRequestReason} onValueChange={setDeleteRequestReason}>
+                           <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                              <SelectValue placeholder="Select reason" />
+                           </SelectTrigger>
+                           <SelectContent>
+                              <SelectItem value="CUSTOMER_REQUEST">Customer Requested Closure</SelectItem>
+                              <SelectItem value="KYC_ISSUE">KYC/Compliance Issue</SelectItem>
+                              <SelectItem value="FRAUD_RISK">Fraud Risk</SelectItem>
+                              <SelectItem value="OTHER">Other</SelectItem>
+                           </SelectContent>
+                        </Select>
+                     </div>
+
+                     <div>
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-sky-100/90">
+                           Note To Admin (Optional)
+                        </label>
+                        <textarea
+                           value={deleteRequestNote}
+                           onChange={(event) => setDeleteRequestNote(event.target.value)}
+                           rows={4}
+                           className="w-full rounded-md border border-white/20 bg-white/10 p-2 text-sm text-white placeholder:text-sky-100/60 focus:outline-none"
+                           placeholder="Provide context for admin review..."
+                        />
+                     </div>
+                  </div>
+               </PopupModal>
         </main>
       </div>
     </AuthGuard>
   );
 }
-
 
 
 

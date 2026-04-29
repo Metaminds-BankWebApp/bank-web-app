@@ -27,6 +27,7 @@ export const CUSTOMER_ENDPOINTS = {
   verifyBankAccount: "/bank-officers/customers/accounts/verify",
   bankOfficerCustomerByUser: (userId: number) => `/bank-officers/customers/user/${userId}`,
   bankOfficerCustomerStepOneByNic: "/bank-officers/customers/step-1/by-nic",
+  bankOfficerCustomerGeneratedCredentials: "/bank-officers/customers/credentials/generate",
 } as const;
 
 export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
@@ -52,6 +53,7 @@ export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
 
 export const PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS = {
   me: "/public-customers/me",
+  cardProviders: "/public-customers/card-providers",
   base: (publicCustomerId: number) => `/public-customers/${publicCustomerId}/financial-records`,
   saveIncomeStep: (publicCustomerId: number) =>
     `/public-customers/${publicCustomerId}/financial-records/steps/income`,
@@ -80,6 +82,16 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
   byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
 } as const;
 
+export const BANK_CREDITLENS_ENDPOINTS = {
+  current: "/creditlens/bank/current",
+  dashboard: "/creditlens/bank/dashboard",
+  trends: "/creditlens/bank/trends",
+  insights: "/creditlens/bank/insights",
+  report: "/creditlens/bank/report",
+  history: "/creditlens/bank/history",
+  byId: (bankEvaluationId: number) => `/creditlens/bank/evaluations/${bankEvaluationId}`,
+} as const;
+
 export const USER_PROFILE_ENDPOINTS = {
   current: "/users/profile",
   update: "/users/profile",
@@ -91,6 +103,7 @@ export const ADMIN_ENDPOINTS = {
   bankOfficers: "/admin/bank-officers",
   branches: "/admin/branches",
   users: "/admin/users",
+  dashboardSummary: "/admin/dashboard/summary",
 } as const;
 
 export const TRANSACT_ENDPOINTS = {
@@ -98,6 +111,7 @@ export const TRANSACT_ENDPOINTS = {
   transactionsVerifyOtp: "/bank-customers/transact/transactions/verify-otp",
   transactionsResendOtp: "/bank-customers/transact/transactions/resend-otp",
   transactionsHistory: "/bank-customers/transact/transactions/history",
+  bankOfficerTransactionsHistory: "/bank-officers/transact/transactions",
   transactionByReference: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}`,
   beneficiaries: "/bank-customers/transact/beneficiaries",
   beneficiaryById: (beneficiaryId: number) => `/bank-customers/transact/beneficiaries/${beneficiaryId}`,

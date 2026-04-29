@@ -1,7 +1,8 @@
 import type { BranchFormData, BranchFormErrors } from "./types";
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const contactRegex = /^\+?[0-9][0-9\s-]{7,20}$/;
+const emailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;
+const contactRegex =
+  /^(?:070|071|072|074|075|076|077|078|011|021|023|024|025|026|027|031|032|033|034|035|036|037|038|041|045|047|051|052|054|055|057|063|065|066|067|081|091)\d{7}$/;
 
 export function validateBranchForm(formData: BranchFormData): BranchFormErrors {
   const errors: BranchFormErrors = {};
@@ -13,13 +14,14 @@ export function validateBranchForm(formData: BranchFormData): BranchFormErrors {
   if (!formData.contact.trim()) {
     errors.contact = "Contact number is required.";
   } else if (!contactRegex.test(formData.contact.trim())) {
-    errors.contact = "Enter a valid contact number.";
+    errors.contact =
+      "Contact number must be 10 digits and start with a valid Sri Lankan area/mobile code.";
   }
 
   if (!formData.email.trim()) {
     errors.email = "Email address is required.";
   } else if (!emailRegex.test(formData.email.trim())) {
-    errors.email = "Enter a valid email address.";
+    errors.email = "Email must be in the format name@primecore.com.";
   }
 
   if (!formData.address.trim()) {

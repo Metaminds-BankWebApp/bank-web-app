@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui";
@@ -132,12 +132,6 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
     }));
   };
 
-  const handleDeleteIncome = (index: number) => {
-    updateFormData({
-      incomes: formData.incomes.filter((_, rowIndex) => rowIndex !== index),
-    });
-  };
-
   const handleNext = () => {
     const validationErrors = validateFinancialDataStep(formData);
     const hasPendingDraft =
@@ -162,8 +156,7 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
       </div>
 
       <div className="p-8">
-        <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_1fr] gap-8">
-          <div className="space-y-8">
+        <div className="space-y-8">
             <div>
               <Label className="text-slate-700 font-medium mb-3 block">Customer Income Type</Label>
               <Select
@@ -353,65 +346,11 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
                 {errors.incomes}
               </div>
             )}
-          </div>
-
-          <div className="h-fit space-y-6">
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-slate-900">Added Income Sources</h3>
-                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full">
-                  {formData.incomes.length} Items
-                </span>
-              </div>
-
-              {formData.incomes.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                  <p>No income sources added yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">
-                    <span className="w-1/2">Type</span>
-                    <span className="w-1/3 text-right">Amount</span>
-                    <span className="w-1/6 text-right">Actions</span>
-                  </div>
-
-                  {formData.incomes.map((income, index) => (
-                    <div key={`${income.type}-${income.amount}-${index}`} className="bg-white border border-slate-100 rounded-xl p-4 flex items-center shadow-sm">
-                      <div className="w-1/2">
-                        <p className="font-bold text-slate-800 text-sm">{income.type}</p>
-                        <p className="text-xs text-slate-500">
-                          {income.type === "Business Person"
-                            ? `Stability: ${income.incomeStability ?? "-"}`
-                            : `Salary: ${income.salaryType ?? "-"} | Employment: ${income.employmentType ?? "-"}`}
-                        </p>
-                      </div>
-                      <div className="w-1/3 text-right">
-                        <p className="font-bold text-slate-800 text-sm">{formatCurrency(Number(income.amount || 0))}</p>
-                      </div>
-                      <div className="w-1/6 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteIncome(index)}
-                          className="text-slate-400 hover:text-red-500"
-                          aria-label={`Delete income source ${index + 1}`}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {formData.incomes.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-slate-200 flex justify-between items-center">
-                  <span className="text-slate-500 font-medium">Total Monthly Income</span>
-                  <span className="text-[#3e9fd3] font-bold text-lg">{formatCurrency(totalIncome)}</span>
-                </div>
-              )}
-            </div>
-          </div>
+            {formData.incomes.length > 0 && (
+              <p className="text-xs font-medium text-emerald-700">
+                {formData.incomes.length} income source{formData.incomes.length > 1 ? "s" : ""} added to the live summary.
+              </p>
+            )}
         </div>
       </div>
 

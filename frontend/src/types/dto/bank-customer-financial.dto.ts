@@ -23,6 +23,11 @@ export interface BankOfficerCustomerStepOnePrefillResponse {
   accountType: string | null;
 }
 
+export interface GeneratedBankCustomerCredentialsResponse {
+  username: string;
+  password: string;
+}
+
 export interface BankCustomerFinancialRecordResponse {
   bankRecordId: number;
   bankCustomerId: number;
@@ -63,13 +68,22 @@ export interface BankCustomerFinancialRecordResponse {
   missedPayments: number;
 }
 
+export interface BankCustomerFinancialRecordSummaryResponse {
+  bankRecordId: number;
+  bankCustomerId: number;
+  verifiedByOfficerId: number;
+  dataSource: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface BankCustomerIncomeStepRequest {
   incomes: Array<{
     incomeCategory: "SALARY" | "BUSINESS";
     amount: number;
     salaryType?: string;
     employmentType?: string;
-    contractDurationMonths?: number;
+    durationMonths?: number;
     incomeStability?: string;
   }>;
 }
@@ -176,4 +190,6 @@ export interface BankCustomerCribStepResponse {
   cribData?: BankCustomerCribDataBlock | null;
   report?: BankCustomerCribDataBlock | null;
   data?: BankCustomerCribDataBlock | null;
+  bankEvaluationId?: number | null;
+  bankEvaluationTotalRiskPoints?: number | null;
 }

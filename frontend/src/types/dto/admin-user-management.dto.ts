@@ -13,3 +13,10 @@ export interface AdminUserManagementUserResponse {
   status: AdminUserStatus;
   avatarUrl: string;
 }
+
+export interface AdminUserManagementUpdateRequest {
+  firstName: string;
+  lastName: string;
+  email: string;
+  contactNumber: string;
+}

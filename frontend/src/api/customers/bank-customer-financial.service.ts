@@ -3,6 +3,7 @@ import { BANK_CUSTOMER_FINANCIAL_ENDPOINTS, CUSTOMER_ENDPOINTS } from "@/src/api
 import type {
   BankCustomerCardStepRequest,
   BankCustomerFinancialRecordResponse,
+  BankCustomerFinancialRecordSummaryResponse,
   BankCustomerCribRequestStepRequest,
   BankCustomerCribStepResponse,
   BankCustomerFinancialStepResponse,
@@ -11,6 +12,7 @@ import type {
   BankCustomerLoanStepRequest,
   BankOfficerCustomerIdentityResponse,
   BankOfficerCustomerStepOnePrefillResponse,
+  GeneratedBankCustomerCredentialsResponse,
 } from "@/src/types/dto/bank-customer-financial.dto";
 
 export async function getOwnedBankCustomerIdentityByUserId(
@@ -44,12 +46,59 @@ export async function findOwnedBankCustomerStepOneByNic(
   }
 }
 
+export async function generateBankCustomerCredentials(
+  firstName: string,
+  lastName: string,
+): Promise<GeneratedBankCustomerCredentialsResponse> {
+  try {
+    const { data } = await apiClient.get<GeneratedBankCustomerCredentialsResponse>(
+      CUSTOMER_ENDPOINTS.bankOfficerCustomerGeneratedCredentials,
+      {
+        params: {
+          firstName,
+          lastName,
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export async function getCurrentBankCustomerFinancialRecord(
   bankCustomerId: number,
 ): Promise<BankCustomerFinancialRecordResponse> {
   try {
     const { data } = await apiClient.get<BankCustomerFinancialRecordResponse>(
       BANK_CUSTOMER_FINANCIAL_ENDPOINTS.current(bankCustomerId),
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getBankCustomerFinancialRecordHistory(
+  bankCustomerId: number,
+): Promise<BankCustomerFinancialRecordSummaryResponse[]> {
+  try {
+    const { data } = await apiClient.get<BankCustomerFinancialRecordSummaryResponse[]>(
+      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.history(bankCustomerId),
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getBankCustomerFinancialRecordById(
+  bankCustomerId: number,
+  bankRecordId: number,
+): Promise<BankCustomerFinancialRecordResponse> {
+  try {
+    const { data } = await apiClient.get<BankCustomerFinancialRecordResponse>(
+      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.byId(bankCustomerId, bankRecordId),
     );
     return data;
   } catch (error) {

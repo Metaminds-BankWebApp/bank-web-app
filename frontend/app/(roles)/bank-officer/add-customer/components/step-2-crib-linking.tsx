@@ -111,7 +111,7 @@ export function CribLinking({
           </div>
         )}
 
-        <div className="bg-slate-50 px-8 py-4 flex items-center justify-between border-t border-slate-100 mt-auto">
+        <div className="fixed bottom-0 right-0 left-0 lg:left-64 bg-white border-t border-slate-200 px-8 py-4 flex items-center justify-between z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <Button
             variant="ghost"
             onClick={onBack}
@@ -127,7 +127,7 @@ export function CribLinking({
             className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200 min-w-35"
           >
             {requestStatus === "draft" ? (
-              <>Link CRIB Data <ArrowRight size={16} /></>
+              <>Link CRIB Data &amp; Continue <ArrowRight size={16} /></>
             ) : (
               <><Loader2 size={16} className="animate-spin" /> Processing...</>
             )}

@@ -9,6 +9,8 @@ export type BranchResponse = {
   address: string | null;
   status: BranchStatus | string | null;
   updatedAt: string | null;
+  officerCount: number | null;
+  customerCount: number | null;
 };
 
 export type BranchRequest = {
