@@ -37,6 +37,16 @@ type OfficerData = {
   createdAt: string | null;
 };
 
+type OfficerSearchField =
+  | "ALL"
+  | "ID"
+  | "NAME"
+  | "BRANCH"
+  | "EMAIL"
+  | "CONTACT"
+  | "ASSIGNED"
+  | "STATUS";
+
 type OfficerEditErrors = Partial<
   Record<"firstName" | "lastName" | "email" | "contactNumber" | "branchId", string>
 >;
@@ -47,6 +57,17 @@ type OfficerEditForm = AdminBankOfficerUpdateRequest & {
 
 const officerEmailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;
 const officerContactRegex = /^(?:070|071|072|074|075|076|077|078)\d{7}$/;
+const officerSearchOptions: Array<{ value: OfficerSearchField; label: string }> = [
+  { value: "ALL", label: "All Fields" },
+  { value: "ID", label: "ID" },
+  { value: "NAME", label: "Officer Name" },
+  { value: "BRANCH", label: "Branch" },
+  { value: "EMAIL", label: "Email" },
+  { value: "CONTACT", label: "Contact" },
+  { value: "ASSIGNED", label: "Assigned Date" },
+  { value: "STATUS", label: "Status" },
+];
+const officerStatusKeywords = new Set(["active", "inactive", "locked", "pending"]);
 
 function SummaryCard({
   label,
@@ -138,6 +159,14 @@ function toStatusCode(status: StatusType): AdminBankOfficerStatus {
   return "ACTIVE";
 }
 
+function matchesOfficerStatus(status: StatusType, normalizedQuery: string): boolean {
+  const normalizedStatus = status.toLowerCase();
+  if (officerStatusKeywords.has(normalizedQuery)) {
+    return normalizedStatus === normalizedQuery;
+  }
+  return normalizedStatus.includes(normalizedQuery);
+}
+
 function isRecentDate(isoDateTime: string | null, days: number): boolean {
   if (!isoDateTime) {
     return false;
@@ -208,6 +237,7 @@ export default function Page() {
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState<OfficerSearchField>("ALL");
   const [officers, setOfficers] = useState<OfficerData[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -424,17 +454,48 @@ export default function Page() {
   };
 
   const filteredOfficers = useMemo(() => {
-    const normalized = searchQuery.toLowerCase();
+    const normalized = searchQuery.trim().toLowerCase();
 
-    return [...officers]
-      .filter(
-        (officer) =>
-          officer.id.toLowerCase().includes(normalized) ||
-          officer.name.toLowerCase().includes(normalized) ||
-          officer.email.toLowerCase().includes(normalized)
-      )
-      .sort((left, right) => left.id.localeCompare(right.id));
-  }, [officers, searchQuery]);
+    if (!normalized) {
+      return officers;
+    }
+
+    return officers.filter((officer) => {
+      const matches = (value: string | number) =>
+        String(value).toLowerCase().includes(normalized);
+
+      if (searchField === "ALL") {
+        return (
+          matches(officer.id) ||
+          matches(officer.name) ||
+          matches(officer.branch) ||
+          matches(officer.email) ||
+          matches(officer.contact) ||
+          matches(officer.assigned) ||
+          matchesOfficerStatus(officer.status, normalized)
+        );
+      }
+      if (searchField === "ID") {
+        return matches(officer.id);
+      }
+      if (searchField === "NAME") {
+        return matches(officer.name);
+      }
+      if (searchField === "BRANCH") {
+        return matches(officer.branch);
+      }
+      if (searchField === "EMAIL") {
+        return matches(officer.email);
+      }
+      if (searchField === "CONTACT") {
+        return matches(officer.contact);
+      }
+      if (searchField === "ASSIGNED") {
+        return matches(officer.assigned);
+      }
+      return matchesOfficerStatus(officer.status, normalized);
+    });
+  }, [officers, searchField, searchQuery]);
 
   const totalPages = Math.ceil(filteredOfficers.length / officersPerPage);
   const paginatedOfficers = filteredOfficers.slice(
@@ -462,7 +523,7 @@ export default function Page() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [searchQuery, searchField]);
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
@@ -500,18 +561,34 @@ export default function Page() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search
-                  size={18}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Search Officers by ID, Name or Email..."
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
-                />
+              <div className="flex flex-1 flex-col sm:flex-row gap-3">
+                <select
+                  value={searchField}
+                  onChange={(event) =>
+                    setSearchField(event.target.value as OfficerSearchField)
+                  }
+                  className="h-12 rounded-full border border-gray-300 bg-white px-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
+                >
+                  {officerSearchOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      Search by {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="relative flex-1">
+                  <Search
+                    size={18}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Search officers..."
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    className="h-12 w-full pl-12 pr-4 rounded-full border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
+                  />
+                </div>
               </div>
 
               <button
