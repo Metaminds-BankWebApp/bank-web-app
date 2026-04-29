@@ -83,7 +83,7 @@ export async function verifyOtp(payload: VerifyOtpRequest): Promise<AuthActionRe
 
     if (["NETWORK_ERROR", "TIMEOUT", "NOT_FOUND"].includes(apiError.code)) {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return { message: "Mock OTP verified." };
+      return { message: "Mock OTP verified.", resetToken: "mock-reset-token" };
     }
 
     throw apiError;
