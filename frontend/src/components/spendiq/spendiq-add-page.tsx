@@ -374,27 +374,27 @@ export function SpendIqAddPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-8 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">
+      <div className="flex flex-col gap-8 p-4 md:p-8 min-h-screen bg-white dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100">
         <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Add Income / Expense" />
 
-        <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 mb-6">Add record</h2>
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Add record</h2>
 
           <div className="flex items-center gap-8 mb-6">
             <label className="flex items-center gap-3 cursor-pointer group">
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${entryType === "expense" ? "border-[#0b1a3a]" : "border-slate-300"}`}>
-                {entryType === "expense" && <div className="w-2.5 h-2.5 rounded-full bg-[#0b1a3a]" />}
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${entryType === "expense" ? "border-[#0b1a3a] dark:border-sky-400" : "border-slate-300"}`}>
+                {entryType === "expense" && <div className="w-2.5 h-2.5 rounded-full bg-[#0b1a3a] dark:bg-sky-600" />}
               </div>
               <input type="radio" className="hidden" checked={entryType === "expense"} onChange={() => setEntryType("expense")} />
-              <span className={`font-medium ${entryType === "expense" ? "text-slate-900" : "text-slate-500"}`}>Expense</span>
+              <span className={`font-medium ${entryType === "expense" ? "text-slate-900 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>Expense</span>
             </label>
 
             <label className="flex items-center gap-3 cursor-pointer group">
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${entryType === "income" ? "border-[#0b1a3a]" : "border-slate-300"}`}>
-                {entryType === "income" && <div className="w-2.5 h-2.5 rounded-full bg-[#0b1a3a]" />}
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${entryType === "income" ? "border-[#0b1a3a] dark:border-sky-400" : "border-slate-300"}`}>
+                {entryType === "income" && <div className="w-2.5 h-2.5 rounded-full bg-[#0b1a3a] dark:bg-sky-600" />}
               </div>
               <input type="radio" className="hidden" checked={entryType === "income"} onChange={() => setEntryType("income")} />
-              <span className={`font-medium ${entryType === "income" ? "text-slate-900" : "text-slate-500"}`}>Income</span>
+              <span className={`font-medium ${entryType === "income" ? "text-slate-900 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"}`}>Income</span>
             </label>
           </div>
 
@@ -405,13 +405,13 @@ export function SpendIqAddPage() {
               value={amountInput}
               onChange={(event) => setAmountInput(event.target.value)}
               placeholder="Amount"
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#0b1a3a] focus:ring-1 focus:ring-[#0b1a3a] bg-slate-50/50"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-sky-400 focus:ring-1 focus:ring-[#0b1a3a] dark:focus:ring-sky-400 bg-slate-50/50 dark:bg-slate-800 dark:text-slate-100"
             />
 
             {entryType === "expense" ? (
               <>
                 <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                  <SelectTrigger className="w-full py-6 border-slate-200 bg-slate-50/50">
+                  <SelectTrigger className="w-full py-6 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 dark:text-slate-100">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -424,7 +424,7 @@ export function SpendIqAddPage() {
                 </Select>
 
                 <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                  <SelectTrigger className="w-full py-6 border-slate-200 bg-slate-50/50">
+                  <SelectTrigger className="w-full py-6 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 dark:text-slate-100">
                     <SelectValue placeholder="Payment method" />
                   </SelectTrigger>
                   <SelectContent>
@@ -440,7 +440,7 @@ export function SpendIqAddPage() {
                   type="date"
                   value={expenseDate}
                   onChange={(event) => setExpenseDate(event.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#0b1a3a] focus:ring-1 focus:ring-[#0b1a3a] bg-slate-50/50"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-sky-400 focus:ring-1 focus:ring-[#0b1a3a] dark:focus:ring-sky-400 bg-slate-50/50 dark:bg-slate-800 dark:text-slate-100"
                 />
               </>
             ) : (
@@ -450,14 +450,14 @@ export function SpendIqAddPage() {
                   value={incomeSourceName}
                   onChange={(event) => setIncomeSourceName(event.target.value)}
                   placeholder="Income source"
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#0b1a3a] focus:ring-1 focus:ring-[#0b1a3a] bg-slate-50/50"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-sky-400 focus:ring-1 focus:ring-[#0b1a3a] dark:focus:ring-sky-400 bg-slate-50/50 dark:bg-slate-800 dark:text-slate-100"
                 />
 
                 <input
                   type="date"
                   value={incomeDate}
                   onChange={(event) => setIncomeDate(event.target.value)}
-                  className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#0b1a3a] focus:ring-1 focus:ring-[#0b1a3a] bg-slate-50/50"
+                  className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-sky-400 focus:ring-1 focus:ring-[#0b1a3a] dark:focus:ring-sky-400 bg-slate-50/50 dark:bg-slate-800 dark:text-slate-100"
                 />
               </>
             )}
@@ -467,26 +467,26 @@ export function SpendIqAddPage() {
             <Button
               onClick={entryType === "expense" ? handleAddExpense : handleAddIncome}
               loading={isSubmittingEntry}
-              className="bg-[#0b1a3a] hover:bg-[#162c57] text-white px-8 py-6 text-sm font-semibold rounded-lg min-w-[140px]"
+              className="bg-[#0b1a3a] dark:bg-sky-600 hover:bg-[#162c57] text-white px-8 py-6 text-sm font-semibold rounded-lg min-w-[140px]"
             >
               Add now
             </Button>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 mb-6">Add new category</h2>
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Add new category</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input
               type="text"
               value={newCategoryName}
               onChange={(event) => setNewCategoryName(event.target.value)}
               placeholder="Category name"
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#0b1a3a] bg-slate-50/50"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-sky-400 bg-slate-50/50 dark:bg-slate-800 dark:text-slate-100"
             />
 
             <Select value={newCategoryType} onValueChange={(value) => setNewCategoryType(value as SpendIqCategoryType)}>
-              <SelectTrigger className="w-full py-6 border-slate-200 bg-slate-50/50">
+              <SelectTrigger className="w-full py-6 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 dark:text-slate-100">
                 <SelectValue placeholder="Category type" />
               </SelectTrigger>
               <SelectContent>
@@ -498,45 +498,45 @@ export function SpendIqAddPage() {
             <Button
               onClick={handleAddCategory}
               loading={isSubmittingCategory}
-              className="bg-[#0b1a3a] hover:bg-[#162c57] text-white px-8 py-6 text-sm font-semibold rounded-lg"
+              className="bg-[#0b1a3a] dark:bg-sky-600 hover:bg-[#162c57] text-white px-8 py-6 text-sm font-semibold rounded-lg"
             >
               Add category
             </Button>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm overflow-hidden">
-          <h2 className="text-sm text-slate-500 font-bold uppercase tracking-wider mb-6">Recent Records</h2>
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm overflow-hidden">
+          <h2 className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-6">Recent Records</h2>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[960px]">
               <thead>
-                <tr className="text-left border-b border-slate-100">
-                  <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Date</th>
-                  <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Type</th>
-                  <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Category / Source</th>
-                  <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Amount</th>
-                  <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Payment Type</th>
-                  <th className="pb-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                <tr className="text-left border-b border-slate-100 dark:border-slate-800">
+                  <th className="pb-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Date</th>
+                  <th className="pb-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Type</th>
+                  <th className="pb-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Category / Source</th>
+                  <th className="pb-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Amount</th>
+                  <th className="pb-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">Payment Type</th>
+                  <th className="pb-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
                 {!isLoading && timelineRows.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500">No records found.</td>
+                    <td colSpan={6} className="py-8 text-center text-slate-500 dark:text-slate-400">No records found.</td>
                   </tr>
                 )}
 
                 {timelineRows.map((row) => (
-                  <tr key={row.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50/70 transition-colors">
-                    <td className="py-4 font-semibold text-slate-700">{formatDate(row.date)}</td>
+                  <tr key={row.id} className="border-b border-slate-50 dark:border-slate-800 last:border-0 hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors">
+                    <td className="py-4 font-semibold text-slate-700 dark:text-slate-200">{formatDate(row.date)}</td>
                     <td className="py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold border ${row.kind === "expense" ? "bg-red-50 text-red-600 border-red-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"}`}>
                         {row.kind === "expense" ? "Expense" : "Income"}
                       </span>
                     </td>
                     <td className="py-4">
-                      <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-bold border border-slate-200">
+                      <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold border border-slate-200 dark:border-slate-700">
                         {row.label}
                       </span>
                     </td>
@@ -545,14 +545,14 @@ export function SpendIqAddPage() {
                     </td>
                     <td className="py-4 text-center">
                       {row.kind === "expense" ? (
-                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold">
+                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold">
                           {row.paymentType === "CARD" && <CreditCard size={14} />}
                           {row.paymentType === "CASH" && <Banknote size={14} />}
                           {row.paymentType === "BANK_TRANSFER" && <Landmark size={14} />}
                           {paymentLabel(row.paymentType)}
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-xs font-semibold">-</span>
+                        <span className="text-slate-400 dark:text-slate-500 text-xs font-semibold">-</span>
                       )}
                     </td>
                     <td className="py-4 text-right">
@@ -560,7 +560,7 @@ export function SpendIqAddPage() {
                         <button
                           type="button"
                           onClick={() => openEditDialog(row)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800"
                           aria-label="Edit record"
                         >
                           <Edit2 size={16} />
@@ -608,13 +608,13 @@ export function SpendIqAddPage() {
             value={editAmount}
             onChange={(event) => setEditAmount(event.target.value)}
             placeholder="Amount"
-            className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#0b1a3a]"
+            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-sky-400"
           />
 
           {editTarget?.kind === "expense" ? (
             <>
               <Select value={editCategoryId} onValueChange={setEditCategoryId}>
-                <SelectTrigger className="w-full py-6 border-slate-200">
+                <SelectTrigger className="w-full py-6 border-slate-200 dark:border-slate-700">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -627,7 +627,7 @@ export function SpendIqAddPage() {
               </Select>
 
               <Select value={editPaymentMethod} onValueChange={setEditPaymentMethod}>
-                <SelectTrigger className="w-full py-6 border-slate-200">
+                <SelectTrigger className="w-full py-6 border-slate-200 dark:border-slate-700">
                   <SelectValue placeholder="Payment method" />
                 </SelectTrigger>
                 <SelectContent>
@@ -645,7 +645,7 @@ export function SpendIqAddPage() {
               value={editSourceName}
               onChange={(event) => setEditSourceName(event.target.value)}
               placeholder="Income source"
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#0b1a3a]"
+              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-sky-400"
             />
           )}
 
@@ -653,7 +653,7 @@ export function SpendIqAddPage() {
             type="date"
             value={editDate}
             onChange={(event) => setEditDate(event.target.value)}
-            className="w-full px-4 py-3 rounded-lg border border-slate-200 focus:outline-none focus:border-[#0b1a3a]"
+            className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-sky-400"
           />
         </div>
       </Dialog>
@@ -676,7 +676,7 @@ export function SpendIqAddPage() {
           </>
         }
       >
-        <p className="text-sm text-slate-600">{deleteTarget ? `${deleteTarget.kind === "expense" ? "Expense" : "Income"}: ${deleteTarget.label}` : ""}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300">{deleteTarget ? `${deleteTarget.kind === "expense" ? "Expense" : "Income"}: ${deleteTarget.label}` : ""}</p>
       </Dialog>
     </>
   );

@@ -36,12 +36,14 @@ export interface VerifyOtpRequest {
 
 export interface ResetPasswordRequest {
   email: string;
+  resetToken: string;
   password: string;
   confirmPassword: string;
 }
 
 export interface AuthActionResponse {
   message?: string;
+  resetToken?: string;
 }
 
 export interface AuthMeResponse {

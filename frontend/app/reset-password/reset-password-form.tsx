@@ -18,6 +18,7 @@ export function ResetPasswordForm() {
   const [error, setError] = useState<string | null>(null);
 
   const email = useMemo(() => searchParams.get("email") ?? "", [searchParams]);
+  const resetToken = useMemo(() => searchParams.get("token") ?? "", [searchParams]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,12 +38,18 @@ export function ResetPasswordForm() {
       return;
     }
 
+    if (!resetToken) {
+      setError("Missing reset session. Restart from forgot password.");
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
 
     try {
       await authService.resetPassword({
         email,
+        resetToken,
         password,
         confirmPassword,
       });

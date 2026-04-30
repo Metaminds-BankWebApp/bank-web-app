@@ -73,9 +73,14 @@ export async function deleteSpendIqExpense(expenseId: number): Promise<void> {
   }
 }
 
-export async function getSpendIqIncomes(): Promise<SpendIqIncomeResponse[]> {
+export async function getSpendIqIncomes(filters?: {
+  fromDate?: string;
+  toDate?: string;
+}): Promise<SpendIqIncomeResponse[]> {
   try {
-    const { data } = await apiClient.get<SpendIqIncomeResponse[]>(SPENDIQ_ENDPOINTS.incomes);
+    const { data } = await apiClient.get<SpendIqIncomeResponse[]>(SPENDIQ_ENDPOINTS.incomes, {
+      params: filters,
+    });
     return data;
   } catch (error) {
     throw toApiError(error);
