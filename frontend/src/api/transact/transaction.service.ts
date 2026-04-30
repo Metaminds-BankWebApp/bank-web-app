@@ -1,12 +1,32 @@
 import apiClient, { toApiError } from "@/src/api/client";
 import { TRANSACT_ENDPOINTS } from "@/src/api/endpoints";
 import type {
+  CurrentBalanceResponse,
   CreateTransactionRequest,
   ResendTransactionOtpRequest,
+  TransactDashboardSummaryResponse,
   TransactionInitiateResponse,
   TransactionResponse,
   VerifyTransactionOtpRequest,
 } from "@/src/types/dto/transact.dto";
+
+export async function getCurrentBalance(): Promise<CurrentBalanceResponse> {
+  try {
+    const { data } = await apiClient.get<CurrentBalanceResponse>(TRANSACT_ENDPOINTS.dashboardCurrentBalance);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getDashboardSummary(): Promise<TransactDashboardSummaryResponse> {
+  try {
+    const { data } = await apiClient.get<TransactDashboardSummaryResponse>(TRANSACT_ENDPOINTS.dashboardSummary);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
 
 export async function initiateTransaction(payload: CreateTransactionRequest): Promise<TransactionInitiateResponse> {
   try {
@@ -54,6 +74,8 @@ export async function getBankOfficerTransactionHistory(): Promise<TransactionRes
 }
 
 export const transactionService = {
+  getCurrentBalance,
+  getDashboardSummary,
   initiateTransaction,
   verifyTransactionOtp,
   resendTransactionOtp,

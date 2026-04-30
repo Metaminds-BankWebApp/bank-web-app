@@ -5,7 +5,6 @@ import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 import { ConfirmationModal, useToast } from "@/src/components/ui";
-import { Pencil, Search, Trash2, X } from "lucide-react";
 import {
   deleteAdminUser,
   getAdminUsers,
@@ -20,6 +19,22 @@ import type {
 } from "@/src/types/dto/admin-user-management.dto";
 
 const usersPerPage = 5;
+
+type InlineIconProps = {
+  symbol: string;
+  className?: string;
+};
+
+function InlineIcon({ symbol, className = "" }: InlineIconProps) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex select-none items-center justify-center leading-none ${className}`.trim()}
+    >
+      {symbol}
+    </span>
+  );
+}
 
 function formatJoinedDate(value: string | null): string {
   if (!value) {
@@ -518,9 +533,9 @@ export default function UserManagementPage() {
                 </select>
 
                 <div className="relative flex-1">
-                  <Search
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                  <InlineIcon
+                    symbol="⌕"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base"
                   />
                   <input
                     type="text"
@@ -643,7 +658,7 @@ export default function UserManagementPage() {
                                   title="Edit user details"
                                   className="p-2 rounded-lg hover:bg-blue-50 text-blue-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                  <Pencil size={16} />
+                                  <InlineIcon symbol="✎" className="text-sm" />
                                 </button>
                                 <button
                                   onClick={() => openDeleteUserModal(user)}
@@ -651,7 +666,7 @@ export default function UserManagementPage() {
                                   title="Delete user permanently"
                                   className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                  <Trash2 size={16} />
+                                  <InlineIcon symbol="🗑" className="text-sm" />
                                 </button>
                               </div>
                             </td>
@@ -716,7 +731,7 @@ export default function UserManagementPage() {
                 title="Close"
                 className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
               >
-                <X size={16} />
+                <InlineIcon symbol="✕" className="text-sm" />
               </button>
               <h3 className="text-xl font-semibold text-gray-900">Edit User</h3>
               <p className="mt-1 text-sm text-gray-500">
@@ -864,4 +879,3 @@ export default function UserManagementPage() {
     </AuthGuard>
   );
 }
-
