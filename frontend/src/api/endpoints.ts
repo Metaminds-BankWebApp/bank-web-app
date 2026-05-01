@@ -91,6 +91,15 @@ export const BANK_CREDITLENS_ENDPOINTS = {
   byId: (bankEvaluationId: number) => `/creditlens/bank/evaluations/${bankEvaluationId}`,
 } as const;
 
+export const BANK_LOANSENSE_ENDPOINTS = {
+  current: "/loansense/bank/current",
+  history: "/loansense/bank/history",
+  byId: (loansenseEvaluationId: number) =>
+    `/loansense/bank/evaluations/${loansenseEvaluationId}`,
+  loanType: (loanType: string) =>
+    `/loansense/bank/loan-types/${encodeURIComponent(loanType)}`,
+} as const;
+
 export const USER_PROFILE_ENDPOINTS = {
   current: "/users/profile",
   update: "/users/profile",
@@ -103,6 +112,10 @@ export const ADMIN_ENDPOINTS = {
   branches: "/admin/branches",
   users: "/admin/users",
   dashboardSummary: "/admin/dashboard/summary",
+  dashboardRecentActions: "/admin/dashboard/recent-actions",
+  auditLogs: "/admin/audit-logs",
+  auditLogFilters: "/admin/audit-logs/filters",
+  auditLogRecent: "/admin/audit-logs/recent",
   loanPolicies: "/admin/loan-policies",
 } as const;
 
