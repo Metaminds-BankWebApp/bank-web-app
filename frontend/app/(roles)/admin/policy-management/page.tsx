@@ -21,7 +21,9 @@ type LoanCard = {
   title: string;
   description: string;
   rate: number;
-  dark?: boolean;
+  cardClassName: string;
+  contentClassName: string;
+  dividerClassName: string;
 };
 
 const loanTypeOrder: AdminLoanPolicyType[] = [
@@ -38,19 +40,30 @@ const loanPresentationMap: Record<
   PERSONAL: {
     title: "Personal Loan",
     description: "Flexible personal financing for day-to-day needs.",
-    dark: true,
+    cardClassName: "bg-[#0d3b66]",
+    contentClassName: "text-white",
+    dividerClassName: "bg-white/30",
   },
   VEHICLE: {
     title: "Vehicle Loan",
     description: "Auto financing with competitive repayment terms.",
+    cardClassName: "bg-[#446892]",
+    contentClassName: "text-white",
+    dividerClassName: "bg-white/30",
   },
   EDUCATION: {
     title: "Educational Loan",
     description: "Loan support for tuition and educational expenses.",
+    cardClassName: "bg-[#6f8fb6]",
+    contentClassName: "text-white",
+    dividerClassName: "bg-white/30",
   },
   HOUSING: {
     title: "Housing Loan",
     description: "Home ownership financing with long-term plans.",
+    cardClassName: "bg-[#9fb1c9]",
+    contentClassName: "text-[#15375f]",
+    dividerClassName: "bg-[#15375f]/30",
   },
 };
 
@@ -85,7 +98,9 @@ function mapPoliciesToCards(policies: AdminLoanPolicyResponse[]): LoanCard[] {
         title: presentation.title,
         description: presentation.description,
         rate: normalizeRate(Number(policy.baseInterestRate)),
-        dark: presentation.dark,
+        cardClassName: presentation.cardClassName,
+        contentClassName: presentation.contentClassName,
+        dividerClassName: presentation.dividerClassName,
       };
     })
     .filter((loan): loan is LoanCard => loan !== null);
@@ -270,18 +285,14 @@ export default function PolicyManagementPage() {
               loans.map((loan) => (
                 <div
                   key={loan.policyId}
-                  className={`flex flex-col lg:flex-row justify-between items-center rounded-xl px-6 py-5 transition ${
-                    loan.dark
-                      ? "bg-[#0B3B66] text-white"
-                      : "bg-[#5f879e] text-white"
-                  }`}
+                  className={`flex flex-col lg:flex-row justify-between items-center rounded-xl px-6 py-5 transition ${loan.cardClassName} ${loan.contentClassName}`}
                 >
                   <div className="flex-1 pr-8">
                     <h3 className="text-xl font-semibold mb-3">{loan.title}</h3>
                     <p className="text-sm opacity-90 max-w-2xl">{loan.description}</p>
                   </div>
 
-                  <div className="hidden lg:block w-px h-20 bg-white/30 mx-6"></div>
+                  <div className={`hidden lg:block w-px h-20 mx-6 ${loan.dividerClassName}`}></div>
 
                   <div className="flex flex-col items-center gap-3 mt-6 lg:mt-0">
                     <span className="text-xs tracking-widest opacity-80">
