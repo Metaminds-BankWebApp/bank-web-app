@@ -121,6 +121,8 @@ export const ADMIN_ENDPOINTS = {
 } as const;
 
 export const TRANSACT_ENDPOINTS = {
+  dashboardCurrentBalance: "/bank-customers/transact/dashboard/current-balance",
+  dashboardSummary: "/bank-customers/transact/dashboard/summary",
   transactionsInitiate: "/bank-customers/transact/transactions/initiate",
   transactionsVerifyOtp: "/bank-customers/transact/transactions/verify-otp",
   transactionsResendOtp: "/bank-customers/transact/transactions/resend-otp",
