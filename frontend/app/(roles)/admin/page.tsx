@@ -34,10 +34,16 @@ import { Sidebar } from "@/src/components/layout";
 import { useToast } from "@/src/components/ui";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { cn } from "@/src/lib/utils";
-import { getAdminDashboardSummary } from "@/src/api/admin/dashboard.service";
+import {
+  getAdminDashboardSummary,
+  getAdminRecentActions,
+} from "@/src/api/admin/dashboard.service";
 import { getAdminLoanPolicies } from "@/src/api/admin/loan-policy.service";
 import { ApiError } from "@/src/types/api-error";
-import type { AdminDashboardSummaryResponse } from "@/src/types/dto/admin-dashboard.dto";
+import type {
+  AdminDashboardSummaryResponse,
+  AdminRecentActionResponse,
+} from "@/src/types/dto/admin-dashboard.dto";
 import type {
   AdminLoanPolicyResponse,
   AdminLoanPolicyType,
@@ -64,8 +70,10 @@ type QuickAction = {
 type ActionTone = "success" | "warning" | "info";
 
 type AdminAction = {
+  id: string;
   title: string;
   meta: string;
+  details?: string | null;
   icon: LucideIcon;
   tone: ActionTone;
 };
@@ -128,27 +136,6 @@ const quickActions: QuickAction[] = [
   { label: "POLICY", icon: ShieldCheck, href: "/admin/policy-management" },
 ];
 
-const adminActions: AdminAction[] = [
-  {
-    title: 'Approved Branch Creation: "North Wing Capital"',
-    meta: "2 hours ago â€¢ by Kamal Edirisinghe",
-    icon: CheckCircle2,
-    tone: "success",
-  },
-  {
-    title: 'Flagged User Account: "ID-12451" for suspicious activity',
-    meta: "5 hours ago â€¢ System Audit",
-    icon: AlertTriangle,
-    tone: "warning",
-  },
-  {
-    title: "Updated System Security Protocols",
-    meta: "Yesterday at 4:30 PM â€¢ Maintenance Team",
-    icon: ShieldCheck,
-    tone: "info",
-  },
-];
-
 const loanTypeOrder: AdminLoanPolicyType[] = [
   "PERSONAL",
   "VEHICLE",
@@ -183,23 +170,25 @@ function formatInterestRate(value: number): string {
 }
 
 function formatPolicySinceDate(createdAt: string | null, updatedAt: string | null): string {
-  const source = createdAt ?? updatedAt;
+  const source = updatedAt ?? createdAt;
   if (!source) {
-    return "Since -";
+    return "Updated -";
   }
 
   const parsed = new Date(source);
   if (Number.isNaN(parsed.getTime())) {
-    return `Since ${source}`;
+    return `Updated ${source}`;
   }
 
   const formatted = new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(parsed);
 
-  return `Since ${formatted}`;
+  return `Updated ${formatted}`;
 }
 
 function mapLoanPoliciesToRates(policies: AdminLoanPolicyResponse[]): LoanRate[] {
@@ -214,7 +203,9 @@ function mapLoanPoliciesToRates(policies: AdminLoanPolicyResponse[]): LoanRate[]
       loanType,
       title: loanTypeTitleMap[loanType],
       rate: policy ? formatInterestRate(Number(policy.baseInterestRate)) : "-",
-      sinceLabel: policy ? formatPolicySinceDate(policy.createdAt, policy.updatedAt) : "Since -",
+      sinceLabel: policy
+        ? formatPolicySinceDate(policy.createdAt, policy.updatedAt)
+        : "Updated -",
       icon: loanTypeIconMap[loanType],
     };
   });
@@ -225,6 +216,103 @@ const actionToneClass: Record<ActionTone, string> = {
   warning: "bg-[#fbefd9] text-[#d28725]",
   info: "bg-[#e6e9ff] text-[#6363d9]",
 };
+
+function resolveActionTone(tone: AdminRecentActionResponse["tone"] | null | undefined): ActionTone {
+  if (tone === "SUCCESS") {
+    return "success";
+  }
+  if (tone === "WARNING" || tone === "ERROR") {
+    return "warning";
+  }
+  return "info";
+}
+
+function resolveActionIcon(actionType: string | null | undefined, tone: ActionTone): LucideIcon {
+  const normalized = (actionType ?? "").toUpperCase();
+
+  if (normalized.includes("BRANCH")) {
+    return Building2;
+  }
+  if (normalized.includes("OFFICER")) {
+    return UserPlus;
+  }
+  if (normalized.includes("USER")) {
+    return User;
+  }
+  if (normalized.includes("POLICY")) {
+    return FileText;
+  }
+  if (normalized.includes("RISK")) {
+    return ShieldCheck;
+  }
+  if (tone === "success") {
+    return CheckCircle2;
+  }
+  if (tone === "warning") {
+    return AlertTriangle;
+  }
+  return ShieldCheck;
+}
+
+function formatActionTime(value: string | null | undefined): string {
+  if (!value) {
+    return "Just now";
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  const diffMs = Date.now() - parsed.getTime();
+  if (diffMs < 0) {
+    return "Just now";
+  }
+
+  const diffMinutes = Math.floor(diffMs / 60000);
+  if (diffMinutes < 1) {
+    return "Just now";
+  }
+  if (diffMinutes < 60) {
+    return `${diffMinutes} min ago`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+  }
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) {
+    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(parsed);
+}
+
+function mapRecentActionsToView(
+  actions: AdminRecentActionResponse[]
+): AdminAction[] {
+  return actions.map((item) => {
+    const tone = resolveActionTone(item.tone);
+    const actor = item.actorName?.trim() || "System";
+    const timeLabel = formatActionTime(item.createdAt);
+    return {
+      id: String(item.actionId),
+      title: item.title,
+      meta: `${timeLabel} | by ${actor}`,
+      details: item.details,
+      icon: resolveActionIcon(item.actionType, tone),
+      tone,
+    };
+  });
+}
 
 export default function DashboardPage() {
   const { showToast } = useToast();
@@ -237,6 +325,8 @@ export default function DashboardPage() {
     mapLoanPoliciesToRates([])
   );
   const [isLoanRatesLoading, setIsLoanRatesLoading] = useState(true);
+  const [recentActions, setRecentActions] = useState<AdminAction[]>([]);
+  const [isRecentActionsLoading, setIsRecentActionsLoading] = useState(true);
   const customerTypes: Array<"ALL" | "BANK" | "PUBLIC"> = ["ALL", "BANK", "PUBLIC"];
 
   useEffect(() => {
@@ -274,6 +364,53 @@ export default function DashboardPage() {
 
     return () => {
       mounted = false;
+    };
+  }, [showToast]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadRecentActions = async (showLoading = true, showErrorToast = true) => {
+      if (showLoading) {
+        setIsRecentActionsLoading(true);
+      }
+      try {
+        const data = await getAdminRecentActions({ hours: 12, limit: 20 });
+        if (!mounted) {
+          return;
+        }
+        setRecentActions(mapRecentActionsToView(data));
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        if (showErrorToast) {
+          const message =
+            error instanceof ApiError
+              ? error.message
+              : "Failed to load recent admin actions.";
+          showToast({
+            type: "error",
+            title: "Recent actions load failed",
+            description: message,
+          });
+        }
+        setRecentActions([]);
+      } finally {
+        if (mounted && showLoading) {
+          setIsRecentActionsLoading(false);
+        }
+      }
+    };
+
+    void loadRecentActions(true, true);
+    const intervalId = window.setInterval(() => {
+      void loadRecentActions(false, false);
+    }, 30000);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
     };
   }, [showToast]);
 
@@ -506,12 +643,20 @@ export default function DashboardPage() {
             {/* Recent Admin Actions & Loan Rates: responsive grid */}
             <section className="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px]">
               <div className="rounded-3xl border border-[#e3e7ee] bg-white p-4 sm:p-6">
-                <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#0f2f52]">Recent Admin Actions - within 6 hours</h3>
-                <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-5">
-                  {adminActions.map((action) => {
+                <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#0f2f52]">Recent Admin Actions - within 12 hours</h3>
+                <div className="mt-4 sm:mt-6 max-h-[360px] sm:max-h-[440px] xl:max-h-[350px] overflow-y-auto pr-2 space-y-4 sm:space-y-5">
+                  {isRecentActionsLoading ? (
+                    <p className="text-xs sm:text-sm text-[#a0adbd]">Loading recent actions...</p>
+                  ) : null}
+                  {!isRecentActionsLoading && recentActions.length === 0 ? (
+                    <p className="text-xs sm:text-sm text-[#a0adbd]">
+                      No admin actions recorded in the last 12 hours.
+                    </p>
+                  ) : null}
+                  {recentActions.map((action) => {
                     const Icon = action.icon;
                     return (
-                      <div key={action.title} className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                      <div key={action.id} className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                         <span
                           className={cn(
                             "mt-1 inline-flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-lg",
@@ -522,6 +667,9 @@ export default function DashboardPage() {
                         </span>
                         <div>
                           <p className="text-xs sm:text-sm font-medium leading-tight text-[#1e4169]">{action.title}</p>
+                          {action.details ? (
+                            <p className="mt-1 text-xs sm:text-sm text-[#7f8ea3]">{action.details}</p>
+                          ) : null}
                           <p className="mt-1 text-xs sm:text-sm text-[#a0adbd]">{action.meta}</p>
                         </div>
                       </div>
@@ -531,7 +679,7 @@ export default function DashboardPage() {
               </div>
               <div className="rounded-3xl border border-[#e3e7ee] bg-white p-4 sm:p-6">
                 <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#0f2f52]">Current Loan Interest Rate</h3>
-                <div className="mt-4 sm:mt-6 space-y-4 sm:space-y-5">
+                <div className="mt-4 sm:mt-6 space-y-5 sm:space-y-10">
                   {loanRates.map((item) => {
                     const Icon = item.icon;
                     return (
@@ -560,4 +708,3 @@ export default function DashboardPage() {
     </AuthGuard>
   );
 }
-

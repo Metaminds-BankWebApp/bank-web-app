@@ -1,14 +1,24 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 import { Search } from "lucide-react";
+import { useToast } from "@/src/components/ui";
+import { ApiError } from "@/src/types/api-error";
+import {
+  getAdminAuditLogFilters,
+  getAdminAuditLogs,
+} from "@/src/api/admin/audit-log.service";
+import type {
+  AdminAuditLogRecordResponse,
+  AdminAuditTone,
+} from "@/src/types/dto/admin-audit-log.dto";
 
 type LogStatus = "Success" | "Failure" | "Policy Change";
 
-type AuditLog = {
+type AuditLogRow = {
   id: number;
   date: string;
   time: string;
@@ -18,131 +28,236 @@ type AuditLog = {
   target: string;
   ip: string;
   status: LogStatus;
+  details: string | null;
 };
 
-const auditData: AuditLog[] = [
-  {
-    id: 1,
-    date: "Oct 24, 2023",
-    time: "14:32:01",
-    user: "Alex Morgan",
-    role: "Admin",
-    action: "Update Permissions",
-    target: "Marketing API Key",
-    ip: "192.168.1.124",
-    status: "Policy Change",
-  },
-  {
-    id: 2,
-    date: "Oct 24, 2023",
-    time: "13:15:44",
-    user: "James Chen",
-    role: "Bank Customer",
-    action: "User Login",
-    target: "-",
-    ip: "45.22.108.9",
-    status: "Success",
-  },
-  {
-    id: 3,
-    date: "Oct 24, 2023",
-    time: "12:10:29",
-    user: "Rita Walsh",
-    role: "Customer",
-    action: "Download Report",
-    target: "Q3 Financials.pdf",
-    ip: "102.43.12.77",
-    status: "Success",
-  },
-  {
-    id: 4,
-    date: "Oct 23, 2023",
-    time: "22:45:10",
-    user: "Alex Morgan",
-    role: "Admin",
-    action: "Update Policy",
-    target: "Two-Factor Auth",
-    ip: "192.168.1.124",
-    status: "Policy Change",
-  },
-  {
-    id: 5,
-    date: "Oct 23, 2023",
-    time: "18:12:05",
-    user: "Tom Hardy",
-    role: "Public Customer",
-    action: "User Login",
-    target: "-",
-    ip: "77.102.44.11",
-    status: "Failure",
-  },
-  {
-    id: 6,
-    date: "Oct 23, 2023",
-    time: "15:55:12",
-    user: "Emma Lee",
-    role: "Admin",
-    action: "System Backup",
-    target: "Core DB v12",
-    ip: "12.22.4.99",
-    status: "Success",
-  },
-];
+const ALL_FILTER_OPTION = "All";
+
+function formatDateTimeParts(value: string | null): { date: string; time: string } {
+  if (!value) {
+    return { date: "-", time: "-" };
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return { date: value, time: "-" };
+  }
+
+  return {
+    date: new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(parsed),
+    time: new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).format(parsed),
+  };
+}
+
+function mapToneToStatus(tone: AdminAuditTone): LogStatus {
+  if (tone === "SUCCESS") {
+    return "Success";
+  }
+  if (tone === "ERROR") {
+    return "Failure";
+  }
+  return "Policy Change";
+}
+
+function toAuditLogRow(record: AdminAuditLogRecordResponse): AuditLogRow {
+  const { date, time } = formatDateTimeParts(record.createdAt);
+  const target =
+    record.targetId?.trim() ||
+    record.targetType?.trim() ||
+    "-";
+
+  return {
+    id: record.actionId,
+    date,
+    time,
+    user: record.actorName?.trim() || "System",
+    role: record.actorRole?.trim() || "SYSTEM",
+    action: record.title?.trim() || record.actionType,
+    target,
+    ip: record.ipAddress?.trim() || "-",
+    status: mapToneToStatus(record.tone),
+    details: record.details?.trim() || null,
+  };
+}
 
 export default function AuditLogsPage() {
+  const { showToast } = useToast();
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("All");
-  const [actionFilter, setActionFilter] = useState("All");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState(ALL_FILTER_OPTION);
+  const [actionFilter, setActionFilter] = useState(ALL_FILTER_OPTION);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [logs, setLogs] = useState<AuditLogRow[]>([]);
+  const [roleOptions, setRoleOptions] = useState<string[]>([]);
+  const [actionOptions, setActionOptions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const logsPerPage = 6;
 
-  const filteredLogs = useMemo(() => {
-    return auditData
-      .filter((log) =>
-        roleFilter === "All" ? true : log.role === roleFilter
-      )
-      .filter((log) =>
-        actionFilter === "All" ? true : log.action === actionFilter
-      )
-      .filter((log) =>
-        log.user.toLowerCase().includes(search.toLowerCase()) ||
-        log.action.toLowerCase().includes(search.toLowerCase()) ||
-        log.target.toLowerCase().includes(search.toLowerCase())
-      );
-  }, [search, roleFilter, actionFilter]);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 300);
 
-  const totalPages = Math.ceil(filteredLogs.length / logsPerPage);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [search]);
 
-  const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * logsPerPage,
-    currentPage * logsPerPage
-  );
+  useEffect(() => {
+    let mounted = true;
+
+    const loadFilters = async () => {
+      try {
+        const data = await getAdminAuditLogFilters();
+        if (!mounted) {
+          return;
+        }
+        setRoleOptions(data.actorRoles ?? []);
+        setActionOptions(data.actionTypes ?? []);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : "Failed to load audit log filter options.";
+        showToast({
+          type: "error",
+          title: "Filter load failed",
+          description: message,
+        });
+      }
+    };
+
+    void loadFilters();
+
+    return () => {
+      mounted = false;
+    };
+  }, [showToast]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, roleFilter, actionFilter]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadAuditLogs = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getAdminAuditLogs({
+          page: currentPage,
+          size: logsPerPage,
+          query: debouncedSearch || undefined,
+          actorRole: roleFilter === ALL_FILTER_OPTION ? undefined : roleFilter,
+          actionType: actionFilter === ALL_FILTER_OPTION ? undefined : actionFilter,
+        });
+
+        if (!mounted) {
+          return;
+        }
+
+        setLogs((data.records ?? []).map(toAuditLogRow));
+        setTotalElements(data.totalElements ?? 0);
+        setTotalPages(data.totalPages ?? 0);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : "Failed to load audit logs.";
+        setLogs([]);
+        setTotalElements(0);
+        setTotalPages(0);
+        showToast({
+          type: "error",
+          title: "Audit logs load failed",
+          description: message,
+        });
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadAuditLogs();
+
+    return () => {
+      mounted = false;
+    };
+  }, [actionFilter, currentPage, debouncedSearch, roleFilter, showToast]);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const showingFrom = useMemo(() => {
+    if (totalElements === 0) {
+      return 0;
+    }
+    return (currentPage - 1) * logsPerPage + 1;
+  }, [currentPage, logsPerPage, totalElements]);
+
+  const showingTo = useMemo(() => {
+    if (totalElements === 0) {
+      return 0;
+    }
+    return Math.min(currentPage * logsPerPage, totalElements);
+  }, [currentPage, logsPerPage, totalElements]);
 
   const statusStyle = (status: LogStatus) => {
-    if (status === "Success")
+    if (status === "Success") {
       return "bg-green-100 text-green-700";
-    if (status === "Failure")
+    }
+    if (status === "Failure") {
       return "bg-red-100 text-red-600";
+    }
     return "bg-blue-100 text-blue-600";
   };
 
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
-         <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
+        <Sidebar role="ADMIN" className="max-lg:hidden h-full z-10 relative" />
 
         <main className="flex-1 flex flex-col bg-[#f3f4f6] overflow-hidden lg:rounded-l-[28px] shadow-2xl p-3 sm:p-5 lg:p-7">
           <div className="shrink-0 mb-5">
-            <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="ADMIN" mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Admin" title="Audit Logs" />
+            <ModuleHeader
+              theme="staff"
+              menuMode="sidebar-overlay"
+              sidebarRole="ADMIN"
+              mailBadge={2}
+              notificationBadge={8}
+              avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random"
+              avatarStatusDot
+              name="Kamal Edirisinghe"
+              role="Admin"
+              title="Audit Logs"
+            />
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-6">
-
-            {/* FILTER BAR */}
             <div className="bg-white rounded-xl shadow-sm p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-              
-              {/* Search */}
               <div className="col-span-1 lg:col-span-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase">
                   Search Logs
@@ -151,52 +266,51 @@ export default function AuditLogsPage() {
                   <Search size={16} className="text-gray-400 mr-2" />
                   <input
                     type="text"
-                    placeholder="Search by user, action, target..."
+                    placeholder="Search by user, action, target, details, or IP..."
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={(event) => setSearch(event.target.value)}
                     className="bg-transparent w-full text-sm focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* Role Filter */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase">
                   Role
                 </label>
                 <select
                   value={roleFilter}
-                  onChange={(e) => setRoleFilter(e.target.value)}
+                  onChange={(event) => setRoleFilter(event.target.value)}
                   className="mt-2 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm"
                 >
-                  <option>All</option>
-                  <option>Admin</option>
-                  <option>Bank Customer</option>
-                  <option>Customer</option>
-                  <option>Public Customer</option>
+                  <option value={ALL_FILTER_OPTION}>{ALL_FILTER_OPTION}</option>
+                  {roleOptions.map((role) => (
+                    <option key={role} value={role}>
+                      {role}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* Action Filter */}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase">
                   Action Type
                 </label>
                 <select
                   value={actionFilter}
-                  onChange={(e) => setActionFilter(e.target.value)}
+                  onChange={(event) => setActionFilter(event.target.value)}
                   className="mt-2 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm"
                 >
-                  <option>All</option>
-                  <option>User Login</option>
-                  <option>Update Policy</option>
-                  <option>System Backup</option>
-                  <option>Download Report</option>
+                  <option value={ALL_FILTER_OPTION}>{ALL_FILTER_OPTION}</option>
+                  {actionOptions.map((actionType) => (
+                    <option key={actionType} value={actionType}>
+                      {actionType}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            {/* TABLE */}
             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[1000px] text-sm">
@@ -210,85 +324,96 @@ export default function AuditLogsPage() {
                         "Target",
                         "IP Address",
                         "Status",
-                      ].map((h) => (
+                      ].map((header) => (
                         <th
-                          key={h}
+                          key={header}
                           className="px-6 py-4 text-left font-semibold text-gray-600"
                         >
-                          {h}
+                          {header}
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {paginatedLogs.map((log) => (
-                      <tr key={log.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div>{log.date}</div>
-                          <div className="text-xs text-gray-400">{log.time}</div>
-                        </td>
-                        <td className="px-6 py-4">{log.user}</td>
-                        <td className="px-6 py-4">{log.role}</td>
-                        <td className="px-6 py-4">{log.action}</td>
-                        <td className="px-6 py-4 text-blue-600 underline cursor-pointer">
-                          {log.target}
-                        </td>
-                        <td className="px-6 py-4 font-mono text-gray-500">
-                          {log.ip}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle(
-                              log.status
-                            )}`}
-                          >
-                            {log.status}
-                          </span>
+                    {isLoading ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                          Loading audit logs...
                         </td>
                       </tr>
-                    ))}
+                    ) : logs.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                          No audit logs found for selected filters.
+                        </td>
+                      </tr>
+                    ) : (
+                      logs.map((log) => (
+                        <tr key={log.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <div>{log.date}</div>
+                            <div className="text-xs text-gray-400">{log.time}</div>
+                          </td>
+                          <td className="px-6 py-4">{log.user}</td>
+                          <td className="px-6 py-4">{log.role}</td>
+                          <td className="px-6 py-4">
+                            <div>{log.action}</div>
+                            {log.details ? (
+                              <div className="text-xs text-gray-500 mt-1">{log.details}</div>
+                            ) : null}
+                          </td>
+                          <td className="px-6 py-4 text-blue-600">{log.target}</td>
+                          <td className="px-6 py-4 font-mono text-gray-500">{log.ip}</td>
+                          <td className="px-6 py-4">
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle(
+                                log.status
+                              )}`}
+                            >
+                              {log.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
 
-              {/* Pagination */}
               <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4">
                 <div className="text-sm text-gray-500">
-                  Showing {(currentPage - 1) * logsPerPage + 1} to{" "}
-                  {Math.min(currentPage * logsPerPage, filteredLogs.length)} of{" "}
-                  {filteredLogs.length} logs
+                  Showing {showingFrom} to {showingTo} of {totalElements} logs
                 </div>
 
                 <div className="flex items-center gap-2 mt-3 sm:mt-0">
                   <button
-                    disabled={currentPage === 1}
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
+                    disabled={currentPage === 1 || totalPages === 0}
+                    onClick={() => setCurrentPage((previous) => Math.max(previous - 1, 1))}
                     className="px-3 py-1 border rounded-lg disabled:opacity-40"
                   >
                     {"<"}
                   </button>
 
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentPage(i + 1)}
-                      className={`px-3 py-1 rounded-lg ${
-                        currentPage === i + 1
-                          ? "bg-[#0B3B66] text-white"
-                          : "border"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPages }).map((_, index) => {
+                    const page = index + 1;
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`px-3 py-1 rounded-lg ${
+                          currentPage === page ? "bg-[#0B3B66] text-white" : "border"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
 
                   <button
-                    disabled={currentPage === totalPages}
+                    disabled={totalPages === 0 || currentPage === totalPages}
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages)
+                      setCurrentPage((previous) =>
+                        Math.min(previous + 1, Math.max(totalPages, 1))
                       )
                     }
                     className="px-3 py-1 border rounded-lg disabled:opacity-40"
