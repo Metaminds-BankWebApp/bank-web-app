@@ -1,8 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Download } from "lucide-react"
-
+import { Download, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import PopupModal from "@/src/components/ui/popup-modal"
 import {
@@ -12,11 +11,10 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/src/components/ui/select"
+import { transactionService } from "@/src/api/transact/transaction.service"
+import { ApiError } from "@/src/types/api-error"
 
-type TransactionStatus = "success" | "failed" | "pending" | "cancelled"
-type ReportFileType = "csv" | "json" | "txt" | "pdf"
-type ReportRange = "last7" | "last30" | "yearToDate"
-type ReportStatusFilter = "all" | TransactionStatus
+type ReportRange = "currentMonth" | "last30" | "last90" | "custom"
 
 export type TransactionHistoryRecord = {
 	id: string
@@ -25,7 +23,7 @@ export type TransactionHistoryRecord = {
 	senderName: string
 	senderAcc: string
 	amount: string
-	status: TransactionStatus
+	status: string
 	date: string
 	reference: string
 }
@@ -34,288 +32,119 @@ type TransactionHistoryExportProps = {
 	records: TransactionHistoryRecord[]
 }
 
-const reportColumns: Array<{ key: keyof TransactionHistoryRecord; label: string }> = [
-	{ key: "receiverName", label: "Receiver Name" },
-	{ key: "receiverAcc", label: "Receiver Account Number" },
-	{ key: "senderName", label: "Sender Name" },
-	{ key: "senderAcc", label: "Sender Account Number" },
-	{ key: "amount", label: "Amount" },
-	{ key: "status", label: "Status" },
-	{ key: "date", label: "Date" },
-	{ key: "reference", label: "Reference Number" },
-]
-
-const reportRangeLabels: Record<ReportRange, string> = {
-	last7: "Last 7 days",
+const rangeLabels: Record<ReportRange, string> = {
+	currentMonth: "Current month",
 	last30: "Last 30 days",
-	yearToDate: "Year to date",
+	last90: "Last 90 days",
+	custom: "Custom date range",
 }
 
-const reportStatusLabels: Record<ReportStatusFilter, string> = {
-	all: "All transactions",
-	success: "Success only",
-	failed: "Failed only",
-	pending: "Pending only",
-	cancelled: "Cancelled only",
+function formatDateInput(date: Date): string {
+	const year = date.getFullYear()
+	const month = String(date.getMonth() + 1).padStart(2, "0")
+	const day = String(date.getDate()).padStart(2, "0")
+	return `${year}-${month}-${day}`
 }
 
-const reportFileTypeMeta: Record<ReportFileType, { label: string; extension: string; mimeType: string }> = {
-	csv: { label: "CSV", extension: "csv", mimeType: "text/csv;charset=utf-8;" },
-	json: { label: "JSON", extension: "json", mimeType: "application/json;charset=utf-8;" },
-	txt: { label: "Text", extension: "txt", mimeType: "text/plain;charset=utf-8;" },
-	pdf: { label: "PDF", extension: "pdf", mimeType: "application/pdf" },
+function shiftDate(days: number): string {
+	const now = new Date()
+	const shifted = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+	shifted.setDate(shifted.getDate() + days)
+	return formatDateInput(shifted)
 }
 
-const parseDate = (value: string) => {
-	const [year, month, day] = value.split("-").map(Number)
-	return new Date(year, month - 1, day)
+function getCurrentMonthStartDate(): string {
+	const now = new Date()
+	return formatDateInput(new Date(now.getFullYear(), now.getMonth(), 1))
 }
 
-const getRangeStartDate = (range: ReportRange) => {
-	const today = new Date()
-	const startDate = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+function resolveDateRange(
+	range: ReportRange,
+	customFromDate: string,
+	customToDate: string
+): { fromDate: string; toDate: string } {
+	const today = formatDateInput(new Date())
 
-	if (range === "last7") {
-		startDate.setDate(startDate.getDate() - 7)
-		return startDate
+	if (range === "currentMonth") {
+		return {
+			fromDate: getCurrentMonthStartDate(),
+			toDate: today,
+		}
 	}
 
 	if (range === "last30") {
-		startDate.setDate(startDate.getDate() - 30)
-		return startDate
-	}
-
-	return new Date(today.getFullYear(), 0, 1)
-}
-
-const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`
-
-const buildCsv = (rows: TransactionHistoryRecord[]) => {
-	const headerLine = reportColumns.map((column) => csvEscape(column.label)).join(",")
-	const rowLines = rows.map((row) => {
-		return reportColumns.map((column) => csvEscape(String(row[column.key]))).join(",")
-	})
-
-	return [headerLine, ...rowLines].join("\n")
-}
-
-const buildText = (rows: TransactionHistoryRecord[]) => {
-	const lines = rows.map((row, index) => {
-		return `${index + 1}. ${row.date} | ${row.reference} | ${row.senderName} -> ${row.receiverName} | ${row.amount} | ${row.status}`
-	})
-
-	return lines.join("\n")
-}
-
-const normalizePdfText = (value: string) => value.replace(/[^\x20-\x7E]/g, "?")
-
-const escapePdfText = (value: string) => normalizePdfText(value).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)")
-
-const wrapPdfLine = (line: string, maxChars: number) => {
-	if (line.length <= maxChars) {
-		return [line]
-	}
-
-	const words = line.split(" ")
-	const wrapped: string[] = []
-	let current = ""
-
-	words.forEach((word) => {
-		const next = current ? `${current} ${word}` : word
-		if (next.length <= maxChars) {
-			current = next
-			return
+		return {
+			fromDate: shiftDate(-29),
+			toDate: today,
 		}
+	}
 
-		if (current) {
-			wrapped.push(current)
+	if (range === "last90") {
+		return {
+			fromDate: shiftDate(-89),
+			toDate: today,
 		}
-
-		if (word.length > maxChars) {
-			for (let index = 0; index < word.length; index += maxChars) {
-				wrapped.push(word.slice(index, index + maxChars))
-			}
-			current = ""
-			return
-		}
-
-		current = word
-	})
-
-	if (current) {
-		wrapped.push(current)
 	}
 
-	return wrapped
-}
-
-const buildPdf = (
-	rows: TransactionHistoryRecord[],
-	options: { rangeLabel: string; statusLabel: string; generatedOn: string }
-) => {
-	const headerLines = [
-		"Transaction History Report",
-		`Generated on: ${options.generatedOn}`,
-		`Range: ${options.rangeLabel}`,
-		`Status: ${options.statusLabel}`,
-		`Records: ${rows.length}`,
-		"",
-		"Date | Reference | Sender -> Receiver | Amount | Status",
-	]
-
-	const dataLines = rows.map((row, index) => {
-		return `${index + 1}. ${row.date} | ${row.reference} | ${row.senderName} -> ${row.receiverName} | ${row.amount} | ${row.status}`
-	})
-
-	const allLines = [...headerLines, ...dataLines]
-	const wrappedLines = allLines.flatMap((line) => wrapPdfLine(line, 96))
-
-	const pageHeight = 842
-	const startY = 800
-	const bottomPadding = 40
-	const lineHeight = 14
-	const maxLinesPerPage = Math.max(1, Math.floor((startY - bottomPadding) / lineHeight))
-
-	const pageChunks: string[][] = []
-	for (let index = 0; index < wrappedLines.length; index += maxLinesPerPage) {
-		pageChunks.push(wrappedLines.slice(index, index + maxLinesPerPage))
+	if (!customFromDate || !customToDate) {
+		throw new Error("Please select both from and to dates.")
 	}
 
-	if (pageChunks.length === 0) {
-		pageChunks.push(["Transaction History Report", "No records available for the selected filters."])
+	if (customFromDate > customToDate) {
+		throw new Error("From date must be before or equal to to date.")
 	}
 
-	const pageCount = pageChunks.length
-	const objects: Array<{ number: number; content: string }> = []
-	objects.push({
-		number: 1,
-		content: "<< /Type /Catalog /Pages 2 0 R >>",
-	})
-
-	const firstPageObject = 3
-	const fontObject = firstPageObject + pageCount * 2
-	const pageRefs = Array.from({ length: pageCount }, (_, index) => `${firstPageObject + index * 2} 0 R`).join(" ")
-
-	objects.push({
-		number: 2,
-		content: `<< /Type /Pages /Kids [${pageRefs}] /Count ${pageCount} >>`,
-	})
-
-	pageChunks.forEach((lines, index) => {
-		const pageObject = firstPageObject + index * 2
-		const contentObject = pageObject + 1
-		const safeLines = lines.map((line) => escapePdfText(line))
-		const streamLines = [
-			"BT",
-			"/F1 10 Tf",
-			"40 800 Td",
-			...safeLines.map((line, lineIndex) =>
-				lineIndex === 0 ? `(${line}) Tj` : `0 -${lineHeight} Td (${line}) Tj`
-			),
-			"ET",
-		]
-		const stream = streamLines.join("\n")
-		const streamLength = new TextEncoder().encode(stream).length
-
-		objects.push({
-			number: pageObject,
-			content: `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 ${pageHeight}] /Resources << /Font << /F1 ${fontObject} 0 R >> >> /Contents ${contentObject} 0 R >>`,
-		})
-
-		objects.push({
-			number: contentObject,
-			content: `<< /Length ${streamLength} >>\nstream\n${stream}\nendstream`,
-		})
-	})
-
-	objects.push({
-		number: fontObject,
-		content: "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-	})
-
-	let pdf = "%PDF-1.4\n"
-	const offsets: number[] = [0]
-
-	objects.forEach((object) => {
-		offsets[object.number] = pdf.length
-		pdf += `${object.number} 0 obj\n${object.content}\nendobj\n`
-	})
-
-	const xrefStart = pdf.length
-	pdf += `xref\n0 ${objects.length + 1}\n`
-	pdf += "0000000000 65535 f \n"
-
-	for (let objectNumber = 1; objectNumber <= objects.length; objectNumber += 1) {
-		const offset = String(offsets[objectNumber]).padStart(10, "0")
-		pdf += `${offset} 00000 n \n`
+	return {
+		fromDate: customFromDate,
+		toDate: customToDate,
 	}
-
-	pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`
-
-	return pdf
 }
 
 export function TransactionHistoryExport({ records }: TransactionHistoryExportProps) {
 	const [isReportModalOpen, setIsReportModalOpen] = React.useState(false)
-	const [reportRange, setReportRange] = React.useState<ReportRange>("last30")
-	const [reportStatusFilter, setReportStatusFilter] = React.useState<ReportStatusFilter>("all")
-	const [reportFileType, setReportFileType] = React.useState<ReportFileType>("csv")
-
-	const filteredRecords = React.useMemo(() => {
-		const rangeStartDate = getRangeStartDate(reportRange)
-
-		return records.filter((row) => {
-			const rowDate = parseDate(row.date)
-			const matchesRange = rowDate >= rangeStartDate
-			const matchesStatus = reportStatusFilter === "all" || row.status === reportStatusFilter
-			return matchesRange && matchesStatus
-		})
-	}, [records, reportRange, reportStatusFilter])
+	const [reportRange, setReportRange] = React.useState<ReportRange>("currentMonth")
+	const [customFromDate, setCustomFromDate] = React.useState("")
+	const [customToDate, setCustomToDate] = React.useState("")
+	const [isDownloading, setIsDownloading] = React.useState(false)
+	const [downloadError, setDownloadError] = React.useState("")
 
 	const reportDateStamp = React.useMemo(() => {
 		return new Date().toISOString().slice(0, 10).replace(/-/g, "")
 	}, [])
 
-	const downloadFileName = React.useMemo(() => {
-		const extension = reportFileTypeMeta[reportFileType].extension
-		return `transaction-history-${reportRange}-${reportDateStamp}.${extension}`
-	}, [reportDateStamp, reportFileType, reportRange])
+	const previewFileName = React.useMemo(() => {
+		return `transaction-statement-${reportRange}-${reportDateStamp}.pdf`
+	}, [reportDateStamp, reportRange])
 
-	const handleDownloadReport = React.useCallback(() => {
-		const fileMeta = reportFileTypeMeta[reportFileType]
-		let blob: Blob
+	const handleDownloadReport = React.useCallback(async () => {
+		setDownloadError("")
+		setIsDownloading(true)
 
-		if (reportFileType === "pdf") {
-			const pdfContent = buildPdf(filteredRecords, {
-				rangeLabel: reportRangeLabels[reportRange],
-				statusLabel: reportStatusLabels[reportStatusFilter],
-				generatedOn: new Date().toLocaleString(),
-			})
-			blob = new Blob([pdfContent], { type: fileMeta.mimeType })
-		} else {
-			let content = ""
+		try {
+			const dateRange = resolveDateRange(reportRange, customFromDate, customToDate)
+			const result = await transactionService.downloadTransactionHistoryReport(dateRange)
 
-			if (reportFileType === "csv") {
-				content = buildCsv(filteredRecords)
-			} else if (reportFileType === "json") {
-				content = JSON.stringify(filteredRecords, null, 2)
-			} else {
-				content = buildText(filteredRecords)
+			const blobUrl = URL.createObjectURL(result.blob)
+			const anchor = document.createElement("a")
+			anchor.href = blobUrl
+			anchor.download = result.fileName
+			document.body.appendChild(anchor)
+			anchor.click()
+			anchor.remove()
+			URL.revokeObjectURL(blobUrl)
+			setIsReportModalOpen(false)
+		} catch (error) {
+			let message = "Failed to download PDF report. Please try again."
+			if (error instanceof ApiError) {
+				message = error.message || message
+			} else if (error instanceof Error && error.message) {
+				message = error.message
 			}
-
-			blob = new Blob([content], { type: fileMeta.mimeType })
+			setDownloadError(message)
+		} finally {
+			setIsDownloading(false)
 		}
-
-		const blobUrl = URL.createObjectURL(blob)
-		const anchor = document.createElement("a")
-		anchor.href = blobUrl
-		anchor.download = downloadFileName
-		document.body.appendChild(anchor)
-		anchor.click()
-		anchor.remove()
-		URL.revokeObjectURL(blobUrl)
-		setIsReportModalOpen(false)
-	}, [downloadFileName, filteredRecords, reportFileType, reportRange, reportStatusFilter])
+	}, [customFromDate, customToDate, reportRange])
 
 	return (
 		<>
@@ -326,107 +155,109 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 				onClick={() => setIsReportModalOpen(true)}
 			>
 				<Download className="w-4 h-4 mr-2" />
-				Export
+				Export PDF
 			</Button>
 
 			<PopupModal
 				open={isReportModalOpen}
 				onOpenChange={setIsReportModalOpen}
-				title="Download Transaction Report"
-				description="Select the range, status, and file type to export your report."
+				title="Download Transaction Statement"
+				description="Generate official PDF statement using the bank report template."
 				footer={
 					<>
-						<Button variant="outline" onClick={() => setIsReportModalOpen(false)} className="text-white">
+						<Button variant="outline" onClick={() => setIsReportModalOpen(false)} className="text-slate-700">
 							Cancel
 						</Button>
 						<Button
 							onClick={handleDownloadReport}
-							className="border-[#0B3E5A] bg-[#0B3E5A] text-white hover:border-[#0e4f62] hover:bg-[#0e4f62] hover:text-white"
+							disabled={isDownloading}
+							className="border-[#0B3E5A] bg-[#0B3E5A] text-white hover:border-[#0e4f62] hover:bg-[#0e4f62] hover:text-white disabled:opacity-60"
 						>
 							<Download className="h-4 w-4" />
-							Download
+							{isDownloading ? "Downloading..." : "Download PDF"}
 						</Button>
 					</>
 				}
-			>
-				<div className="space-y-4">
-					<div className="rounded-xl border border-[#0B3E5A]/20 bg-[#e0f7fa] px-3 py-2">
-						<p className="text-xs text-[#0e4f62]/80">System generated file name</p>
-						<p className="mt-1 break-all text-sm font-medium text-[#0B3E5A]">{downloadFileName}</p>
-					</div>
+				>
+					<div className="space-y-4">
+						<div className="rounded-xl border border-[#9ec4de] bg-[#eaf4fa] px-3 py-2">
+							<p className="text-xs text-[#0e4f62]">Statement file format</p>
+							<p className="mt-1 text-sm font-semibold text-[#0B3E5A]">PDF only</p>
+						</div>
 
-					<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-						<div>
-							<p className="mb-2 text-xs font-medium uppercase tracking-wide  text-white text-(--primecore-foreground)/70">Report range</p>
+						<div className="rounded-xl border border-[#b8d3e6] bg-[#f5fbff] px-3 py-3">
+							<p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[#0e4f62]">Date range</p>
 							<Select value={reportRange} onValueChange={(value) => setReportRange(value as ReportRange)}>
-								<SelectTrigger className="text-black">
-									<SelectValue className="text-black" placeholder="Select report range" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="last7">{reportRangeLabels.last7}</SelectItem>
-									<SelectItem value="last30">{reportRangeLabels.last30}</SelectItem>
-									<SelectItem value="yearToDate">{reportRangeLabels.yearToDate}</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-
-						<div>
-							<p className="mb-2 text-xs font-medium uppercase tracking-wide  text-white text-(--primecore-foreground)/70">Status</p>
-							<Select value={reportStatusFilter} onValueChange={(value) => setReportStatusFilter(value as ReportStatusFilter)}>
-								<SelectTrigger className="text-black">
-									<SelectValue className="text-black"	 placeholder="Select status" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="all">All transactions</SelectItem>
-									<SelectItem value="success">Success only</SelectItem>
-									<SelectItem value="failed">Failed only</SelectItem>
-									<SelectItem value="pending">Pending only</SelectItem>
-									<SelectItem value="cancelled">Cancelled only</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-					</div>
-
-					<div>
-						<p className="mb-2 text-xs font-medium uppercase tracking-wide  text-white text-(--primecore-foreground)/70">File type</p>
-						<Select value={reportFileType} onValueChange={(value) => setReportFileType(value as ReportFileType)}>
-							<SelectTrigger className="text-black">
-								<SelectValue className="text-black"	 placeholder="Select file type" />
+								<SelectTrigger className="text-black bg-white">
+									<SelectValue placeholder="Select report range" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="csv">{reportFileTypeMeta.csv.label}</SelectItem>
-								<SelectItem value="json">{reportFileTypeMeta.json.label}</SelectItem>
-								<SelectItem value="txt">{reportFileTypeMeta.txt.label}</SelectItem>
-								<SelectItem value="pdf">{reportFileTypeMeta.pdf.label}</SelectItem>
+								<SelectItem value="currentMonth">{rangeLabels.currentMonth}</SelectItem>
+								<SelectItem value="last30">{rangeLabels.last30}</SelectItem>
+								<SelectItem value="last90">{rangeLabels.last90}</SelectItem>
+								<SelectItem value="custom">{rangeLabels.custom}</SelectItem>
 							</SelectContent>
 						</Select>
-					</div>
 
-					<div className="rounded-2xl border border-[#0B3E5A]/20 bg-[linear-gradient(140deg,#0B3E5A_0%,#0e4f62_58%,#399FD8_100%)] p-4 text-white shadow-[0_16px_40px_-26px_rgba(11,62,90,0.85)]">
-						<p className="text-xs uppercase tracking-[0.11em] text-white/80">Report Preview</p>
-						<p className="mt-1 text-base font-semibold">Transaction History Report</p>
-
-						<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-							<div className="rounded-lg bg-white/12 px-3 py-2">
-								<p className="text-[11px] uppercase tracking-wide text-white/75">Range</p>
-								<p className="mt-1 text-xs font-medium">{reportRangeLabels[reportRange]}</p>
+							{reportRange === "custom" && (
+								<div className="mt-3 grid gap-3 sm:grid-cols-2">
+									<div>
+										<p className="mb-1 text-xs font-medium text-[#0e4f62]">From date</p>
+										<input
+											type="date"
+											value={customFromDate}
+										onChange={(event) => setCustomFromDate(event.target.value)}
+										className="h-10 w-full rounded-md border border-[#d8d8d8] bg-white px-3 text-sm text-black"
+									/>
+									</div>
+									<div>
+										<p className="mb-1 text-xs font-medium text-[#0e4f62]">To date</p>
+										<input
+											type="date"
+											value={customToDate}
+										onChange={(event) => setCustomToDate(event.target.value)}
+										className="h-10 w-full rounded-md border border-[#d8d8d8] bg-white px-3 text-sm text-black"
+									/>
+								</div>
 							</div>
-							<div className="rounded-lg bg-white/12 px-3 py-2">
-								<p className="text-[11px] uppercase tracking-wide text-white/75">Status</p>
-								<p className="mt-1 text-xs font-medium">{reportStatusLabels[reportStatusFilter]}</p>
-							</div>
-							<div className="rounded-lg bg-white/12 px-3 py-2">
-								<p className="text-[11px] uppercase tracking-wide text-white/75">Format</p>
-								<p className="mt-1 text-xs font-medium">{reportFileTypeMeta[reportFileType].label}</p>
-							</div>
+							)}
 						</div>
 
-						<div className="mt-3 rounded-lg bg-[#e0f7fa] px-3 py-2 text-[#0B3E5A]">
-							<p className="text-xs font-semibold">
-								{filteredRecords.length} transaction{filteredRecords.length === 1 ? "" : "s"} will be included in this report.
-							</p>
+						<div className="rounded-xl border border-[#b8d3e6] bg-[#f0f8fe] p-4 text-[#353535]">
+							<div className="flex items-start justify-between gap-2">
+								<div>
+									<p className="text-xs uppercase tracking-[0.11em] text-[#0e4f62]">Statement Preview</p>
+									<p className="mt-1 text-sm font-semibold text-[#1f1f1f]">Transaction History PDF</p>
+								</div>
+								<div className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#8ebddd] bg-[#399FD8] text-white">
+									<FileText className="h-4 w-4" />
+								</div>
+							</div>
+
+							<div className="mt-3 rounded-lg border border-[#d4e5f1] bg-white px-3 py-2">
+								<p className="text-xs text-[#6f6f6f]">System generated file name</p>
+								<p className="mt-1 break-all text-sm font-medium text-[#1e1e1e]">{previewFileName}</p>
+							</div>
+
+							<div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+								<div className="rounded-md border border-[#b9d5e8] bg-[#eaf4fa] px-3 py-2">
+									<p className="text-[11px] uppercase tracking-wide text-[#0e4f62]">Report range</p>
+									<p className="mt-1 text-xs font-semibold text-[#0B3E5A]">{rangeLabels[reportRange]}</p>
+								</div>
+								<div className="rounded-md border border-[#b9d5e8] bg-[#edf7fc] px-3 py-2">
+									<p className="text-[11px] uppercase tracking-wide text-[#6f6f6f]">Transactions</p>
+									<p className="mt-1 text-xs font-semibold text-[#333333]">
+										{records.length} record{records.length === 1 ? "" : "s"} loaded
+								</p>
+							</div>
 						</div>
 					</div>
+
+					{downloadError && (
+						<div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+							{downloadError}
+						</div>
+					)}
 				</div>
 			</PopupModal>
 		</>
