@@ -5,6 +5,20 @@ export type AdminDashboardSummaryResponse = {
   totalTransactions: number;
 };
 
+export type AdminMonthlyUserGrowthPointResponse = {
+  year: number;
+  month: number;
+  label: string;
+  totalUsers: number;
+  bankUsers: number;
+  publicUsers: number;
+};
+
+export type AdminMonthlyUserGrowthResponse = {
+  months: number;
+  points: AdminMonthlyUserGrowthPointResponse[];
+};
+
 export type AdminRecentActionResponse = {
   actionId: number;
   title: string;
