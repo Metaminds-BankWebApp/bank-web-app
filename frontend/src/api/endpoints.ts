@@ -78,6 +78,7 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
   trends: "/creditlens/public/trends",
   insights: "/creditlens/public/insights",
   report: "/creditlens/public/report",
+  reportPdf: (selfEvaluationId: number) => `/creditlens/public/report/${selfEvaluationId}/pdf`,
   history: "/creditlens/public/history",
   byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
 } as const;

@@ -1,5 +1,7 @@
+import axios from "axios";
 import apiClient, { toApiError } from "@/src/api/client";
 import { PUBLIC_CREDITLENS_ENDPOINTS } from "@/src/api/endpoints";
+import { ApiError } from "@/src/types/api-error";
 import type {
   CreditDashboardResponse,
   CreditInsightsResponse,
@@ -72,6 +74,49 @@ export async function getPublicCreditReport(): Promise<CreditReportResponse> {
     );
     return data;
   } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function downloadPublicCreditReportPdf(selfEvaluationId: number): Promise<Blob> {
+  try {
+    const { data } = await apiClient.get<Blob>(
+      PUBLIC_CREDITLENS_ENDPOINTS.reportPdf(selfEvaluationId),
+      {
+        responseType: "blob",
+        headers: {
+          Accept: "application/pdf",
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+      try {
+        const parsed = JSON.parse(await error.response.data.text()) as { message?: string; [key: string]: unknown };
+        const message = typeof parsed.message === "string" && parsed.message
+          ? parsed.message
+          : "Unable to prepare the CreditLens PDF report.";
+
+        throw new ApiError({
+          message,
+          code: "UNKNOWN_ERROR",
+          status: error.response.status,
+          details: parsed,
+        });
+      } catch (blobError) {
+        if (blobError instanceof ApiError) {
+          throw blobError;
+        }
+
+        throw new ApiError({
+          message: "Unable to prepare the CreditLens PDF report.",
+          code: "UNKNOWN_ERROR",
+          status: error.response.status,
+        });
+      }
+    }
+
     throw toApiError(error);
   }
 }
