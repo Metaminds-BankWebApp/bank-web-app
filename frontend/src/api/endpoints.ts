@@ -89,6 +89,7 @@ export const BANK_CREDITLENS_ENDPOINTS = {
   trends: "/creditlens/bank/trends",
   insights: "/creditlens/bank/insights",
   report: "/creditlens/bank/report",
+  reportPdf: (bankEvaluationId: number) => `/creditlens/bank/report/${bankEvaluationId}/pdf`,
   history: "/creditlens/bank/history",
   byId: (bankEvaluationId: number) => `/creditlens/bank/evaluations/${bankEvaluationId}`,
 } as const;
