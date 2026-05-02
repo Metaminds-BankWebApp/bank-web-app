@@ -16,7 +16,12 @@ import {
   type ReportFileType,
 } from "@/src/components/ui/report-download-modal";
 import type { RiskFactor } from "@/src/types/creditlens-report";
-import { getBankCreditReport } from "@/src/api/creditlens/bank-creditlens.service";
+import {
+  downloadBankCreditReportPdf,
+  getBankCreditReport,
+} from "@/src/api/creditlens/bank-creditlens.service";
+import { useToast } from "@/src/components/ui";
+import { ApiError } from "@/src/types/api-error";
 import type { CreditReportResponse } from "@/src/types/dto/bank-creditlens.dto";
 import ReportMetricCard from "./components/ReportMetricCard";
 import CreditSummaryDonut from "./components/CreditSummaryDonut";
@@ -26,6 +31,7 @@ import RiskPointsBreakdown from "./components/RiskPointsBreakdown";
 type LabelTone = "Low" | "Medium" | "High";
 
 type ReportSnapshot = {
+  evaluationId: number;
   month: string;
   income: number;
   loanEmi: number;
@@ -46,9 +52,11 @@ type ReportSnapshot = {
 };
 
 export default function ReportPage() {
+  const { showToast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [reportFileType, setReportFileType] = useState<ReportFileType>("pdf");
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
   const [snapshots, setSnapshots] = useState<ReportSnapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +125,41 @@ export default function ReportPage() {
     setIsDownloadModalOpen(true);
   };
 
+  const handleConfirmDownload = async ({ fullFileName }: { fileType: ReportFileType; fullFileName: string }) => {
+    if (!current) {
+      return;
+    }
+
+    try {
+      setIsDownloadingReport(true);
+      const blob = await downloadBankCreditReportPdf(current.evaluationId);
+      downloadBlob(fullFileName, blob);
+      setIsDownloadModalOpen(false);
+      showToast({
+        type: "success",
+        title: "Report downloaded",
+        description: fullFileName,
+      });
+    } catch (unknownError) {
+      const apiError = unknownError instanceof ApiError
+        ? unknownError
+        : new ApiError({
+          message: unknownError instanceof Error
+            ? unknownError.message
+            : "Unable to prepare your CreditLens PDF report.",
+          code: "UNKNOWN_ERROR",
+        });
+
+      showToast({
+        type: "error",
+        title: "Download failed",
+        description: apiError.message,
+      });
+    } finally {
+      setIsDownloadingReport(false);
+    }
+  };
+
   return (
     <div className="w-full min-h-[calc(100dvh-1.25rem)] space-y-4 overflow-x-hidden px-1 pt-2 sm:space-y-5 sm:px-2 lg:min-h-[calc(100dvh-2rem)] lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
       <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Report" subtitle="" name="Kamal Edirisinghe" role="Bank Customer" />
@@ -155,7 +198,7 @@ export default function ReportPage() {
                 className="h-10 w-full rounded-xl bg-sky-500 px-5 text-white hover:bg-sky-600 sm:w-auto"
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download Full Report
+                Download PDF Report
               </Button>
             </div>
 
@@ -233,6 +276,9 @@ export default function ReportPage() {
             fileBaseName={reportFileBaseName}
             fileType={reportFileType}
             onFileTypeChange={setReportFileType}
+            supportedFileTypes={["pdf"]}
+            isDownloading={isDownloadingReport}
+            onDownload={handleConfirmDownload}
             monthLabel={selectedMonth ?? current.month}
             score={current.score}
             riskLabel={current.riskLabel}
@@ -250,6 +296,7 @@ export default function ReportPage() {
 
 function mapReportSnapshots(report: CreditReportResponse): ReportSnapshot[] {
   return report.snapshots.map((snapshot) => ({
+    evaluationId: snapshot.evaluationId,
     month: snapshot.monthLabel,
     income: snapshot.income,
     loanEmi: snapshot.loanEmi,
@@ -291,6 +338,17 @@ function roundMetric(value: number): number {
 
 function formatCurrency(value: number): string {
   return `LKR ${value.toLocaleString()}`;
+}
+
+function downloadBlob(filename: string, blob: Blob) {
+  const downloadUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(downloadUrl);
 }
 
 function StateCard({

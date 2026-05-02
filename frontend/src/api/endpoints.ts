@@ -78,6 +78,7 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
   trends: "/creditlens/public/trends",
   insights: "/creditlens/public/insights",
   report: "/creditlens/public/report",
+  reportPdf: (selfEvaluationId: number) => `/creditlens/public/report/${selfEvaluationId}/pdf`,
   history: "/creditlens/public/history",
   byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
 } as const;
@@ -88,6 +89,7 @@ export const BANK_CREDITLENS_ENDPOINTS = {
   trends: "/creditlens/bank/trends",
   insights: "/creditlens/bank/insights",
   report: "/creditlens/bank/report",
+  reportPdf: (bankEvaluationId: number) => `/creditlens/bank/report/${bankEvaluationId}/pdf`,
   history: "/creditlens/bank/history",
   byId: (bankEvaluationId: number) => `/creditlens/bank/evaluations/${bankEvaluationId}`,
 } as const;
