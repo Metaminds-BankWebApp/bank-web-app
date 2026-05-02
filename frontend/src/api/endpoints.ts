@@ -114,6 +114,7 @@ export const ADMIN_ENDPOINTS = {
   users: "/admin/users",
   dashboardSummary: "/admin/dashboard/summary",
   dashboardRecentActions: "/admin/dashboard/recent-actions",
+  dashboardMonthlyUserGrowth: "/admin/dashboard/monthly-user-growth",
   auditLogs: "/admin/audit-logs",
   auditLogFilters: "/admin/audit-logs/filters",
   auditLogRecent: "/admin/audit-logs/recent",

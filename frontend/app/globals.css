@@ -2,6 +2,18 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --color-background: var(--primecore-background);
+  --color-foreground: var(--primecore-foreground);
+  --color-border: var(--primecore-border);
+  --color-surface: var(--primecore-surface);
+  --color-surface-soft: var(--primecore-surface-soft);
+  --color-primary: var(--primecore-primary);
+  --color-primary-foreground: var(--primecore-foreground);
+  --color-deep: var(--primecore-deep);
+  --color-navy: var(--primecore-navy);
+}
+
 :root {
   color-scheme: light;
   --primecore-background: #edf2ff;
@@ -205,8 +217,8 @@
     border-color: rgba(102, 168, 208, 0.35);
     background-color: #0f2940;
     background-image:
-      radial-gradient(120% 100% at 8% -16%, rgba(56, 189, 248, 0.28), transparent 62%) important,
-      linear-gradient(180deg, #123754 0%, #0f2f48 58%, #0c273d 100%) important;
+      radial-gradient(120% 100% at 8% -16%, rgba(56, 189, 248, 0.28), transparent 62%),
+      linear-gradient(180deg, #123754 0%, #0f2f48 58%, #0c273d 100%) !important;
     box-shadow:
       0 30px 62px -40px rgba(2, 18, 33, 0.85),
       0 14px 34px -28px rgba(56, 189, 248, 0.45);
@@ -241,8 +253,8 @@
     border-color: rgba(133, 169, 224, 0.32);
     background-color: #16294a;
     background-image:
-      radial-gradient(120% 100% at 8% -16%, rgba(99, 145, 214, 0.28), transparent 62%) important,
-      linear-gradient (180deg, #203f6f 0%, #1a365f 58%, #142d51 100%) important;
+      radial-gradient(120% 100% at 8% -16%, rgba(99, 145, 214, 0.28), transparent 62%),
+      linear-gradient(180deg, #203f6f 0%, #1a365f 58%, #142d51 100%) !important;
     box-shadow:
       0 30px 62px -40px rgba(3, 16, 36, 0.86),
       0 14px 34px -28px rgba(99, 145, 214, 0.42);
