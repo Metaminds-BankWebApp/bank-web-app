@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
-import { getSpendIqBudgets, getSpendIqExpenses, getSpendIqMonthlySummary } from "@/src/api/spendiq/spendiq.service";
+import { getSpendIqBudgets, getSpendIqExpenses, getSpendIqIncomes } from "@/src/api/spendiq/spendiq.service";
 import { toApiError } from "@/src/api/client";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { useToast } from "@/src/components/ui/toast";
@@ -22,14 +22,6 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 type SpendIqDashboardPageProps = {
   spendIqRoot: string;
 };
-
-function currentMonthBounds(): { fromDate: string; toDate: string } {
-  const now = new Date();
-  return {
-    fromDate: new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1)).toISOString().slice(0, 10),
-    toDate: new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 0)).toISOString().slice(0, 10),
-  };
-}
 
 export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps) {
   const { showToast } = useToast();
@@ -51,16 +43,12 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
 
   const loadExpenseByCategory = useCallback(async () => {
     try {
-      const now = new Date();
-      const month = now.getMonth() + 1;
-      const year = now.getFullYear();
-      const { fromDate, toDate } = currentMonthBounds();
-
-      const [expenses, budgets, monthlySummary] = await Promise.all([
-        getSpendIqExpenses({ fromDate, toDate }),
-        getSpendIqBudgets({ month, year }),
-        getSpendIqMonthlySummary(month, year),
+      const [expenses, budgets, incomes] = await Promise.all([
+        getSpendIqExpenses(),
+        getSpendIqBudgets(),
+        getSpendIqIncomes(),
       ]);
+
       const byCategory = new Map<string, number>();
       for (const expense of expenses) {
         byCategory.set(expense.categoryName, (byCategory.get(expense.categoryName) ?? 0) + Number(expense.amount));
@@ -88,15 +76,22 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
       setCategoryExpenses(rows);
       setBudgetUsageRows(usageRows);
       setRecentExpenses(expenses.slice(0, 5));
+
+      const totalExpense = expenses.reduce((sum, expense) => sum + Number(expense.amount ?? 0), 0);
+      const totalIncome = incomes.reduce((sum, income) => sum + Number(income.amount ?? 0), 0);
+      const totalBudget = budgets.reduce((sum, budget) => sum + Number(budget.budgetAmount ?? 0), 0);
+      const netSavings = totalIncome - totalExpense;
+      const remainingBudget = totalBudget - totalExpense;
+
       setSummary({
-        month: monthlySummary.month,
-        year: monthlySummary.year,
-        totalIncome: Number(monthlySummary.totalIncome ?? 0),
-        totalExpense: Number(monthlySummary.totalExpense ?? 0),
-        totalBudget: Number(monthlySummary.totalBudget ?? 0),
-        netSavings: Number(monthlySummary.netSavings ?? 0),
-        remainingBudget: Number(monthlySummary.remainingBudget ?? 0),
-        budgetUsagePercentage: Number(monthlySummary.budgetUsagePercentage ?? 0),
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear(),
+        totalIncome,
+        totalExpense,
+        totalBudget,
+        netSavings,
+        remainingBudget,
+        budgetUsagePercentage: totalBudget > 0 ? (totalExpense / totalBudget) * 100 : 0,
       });
     } catch (error) {
       const apiError = toApiError(error);
@@ -115,11 +110,8 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
   );
 
   const openCategoryTransactions = useCallback((categoryName: string) => {
-    const { fromDate, toDate } = currentMonthBounds();
     const query = new URLSearchParams({
       category: categoryName,
-      fromDate,
-      toDate,
     });
     router.push(`${spendIqRoot}/category/transactions?${query.toString()}`);
   }, [router, spendIqRoot]);
@@ -226,9 +218,9 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="SpendIQ - Expense Overview" />
 
       <div className="grid md:grid-cols-4 gap-6">
-        <GlassCard title="Total Expenses" value={formatCurrency(summary.totalExpense)} subtitle="This month" href={`${spendIqRoot}/history`} actionLabel="View expenses" />
-        <GlassCard title="Monthly Budget" value={formatCurrency(summary.totalBudget)} subtitle="Total allocated" href={`${spendIqRoot}/budget`} actionLabel="Edit budget" />
-        <GlassCard title="Remaining Budget" value={formatCurrency(summary.remainingBudget)} subtitle={summary.remainingBudget >= 0 ? "Under budget" : "Over budget"} href={`${spendIqRoot}/budget`} actionLabel="Review budget" />
+        <GlassCard title="Total Expenses" value={formatCurrency(summary.totalExpense)} subtitle="All time" href={`${spendIqRoot}/history`} actionLabel="View expenses" />
+        <GlassCard title="Budget Total" value={formatCurrency(summary.totalBudget)} subtitle="All saved budgets" href={`${spendIqRoot}/budget`} actionLabel="Edit budget" />
+        <GlassCard title="Remaining Budget" value={formatCurrency(summary.remainingBudget)} subtitle={summary.remainingBudget >= 0 ? "Across saved budgets" : "Over saved budgets"} href={`${spendIqRoot}/budget`} actionLabel="Review budget" />
         <GlassCard
           title="Savings Estimate"
           value={formatCurrency(summary.netSavings)}
@@ -248,7 +240,7 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
             {categoryExpenses.length > 0 ? (
               <Doughnut ref={chartRef} data={data} options={options} plugins={[chartCenterLabel]} />
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No expense data for this month.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No expense data found.</p>
             )}
           </div>
         </div>
@@ -293,7 +285,7 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
         <h2 className="text-sm font-semibold mb-6 text-gray-700 dark:text-slate-200">Recent Expenses</h2>
 
         {recentExpenses.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">No recent expenses for this month.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">No recent expenses found.</p>
         ) : (
           <div className="space-y-4">
             {recentExpenses.map((exp) => (
