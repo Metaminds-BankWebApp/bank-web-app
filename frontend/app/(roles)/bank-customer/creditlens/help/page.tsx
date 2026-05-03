@@ -8,6 +8,9 @@ import PopupModal from "@/src/components/ui/popup-modal";
 
 export type Ticket = { id: string; feature: string; category: string; priority: string; status: string; officer: string; updated: string; subject?: string };
 
+/**
+ * Bank-customer CreditLens support page with FAQs, officer contact shortcuts, and ticket creation.
+ */
 export default function CreditLensCustomerHelp() {
   const [search, setSearch] = useState("");
   const [openTicket, setOpenTicket] = useState(false);

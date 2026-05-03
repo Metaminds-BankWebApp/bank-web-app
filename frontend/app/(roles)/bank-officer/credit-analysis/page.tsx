@@ -58,6 +58,9 @@ function buildInitials(name: string): string {
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "--";
 }
 
+/**
+ * Officer-facing CreditLens portfolio dashboard with search, filters, export, and quick risk counts.
+ */
 export default function CreditAnalysisPage() {
   const router = useRouter();
   const [dashboard, setDashboard] = useState<BankCreditAnalysisDashboardResponse | null>(null);
@@ -383,6 +386,9 @@ export default function CreditAnalysisPage() {
   );
 }
 
+/**
+ * Summary metric card used in the officer portfolio header.
+ */
 function StatCard({
   title,
   value,
@@ -407,6 +413,9 @@ function StatCard({
   );
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the officer dashboard.
+ */
 function StateCard({
   title,
   description,

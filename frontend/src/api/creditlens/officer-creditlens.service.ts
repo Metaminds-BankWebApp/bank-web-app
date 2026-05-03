@@ -11,10 +11,16 @@ import type {
   CreditTrendResponse,
 } from "@/src/types/dto/officer-creditlens.dto";
 
+/**
+ * Builds the officer-scoped CreditLens route prefix for a specific bank customer.
+ */
 function officerCustomerBase(bankCustomerId: number): string {
   return `/creditlens/officer/customers/${bankCustomerId}`;
 }
 
+/**
+ * Bank-officer CreditLens API client for portfolio, customer, trend, insight, and report views.
+ */
 export async function getOfficerCreditDashboard(): Promise<BankCreditAnalysisDashboardResponse> {
   try {
     const { data } = await apiClient.get<BankCreditAnalysisDashboardResponse>(

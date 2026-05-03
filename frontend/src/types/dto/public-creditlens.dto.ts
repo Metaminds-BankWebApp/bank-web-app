@@ -1,3 +1,7 @@
+/**
+ * Shared public-customer CreditLens DTO contracts returned by the backend API.
+ * These interfaces mirror the dashboard, trend, insight, report, and evaluation payloads.
+ */
 export interface CreditInfoTooltipResponse {
   title: string;
   description: string;
