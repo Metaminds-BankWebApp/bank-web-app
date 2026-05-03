@@ -1,3 +1,6 @@
+/**
+ * Bank-officer CreditLens DTO contracts used by the portfolio dashboard and customer drill-down screens.
+ */
 export type {
   BankCreditEvaluationResponse,
   BankCreditEvaluationSummaryResponse,

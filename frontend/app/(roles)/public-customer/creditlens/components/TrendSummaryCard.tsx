@@ -18,6 +18,9 @@ type Props = {
   insufficientHistoryDescription?: string;
 };
 
+/**
+ * Narrative summary card that explains the direction and quality of the recent CreditLens trend.
+ */
 export default function TrendSummaryCard({
   riskLabel = "Moderate Risk",
   riskDelta = -25,

@@ -5,6 +5,9 @@ import { BadgeCheck } from "lucide-react";
 import type { CreditInsightItemResponse } from "@/src/types/dto/bank-creditlens.dto";
 import { CreditInsightIcon, getInsightToneClasses } from "./creditlens-insight-helpers";
 
+/**
+ * Highlights positive repayment or utilization signals surfaced by CreditLens.
+ */
 export default function PositiveBehaviorsCard({
   items = [],
 }: {
