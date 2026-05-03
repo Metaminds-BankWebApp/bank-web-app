@@ -19,6 +19,9 @@ import type { CreditTrendResponse } from "@/src/types/dto/bank-creditlens.dto";
 
 type TrendRange = "6m" | "12m";
 
+/**
+ * Bank-customer CreditLens trends page with range switching and summary messaging.
+ */
 export default function TrendsPage() {
   const router = useRouter();
   const [trendRange, setTrendRange] = useState<TrendRange>("6m");
@@ -168,6 +171,9 @@ export default function TrendsPage() {
   );
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the trends screen.
+ */
 function StateCard({
   title,
   description,

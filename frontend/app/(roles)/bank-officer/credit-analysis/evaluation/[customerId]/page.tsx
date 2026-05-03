@@ -103,6 +103,9 @@ const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "reports", label: "Reports" },
 ];
 
+/**
+ * Officer-side CreditLens evaluation workspace for reviewing one customer's latest and historical results.
+ */
 export default function CreditAnalysisEvaluationPage() {
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
@@ -972,6 +975,9 @@ function CreditLensTabShell({
   );
 }
 
+/**
+ * Reusable panel state card for loading, empty, and error blocks inside the evaluation workspace.
+ */
 function PanelStateCard({
   title,
   description,

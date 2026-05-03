@@ -5,6 +5,9 @@ import { Lightbulb } from "lucide-react";
 import type { CreditInsightItemResponse } from "@/src/types/dto/bank-creditlens.dto";
 import { CreditInsightIcon, getInsightToneClasses } from "./creditlens-insight-helpers";
 
+/**
+ * Shows practical improvement tips derived from the current CreditLens profile.
+ */
 export default function FinancialTipsCard({
   items = [],
 }: {

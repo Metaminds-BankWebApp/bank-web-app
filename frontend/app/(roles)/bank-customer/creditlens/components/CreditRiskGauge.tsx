@@ -15,6 +15,9 @@ ChartJS.register(ArcElement, Tooltip);
 type Props = { value: number };
 const SEGMENTS = [33, 33, 33];
 
+/**
+ * Animated semicircle gauge used to visualize the current CreditLens score.
+ */
 export default function CreditRiskGauge({ value }: Props) {
   const safeValue = Math.max(0, Math.min(100, value));
   const chartRef = useRef<ChartJS<"doughnut"> | null>(null);

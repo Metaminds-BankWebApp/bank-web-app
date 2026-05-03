@@ -10,6 +10,9 @@ import PositiveBehaviorsCard from "../components/PositiveBehaviorsCard";
 import FinancialTipsCard from "../components/FinancialTipsCard";
 import FullReportBanner from "../components/FullReportBanner";
 
+/**
+ * Bank-customer CreditLens insight page that groups risk drivers, positive signals, and next steps.
+ */
 export default function InsightPage() {
   const [insights, setInsights] = useState<CreditInsightsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +87,9 @@ export default function InsightPage() {
   );
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the insight page.
+ */
 function StateCard({
   title,
   description,

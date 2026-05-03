@@ -56,6 +56,10 @@ type ReportSnapshot = {
   factors: RiskFactor[];
 };
 
+/**
+ * Public-customer CreditLens report page.
+ * It combines monthly report snapshots, additional financial-record details, and export actions.
+ */
 export default function ReportPage() {
   const { showToast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
@@ -405,6 +409,9 @@ function downloadBlob(filename: string, blob: Blob) {
   URL.revokeObjectURL(blobUrl);
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the report page.
+ */
 function StateCard({
   title,
   description,

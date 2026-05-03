@@ -11,6 +11,10 @@ import type {
   CreditTrendResponse,
 } from "@/src/types/dto/bank-creditlens.dto";
 
+/**
+ * Bank-customer CreditLens API client.
+ * Each function wraps one backend endpoint and normalizes transport errors into the shared ApiError shape.
+ */
 export async function getCurrentBankCreditEvaluation(): Promise<BankCreditEvaluationResponse> {
   try {
     const { data } = await apiClient.get<BankCreditEvaluationResponse>(

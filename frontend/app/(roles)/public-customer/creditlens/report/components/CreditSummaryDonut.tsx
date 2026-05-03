@@ -9,6 +9,9 @@ ChartJS.register(ArcElement, Tooltip);
 const SEGMENTS = [34, 33, 33];
 const FINAL_ROTATION = -90;
 
+/**
+ * Donut chart that visualizes the composition of the selected CreditLens report snapshot.
+ */
 export default function CreditSummaryDonut({
   score,
   riskLabel,

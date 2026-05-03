@@ -8,6 +8,9 @@ import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import ModuleHeader from "@/src/components/ui/module-header";
 
+/**
+ * Officer-side customer profile view linked from the CreditLens analysis area.
+ */
 export default function CreditAnalysisCustomerPage() {
   const params = useParams<{ customerId: string }>();
   const searchParams = useSearchParams();

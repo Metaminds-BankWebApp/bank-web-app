@@ -1,3 +1,6 @@
+/**
+ * Legacy officer-facing CreditLens DTO definitions kept for modules that still import this path directly.
+ */
 export interface BankCreditAnalysisCustomerRowResponse {
   bankCustomerId: number;
   customerCode: string;

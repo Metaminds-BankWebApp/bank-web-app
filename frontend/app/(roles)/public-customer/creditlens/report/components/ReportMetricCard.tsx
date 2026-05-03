@@ -11,6 +11,9 @@ const toneStyles: Record<Tone, { ring: string; iconBg: string; icon: string }> =
   violet: { ring: "border-violet-200", iconBg: "bg-violet-50", icon: "text-violet-600" },
 };
 
+/**
+ * Small metric tile used in the CreditLens report summary grid.
+ */
 export default function ReportMetricCard({
   title,
   value,
