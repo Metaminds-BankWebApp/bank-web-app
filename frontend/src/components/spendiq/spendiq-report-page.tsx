@@ -55,6 +55,12 @@ type ReportSuggestion = {
   detail: string;
 };
 
+type SpendIqScoreReason = {
+  factor: string;
+  impact: number;
+  detail: string;
+};
+
 type SpendPrediction = {
   nextMonthSpend: number;
   nextMonthSavings: number;
@@ -230,6 +236,7 @@ function buildSpendIqPdfReport({
   variableExpenses,
   spendIqScore,
   scoreLabel,
+  scoreReasons,
   highValueCount,
   suggestions,
   prediction,
@@ -244,6 +251,7 @@ function buildSpendIqPdfReport({
   variableExpenses: number;
   spendIqScore: number;
   scoreLabel: string;
+  scoreReasons: SpendIqScoreReason[];
   highValueCount: number;
   suggestions: ReportSuggestion[];
   prediction: SpendPrediction;
@@ -343,20 +351,35 @@ function buildSpendIqPdfReport({
 
   const pageTwo: string[] = [
     rect(0, 0, pageWidth, 70, "0.04 0.10 0.23"),
-    text("SpendIQ Recommendations", 36, 44, 19, "1 1 1", "F2"),
+    text("SpendIQ Score Details", 36, 44, 19, "1 1 1", "F2"),
     text(selectedMonthLabel, 430, 44, 11, "0.78 0.86 0.96", "F2"),
-    text("Suggestions", 36, 104, 15, "0.04 0.10 0.23", "F2"),
+    text(`Score: ${spendIqScore}/100 - ${scoreLabel}`, 36, 104, 15, "0.04 0.10 0.23", "F2"),
+    text("Why this score?", 36, 132, 12, "0.04 0.10 0.23", "F2"),
   ];
 
-  let y = 126;
+  let y = 150;
+  scoreReasons.slice(0, 4).forEach((reason) => {
+    pageTwo.push(rect(36, y, 523, 54, "0.98 0.99 1.00"));
+    pageTwo.push(rect(36, y, 523, 54, "0.84 0.89 0.95", true));
+    pageTwo.push(text(reason.factor, 54, y + 20, 10, "0.04 0.10 0.23", "F2"));
+    pageTwo.push(text(reason.impact > 0 ? `-${reason.impact} points` : "No penalty", 472, y + 20, 9, reason.impact > 0 ? "0.86 0.15 0.15" : "0.09 0.64 0.29", "F2"));
+    wrapText(reason.detail, 92).slice(0, 2).forEach((lineText, lineIndex) => {
+      pageTwo.push(text(lineText, 54, y + 38 + lineIndex * 12, 8, "0.30 0.36 0.45"));
+    });
+    y += 66;
+  });
+
+  y += 8;
+  pageTwo.push(text("Suggestions", 36, y, 15, "0.04 0.10 0.23", "F2"));
+  y += 22;
   suggestions.forEach((suggestion, index) => {
-    pageTwo.push(rect(36, y, 523, 62, "0.98 0.99 1.00"));
-    pageTwo.push(rect(36, y, 523, 62, "0.84 0.89 0.95", true));
+    pageTwo.push(rect(36, y, 523, 56, "0.98 0.99 1.00"));
+    pageTwo.push(rect(36, y, 523, 56, "0.84 0.89 0.95", true));
     pageTwo.push(text(`${index + 1}. ${suggestion.title}`, 54, y + 22, 11, "0.04 0.10 0.23", "F2"));
     wrapText(suggestion.detail, 92).slice(0, 2).forEach((lineText, lineIndex) => {
       pageTwo.push(text(lineText, 54, y + 42 + lineIndex * 13, 9, "0.30 0.36 0.45"));
     });
-    y += 76;
+    y += 66;
   });
 
   y += 14;
@@ -568,6 +591,66 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
   const highValuePenalty = Math.min(12, highValueCount * 3);
   const spendIqScore = Math.max(0, Math.min(100, Math.round(82 - budgetPenalty - savingsPenalty - concentrationPenalty - highValuePenalty)));
   const scoreLabel = spendIqScore >= 75 ? "Strong" : spendIqScore >= 50 ? "Moderate" : "Needs attention";
+  const scoreReasons = useMemo<SpendIqScoreReason[]>(() => {
+    const reasons: SpendIqScoreReason[] = [];
+
+    if (budgetPenalty > 0) {
+      reasons.push({
+        factor: "Budget health",
+        impact: Math.round(budgetPenalty),
+        detail: summary.totalBudget <= 0
+          ? "No budget is set for this period, so SpendIQ cannot confirm that spending is controlled."
+          : `Budget usage is ${budgetUsage.toFixed(2)}%, so the score drops when spending is close to or over the budget limit.`,
+      });
+    }
+
+    if (savingsPenalty > 0) {
+      reasons.push({
+        factor: "Savings health",
+        impact: Math.round(savingsPenalty),
+        detail: Number(summary.netSavings) < 0
+          ? `Net savings are negative (${formatCurrency(Number(summary.netSavings))}), meaning recorded expenses are higher than recorded income.`
+          : "Savings are below 10% of recorded income, so SpendIQ marks this as weak savings behavior.",
+      });
+    }
+
+    if (concentrationPenalty > 0 && topCategory) {
+      reasons.push({
+        factor: "Category concentration",
+        impact: Math.round(concentrationPenalty),
+        detail: `${topCategory.name} is ${(topCategoryShare * 100).toFixed(2)}% of total spend, so spending is too concentrated in one category.`,
+      });
+    }
+
+    if (highValuePenalty > 0) {
+      reasons.push({
+        factor: "High-value transactions",
+        impact: Math.round(highValuePenalty),
+        detail: `${highValueCount} transaction${highValueCount === 1 ? "" : "s"} are unusually high compared with the average expense.`,
+      });
+    }
+
+    if (reasons.length === 0) {
+      reasons.push({
+        factor: "Healthy behavior",
+        impact: 0,
+        detail: "Budget usage, savings, category spread, and transaction values are not creating major score penalties.",
+      });
+    }
+
+    return reasons;
+  }, [
+    budgetPenalty,
+    budgetUsage,
+    concentrationPenalty,
+    highValueCount,
+    highValuePenalty,
+    savingsPenalty,
+    summary.netSavings,
+    summary.totalBudget,
+    topCategory,
+    topCategoryShare,
+  ]);
   const selectedMonthLabel = selectedMonth === allPeriodsValue ? "All periods" : `${monthNames[selectedMonth - 1]} ${selectedYear}`;
   const reportStamp = selectedMonth === allPeriodsValue ? "all-periods" : `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
   const trendAverageSpend = monthlyTrend.length > 0
@@ -649,6 +732,7 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
       variableExpenses,
       spendIqScore,
       scoreLabel,
+      scoreReasons,
       highValueCount,
       suggestions,
       prediction,
@@ -666,6 +750,7 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
     monthlyTrend,
     prediction,
     reportStamp,
+    scoreReasons,
     scoreLabel,
     selectedMonthLabel,
     showToast,
@@ -688,6 +773,11 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
       ["Remaining Budget", summary.remainingBudget],
       ["Budget Usage %", Number(summary.budgetUsagePercentage).toFixed(2)],
       ["SpendIQ Score", spendIqScore],
+      ["SpendIQ Category", scoreLabel],
+      [],
+      ["Score Details"],
+      ["Factor", "Points Deducted", "Reason"],
+      ...scoreReasons.map((reason) => [reason.factor, reason.impact, reason.detail]),
       [],
       ["Category Breakdown"],
       ["Category", "Type", "Expense Count", "Total Amount"],
@@ -709,7 +799,7 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
     const csv = lines.map((row) => row.map(csvCell).join(",")).join("\n");
     downloadBlob(`spendiq-report-${reportStamp}.csv`, csv, "text/csv;charset=utf-8;");
     showToast({ type: "success", title: "Report downloaded", description: `spendiq-report-${reportStamp}.csv` });
-  }, [budgets, categoryRows, expenses, incomes, reportStamp, selectedMonthLabel, showToast, spendIqScore, summary]);
+  }, [budgets, categoryRows, expenses, incomes, reportStamp, scoreLabel, scoreReasons, selectedMonthLabel, showToast, spendIqScore, summary]);
 
   return (
     <div className="min-h-screen bg-[#f4f6fb] p-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100 md:p-8">
@@ -766,6 +856,14 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
           </div>
           <div className="mt-6 text-sm text-slate-500 dark:text-slate-400">
             Category: <span className="font-medium text-orange-500">{scoreLabel}</span>
+          </div>
+          <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-sm font-semibold text-[#0b1a3a] dark:text-slate-100">Why this score?</h3>
+            <div className="mt-3 space-y-3">
+              {scoreReasons.map((reason) => (
+                <ScoreReasonItem key={reason.factor} reason={reason} />
+              ))}
+            </div>
           </div>
         </section>
 
@@ -874,6 +972,20 @@ function BehaviorItem({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between gap-4 border-b border-slate-100 py-3 text-sm last:border-none dark:border-slate-800">
       <span className="text-slate-600 dark:text-slate-300">{label}</span>
       <span className="font-semibold text-[#0b1a3a] dark:text-slate-100">{value}</span>
+    </div>
+  );
+}
+
+function ScoreReasonItem({ reason }: { reason: SpendIqScoreReason }) {
+  return (
+    <div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-semibold text-slate-800 dark:text-slate-100">{reason.factor}</span>
+        <span className={reason.impact > 0 ? "font-bold text-red-500" : "font-bold text-emerald-600"}>
+          {reason.impact > 0 ? `-${reason.impact}` : "No penalty"}
+        </span>
+      </div>
+      <p className="mt-1 leading-5 text-slate-500 dark:text-slate-400">{reason.detail}</p>
     </div>
   );
 }
