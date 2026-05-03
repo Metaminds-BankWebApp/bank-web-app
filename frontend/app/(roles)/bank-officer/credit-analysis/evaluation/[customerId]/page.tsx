@@ -11,6 +11,7 @@ import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
+import { useToast } from "@/src/components/ui";
 import { Badge } from "@/src/components/ui/badge";
 import { Progress } from "@/src/components/ui/progress";
 import {
@@ -38,6 +39,7 @@ import {
   UserRound,
 } from "lucide-react";
 import {
+  downloadOfficerCreditReportPdf,
   getOfficerCreditCurrentEvaluation,
   getOfficerCreditCustomerProfile,
   getOfficerCreditEvaluationHistory,
@@ -73,6 +75,7 @@ type TrendRange = "6m" | "12m";
 type LabelTone = "Low" | "Medium" | "High";
 
 type OfficerReportSnapshot = {
+  evaluationId: number;
   month: string;
   lastUpdatedIso: string;
   income: number;
@@ -101,11 +104,13 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 ];
 
 export default function CreditAnalysisEvaluationPage() {
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [trendRange, setTrendRange] = useState<TrendRange>("6m");
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [reportFileType, setReportFileType] = useState<ReportFileType>("pdf");
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
 
   const [profile, setProfile] = useState<BankCreditAnalysisCustomerProfileResponse | null>(null);
   const [currentEvaluation, setCurrentEvaluation] = useState<BankCreditEvaluationResponse | null>(null);
@@ -381,6 +386,41 @@ export default function CreditAnalysisEvaluationPage() {
     return `credit-analysis-report-${safeMonthLabel}-${reportDateStamp}`;
   }, [currentReportSnapshot?.month, reportDateStamp, selectedMonth]);
 
+  const handleConfirmDownload = async ({ fullFileName }: { fileType: ReportFileType; fullFileName: string }) => {
+    if (!currentReportSnapshot) {
+      return;
+    }
+
+    try {
+      setIsDownloadingReport(true);
+      const blob = await downloadOfficerCreditReportPdf(bankCustomerId, currentReportSnapshot.evaluationId);
+      downloadBlob(fullFileName, blob);
+      setIsDownloadModalOpen(false);
+      showToast({
+        type: "success",
+        title: "Report downloaded",
+        description: fullFileName,
+      });
+    } catch (unknownError) {
+      const apiError = unknownError instanceof ApiError
+        ? unknownError
+        : new ApiError({
+          message: unknownError instanceof Error
+            ? unknownError.message
+            : "Unable to prepare the CreditLens PDF report.",
+          code: "UNKNOWN_ERROR",
+        });
+
+      showToast({
+        type: "error",
+        title: "Download failed",
+        description: apiError.message,
+      });
+    } finally {
+      setIsDownloadingReport(false);
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -641,7 +681,7 @@ export default function CreditAnalysisEvaluationPage() {
                             className="h-10 w-full rounded-xl bg-[#3e9fd3] px-5 text-white hover:bg-[#3587b3] sm:w-auto"
                           >
                             <Download className="mr-2 h-4 w-4" />
-                            Download Full Report
+                            Download PDF Report
                           </Button>
                         </div>
 
@@ -731,6 +771,9 @@ export default function CreditAnalysisEvaluationPage() {
           fileBaseName={reportFileBaseName}
           fileType={reportFileType}
           onFileTypeChange={setReportFileType}
+          supportedFileTypes={["pdf"]}
+          isDownloading={isDownloadingReport}
+          onDownload={handleConfirmDownload}
           monthLabel={selectedMonth ?? currentReportSnapshot.month}
           score={currentReportSnapshot.score}
           riskLabel={currentReportSnapshot.riskLabel}
@@ -1118,6 +1161,7 @@ function mapOfficerReportSnapshots(
         : undefined;
 
       return {
+        evaluationId: snapshot.evaluationId,
         month: snapshot.monthLabel,
         lastUpdatedIso: snapshot.lastUpdated,
         income: snapshot.income,
@@ -1192,6 +1236,17 @@ function formatDate(value?: string | null): string {
 
 function formatPercentageFromRatio(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
+}
+
+function downloadBlob(filename: string, blob: Blob) {
+  const downloadUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(downloadUrl);
 }
 
 function toMonthKey(value: string): string {

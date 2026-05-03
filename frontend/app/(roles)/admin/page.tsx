@@ -36,12 +36,15 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { cn } from "@/src/lib/utils";
 import {
   getAdminDashboardSummary,
+  getAdminMonthlyUserGrowth,
   getAdminRecentActions,
 } from "@/src/api/admin/dashboard.service";
 import { getAdminLoanPolicies } from "@/src/api/admin/loan-policy.service";
 import { ApiError } from "@/src/types/api-error";
 import type {
   AdminDashboardSummaryResponse,
+  AdminMonthlyUserGrowthPointResponse,
+  AdminMonthlyUserGrowthResponse,
   AdminRecentActionResponse,
 } from "@/src/types/dto/admin-dashboard.dto";
 import type {
@@ -314,20 +317,55 @@ function mapRecentActionsToView(
   });
 }
 
+type CustomerType = "ALL" | "BANK" | "PUBLIC";
+
+const CHART_MONTH_WINDOW = 6;
+
+function createFallbackMonthlyGrowthPoints(
+  months: number
+): AdminMonthlyUserGrowthPointResponse[] {
+  const start = new Date();
+  start.setDate(1);
+  start.setHours(0, 0, 0, 0);
+  start.setMonth(start.getMonth() - (months - 1));
+
+  const monthFormatter = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+  });
+
+  const points: AdminMonthlyUserGrowthPointResponse[] = [];
+  for (let i = 0; i < months; i++) {
+    const current = new Date(start.getFullYear(), start.getMonth() + i, 1);
+    points.push({
+      year: current.getFullYear(),
+      month: current.getMonth() + 1,
+      label: monthFormatter.format(current).toUpperCase(),
+      totalUsers: 0,
+      bankUsers: 0,
+      publicUsers: 0,
+    });
+  }
+
+  return points;
+}
+
 export default function DashboardPage() {
   const { showToast } = useToast();
-  const [customerType, setCustomerType] = useState<"ALL" | "BANK" | "PUBLIC">("ALL");
+  const [customerType, setCustomerType] = useState<CustomerType>("ALL");
   const [dashboardSummary, setDashboardSummary] = useState<AdminDashboardSummaryResponse | null>(
     null
   );
   const [isSummaryLoading, setIsSummaryLoading] = useState(true);
+  const [monthlyUserGrowth, setMonthlyUserGrowth] =
+    useState<AdminMonthlyUserGrowthResponse | null>(null);
+  const [isMonthlyUserGrowthLoading, setIsMonthlyUserGrowthLoading] = useState(true);
   const [loanRates, setLoanRates] = useState<LoanRate[]>(() =>
     mapLoanPoliciesToRates([])
   );
   const [isLoanRatesLoading, setIsLoanRatesLoading] = useState(true);
   const [recentActions, setRecentActions] = useState<AdminAction[]>([]);
   const [isRecentActionsLoading, setIsRecentActionsLoading] = useState(true);
-  const customerTypes: Array<"ALL" | "BANK" | "PUBLIC"> = ["ALL", "BANK", "PUBLIC"];
+  const customerTypes: CustomerType[] = ["ALL", "BANK", "PUBLIC"];
 
   useEffect(() => {
     let mounted = true;
@@ -361,6 +399,45 @@ export default function DashboardPage() {
     };
 
     void loadDashboardSummary();
+
+    return () => {
+      mounted = false;
+    };
+  }, [showToast]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadMonthlyUserGrowth = async () => {
+      setIsMonthlyUserGrowthLoading(true);
+      try {
+        const data = await getAdminMonthlyUserGrowth({ months: CHART_MONTH_WINDOW });
+        if (!mounted) {
+          return;
+        }
+        setMonthlyUserGrowth(data);
+      } catch (error) {
+        if (!mounted) {
+          return;
+        }
+        const message =
+          error instanceof ApiError
+            ? error.message
+            : "Failed to load monthly user growth.";
+        showToast({
+          type: "error",
+          title: "Chart load failed",
+          description: message,
+        });
+        setMonthlyUserGrowth(null);
+      } finally {
+        if (mounted) {
+          setIsMonthlyUserGrowthLoading(false);
+        }
+      }
+    };
+
+    void loadMonthlyUserGrowth();
 
     return () => {
       mounted = false;
@@ -472,19 +549,46 @@ export default function DashboardPage() {
     [dashboardSummary, isSummaryLoading]
   );
 
-  const chartValues = {
-    ALL: [30, 48, 62, 100, 72, 52],
-    BANK: [20, 35, 50, 80, 60, 40],
-    PUBLIC: [10, 25, 40, 60, 50, 30],
-  };
+  const chartPoints = useMemo(() => {
+    if (monthlyUserGrowth?.points?.length) {
+      return monthlyUserGrowth.points;
+    }
+    return createFallbackMonthlyGrowthPoints(CHART_MONTH_WINDOW);
+  }, [monthlyUserGrowth]);
+
+  const chartLabels = useMemo(
+    () => chartPoints.map((point) => point.label),
+    [chartPoints]
+  );
+
+  const chartValues = useMemo(
+    () => ({
+      ALL: chartPoints.map((point) => point.totalUsers ?? 0),
+      BANK: chartPoints.map((point) => point.bankUsers ?? 0),
+      PUBLIC: chartPoints.map((point) => point.publicUsers ?? 0),
+    }),
+    [chartPoints]
+  );
+
+  const chartBarColors = useMemo(() => {
+    const highlightedIndex = Math.max(0, chartLabels.length - 1);
+    return chartLabels.map((_, index) =>
+      index === highlightedIndex ? "#0d3b66" : "#8fa3b7"
+    );
+  }, [chartLabels]);
 
   const chartData = {
-    labels: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN"],
+    labels: chartLabels,
     datasets: [
       {
-        label: "Users",
+        label:
+          customerType === "BANK"
+            ? "Bank Users"
+            : customerType === "PUBLIC"
+              ? "Public Users"
+              : "Users",
         data: chartValues[customerType],
-        backgroundColor: ["#8fa3b7", "#8fa3b7", "#8fa3b7", "#0d3b66", "#8fa3b7", "#8fa3b7"],
+        backgroundColor: chartBarColors,
         borderRadius: 6,
         barThickness: 30,
       },
@@ -504,7 +608,13 @@ export default function DashboardPage() {
         displayColors: false,
         callbacks: {
           label: function (context: TooltipItem<"bar">) {
-            return `Users: ${context.raw}`;
+            const prefix =
+              customerType === "BANK"
+                ? "Bank Users"
+                : customerType === "PUBLIC"
+                  ? "Public Users"
+                  : "Users";
+            return `${prefix}: ${context.raw}`;
           },
         },
       },
@@ -592,7 +702,13 @@ export default function DashboardPage() {
                         <p className="text-xs sm:text-sm text-[#a3afbf]">User onboarding and retention across 6 months</p>
                       </div>
                       <button className="rounded-xl bg-[#f3f4f6] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#223f5f]">
-                        6 Months
+                        {isMonthlyUserGrowthLoading
+                          ? "Syncing..."
+                          : `${monthlyUserGrowth?.months ?? CHART_MONTH_WINDOW} ${(
+                              monthlyUserGrowth?.months ?? CHART_MONTH_WINDOW
+                            ) === 1
+                              ? "Month"
+                              : "Months"}`}
                       </button>
                     </div>
                     <div className="relative mt-5 h-[180px] sm:h-[220px] rounded-2xl border border-[#edf1f6] bg-[#f9fbff] p-2 sm:p-4 overflow-x-auto">
