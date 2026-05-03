@@ -13,6 +13,9 @@ function getRiskBarColor(value: number, max: number): string {
   return "#ef4444";
 }
 
+/**
+ * Breaks down how each factor contributed to the total CreditLens score.
+ */
 export default function RiskPointsBreakdown({
   factors,
   score,
@@ -56,4 +59,3 @@ export default function RiskPointsBreakdown({
     </div>
   );
 }
-

@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/src/components/ui/button";
 import fullReportBg from "../image/creditlens-full-report-bg.svg";
 
+/**
+ * Reusable call-to-action banner that links users from dashboard insights to the full CreditLens report.
+ */
 export default function FullReportBanner({
   title = "View Full Report",
   description = "Get a complete summary of your credit profile, risk factors, and recommended next actions.",

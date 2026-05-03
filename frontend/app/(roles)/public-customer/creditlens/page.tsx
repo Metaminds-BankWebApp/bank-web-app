@@ -10,6 +10,9 @@ import { Button } from "@/src/components/ui/button";
 import { getPublicCreditDashboard } from "@/src/api/creditlens/public-creditlens.service";
 import type { CreditDashboardResponse } from "@/src/types/dto/public-creditlens.dto";
 
+/**
+ * Public-customer CreditLens dashboard landing page.
+ */
 export default function PublicCustomerCreditLensPage() {
   const router = useRouter();
   const [dashboard, setDashboard] = useState<CreditDashboardResponse | null>(null);
@@ -180,6 +183,9 @@ export default function PublicCustomerCreditLensPage() {
   );
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the dashboard.
+ */
 function StateCard({
   title,
   description,

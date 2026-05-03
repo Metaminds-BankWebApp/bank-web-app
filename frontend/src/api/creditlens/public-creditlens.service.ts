@@ -11,6 +11,10 @@ import type {
   SelfCreditEvaluationSummaryResponse,
 } from "@/src/types/dto/public-creditlens.dto";
 
+/**
+ * Public-customer CreditLens API client.
+ * Each function wraps one backend endpoint and normalizes transport errors into the shared ApiError shape.
+ */
 export async function createPublicCreditEvaluation(): Promise<SelfCreditEvaluationResponse> {
   try {
     const { data } = await apiClient.post<SelfCreditEvaluationResponse>(

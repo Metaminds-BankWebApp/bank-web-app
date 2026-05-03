@@ -15,6 +15,9 @@ type Factor = {
   };
 };
 
+/**
+ * Horizontal factor breakdown bars for the dashboard score summary.
+ */
 export default function RiskFactorBars({ factors }: { factors: Factor[] }) {
   const [displayValues, setDisplayValues] = useState<Record<string, number>>({});
 
