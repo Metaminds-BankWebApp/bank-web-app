@@ -62,8 +62,15 @@ type SpendPrediction = {
   detail: string;
 };
 
+type TrendRangeMonths = 3 | 6 | 12;
+
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const allPeriodsValue = 0;
+const trendRangeOptions: Array<{ value: TrendRangeMonths; label: string }> = [
+  { value: 3, label: "Last 3 months" },
+  { value: 6, label: "Last 6 months" },
+  { value: 12, label: "Last 12 months" },
+];
 
 const emptySummary: SpendIqMonthlySummaryResponse = {
   month: new Date().getMonth() + 1,
@@ -118,7 +125,7 @@ function summarizeRecords(
   };
 }
 
-function buildTrendRows(expenses: SpendIqExpenseResponse[], incomes: SpendIqIncomeResponse[]) {
+function buildTrendRows(expenses: SpendIqExpenseResponse[], incomes: SpendIqIncomeResponse[], rangeMonths: TrendRangeMonths) {
   const grouped = new Map<string, { income: number; spend: number }>();
 
   for (const expense of expenses) {
@@ -137,7 +144,7 @@ function buildTrendRows(expenses: SpendIqExpenseResponse[], incomes: SpendIqInco
 
   return Array.from(grouped.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-6)
+    .slice(-rangeMonths)
     .map(([key, row]) => ({
       month: monthLabelFromKey(key),
       income: row.income,
@@ -437,6 +444,7 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
   const { showToast } = useToast();
   const today = useMemo(() => new Date(), []);
   const [selectedMonth, setSelectedMonth] = useState(allPeriodsValue);
+  const [trendRangeMonths, setTrendRangeMonths] = useState<TrendRangeMonths>(3);
   const [selectedYear] = useState(today.getFullYear());
   const [isLoading, setIsLoading] = useState(true);
   const [categories, setCategories] = useState<SpendIqCategoryResponse[]>([]);
@@ -455,8 +463,8 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
         : { fromDate: firstDayOfMonth(selectedYear, selectedMonth), toDate: lastDayOfMonth(selectedYear, selectedMonth) };
       const trendEndMonth = isAllPeriods ? today.getMonth() + 1 : selectedMonth;
       const trendEndYear = isAllPeriods ? today.getFullYear() : selectedYear;
-      const trendMonths = Array.from({ length: 6 }, (_, index) => {
-        const date = new Date(trendEndYear, trendEndMonth - 1 - (5 - index), 1);
+      const trendMonths = Array.from({ length: trendRangeMonths }, (_, index) => {
+        const date = new Date(trendEndYear, trendEndMonth - 1 - (trendRangeMonths - 1 - index), 1);
         return { month: date.getMonth() + 1, year: date.getFullYear() };
       });
 
@@ -486,7 +494,7 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
           }
         : summarizeRecords(expenseData, incomeData, budgetData, today.getMonth() + 1, today.getFullYear()));
       setMonthlyTrend(isAllPeriods
-        ? buildTrendRows(expenseData, incomeData)
+        ? buildTrendRows(expenseData, incomeData, trendRangeMonths)
         : trendData.map((item) => ({
             month: `${monthNames[item.month - 1]} ${String(item.year).slice(2)}`,
             income: Number(item.totalIncome ?? 0),
@@ -499,7 +507,7 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
     } finally {
       setIsLoading(false);
     }
-  }, [selectedMonth, selectedYear, showToast, today]);
+  }, [selectedMonth, selectedYear, showToast, today, trendRangeMonths]);
 
   useEffect(() => {
     void loadReport();
@@ -747,7 +755,21 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:col-span-2">
-          <h2 className="text-base font-semibold">Monthly Spend Trend</h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className="text-base font-semibold">Monthly Spend Trend</h2>
+            <select
+              value={trendRangeMonths}
+              onChange={(event) => setTrendRangeMonths(Number(event.target.value) as TrendRangeMonths)}
+              className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              aria-label="Monthly spend trend range"
+            >
+              {trendRangeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="mt-4 h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyTrend}>
