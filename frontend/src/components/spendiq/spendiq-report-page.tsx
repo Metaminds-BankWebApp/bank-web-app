@@ -125,11 +125,26 @@ function summarizeRecords(
   };
 }
 
-function buildTrendRows(expenses: SpendIqExpenseResponse[], incomes: SpendIqIncomeResponse[], rangeMonths: TrendRangeMonths) {
+function buildTrendRows(
+  expenses: SpendIqExpenseResponse[],
+  incomes: SpendIqIncomeResponse[],
+  rangeMonths: TrendRangeMonths,
+  endMonth: number,
+  endYear: number,
+) {
   const grouped = new Map<string, { income: number; spend: number }>();
+  const rangeKeys = Array.from({ length: rangeMonths }, (_, index) => {
+    const date = new Date(endYear, endMonth - 1 - (rangeMonths - 1 - index), 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  });
+
+  for (const key of rangeKeys) {
+    grouped.set(key, { income: 0, spend: 0 });
+  }
 
   for (const expense of expenses) {
     const key = monthKey(expense.expenseDate);
+    if (!grouped.has(key)) continue;
     const row = grouped.get(key) ?? { income: 0, spend: 0 };
     row.spend += Number(expense.amount ?? 0);
     grouped.set(key, row);
@@ -137,14 +152,14 @@ function buildTrendRows(expenses: SpendIqExpenseResponse[], incomes: SpendIqInco
 
   for (const income of incomes) {
     const key = monthKey(income.incomeDate);
+    if (!grouped.has(key)) continue;
     const row = grouped.get(key) ?? { income: 0, spend: 0 };
     row.income += Number(income.amount ?? 0);
     grouped.set(key, row);
   }
 
-  return Array.from(grouped.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .slice(-rangeMonths)
+  return rangeKeys
+    .map((key) => [key, grouped.get(key) ?? { income: 0, spend: 0 }] as const)
     .map(([key, row]) => ({
       month: monthLabelFromKey(key),
       income: row.income,
@@ -494,7 +509,7 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
           }
         : summarizeRecords(expenseData, incomeData, budgetData, today.getMonth() + 1, today.getFullYear()));
       setMonthlyTrend(isAllPeriods
-        ? buildTrendRows(expenseData, incomeData, trendRangeMonths)
+        ? buildTrendRows(expenseData, incomeData, trendRangeMonths, trendEndMonth, trendEndYear)
         : trendData.map((item) => ({
             month: `${monthNames[item.month - 1]} ${String(item.year).slice(2)}`,
             income: Number(item.totalIncome ?? 0),
