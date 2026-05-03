@@ -255,7 +255,13 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
               {budgetUsageRows.map((cat) => {
                 const percent = cat.total > 0 ? (cat.used / cat.total) * 100 : 0;
                 const progress = Math.max(0, Math.min(percent, 100));
-                const barColor = cat.total <= 0 ? "bg-slate-500" : percent > 100 ? "bg-red-500" : "bg-[#0a234c]";
+                const barColor = cat.total <= 0
+                  ? "bg-slate-400"
+                  : percent > 100
+                    ? "bg-red-500"
+                    : percent >= 80
+                      ? "bg-amber-500"
+                      : "bg-black dark:bg-cyan-500";
 
                 return (
                   <button
@@ -270,7 +276,7 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
                       <span className="text-gray-600 dark:text-slate-400">{formatCurrency(cat.used)} / {formatCurrency(cat.total)}</span>
                     </div>
 
-                    <div className="h-3 bg-white/60 dark:bg-slate-800/80 rounded-full overflow-hidden">
+                    <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div className={`h-3 rounded-full transition-all duration-1000 ease-out ${barColor}`} style={{ width: `${progress}%` }} />
                     </div>
                   </button>

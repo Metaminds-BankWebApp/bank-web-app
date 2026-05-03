@@ -64,7 +64,7 @@ export function SpendIqCategoryAnalysisPage() {
   const { showToast } = useToast();
   const router = useRouter();
   const today = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
   const [categories, setCategories] = useState<SpendIqCategoryResponse[]>([]);
@@ -109,7 +109,10 @@ export function SpendIqCategoryAnalysisPage() {
     }
 
     for (const budget of budgets) {
-      budgetByCategory.set(budget.categoryId, Number(budget.budgetAmount ?? 0));
+      budgetByCategory.set(
+        budget.categoryId,
+        round2((budgetByCategory.get(budget.categoryId) ?? 0) + Number(budget.budgetAmount ?? 0)),
+      );
     }
 
     const totalSpent = Array.from(spentByCategory.values()).reduce((acc, value) => acc + value, 0);
