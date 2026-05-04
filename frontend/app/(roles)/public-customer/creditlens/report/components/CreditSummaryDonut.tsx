@@ -6,7 +6,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, ChartOptions } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip);
 
-const SEGMENTS = [34, 33, 33];
+const SEGMENTS = [33, 33, 34];
 const FINAL_ROTATION = -90;
 
 /**

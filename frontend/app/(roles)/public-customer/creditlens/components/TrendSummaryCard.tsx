@@ -28,7 +28,7 @@ export default function TrendSummaryCard({
   biggestDriver = "Reduced DTI pressure",
   momentumText,
   stabilityText,
-  nextTarget = "Below 40 to Low Risk",
+  nextTarget = "33 or below to Low Risk",
   hasSufficientHistory = true,
   insufficientHistoryTitle = "Not enough trend history yet",
   insufficientHistoryDescription = "At least 2 monthly evaluations are needed to show score movement, biggest drivers, and monthly momentum.",

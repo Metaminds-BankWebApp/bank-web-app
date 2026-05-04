@@ -13,7 +13,7 @@ import { Doughnut } from "react-chartjs-2";
 ChartJS.register(ArcElement, Tooltip);
 
 type Props = { value: number };
-const SEGMENTS = [33, 33, 33];
+const SEGMENTS = [33, 33, 34];
 
 /**
  * Animated semicircle gauge used to visualize the current CreditLens score.
@@ -87,8 +87,8 @@ export default function CreditRiskGauge({ value }: Props) {
         const arcs = meta?.data;
         if (!arcs || arcs.length === 0) return;
 
-        const first = arcs[0] as any;
-        const last = arcs[arcs.length - 1] as any;
+        const first = arcs[0] as ArcElement;
+        const last = arcs[arcs.length - 1] as ArcElement;
 
         const cx = first.x;
         const cy = first.y;
