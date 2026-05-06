@@ -239,7 +239,11 @@ export function LoginForm() {
 
         {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 
-        <Button type="submit" className="mt-3 h-12 w-full rounded-xl bg-primary text-base font-semibold text-white hover:bg-primary/90" loading={isSubmitting}>
+        <Button
+          type="submit"
+          className="mt-3 h-12 w-full rounded-xl bg-[#3e9fd3] text-base font-semibold text-white hover:bg-[#2c8ac0]"
+          loading={isSubmitting}
+        >
           {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
 
