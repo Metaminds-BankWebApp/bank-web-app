@@ -319,7 +319,9 @@ export function RegisterForm() {
         description: "Your registration step one is saved. Please sign in.",
       });
 
-      router.replace("/login");
+      router.replace(
+        `/login?email=${encodeURIComponent(values.email)}&role=PUBLIC_CUSTOMER`
+      );
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
 

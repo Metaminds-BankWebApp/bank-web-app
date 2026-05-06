@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { authService } from "@/src/api/auth/auth.service";
 import { ApiError } from "@/src/types/api-error";
@@ -47,6 +47,7 @@ function createDemoPayload(email: string, role: UserRole): LoginResponse {
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const login = useAuthStore((state) => state.login);
   const token = useAuthStore((state) => state.token);
@@ -62,13 +63,18 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+    const force = searchParams.get("force") === "true";
+    const prefilledEmail = searchParams.get("email");
+    const prefilledRole = normalizeRole(searchParams.get("role") ?? "");
 
-    const params = new URLSearchParams(window.location.search);
-    setForceLogin(params.get("force") === "true");
-  }, []);
+    setForceLogin(force);
+
+    if (prefilledEmail) {
+      setEmail(prefilledEmail.trim());
+      setPassword("");
+      setSelectedRole(prefilledRole ?? "PUBLIC_CUSTOMER");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (useAuthStore.persist.hasHydrated()) {
