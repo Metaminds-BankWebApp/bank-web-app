@@ -155,7 +155,7 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 				onClick={() => setIsReportModalOpen(true)}
 			>
 				<Download className="w-4 h-4 mr-2" />
-				Export PDF
+				Download PDF Report
 			</Button>
 
 			<PopupModal
@@ -174,7 +174,7 @@ export function TransactionHistoryExport({ records }: TransactionHistoryExportPr
 							className="border-[#0B3E5A] bg-[#0B3E5A] text-white hover:border-[#0e4f62] hover:bg-[#0e4f62] hover:text-white disabled:opacity-60"
 						>
 							<Download className="h-4 w-4" />
-							{isDownloading ? "Downloading..." : "Download PDF"}
+							{isDownloading ? "Downloading..." : "Download PDF Report"}
 						</Button>
 					</>
 				}

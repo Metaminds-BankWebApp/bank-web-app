@@ -84,6 +84,8 @@ const statusMeta: Record<TransactionStatus, { label: string; variant: "success" 
   cancelled: { label: "Cancelled", variant: "outline" },
 }
 
+const statusBadgeClassName = "min-w-[112px] justify-center whitespace-nowrap px-3 py-1"
+
 export default function Page() {
   const [records, setRecords] = React.useState<TransactionRecord[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
@@ -233,7 +235,9 @@ export default function Page() {
                       <td className="px-4 py-3 align-middle">{row.senderAcc}</td>
                       <td className="px-4 py-4 align-middle">{row.amount}</td>
                       <td className="px-4 py-3 align-middle">
-                        <Badge variant={statusMeta[row.status].variant}>{statusMeta[row.status].label}</Badge>
+                        <Badge className={statusBadgeClassName} variant={statusMeta[row.status].variant}>
+                          {statusMeta[row.status].label}
+                        </Badge>
                       </td>
                       <td className="px-4 py-3 align-middle">{row.date || "-"}</td>
                       <td className="px-4 py-3 align-middle">{row.reference}</td>
