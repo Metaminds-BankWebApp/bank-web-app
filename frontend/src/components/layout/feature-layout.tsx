@@ -22,18 +22,46 @@ type FeatureLayoutContextValue = {
   isMobileSidebarOpen: boolean;
 };
 
+// Context used to control the mobile sidebar state from nested components.
+// Components can call `useFeatureLayout()` to open/close the sidebar.
 const FeatureLayoutContext = createContext<FeatureLayoutContextValue | null>(null);
 
+/**
+ * Hook to access the layout context.
+ *
+ * Returns the `FeatureLayoutContextValue` object or `null` if used outside
+ * of a `FeatureLayout` provider. Consumers can use `openMobileSidebar`,
+ * `closeMobileSidebar` and read `isMobileSidebarOpen`.
+ */
 export function useFeatureLayout() {
   return useContext(FeatureLayoutContext);
 }
 
+/**
+ * Layout component that wraps feature screens (e.g. CreditLens, Transact).
+ *
+ * Responsibilities:
+ * - Enforce the required `role` via `AuthGuard`.
+ * - Render the `FeatureSidebar` for desktop and a slide-in mobile sidebar.
+ * - Provide a context that lets nested components toggle the mobile sidebar.
+ * - Apply feature-specific surface styles and optional background images.
+ *
+ * Props:
+ * - `children`: page content rendered in the main area.
+ * - `role`: required user role for the enclosed routes (enforced by `AuthGuard`).
+ * - `feature`: feature key to determine sidebar and surface styling.
+ */
 export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
+  // Local UI state to track whether the mobile sidebar is visible.
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Shorthand booleans to pick styling and background for specific features.
   const isCreditLens = feature === "creditlens";
   const isTransact = feature === "transact";
   const isLoanSense = feature === "loansense";
 
+  // Close the mobile sidebar when the user presses Escape. The effect
+  // subscribes on mount and cleans up on unmount.
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -45,6 +73,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
     return () => window.removeEventListener("keydown", onEscape);
   }, []);
 
+  // Memoize the context value so consumers don't re-render unnecessarily.
   const contextValue = useMemo<FeatureLayoutContextValue>(
     () => ({
       openMobileSidebar: () => setIsMobileSidebarOpen(true),
@@ -58,15 +87,21 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
     <AuthGuard requiredRole={role}>
       <FeatureLayoutContext.Provider value={contextValue}>
         <div className={cn("flex h-screen overflow-hidden", featureMeta[feature]?.colorClass)}>
+          {/* Desktop sidebar (hidden on small screens) */}
           <FeatureSidebar role={role} feature={feature} className="hidden lg:flex" />
 
-          {/* This wrapper ensures the sidebar color bleeds behind the rounded corners of the main content */}
+          {/*
+            Mobile sidebar overlay:
+            - A full-screen overlay captures clicks to close the menu.
+            - The sliding panel contains the sidebar and a close button.
+          */}
           <div
             className={cn(
               "fixed inset-0 z-[70] lg:hidden",
               isMobileSidebarOpen ? "pointer-events-auto" : "pointer-events-none"
             )}
           >
+            {/* Backdrop: fades in when the menu opens. */}
             <button
               type="button"
               aria-label="Close sidebar"
@@ -77,6 +112,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
               )}
             />
 
+            {/* Sliding panel that animates in/out from the left. */}
             <div
               className={cn(
                 "absolute inset-y-0 left-0 max-w-[85vw] transition-transform duration-300 ease-out",
@@ -89,6 +125,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
                 onNavigate={() => setIsMobileSidebarOpen(false)}
                 className="flex !h-full !w-[280px] !max-w-[85vw] !static"
               />
+              {/* Small close button in the panel header. */}
               <button
                 type="button"
                 aria-label="Close menu"
@@ -100,6 +137,11 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
             </div>
           </div>
 
+          {/*
+            Main content area:
+            - Applies different background colors/rounded corners per feature.
+            - For CreditLens, we also apply a decorative background image.
+          */}
           <main
             className={cn(
               "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none p-3 sm:p-4 lg:p-0",
