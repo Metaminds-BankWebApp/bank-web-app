@@ -36,6 +36,7 @@ type CustomerFeatureProfilePageProps = {
   roleLabel: CustomerRoleLabel;
 };
 
+// Renders the shared customer profile page used inside feature areas.
 export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerFeatureProfilePageProps) {
   const isCreditLens = featureName === "CreditLens";
   const isTransact = featureName === "Transact";
@@ -97,6 +98,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     void loadProfile();
   }, [loadRequestId, setAuthProfile]);
 
+  // Updates validation errors for one profile field.
   const updateFieldError = (fieldKey: string, errorMessage?: string) => {
     setFieldErrors((prev) => {
       const next = { ...prev };
@@ -109,6 +111,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     });
   };
 
+  // Applies password validation errors to the profile form.
   const applyPasswordErrors = (nextSecurityValues: Record<string, string>) => {
     const passwordErrors = validatePasswordGroup(nextSecurityValues);
     setFieldErrors((prev) => {
@@ -120,6 +123,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     });
   };
 
+  // Handles edits to profile personal information fields.
   const handlePersonalChange = (field: ProfileFieldItem, value: string) => {
     if (field.readOnly) return;
 
@@ -135,6 +139,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     }
   };
 
+  // Handles username and password field changes.
   const handleSecurityChange = (field: ProfileFieldItem, value: string) => {
     if (field.readOnly) return;
 
@@ -150,6 +155,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     }
   };
 
+  // Resets the form back to the saved profile values.
   const handleCancel = () => {
     if (!profile) {
       return;
@@ -162,6 +168,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     setShowPassword({});
   };
 
+  // Saves the current form changes through the API.
   const handleSave = async () => {
     if (!profile) {
       return;
@@ -244,10 +251,12 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     }
   };
 
+  // Shows or hides one password field.
   const togglePasswordVisibility = (fieldKey: string) => {
     setShowPassword((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
   };
 
+  // Uploads the selected profile image and refreshes profile state.
   const handleProfileImageUpload = async (file: File) => {
     const response = await uploadMyUserProfileImage(file);
     setProfile(response.profile);
@@ -259,6 +268,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     });
   };
 
+  // Removes the saved profile image and refreshes profile state.
   const handleProfileImageRemove = async () => {
     const response = await removeMyUserProfileImage();
     setProfile(response.profile);
@@ -270,6 +280,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     });
   };
 
+  // Renders editable personal information fields.
   const renderPersonalInformationSection = (wrapperClassName: string) => (
     <section className={wrapperClassName}>
       <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
@@ -313,6 +324,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     </section>
   );
 
+  // Renders username and password security fields.
   const renderSecuritySettingsSection = (wrapperClassName: string, showActions: boolean) => (
     <section className={wrapperClassName}>
       <div className="mb-5 flex items-center gap-2 text-[#0d3b66]">
@@ -413,6 +425,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     </section>
   );
 
+  // Renders the correct module header for this profile page.
   const renderFeatureHeader = () => {
     if (featureName === "CreditLens") {
       return (
@@ -481,6 +494,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
     );
   };
 
+  // Renders loading or retry state when profile data is missing.
   const renderEmptyState = () => (
     <section className={`${sectionClassName} xl:col-span-2`}>
       <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 text-center">

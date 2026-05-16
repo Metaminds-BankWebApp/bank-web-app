@@ -19,6 +19,7 @@ export default function BankCustomerCreditLensPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Loads CreditLens dashboard data from the backend.
   const loadDashboard = async () => {
     try {
       setIsLoading(true);
@@ -39,6 +40,7 @@ export default function BankCustomerCreditLensPage() {
     void loadDashboard();
   }, []);
 
+  // Memoizes dashboard factors for stable rendering.
   const factors = useMemo(
     () =>
       dashboard?.factors.map((factor) => ({

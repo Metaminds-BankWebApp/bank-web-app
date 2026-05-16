@@ -103,6 +103,7 @@ export default function ReportPage() {
   const newestSnapshot = snapshots[snapshots.length - 1] ?? null;
   const newestMonth = newestSnapshot?.month;
 
+  // Selects the currently displayed report snapshot.
   const current = useMemo(() => {
     if (!newestSnapshot) {
       return null;
@@ -113,10 +114,12 @@ export default function ReportPage() {
     return snapshots.find((snapshot) => snapshot.month === selectedMonth) ?? newestSnapshot;
   }, [newestSnapshot, selectedMonth, snapshots]);
 
+  // Builds the report date stamp used in filenames.
   const reportDateStamp = useMemo(() => {
     return new Date().toISOString().slice(0, 10).replace(/-/g, "");
   }, []);
 
+  // Builds the default CreditLens report file name.
   const reportFileBaseName = useMemo(() => {
     const monthName = (selectedMonth ?? current?.month ?? "report")
       .toLowerCase()
@@ -125,10 +128,12 @@ export default function ReportPage() {
     return `creditlens-report-${monthName}-${reportDateStamp}`;
   }, [current?.month, reportDateStamp, selectedMonth]);
 
+  // Opens the report download confirmation modal.
   const handleDownload = () => {
     setIsDownloadModalOpen(true);
   };
 
+  // Downloads the selected report file after confirmation.
   const handleConfirmDownload = async ({ fullFileName }: { fileType: ReportFileType; fullFileName: string }) => {
     if (!current) {
       return;
@@ -298,6 +303,7 @@ export default function ReportPage() {
   );
 }
 
+// Maps report snapshots into frontend report rows.
 function mapReportSnapshots(report: CreditReportResponse): ReportSnapshot[] {
   return report.snapshots.map((snapshot) => ({
     evaluationId: snapshot.evaluationId,
@@ -325,6 +331,7 @@ function mapReportSnapshots(report: CreditReportResponse): ReportSnapshot[] {
   }));
 }
 
+// Normalizes risk labels into display tones.
 function normalizeLabel(value?: string): LabelTone {
   const normalized = (value ?? "").trim().toLowerCase();
   if (normalized.includes("low")) {
@@ -336,14 +343,17 @@ function normalizeLabel(value?: string): LabelTone {
   return "Medium";
 }
 
+// Rounds report metric values for display.
 function roundMetric(value: number): number {
   return Number(value.toFixed(1));
 }
 
+// Formats report values as LKR currency.
 function formatCurrency(value: number): string {
   return `LKR ${value.toLocaleString()}`;
 }
 
+// Downloads a generated report blob in the browser.
 function downloadBlob(filename: string, blob: Blob) {
   const downloadUrl = URL.createObjectURL(blob);
   const link = document.createElement("a");

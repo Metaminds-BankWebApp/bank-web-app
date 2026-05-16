@@ -62,6 +62,7 @@ export default function BehaviorExposureCard({
   );
 }
 
+// Renders one label-value row inside the report card.
 function Row({
   icon,
   title,

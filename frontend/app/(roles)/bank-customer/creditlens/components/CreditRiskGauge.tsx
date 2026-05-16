@@ -63,6 +63,7 @@ export default function CreditRiskGauge({ value }: Props) {
     };
   }, [safeValue]);
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       datasets: [
@@ -78,6 +79,7 @@ export default function CreditRiskGauge({ value }: Props) {
     []
   );
 
+  // Builds the custom gauge labels and decorations.
   const gaugeDecorPlugin = useMemo<Plugin<"doughnut">>(
     () => ({
       id: "gaugeDecor",
@@ -173,6 +175,7 @@ export default function CreditRiskGauge({ value }: Props) {
     []
   );
 
+  // Builds chart options for the CreditLens visualization.
   const options = useMemo<ChartOptions<"doughnut">>(
     () => ({
       rotation: -90,

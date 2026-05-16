@@ -353,6 +353,7 @@ export default function CreditAnalysisEvaluationPage() {
   const latestEvaluationDate = currentEvaluation?.createdAt || profile?.latestEvaluationDate || null;
   const hasSufficientTrendHistory = (trendData?.points.length ?? 0) >= 2;
 
+  // Builds the factor list shown in the overview tab.
   const overviewFactors = useMemo(
     () =>
       currentEvaluation?.factors.map((factor) => ({
@@ -365,6 +366,7 @@ export default function CreditAnalysisEvaluationPage() {
   );
 
   const newestReportSnapshot = reportData[reportData.length - 1] ?? null;
+  // Selects the active monthly report snapshot.
   const currentReportSnapshot = useMemo(() => {
     if (!newestReportSnapshot) {
       return null;
@@ -375,11 +377,13 @@ export default function CreditAnalysisEvaluationPage() {
     return reportData.find((snapshot) => snapshot.month === selectedMonth) ?? newestReportSnapshot;
   }, [newestReportSnapshot, reportData, selectedMonth]);
 
+  // Builds the report date stamp used in filenames.
   const reportDateStamp = useMemo(
     () => new Date().toISOString().slice(0, 10).replace(/-/g, ""),
     [],
   );
 
+  // Builds the default CreditLens report file name.
   const reportFileBaseName = useMemo(() => {
     const rawMonthLabel = selectedMonth ?? currentReportSnapshot?.month ?? "creditlens-report";
     const safeMonthLabel = rawMonthLabel
@@ -389,6 +393,7 @@ export default function CreditAnalysisEvaluationPage() {
     return `credit-analysis-report-${safeMonthLabel}-${reportDateStamp}`;
   }, [currentReportSnapshot?.month, reportDateStamp, selectedMonth]);
 
+  // Downloads the selected report file after confirmation.
   const handleConfirmDownload = async ({ fullFileName }: { fileType: ReportFileType; fullFileName: string }) => {
     if (!currentReportSnapshot) {
       return;
@@ -786,6 +791,7 @@ export default function CreditAnalysisEvaluationPage() {
   );
 }
 
+// Renders the officer customer CreditLens overview tab.
 function OverviewTab({
   customerName,
   profile,
@@ -952,6 +958,7 @@ function OverviewTab({
   );
 }
 
+// Renders a shared tab container for officer CreditLens panels.
 function CreditLensTabShell({
   title,
   subtitle,
@@ -1004,6 +1011,7 @@ function PanelStateCard({
   );
 }
 
+// Renders the call-to-action banner used in CreditLens panels.
 function ActionBanner({
   title,
   description,
@@ -1035,6 +1043,7 @@ function ActionBanner({
   );
 }
 
+// Renders one compact detail tile in the officer view.
 function DetailTile({
   icon,
   label,
@@ -1055,6 +1064,7 @@ function DetailTile({
   );
 }
 
+// Renders one small statistic item.
 function MiniStat({
   title,
   value,
@@ -1073,6 +1083,7 @@ function MiniStat({
   );
 }
 
+// Renders one score metric tile in the overview tab.
 function OverviewMetricTile({
   title,
   value,
@@ -1099,6 +1110,7 @@ function OverviewMetricTile({
   );
 }
 
+// Renders one horizontal factor bar in the overview tab.
 function OverviewBar({
   label,
   valueLabel,
@@ -1121,6 +1133,7 @@ function OverviewBar({
   );
 }
 
+// Renders one detail row in the officer evaluation view.
 function DetailRow({
   label,
   value,
@@ -1136,6 +1149,7 @@ function DetailRow({
   );
 }
 
+// Keeps the latest evaluation for each month in history.
 function buildLatestHistoryByMonth(
   history: BankCreditEvaluationSummaryResponse[],
 ): Map<string, BankCreditEvaluationSummaryResponse> {
@@ -1153,6 +1167,7 @@ function buildLatestHistoryByMonth(
   return entries;
 }
 
+// Maps officer report snapshots into the shared report UI model.
 function mapOfficerReportSnapshots(
   report: CreditReportResponse,
   latestHistoryByMonth: Map<string, BankCreditEvaluationSummaryResponse>,
@@ -1195,6 +1210,7 @@ function mapOfficerReportSnapshots(
     .sort((left, right) => Date.parse(left.lastUpdatedIso) - Date.parse(right.lastUpdatedIso));
 }
 
+// Adds remaining loan balances for report totals.
 function sumRemainingLoanBalance(record: {
   loans: Array<{
     remainingBalance: number;
@@ -1203,6 +1219,7 @@ function sumRemainingLoanBalance(record: {
   return record.loans.reduce((total, loan) => total + loan.remainingBalance, 0);
 }
 
+// Normalizes risk labels into display tones.
 function normalizeLabel(value?: string): LabelTone {
   const normalized = (value ?? "").trim().toLowerCase();
 
@@ -1215,14 +1232,17 @@ function normalizeLabel(value?: string): LabelTone {
   return "Medium";
 }
 
+// Rounds report metric values for display.
 function roundMetric(value: number): number {
   return Number(value.toFixed(1));
 }
 
+// Formats report values as LKR currency.
 function formatCurrency(value: number): string {
   return `LKR ${value.toLocaleString()}`;
 }
 
+// Formats date values for CreditLens display.
 function formatDate(value?: string | null): string {
   if (!value) {
     return "Not available";
@@ -1240,10 +1260,12 @@ function formatDate(value?: string | null): string {
   });
 }
 
+// Formats a decimal ratio as a percentage label.
 function formatPercentageFromRatio(value: number): string {
   return `${(value * 100).toFixed(1)}%`;
 }
 
+// Downloads a generated report blob in the browser.
 function downloadBlob(filename: string, blob: Blob) {
   const downloadUrl = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -1255,6 +1277,7 @@ function downloadBlob(filename: string, blob: Blob) {
   URL.revokeObjectURL(downloadUrl);
 }
 
+// Converts a date string into a month key for report grouping.
 function toMonthKey(value: string): string {
   const parsed = new Date(value);
   if (!Number.isNaN(parsed.getTime())) {
@@ -1264,6 +1287,7 @@ function toMonthKey(value: string): string {
   return value.slice(0, 7);
 }
 
+// Chooses a chart color for a CreditLens factor name.
 function factorColor(name: string): string {
   const normalized = name.toLowerCase();
 

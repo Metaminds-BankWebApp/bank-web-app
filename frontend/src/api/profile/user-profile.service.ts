@@ -10,6 +10,7 @@ import type {
 const ABSOLUTE_URL_REGEX = /^(?:https?:)?\/\//i;
 const DATA_URL_REGEX = /^data:/i;
 
+// Resolves the backend origin used for stored profile image URLs.
 function resolveBackendOrigin(): string {
   const apiBaseUrl = env.apiBaseUrl.trim();
 
@@ -27,6 +28,7 @@ function resolveBackendOrigin(): string {
   }
 }
 
+// Builds a usable profile image URL from backend or local image paths.
 export function resolveUserProfileImageUrl(imageUrl?: string | null): string | null {
   const normalized = imageUrl?.trim() ?? "";
   if (!normalized) {
@@ -45,6 +47,7 @@ export function resolveUserProfileImageUrl(imageUrl?: string | null): string | n
   return normalized.startsWith("/") ? `${backendOrigin}${normalized}` : `${backendOrigin}/${normalized}`;
 }
 
+// Loads the authenticated user profile from the backend.
 export async function getMyUserProfile(): Promise<UserProfileResponse> {
   try {
     const { data } = await apiClient.get<UserProfileResponse>(USER_PROFILE_ENDPOINTS.current);
@@ -54,6 +57,7 @@ export async function getMyUserProfile(): Promise<UserProfileResponse> {
   }
 }
 
+// Sends edited profile fields to the backend.
 export async function updateMyUserProfile(
   payload: UserProfileUpdateRequest,
 ): Promise<UserProfileUpdateResponse> {
@@ -68,6 +72,7 @@ export async function updateMyUserProfile(
   }
 }
 
+// Uploads a profile image file to the backend.
 export async function uploadMyUserProfileImage(file: File): Promise<UserProfileUpdateResponse> {
   try {
     const formData = new FormData();
@@ -88,6 +93,7 @@ export async function uploadMyUserProfileImage(file: File): Promise<UserProfileU
   }
 }
 
+// Deletes the current profile image through the backend.
 export async function removeMyUserProfileImage(): Promise<UserProfileUpdateResponse> {
   try {
     const { data } = await apiClient.delete<UserProfileUpdateResponse>(USER_PROFILE_ENDPOINTS.imageDelete);
