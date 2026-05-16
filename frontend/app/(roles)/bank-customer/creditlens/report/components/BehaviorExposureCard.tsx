@@ -3,6 +3,9 @@
 import React from "react";
 import { CheckCircle2, Building2, Percent, CreditCard } from "lucide-react";
 
+/**
+ * Presents behavioral and exposure indicators for a single CreditLens report snapshot.
+ */
 export default function BehaviorExposureCard({
   snapshot,
 }: {
@@ -59,6 +62,7 @@ export default function BehaviorExposureCard({
   );
 }
 
+// Renders one label-value row inside the report card.
 function Row({
   icon,
   title,

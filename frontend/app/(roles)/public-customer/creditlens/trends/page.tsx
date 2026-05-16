@@ -19,13 +19,17 @@ import type { CreditTrendResponse } from "@/src/types/dto/public-creditlens.dto"
 
 type TrendRange = "6m" | "12m";
 
+/**
+ * Public-customer CreditLens trends page with range switching and summary messaging.
+ * his page uses useEffect with trendRange dependency. So every time range changes, it reloads trend data
+ */
 export default function TrendsPage() {
   const router = useRouter();
   const [trendRange, setTrendRange] = useState<TrendRange>("6m");
   const [trendData, setTrendData] = useState<CreditTrendResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const hasSufficientTrendHistory = (trendData?.points.length ?? 0) >= 2;
+  const hasSufficientTrendHistory = (trendData?.points.length ?? 0) >= 2;//checks whether at least 2 months exist
 
   useEffect(() => {
     let isActive = true;
@@ -168,6 +172,9 @@ export default function TrendsPage() {
   );
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the trends screen.
+ */
 function StateCard({
   title,
   description,

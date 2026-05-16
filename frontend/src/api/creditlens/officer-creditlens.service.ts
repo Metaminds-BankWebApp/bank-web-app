@@ -1,4 +1,6 @@
+import axios from "axios";
 import apiClient, { toApiError } from "@/src/api/client";
+import { ApiError } from "@/src/types/api-error";
 import type {
   BankCreditAnalysisCustomerProfileResponse,
   BankCreditAnalysisDashboardResponse,
@@ -9,10 +11,17 @@ import type {
   CreditTrendResponse,
 } from "@/src/types/dto/officer-creditlens.dto";
 
+/**
+ * Builds the officer-scoped CreditLens route prefix for a specific bank customer.
+ */
 function officerCustomerBase(bankCustomerId: number): string {
   return `/creditlens/officer/customers/${bankCustomerId}`;
 }
 
+/**
+ * Bank-officer CreditLens API client for portfolio, customer, trend, insight, and report views.
+ */
+// Loads the officer CreditLens dashboard data.
 export async function getOfficerCreditDashboard(): Promise<BankCreditAnalysisDashboardResponse> {
   try {
     const { data } = await apiClient.get<BankCreditAnalysisDashboardResponse>(
@@ -24,6 +33,7 @@ export async function getOfficerCreditDashboard(): Promise<BankCreditAnalysisDas
   }
 }
 
+// Loads the selected bank customer profile for officer CreditLens.
 export async function getOfficerCreditCustomerProfile(
   bankCustomerId: number,
 ): Promise<BankCreditAnalysisCustomerProfileResponse> {
@@ -37,6 +47,7 @@ export async function getOfficerCreditCustomerProfile(
   }
 }
 
+// Loads the selected bank customer current CreditLens evaluation.
 export async function getOfficerCreditCurrentEvaluation(
   bankCustomerId: number,
 ): Promise<BankCreditEvaluationResponse> {
@@ -50,6 +61,7 @@ export async function getOfficerCreditCurrentEvaluation(
   }
 }
 
+// Loads CreditLens history for an officer-owned customer.
 export async function getOfficerCreditEvaluationHistory(
   bankCustomerId: number,
 ): Promise<BankCreditEvaluationSummaryResponse[]> {
@@ -63,6 +75,7 @@ export async function getOfficerCreditEvaluationHistory(
   }
 }
 
+// Loads one officer-owned customer CreditLens evaluation by id.
 export async function getOfficerCreditEvaluationById(
   bankCustomerId: number,
   bankEvaluationId: number,
@@ -77,6 +90,7 @@ export async function getOfficerCreditEvaluationById(
   }
 }
 
+// Loads CreditLens trends for an officer-owned customer.
 export async function getOfficerCreditTrends(
   bankCustomerId: number,
   range: "6m" | "12m" = "6m",
@@ -92,6 +106,7 @@ export async function getOfficerCreditTrends(
   }
 }
 
+// Loads CreditLens insights for an officer-owned customer.
 export async function getOfficerCreditInsights(
   bankCustomerId: number,
 ): Promise<CreditInsightsResponse> {
@@ -105,6 +120,7 @@ export async function getOfficerCreditInsights(
   }
 }
 
+// Loads CreditLens report data for an officer-owned customer.
 export async function getOfficerCreditReport(
   bankCustomerId: number,
 ): Promise<CreditReportResponse> {
@@ -114,6 +130,53 @@ export async function getOfficerCreditReport(
     );
     return data;
   } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+// Downloads the officer customer CreditLens PDF report.
+export async function downloadOfficerCreditReportPdf(
+  bankCustomerId: number,
+  bankEvaluationId: number,
+): Promise<Blob> {
+  try {
+    const { data } = await apiClient.get<Blob>(
+      `${officerCustomerBase(bankCustomerId)}/report/${bankEvaluationId}/pdf`,
+      {
+        responseType: "blob",
+        headers: {
+          Accept: "application/pdf",
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+      try {
+        const parsed = JSON.parse(await error.response.data.text()) as { message?: string; [key: string]: unknown };
+        const message = typeof parsed.message === "string" && parsed.message
+          ? parsed.message
+          : "Unable to prepare the CreditLens PDF report.";
+
+        throw new ApiError({
+          message,
+          code: "UNKNOWN_ERROR",
+          status: error.response.status,
+          details: parsed,
+        });
+      } catch (blobError) {
+        if (blobError instanceof ApiError) {
+          throw blobError;
+        }
+
+        throw new ApiError({
+          message: "Unable to prepare the CreditLens PDF report.",
+          code: "UNKNOWN_ERROR",
+          status: error.response.status,
+        });
+      }
+    }
+
     throw toApiError(error);
   }
 }

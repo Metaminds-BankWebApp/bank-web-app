@@ -22,6 +22,9 @@ type ReportDownloadModalProps = {
   monthLabel: string;
   score: number;
   riskLabel: "Low" | "Medium" | "High";
+  supportedFileTypes?: ReportFileType[];
+  isDownloading?: boolean;
+  onDownload?: (payload: { fileType: ReportFileType; fullFileName: string }) => void | Promise<void>;
 };
 
 const fileTypeMeta: Record<ReportFileType, { label: string; extension: string; note: string }> = {
@@ -39,6 +42,9 @@ export function ReportDownloadModal({
   monthLabel,
   score,
   riskLabel,
+  supportedFileTypes,
+  isDownloading = false,
+  onDownload,
 }: ReportDownloadModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -63,8 +69,17 @@ export function ReportDownloadModal({
     return null;
   }
 
-  const selectedMeta = fileTypeMeta[fileType];
+  const availableFileTypes = supportedFileTypes?.length
+    ? supportedFileTypes
+    : (Object.keys(fileTypeMeta) as ReportFileType[]);
+  const activeFileType = availableFileTypes.includes(fileType) ? fileType : availableFileTypes[0];
+  const selectedMeta = fileTypeMeta[activeFileType];
   const fullFileName = `${fileBaseName}.${selectedMeta.extension}`;
+  const isSinglePdfMode = availableFileTypes.length === 1 && activeFileType === "pdf";
+  const modalTitle = isSinglePdfMode ? "Prepare CreditLens PDF" : "Prepare CreditLens Report";
+  const modalDescription = isSinglePdfMode
+    ? "Review the selected file details before downloading the report."
+    : "Choose format and review filename before download.";
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
@@ -84,8 +99,8 @@ export function ReportDownloadModal({
 
         <div className="relative flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-xl font-semibold sm:text-2xl">Prepare CreditLens Report</h3>
-            <p className="mt-1 text-sm text-sky-100/80">Choose format and review filename before download.</p>
+            <h3 className="text-xl font-semibold sm:text-2xl">{modalTitle}</h3>
+            <p className="mt-1 text-sm text-sky-100/80">{modalDescription}</p>
           </div>
           <button
             type="button"
@@ -110,22 +125,24 @@ export function ReportDownloadModal({
               <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.12em] text-sky-100/80">
                 Select File Type
               </label>
-              <Select value={fileType} onValueChange={(value) => onFileTypeChange(value as ReportFileType)}>
-                <SelectTrigger className="h-11 rounded-xl border-white/25 bg-white/15 text-left text-white focus:ring-sky-200/50">
-                  <SelectValue placeholder="Select format" />
-                </SelectTrigger>
-                <SelectContent className="border-white/20 bg-[#0e4877] text-white">
-                  <SelectItem value="pdf" className="hover:bg-white/10 focus:bg-white/10">
-                    PDF
-                  </SelectItem>
-                  <SelectItem value="excel" className="hover:bg-white/10 focus:bg-white/10">
-                    Excel
-                  </SelectItem>
-                  <SelectItem value="word" className="hover:bg-white/10 focus:bg-white/10">
-                    Word
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              {availableFileTypes.length === 1 ? (
+                <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-medium text-white">
+                  {selectedMeta.label}
+                </div>
+              ) : (
+                <Select value={activeFileType} onValueChange={(value) => onFileTypeChange(value as ReportFileType)}>
+                  <SelectTrigger className="h-11 rounded-xl border-white/25 bg-white/15 text-left text-white focus:ring-sky-200/50">
+                    <SelectValue placeholder="Select format" />
+                  </SelectTrigger>
+                  <SelectContent className="border-white/20 bg-[#0e4877] text-white">
+                    {availableFileTypes.map((type) => (
+                      <SelectItem key={type} value={type} className="hover:bg-white/10 focus:bg-white/10">
+                        {fileTypeMeta[type].label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <p className="mt-2 text-xs text-sky-100/75">{selectedMeta.note}</p>
             </div>
 
@@ -183,14 +200,19 @@ export function ReportDownloadModal({
           </Button>
           <Button
             type="button"
+            disabled={isDownloading}
             onClick={() => {
+              if (onDownload) {
+                void onDownload({ fileType: activeFileType, fullFileName });
+                return;
+              }
               console.log("Prepare report file:", fullFileName);
               onOpenChange(false);
             }}
             className="bg-sky-300 text-[#05233a] hover:bg-sky-200"
           >
             <Download className="h-4 w-4" />
-            Download file
+            {isDownloading ? "Preparing file..." : "Download file"}
           </Button>
         </div>
       </div>

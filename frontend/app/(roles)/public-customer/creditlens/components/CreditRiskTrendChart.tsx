@@ -23,6 +23,9 @@ type Props = {
 const defaultLabels = ["April", "May", "June", "July", "August", "September"];
 const defaultValues = [80, 50, 90, 70, 60, 55];
 
+/**
+ * Compact trend chart used on dashboard and report surfaces for CreditLens score movement.
+ */
 export default function CreditRiskTrendChart({
   labels = defaultLabels,
   values = defaultValues,
@@ -41,6 +44,7 @@ export default function CreditRiskTrendChart({
     };
   }, [values]);
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       labels,

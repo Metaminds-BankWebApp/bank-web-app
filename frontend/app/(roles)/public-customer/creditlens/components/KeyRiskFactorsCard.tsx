@@ -9,6 +9,9 @@ import {
   getInsightToneClasses,
 } from "./creditlens-insight-helpers";
 
+/**
+ * Lists the strongest negative drivers affecting the current CreditLens result.
+ */
 export default function KeyRiskFactorsCard({
   items = [],
 }: {

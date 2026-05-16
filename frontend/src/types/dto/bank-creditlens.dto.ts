@@ -1,5 +1,10 @@
 import type { CreditRiskFactorResponse } from "@/src/types/dto/public-creditlens.dto";
 
+/**
+ * Bank-customer CreditLens DTO contracts.
+ * This file reuses the shared customer-facing dashboard/report types and adds
+ * the bank-specific evaluation identifiers returned by the backend.
+ */
 export type {
   CreditInfoTooltipResponse,
   CreditRiskFactorResponse,

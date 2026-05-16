@@ -22,6 +22,7 @@ type ProfileImageUploadDialogProps = {
   onRemove: () => Promise<void>;
 };
 
+// Formats uploaded image sizes for the profile image dialog.
 function formatFileSize(bytes: number): string {
   if (bytes >= 1024 * 1024) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -30,6 +31,7 @@ function formatFileSize(bytes: number): string {
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
 }
 
+// Reads the selected image file into a preview data URL.
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -46,6 +48,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
+// Creates an image element so the cropper can render the selected file.
 function createImage(imageSrc: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new window.Image();
@@ -56,6 +59,7 @@ function createImage(imageSrc: string): Promise<HTMLImageElement> {
   });
 }
 
+// Chooses the output extension for the cropped profile image.
 function getImageFileExtension(mimeType: string): string {
   if (mimeType === "image/jpeg") {
     return "jpg";
@@ -68,6 +72,7 @@ function getImageFileExtension(mimeType: string): string {
   return "png";
 }
 
+// Crops the selected profile image and returns it as a new file.
 async function getCroppedImage(imageSrc: string, crop: Area, file: File): Promise<File> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -117,6 +122,7 @@ async function getCroppedImage(imageSrc: string, crop: Area, file: File): Promis
   });
 }
 
+// Renders the upload, crop, and remove dialog for profile photos.
 export function ProfileImageUploadDialog({
   open,
   onOpenChange,
@@ -161,10 +167,12 @@ export function ProfileImageUploadDialog({
     setCroppedAreaPixels(null);
   }, [selectedFile]);
 
+  // Opens the hidden image file picker.
   const triggerFilePicker = () => {
     fileInputRef.current?.click();
   };
 
+  // Validates the selected image and prepares it for cropping.
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -198,6 +206,7 @@ export function ProfileImageUploadDialog({
     }
   };
 
+  // Clears the selected or existing profile image from the dialog.
   const handleRemove = () => {
     setDraftImageSrc(null);
     setSelectedFile(null);
@@ -207,15 +216,18 @@ export function ProfileImageUploadDialog({
     setError("");
   };
 
+  // Stores the selected crop area from the image cropper.
   const handleCropComplete = useCallback((_: Area, areaPixels: Area) => {
     setCroppedAreaPixels(areaPixels);
   }, []);
 
+  // Resets the cropper position and zoom.
   const resetCrop = () => {
     setCrop({ x: 0, y: 0 });
     setZoom(DEFAULT_ZOOM);
   };
 
+  // Saves the current form changes through the API.
   const handleSave = async () => {
     const hadCurrentImage = Boolean(currentImageSrc);
 

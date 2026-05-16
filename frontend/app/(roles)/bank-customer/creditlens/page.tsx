@@ -10,12 +10,16 @@ import { Button } from "@/src/components/ui/button";
 import { getBankCreditDashboard } from "@/src/api/creditlens/bank-creditlens.service";
 import type { CreditDashboardResponse } from "@/src/types/dto/bank-creditlens.dto";
 
+/**
+ * Bank-customer CreditLens dashboard landing page.
+ */
 export default function BankCustomerCreditLensPage() {
   const router = useRouter();
   const [dashboard, setDashboard] = useState<CreditDashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Loads CreditLens dashboard data from the backend.
   const loadDashboard = async () => {
     try {
       setIsLoading(true);
@@ -36,6 +40,7 @@ export default function BankCustomerCreditLensPage() {
     void loadDashboard();
   }, []);
 
+  // Memoizes dashboard factors for stable rendering.
   const factors = useMemo(
     () =>
       dashboard?.factors.map((factor) => ({
@@ -180,6 +185,9 @@ export default function BankCustomerCreditLensPage() {
   );
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the dashboard.
+ */
 function StateCard({
   title,
   description,

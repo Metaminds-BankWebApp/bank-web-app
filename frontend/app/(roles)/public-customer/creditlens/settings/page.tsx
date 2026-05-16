@@ -1,6 +1,9 @@
 import { FeatureSettingsPage } from "@/src/components/feature-settings-page";
 import ModuleHeader from "@/src/components/ui/module-header";
 
+/**
+ * Settings entry point for the public-customer CreditLens experience.
+ */
 export default function PublicCreditLensSettingsPage() {
   return (
     <div className="flex flex-col gap-8 p-4 md:p-8 min-h-screen bg-white font-sans text-slate-800">

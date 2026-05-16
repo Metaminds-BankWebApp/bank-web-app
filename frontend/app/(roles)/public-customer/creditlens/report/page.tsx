@@ -19,11 +19,14 @@ import type { RiskFactor } from "@/src/types/creditlens-report";
 import {
   getPublicCreditEvaluationHistory,
   getPublicCreditReport,
+  downloadPublicCreditReportPdf,
 } from "@/src/api/creditlens/public-creditlens.service";
 import {
   getMyPublicCustomerProfile,
   getPublicCustomerFinancialRecordById,
 } from "@/src/api/customers/public-customer-financial.service";
+import { useToast } from "@/src/components/ui";
+import { ApiError } from "@/src/types/api-error";
 import type { CreditReportResponse } from "@/src/types/dto/public-creditlens.dto";
 import ReportMetricCard from "./components/ReportMetricCard";
 import CreditSummaryDonut from "./components/CreditSummaryDonut";
@@ -33,6 +36,7 @@ import RiskPointsBreakdown from "./components/RiskPointsBreakdown";
 type LabelTone = "Low" | "Medium" | "High";
 
 type ReportSnapshot = {
+  evaluationId: number;
   month: string;
   income: number;
   loanEmi: number;
@@ -52,10 +56,16 @@ type ReportSnapshot = {
   factors: RiskFactor[];
 };
 
+/**
+ * Public-customer CreditLens report page.
+ * It combines monthly report snapshots, additional financial-record details, and export actions.
+ */
 export default function ReportPage() {
+  const { showToast } = useToast();
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [reportFileType, setReportFileType] = useState<ReportFileType>("pdf");
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
   const [snapshots, setSnapshots] = useState<ReportSnapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,6 +109,7 @@ export default function ReportPage() {
   const newestSnapshot = snapshots[snapshots.length - 1] ?? null;
   const newestMonth = newestSnapshot?.month;
 
+  // Selects the currently displayed report snapshot.
   const current = useMemo(() => {
     if (!newestSnapshot) {
       return null;
@@ -109,10 +120,12 @@ export default function ReportPage() {
     return snapshots.find((snapshot) => snapshot.month === selectedMonth) ?? newestSnapshot;
   }, [newestSnapshot, selectedMonth, snapshots]);
 
+  // Builds the report date stamp used in filenames.
   const reportDateStamp = useMemo(() => {
     return new Date().toISOString().slice(0, 10).replace(/-/g, "");
   }, []);
 
+  // Builds the default CreditLens report file name.
   const reportFileBaseName = useMemo(() => {
     const monthName = (selectedMonth ?? current?.month ?? "report")
       .toLowerCase()
@@ -121,8 +134,45 @@ export default function ReportPage() {
     return `creditlens-report-${monthName}-${reportDateStamp}`;
   }, [current?.month, reportDateStamp, selectedMonth]);
 
+  // Opens the report download confirmation modal.
   const handleDownload = () => {
     setIsDownloadModalOpen(true);
+  };
+
+  // Downloads the selected report file after confirmation.
+  const handleConfirmDownload = async ({ fullFileName }: { fileType: ReportFileType; fullFileName: string }) => {
+    if (!current) {
+      return;
+    }
+
+    try {
+      setIsDownloadingReport(true);
+      const blob = await downloadPublicCreditReportPdf(current.evaluationId);
+      downloadBlob(fullFileName, blob);
+      setIsDownloadModalOpen(false);
+      showToast({
+        type: "success",
+        title: "Report downloaded",
+        description: fullFileName,
+      });
+    } catch (unknownError) {
+      const apiError = unknownError instanceof ApiError
+        ? unknownError
+        : new ApiError({
+          message: unknownError instanceof Error
+            ? unknownError.message
+            : "Unable to prepare your CreditLens PDF report.",
+          code: "UNKNOWN_ERROR",
+        });
+
+      showToast({
+        type: "error",
+        title: "Download failed",
+        description: apiError.message,
+      });
+    } finally {
+      setIsDownloadingReport(false);
+    }
   };
 
   return (
@@ -163,7 +213,7 @@ export default function ReportPage() {
                 className="h-10 w-full rounded-xl bg-sky-500 px-5 text-white hover:bg-sky-600 sm:w-auto"
               >
                 <Download className="mr-2 h-4 w-4" />
-                Download Full Report
+                Download PDF Report
               </Button>
             </div>
 
@@ -241,6 +291,9 @@ export default function ReportPage() {
             fileBaseName={reportFileBaseName}
             fileType={reportFileType}
             onFileTypeChange={setReportFileType}
+            supportedFileTypes={["pdf"]}
+            isDownloading={isDownloadingReport}
+            onDownload={handleConfirmDownload}
             monthLabel={selectedMonth ?? current.month}
             score={current.score}
             riskLabel={current.riskLabel}
@@ -256,10 +309,12 @@ export default function ReportPage() {
   );
 }
 
+// Maps report snapshots into frontend report rows.
 async function mapReportSnapshots(report: CreditReportResponse): Promise<ReportSnapshot[]> {
   const remainingBalanceByEvaluationId = await loadRemainingBalances(report);
 
   return report.snapshots.map((snapshot) => ({
+    evaluationId: snapshot.evaluationId,
     month: snapshot.monthLabel,
     income: snapshot.income,
     loanEmi: snapshot.loanEmi,
@@ -284,6 +339,7 @@ async function mapReportSnapshots(report: CreditReportResponse): Promise<ReportS
   }));
 }
 
+// Loads remaining loan balances for public report snapshots.
 async function loadRemainingBalances(report: CreditReportResponse): Promise<Map<number, number | null>> {
   try {
     const [profile, evaluationHistory] = await Promise.all([
@@ -330,6 +386,7 @@ async function loadRemainingBalances(report: CreditReportResponse): Promise<Map<
   }
 }
 
+// Normalizes risk labels into display tones.
 function normalizeLabel(value?: string): LabelTone {
   const normalized = (value ?? "").trim().toLowerCase();
   if (normalized === "low") {
@@ -341,14 +398,31 @@ function normalizeLabel(value?: string): LabelTone {
   return "Medium";
 }
 
+// Rounds report metric values for display.
 function roundMetric(value: number): number {
   return Number(value.toFixed(1));
 }
 
+// Formats report values as LKR currency.
 function formatCurrency(value: number): string {
   return `LKR ${value.toLocaleString()}`;
 }
 
+// Downloads a generated report blob in the browser.
+function downloadBlob(filename: string, blob: Blob) {
+  const blobUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = blobUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(blobUrl);
+}
+
+/**
+ * Reusable empty, loading, and error state shell for the report page.
+ */
 function StateCard({
   title,
   description,

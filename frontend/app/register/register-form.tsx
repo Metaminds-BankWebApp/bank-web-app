@@ -319,7 +319,9 @@ export function RegisterForm() {
         description: "Your registration step one is saved. Please sign in.",
       });
 
-      router.replace("/login");
+      router.replace(
+        `/login?email=${encodeURIComponent(values.email)}&role=PUBLIC_CUSTOMER`
+      );
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
 
@@ -568,7 +570,7 @@ export function RegisterForm() {
 
         <Button
           type="submit"
-          className="mt-2 h-14 w-full rounded-2xl bg-primary text-lg font-semibold text-black hover:bg-primary/90"
+          className="mt-2 h-10 w-full rounded-2xl bg-[#3e9fd3] text-lg font-semibold text-white hover:bg-[#2c8ac0]"
           loading={isSubmitting}
         >
           {isSubmitting ? "Creating account..." : "Create account"}

@@ -13,8 +13,11 @@ import { Doughnut } from "react-chartjs-2";
 ChartJS.register(ArcElement, Tooltip);
 
 type Props = { value: number };
-const SEGMENTS = [33, 33, 33];
+const SEGMENTS = [33, 33, 34];
 
+/**
+ * Animated semicircle gauge used to visualize the current CreditLens score.
+ */
 export default function CreditRiskGauge({ value }: Props) {
   const safeValue = Math.max(0, Math.min(100, value));
   const chartRef = useRef<ChartJS<"doughnut"> | null>(null);
@@ -60,6 +63,7 @@ export default function CreditRiskGauge({ value }: Props) {
     };
   }, [safeValue]);
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       datasets: [
@@ -75,6 +79,7 @@ export default function CreditRiskGauge({ value }: Props) {
     []
   );
 
+  // Builds the custom gauge labels and decorations.
   const gaugeDecorPlugin = useMemo<Plugin<"doughnut">>(
     () => ({
       id: "gaugeDecor",
@@ -84,8 +89,8 @@ export default function CreditRiskGauge({ value }: Props) {
         const arcs = meta?.data;
         if (!arcs || arcs.length === 0) return;
 
-        const first = arcs[0] as any;
-        const last = arcs[arcs.length - 1] as any;
+        const first = arcs[0] as ArcElement;
+        const last = arcs[arcs.length - 1] as ArcElement;
 
         const cx = first.x;
         const cy = first.y;
@@ -170,6 +175,7 @@ export default function CreditRiskGauge({ value }: Props) {
     []
   );
 
+  // Builds chart options for the CreditLens visualization.
   const options = useMemo<ChartOptions<"doughnut">>(
     () => ({
       rotation: -90,

@@ -127,7 +127,7 @@ export function SpendIqAddPage() {
       const createdDiff = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       if (createdDiff !== 0) return createdDiff;
       return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
+    }).slice(0, 10);
   }, [expenses, incomes]);
 
   const loadData = useCallback(async () => {
@@ -506,7 +506,7 @@ export function SpendIqAddPage() {
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm overflow-hidden">
-          <h2 className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-6">Recent Records</h2>
+          <h2 className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-6">Recent Records (Last 10)</h2>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[960px]">

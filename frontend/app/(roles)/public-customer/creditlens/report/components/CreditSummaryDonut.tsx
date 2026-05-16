@@ -6,9 +6,12 @@ import { Chart as ChartJS, ArcElement, Tooltip, ChartOptions } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip);
 
-const SEGMENTS = [34, 33, 33];
+const SEGMENTS = [33, 33, 34];
 const FINAL_ROTATION = -90;
 
+/**
+ * Donut chart that visualizes the composition of the selected CreditLens report snapshot.
+ */
 export default function CreditSummaryDonut({
   score,
   riskLabel,
@@ -58,6 +61,7 @@ export default function CreditSummaryDonut({
     };
   }, [score, riskLabel]);
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       labels: ["Low", "Medium", "High"],
@@ -74,6 +78,7 @@ export default function CreditSummaryDonut({
     []
   );
 
+  // Builds chart options for the CreditLens visualization.
   const options = useMemo<ChartOptions<"doughnut">>(
     () => ({
       responsive: true,
