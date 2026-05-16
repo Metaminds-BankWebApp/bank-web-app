@@ -15,7 +15,7 @@ export const SRI_LANKA_PROVINCES = [
 const provinceSet = new Set(
   SRI_LANKA_PROVINCES.map((province) => province.toLowerCase())
 );
-const emailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;
+const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
 const contactRegex = /^(?:077|076|078|070|072|074|075|071)\d{7}$/;
 const nicRegex = /^(?:\d{9}[VvXx]|\d{12})$/;
 const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -59,7 +59,7 @@ export function validateOfficerForm(formData: OfficerFormData): OfficerFormError
   if (!formData.email.trim()) {
     errors.email = "Email address is required.";
   } else if (!emailRegex.test(formData.email.trim())) {
-    errors.email = "Email must be in the format name@primecore.com.";
+    errors.email = "Email must be in the format name@gmail.com.";
   }
 
   if (!formData.assignedBranch.trim()) {

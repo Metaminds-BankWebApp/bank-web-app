@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import { Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { useToast } from "@/src/components/ui";
 import { ApiError } from "@/src/types/api-error";
 import {
@@ -26,9 +26,7 @@ type AuditLogRow = {
   role: string;
   action: string;
   target: string;
-  ip: string;
   status: LogStatus;
-  details: string | null;
 };
 
 const ALL_FILTER_OPTION = "All";
@@ -68,6 +66,38 @@ function mapToneToStatus(tone: AdminAuditTone): LogStatus {
   return "Policy Change";
 }
 
+function toTitleCase(value: string): string {
+  return value
+    .toLowerCase()
+    .split(" ")
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+}
+
+function toBriefAction(record: AdminAuditLogRecordResponse): string {
+  const rawTitle = record.title?.trim() ?? "";
+  const hasMethodAndPath = /(Executed|Failed)\s+(GET|POST|PUT|PATCH|DELETE)\s+on\s+\/\S+/i.test(rawTitle);
+
+  if (hasMethodAndPath) {
+    const titleMatch = rawTitle.match(/(Executed|Failed)\s+(GET|POST|PUT|PATCH|DELETE)/i);
+    if (titleMatch) {
+      return `${toTitleCase(titleMatch[1])} ${titleMatch[2].toUpperCase()} request`;
+    }
+  }
+
+  if (rawTitle) {
+    return rawTitle;
+  }
+
+  const actionType = record.actionType?.trim() ?? "";
+  if (!actionType) {
+    return "Action recorded";
+  }
+
+  return toTitleCase(actionType.replace(/[_-]+/g, " "));
+}
+
 function toAuditLogRow(record: AdminAuditLogRecordResponse): AuditLogRow {
   const { date, time } = formatDateTimeParts(record.createdAt);
   const target =
@@ -81,11 +111,9 @@ function toAuditLogRow(record: AdminAuditLogRecordResponse): AuditLogRow {
     time,
     user: record.actorName?.trim() || "System",
     role: record.actorRole?.trim() || "SYSTEM",
-    action: record.title?.trim() || record.actionType,
+    action: toBriefAction(record),
     target,
-    ip: record.ipAddress?.trim() || "-",
     status: mapToneToStatus(record.tone),
-    details: record.details?.trim() || null,
   };
 }
 
@@ -225,6 +253,20 @@ export default function AuditLogsPage() {
     return Math.min(currentPage * logsPerPage, totalElements);
   }, [currentPage, logsPerPage, totalElements]);
 
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 0) {
+      return [];
+    }
+
+    const maxVisibleButtons = 3;
+    let start = Math.max(1, currentPage - 1);
+    const end = Math.min(totalPages, start + maxVisibleButtons - 1);
+
+    start = Math.max(1, end - maxVisibleButtons + 1);
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  }, [currentPage, totalPages]);
+
   const statusStyle = (status: LogStatus) => {
     if (status === "Success") {
       return "bg-green-100 text-green-700";
@@ -266,7 +308,7 @@ export default function AuditLogsPage() {
                   <Search size={16} className="text-gray-400 mr-2" />
                   <input
                     type="text"
-                    placeholder="Search by user, action, target, details, or IP..."
+                    placeholder="Search by user, action, target, or details..."
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     className="bg-transparent w-full text-sm focus:outline-none"
@@ -322,7 +364,6 @@ export default function AuditLogsPage() {
                         "Role",
                         "Action",
                         "Target",
-                        "IP Address",
                         "Status",
                       ].map((header) => (
                         <th
@@ -337,13 +378,13 @@ export default function AuditLogsPage() {
                   <tbody className="divide-y">
                     {isLoading ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                           Loading audit logs...
                         </td>
                       </tr>
                     ) : logs.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                        <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                           No audit logs found for selected filters.
                         </td>
                       </tr>
@@ -358,15 +399,11 @@ export default function AuditLogsPage() {
                           <td className="px-6 py-4">{log.role}</td>
                           <td className="px-6 py-4">
                             <div>{log.action}</div>
-                            {log.details ? (
-                              <div className="text-xs text-gray-500 mt-1">{log.details}</div>
-                            ) : null}
                           </td>
                           <td className="px-6 py-4 text-blue-600">{log.target}</td>
-                          <td className="px-6 py-4 font-mono text-gray-500">{log.ip}</td>
                           <td className="px-6 py-4">
                             <span
-                              className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyle(
+                              className={`inline-flex min-w-[7.75rem] justify-center px-3 py-1 rounded-full text-xs font-semibold ${statusStyle(
                                 log.status
                               )}`}
                             >
@@ -389,25 +426,23 @@ export default function AuditLogsPage() {
                   <button
                     disabled={currentPage === 1 || totalPages === 0}
                     onClick={() => setCurrentPage((previous) => Math.max(previous - 1, 1))}
-                    className="px-3 py-1 border rounded-lg disabled:opacity-40"
+                    className="px-3 py-1 border rounded-lg disabled:opacity-40 flex items-center justify-center"
+                    aria-label="Previous page"
                   >
-                    {"<"}
+                    <ChevronLeft size={16} />
                   </button>
 
-                  {Array.from({ length: totalPages }).map((_, index) => {
-                    const page = index + 1;
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`px-3 py-1 rounded-lg ${
-                          currentPage === page ? "bg-[#0B3B66] text-white" : "border"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
+                  {visiblePages.map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 rounded-lg ${
+                        currentPage === page ? "bg-[#0B3B66] text-white" : "border"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
 
                   <button
                     disabled={totalPages === 0 || currentPage === totalPages}
@@ -416,9 +451,10 @@ export default function AuditLogsPage() {
                         Math.min(previous + 1, Math.max(totalPages, 1))
                       )
                     }
-                    className="px-3 py-1 border rounded-lg disabled:opacity-40"
+                    className="px-3 py-1 border rounded-lg disabled:opacity-40 flex items-center justify-center"
+                    aria-label="Next page"
                   >
-                    {">"}
+                    <ChevronRight size={16} />
                   </button>
                 </div>
               </div>
