@@ -114,6 +114,7 @@ export default function CreditLensCustomerHelp() {
   );
 }
 
+// Renders the feature help content and support actions.
 function FeatureHelp({ title, description, faqs, troubleshooterOptions, openTicket }: { title: string; description: string; faqs: string[]; troubleshooterOptions: { key: string; label: string }[]; openTicket: () => void }) {
   const [active, setActive] = useState<string | null>(null);
   const [choice, setChoice] = useState<string | null>(null);
@@ -146,6 +147,7 @@ function FeatureHelp({ title, description, faqs, troubleshooterOptions, openTick
   );
 }
 
+// Renders the customer support ticket form.
 function TicketForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t: Ticket) => void }) {
   const [category, setCategory] = useState('Credit Report');
   const [feature, setFeature] = useState('CreditLens');
@@ -155,6 +157,7 @@ function TicketForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t: 
   const [subject, setSubject] = useState('');
   const [desc, setDesc] = useState('');
 
+  // Submits the support form and closes the dialog.
   const handleSubmit = () => {
     const ticket = { id: `T-${Math.floor(1000+Math.random()*9000)}`, feature, category, priority, status: 'Open', officer: 'Assigned Officer', updated: new Date().toISOString().slice(0,10), subject };
     onCreate(ticket);
@@ -201,9 +204,11 @@ function TicketForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t: 
   );
 }
 
+// Renders the fraud report form in the help page.
 function FraudForm({ onClose }: { onClose: () => void }){
   const [type, setType] = useState('Unauthorized transfer');
   const [desc, setDesc] = useState('');
+  // Submits the support form and closes the dialog.
   const handleSubmit = () => { onClose(); };
   return (
     <div className="space-y-3">

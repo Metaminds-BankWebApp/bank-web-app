@@ -61,6 +61,7 @@ export default function CreditSummaryDonut({
     };
   }, [score, riskLabel]);
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       labels: ["Low", "Medium", "High"],
@@ -77,6 +78,7 @@ export default function CreditSummaryDonut({
     []
   );
 
+  // Builds chart options for the CreditLens visualization.
   const options = useMemo<ChartOptions<"doughnut">>(
     () => ({
       responsive: true,

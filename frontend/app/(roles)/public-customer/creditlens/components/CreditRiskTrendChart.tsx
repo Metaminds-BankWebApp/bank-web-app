@@ -44,6 +44,7 @@ export default function CreditRiskTrendChart({
     };
   }, [values]);
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       labels,

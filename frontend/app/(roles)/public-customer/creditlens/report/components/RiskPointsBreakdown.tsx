@@ -3,6 +3,7 @@
 import React from "react";
 import type { RiskFactor } from "@/src/types/creditlens-report";
 
+// Chooses the risk factor bar color from points and maximum.
 function getRiskBarColor(value: number, max: number): string {
   const safeMax = Math.max(1, max);
   const firstBandUpper = safeMax / 3;

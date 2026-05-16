@@ -18,6 +18,7 @@ export default function InsightPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Loads CreditLens insight data from the backend.
   const loadInsights = async () => {
     try {
       setIsLoading(true);
