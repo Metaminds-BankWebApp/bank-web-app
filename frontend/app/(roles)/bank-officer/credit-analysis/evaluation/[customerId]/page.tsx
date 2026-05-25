@@ -48,6 +48,7 @@ import {
   getOfficerCreditTrends,
 } from "@/src/api/creditlens/officer-creditlens.service";
 import { ApiError } from "@/src/types/api-error";
+import { getCreditLensRiskScoreTextClass } from "@/src/lib/creditlens-risk";
 import { getBankCustomerFinancialRecordById } from "@/src/api/customers/bank-customer-financial.service";
 import type {
   BankCreditAnalysisCustomerProfileResponse,
@@ -863,9 +864,9 @@ function OverviewTab({
 
             <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
               <div className="mx-auto h-[220px] w-full max-w-[340px]">
-                <CreditRiskGauge value={evaluation.totalRiskPoints} />
+                <CreditRiskGauge value={evaluation.totalRiskPoints} riskLabel={evaluation.riskLabel} />
                 <div className="-mt-16 text-center">
-                  <div className="text-5xl font-bold tracking-tight text-[#fbbf24]">{evaluation.totalRiskPoints}</div>
+                  <div className={`text-5xl font-bold tracking-tight ${getCreditLensRiskScoreTextClass(evaluation.riskLabel)}`}>{evaluation.totalRiskPoints}</div>
                   <div className="mt-1 text-base text-slate-200">{evaluation.riskLabel}</div>
                 </div>
               </div>
