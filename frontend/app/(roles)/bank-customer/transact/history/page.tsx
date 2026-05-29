@@ -26,11 +26,13 @@ type TransactionRecord = {
   reference: string
 }
 
+// Formats numeric amounts into LKR-style currency strings with 2 decimal places.
 const amountFormatter = new Intl.NumberFormat("en-LK", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
 
+// Normalizes a date-like value into YYYY-MM-DD for table display and filtering.
 function toDateOnly(value: string): string {
   const trimmed = (value ?? "").trim()
   const match = trimmed.match(/^(\d{4}-\d{2}-\d{2})/)
@@ -49,6 +51,7 @@ function toDateOnly(value: string): string {
   return `${year}-${month}-${day}`
 }
 
+// Maps backend status values into UI-friendly status keys.
 function toStatus(value: string): TransactionStatus {
   const normalized = (value ?? "").trim().toUpperCase()
   if (normalized === "SUCCESS") {
@@ -63,6 +66,7 @@ function toStatus(value: string): TransactionStatus {
   return "failed"
 }
 
+// Converts API transaction payload into the table row shape used by this page.
 function mapTransaction(tx: TransactionResponse): TransactionRecord {
   return {
     id: String(tx.transactionId),
@@ -77,6 +81,7 @@ function mapTransaction(tx: TransactionResponse): TransactionRecord {
   }
 }
 
+// Shared label + badge style mapping per transaction status.
 const statusMeta: Record<TransactionStatus, { label: string; variant: "success" | "warning" | "danger" | "outline" }> = {
   success: { label: "Success", variant: "success" },
   failed: { label: "Failed", variant: "danger" },
@@ -84,15 +89,20 @@ const statusMeta: Record<TransactionStatus, { label: string; variant: "success" 
   cancelled: { label: "Cancelled", variant: "outline" },
 }
 
+// Keeps all status badges aligned to the same width and spacing.
 const statusBadgeClassName = "min-w-[112px] justify-center whitespace-nowrap px-3 py-1"
 
 export default function Page() {
+  // Table data and filter states.
   const [records, setRecords] = React.useState<TransactionRecord[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
   const [dateQuery, setDateQuery] = React.useState("")
+
+  // Loading and API error states.
   const [isLoading, setIsLoading] = React.useState(true)
   const [loadError, setLoadError] = React.useState("")
 
+  // Loads transaction history once on mount and safely ignores updates after unmount.
   React.useEffect(() => {
     let mounted = true
 
@@ -132,6 +142,7 @@ export default function Page() {
     }
   }, [])
 
+  // Applies text and date filters to the loaded records.
   const filteredData = React.useMemo(() => {
     return records.filter((record) => {
       const normalizedSearchQuery = searchQuery.trim().toLowerCase()
@@ -148,6 +159,7 @@ export default function Page() {
     })
   }, [records, searchQuery, dateQuery])
 
+  // Resets all active filters back to default values.
   function clearFilters() {
     setSearchQuery("")
     setDateQuery("")
@@ -157,13 +169,16 @@ export default function Page() {
     <div className="bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transaction History" name="John Deo" />
 
+      {/* Main transaction history card with filters, export action, and table. */}
       <Card className="transact-card transact-card-hover bg-white transact-creditlens-shade creditlens-delay-1 max-w-6xl mx-auto mt-6 w-full rounded-xl p-4 sm:mt-30 sm:p-6 lg:p-8">
+        {/* API load error banner. */}
         {loadError && (
           <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
             {loadError}
           </div>
         )}
 
+        {/* Filter controls and PDF export action row. */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 flex-1">
             <div className="relative max-w-md w-full sm:w-64">
@@ -197,6 +212,7 @@ export default function Page() {
           </div>
         </div>
 
+        {/* Scrollable transaction table area. */}
         <div className="overflow-x-auto">
           <div className="overflow-y-auto max-h-[48vh]">
             <table className="w-full text-sm min-w-[760px]">
