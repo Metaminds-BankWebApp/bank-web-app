@@ -516,7 +516,7 @@ export default function AddOfficerPage() {
                       type="email"
                       value={formData.email}
                       onChange={(event) => handleRequiredFieldChange("email", event.target.value)}
-                      placeholder="kamal@primecore.com"
+                      placeholder="kamal@gmail.com"
                       aria-invalid={Boolean(errors.email)}
                       className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
                         errors.email ? "border-red-500" : "border-gray-300"
