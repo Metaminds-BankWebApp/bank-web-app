@@ -21,6 +21,7 @@ function officerCustomerBase(bankCustomerId: number): string {
 /**
  * Bank-officer CreditLens API client for portfolio, customer, trend, insight, and report views.
  */
+// Loads the officer CreditLens dashboard data.
 export async function getOfficerCreditDashboard(): Promise<BankCreditAnalysisDashboardResponse> {
   try {
     const { data } = await apiClient.get<BankCreditAnalysisDashboardResponse>(
@@ -32,6 +33,7 @@ export async function getOfficerCreditDashboard(): Promise<BankCreditAnalysisDas
   }
 }
 
+// Loads the selected bank customer profile for officer CreditLens.
 export async function getOfficerCreditCustomerProfile(
   bankCustomerId: number,
 ): Promise<BankCreditAnalysisCustomerProfileResponse> {
@@ -45,6 +47,7 @@ export async function getOfficerCreditCustomerProfile(
   }
 }
 
+// Loads the selected bank customer current CreditLens evaluation.
 export async function getOfficerCreditCurrentEvaluation(
   bankCustomerId: number,
 ): Promise<BankCreditEvaluationResponse> {
@@ -58,6 +61,7 @@ export async function getOfficerCreditCurrentEvaluation(
   }
 }
 
+// Loads CreditLens history for an officer-owned customer.
 export async function getOfficerCreditEvaluationHistory(
   bankCustomerId: number,
 ): Promise<BankCreditEvaluationSummaryResponse[]> {
@@ -71,6 +75,7 @@ export async function getOfficerCreditEvaluationHistory(
   }
 }
 
+// Loads one officer-owned customer CreditLens evaluation by id.
 export async function getOfficerCreditEvaluationById(
   bankCustomerId: number,
   bankEvaluationId: number,
@@ -85,6 +90,7 @@ export async function getOfficerCreditEvaluationById(
   }
 }
 
+// Loads CreditLens trends for an officer-owned customer.
 export async function getOfficerCreditTrends(
   bankCustomerId: number,
   range: "6m" | "12m" = "6m",
@@ -100,6 +106,7 @@ export async function getOfficerCreditTrends(
   }
 }
 
+// Loads CreditLens insights for an officer-owned customer.
 export async function getOfficerCreditInsights(
   bankCustomerId: number,
 ): Promise<CreditInsightsResponse> {
@@ -113,6 +120,7 @@ export async function getOfficerCreditInsights(
   }
 }
 
+// Loads CreditLens report data for an officer-owned customer.
 export async function getOfficerCreditReport(
   bankCustomerId: number,
 ): Promise<CreditReportResponse> {
@@ -126,6 +134,7 @@ export async function getOfficerCreditReport(
   }
 }
 
+// Downloads the officer customer CreditLens PDF report.
 export async function downloadOfficerCreditReportPdf(
   bankCustomerId: number,
   bankEvaluationId: number,

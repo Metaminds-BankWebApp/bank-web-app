@@ -77,6 +77,7 @@ export default function CreditAnalysisCustomerPage() {
   );
 }
 
+// Renders one label-value row in a customer detail panel.
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">

@@ -32,6 +32,7 @@ const PHONE_ALLOWED_REGEX = /^\+?[0-9()\s-]+$/;
 const FULL_NAME_REGEX = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 
+// Builds the starting form values from profile field definitions.
 export function buildInitialFieldValues(fields: ProfileFieldItem[]): Record<string, string> {
   return fields.reduce<Record<string, string>>((acc, field) => {
     acc[field.key] = field.value ?? "";
@@ -39,11 +40,13 @@ export function buildInitialFieldValues(fields: ProfileFieldItem[]): Record<stri
   }, {});
 }
 
+// Returns a clean profile value or the fallback text.
 export function fallbackProfileValue(value?: string | null, fallback = "-"): string {
   const normalized = value?.trim() ?? "";
   return normalized || fallback;
 }
 
+// Formats stored profile dates for display.
 export function formatProfileDate(value?: string | null): string {
   const normalized = value?.trim() ?? "";
   if (!normalized) {
@@ -62,6 +65,7 @@ export function formatProfileDate(value?: string | null): string {
   }).format(parsed);
 }
 
+// Validates one editable profile field before saving.
 export function validateProfileScalarField(
   key: string,
   rawValue: string,
@@ -96,6 +100,7 @@ export function validateProfileScalarField(
   return undefined;
 }
 
+// Validates the optional new username field.
 export function validateNewUsername(currentUsername: string, newUsername: string): string | undefined {
   const current = currentUsername.trim();
   const next = newUsername.trim();
@@ -109,6 +114,7 @@ export function validateNewUsername(currentUsername: string, newUsername: string
   return undefined;
 }
 
+// Validates the profile password change fields together.
 export function validatePasswordGroup(values: Record<string, string>): ProfileFieldErrors {
   const currentPassword = values.currentPassword?.trim() ?? "";
   const newPassword = values.newPassword?.trim() ?? "";
@@ -140,6 +146,7 @@ export function validatePasswordGroup(values: Record<string, string>): ProfileFi
   return errors;
 }
 
+// Extracts backend field errors into the profile form error map.
 export function extractProfileFieldErrors(error: ApiError): ProfileFieldErrors {
   const details = error.details as { fieldErrors?: unknown } | undefined;
   const rawFieldErrors = details?.fieldErrors;
@@ -166,6 +173,7 @@ export function extractProfileFieldErrors(error: ApiError): ProfileFieldErrors {
   return result;
 }
 
+// Maps backend profile error messages to the matching form fields.
 export function mapProfileApiMessageToFieldErrors(message: string): ProfileFieldErrors {
   const normalized = message.trim().toLowerCase();
   if (!normalized) {
@@ -184,6 +192,7 @@ export function mapProfileApiMessageToFieldErrors(message: string): ProfileField
   return {};
 }
 
+// Builds the profile summary list displayed under the avatar.
 function buildSummaryItems(profile: UserProfileResponse): SummaryItem[] {
   return profile.summaryItems.map((item) => ({
     label: item.label,
@@ -193,6 +202,7 @@ function buildSummaryItems(profile: UserProfileResponse): SummaryItem[] {
   }));
 }
 
+// Builds the username and password fields for profile security.
 function buildSecurityFields(username: string): ProfileFieldItem[] {
   return [
     {
@@ -230,14 +240,17 @@ function buildSecurityFields(username: string): ProfileFieldItem[] {
   ];
 }
 
+// Builds the display name shown on profile pages.
 function buildDisplayName(profile: UserProfileResponse): string {
   return fallbackProfileValue(profile.fullName, profile.roleDisplayName || "User");
 }
 
+// Builds initials for profile avatars or customer rows.
 function buildInitials(profile: UserProfileResponse): string {
   return fallbackProfileValue(profile.initials, "NA");
 }
 
+// Builds the role badge text shown on profile pages.
 function buildBadgeText(profile: UserProfileResponse): string {
   return fallbackProfileValue(
     profile.badgeText,
@@ -245,6 +258,7 @@ function buildBadgeText(profile: UserProfileResponse): string {
   );
 }
 
+// Builds the customer profile view model for editable profile pages.
 export function buildCustomerProfileView(profile: UserProfileResponse): ProfileViewConfig {
   const common = {
     displayName: buildDisplayName(profile),
@@ -312,6 +326,7 @@ export function buildCustomerProfileView(profile: UserProfileResponse): ProfileV
   };
 }
 
+// Builds the staff profile view model for admin and officer pages.
 export function buildStaffProfileView(profile: UserProfileResponse): ProfileViewConfig {
   const common = {
     displayName: buildDisplayName(profile),

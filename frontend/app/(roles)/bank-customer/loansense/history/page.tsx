@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { useToast } from "@/src/components/ui";
 import { ApiError } from "@/src/types/api-error";
@@ -20,6 +21,8 @@ const dateFilterToMonths: Record<DateFilter, number> = {
   "6m": 6,
   "12m": 12,
 };
+
+const rowsPerPage = 8;
 
 function formatCurrency(value: number): string {
   return `LKR ${value.toLocaleString("en-LK", {
@@ -60,7 +63,7 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+      className={`inline-flex min-w-[9rem] items-center justify-center px-4 py-2 rounded-full text-sm font-medium transition-colors ${
         active
           ? "bg-[#0B3B66] text-white"
           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -76,6 +79,7 @@ export default function LoanSenseHistoryPage() {
   const [loanFilter, setLoanFilter] = useState<LoanFilter>("ALL");
   const [dateFilter, setDateFilter] = useState<DateFilter>("3m");
   const [historyItems, setHistoryItems] = useState<LoanSenseHistoryItemResponse[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,7 +125,44 @@ export default function LoanSenseHistoryPage() {
     };
   }, [dateFilter, loanFilter, showToast]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dateFilter, loanFilter]);
+
   const grouped = useMemo(() => historyItems, [historyItems]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(grouped.length / rowsPerPage)),
+    [grouped.length]
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return grouped.slice(start, start + rowsPerPage);
+  }, [currentPage, grouped]);
+
+  const showingFrom =
+    grouped.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+  const showingTo =
+    grouped.length === 0 ? 0 : Math.min(currentPage * rowsPerPage, grouped.length);
+
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 0) {
+      return [];
+    }
+
+    const maxVisibleButtons = 3;
+    let start = Math.max(1, currentPage - 1);
+    const end = Math.min(totalPages, start + maxVisibleButtons - 1);
+    start = Math.max(1, end - maxVisibleButtons + 1);
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  }, [currentPage, totalPages]);
 
   const loanFilters: Array<{ label: string; value: LoanFilter }> = [
     { label: "All Loans", value: "ALL" },
@@ -205,7 +246,7 @@ export default function LoanSenseHistoryPage() {
                   </td>
                 </tr>
               ) : (
-                grouped.map((row, index) => (
+                paginatedRows.map((row, index) => (
                   <tr
                     key={`${row.loanResultId}-${row.loansenseEvaluationId}`}
                     className={`border-b border-gray-100 transition-colors hover:bg-gray-50 ${
@@ -216,7 +257,7 @@ export default function LoanSenseHistoryPage() {
                     <td className="px-6 py-4 text-sm text-gray-800">{row.loanTypeLabel}</td>
                     <td className="px-6 py-4 text-sm">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusBadgeClass(
+                        className={`inline-flex min-w-[8.75rem] items-center justify-center px-3 py-1 rounded-full text-sm font-medium ${statusBadgeClass(
                           row.eligibilityStatus
                         )}`}
                       >
@@ -229,7 +270,7 @@ export default function LoanSenseHistoryPage() {
                     <td className="px-6 py-4 text-sm text-gray-800">{row.tenureLabel || "-"}</td>
                     <td className="px-6 py-4 text-sm">
                       <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${riskBadgeClass(
+                        className={`inline-flex min-w-[7.5rem] items-center justify-center px-3 py-1 rounded-full text-sm font-medium ${riskBadgeClass(
                           row.riskLevel
                         )}`}
                       >
@@ -241,6 +282,44 @@ export default function LoanSenseHistoryPage() {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm text-gray-600">
+          Showing {showingFrom} to {showingTo} of {grouped.length} entries
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            disabled={currentPage === 1 || grouped.length === 0}
+            onClick={() => setCurrentPage((previous) => Math.max(previous - 1, 1))}
+            className="px-3 py-1 border rounded-lg disabled:opacity-40 flex items-center justify-center"
+            aria-label="Previous page"
+          >
+            <ChevronLeft size={16} />
+          </button>
+
+          {visiblePages.map((page) => (
+            <button
+              key={page}
+              onClick={() => setCurrentPage(page)}
+              className={`px-3 py-1 rounded-lg ${
+                currentPage === page ? "bg-[#0B3B66] text-white" : "border text-gray-700"
+              }`}
+            >
+              {page}
+            </button>
+          ))}
+
+          <button
+            disabled={grouped.length === 0 || currentPage === totalPages}
+            onClick={() => setCurrentPage((previous) => Math.min(previous + 1, totalPages))}
+            className="px-3 py-1 border rounded-lg disabled:opacity-40 flex items-center justify-center"
+            aria-label="Next page"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
       </div>
     </main>

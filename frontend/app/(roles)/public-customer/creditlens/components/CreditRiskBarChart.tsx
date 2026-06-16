@@ -48,6 +48,7 @@ export default function CreditRiskBarChart({ labels = defaultLabels, values = de
 
   const barThickness = isMobile ? (labels.length > 6 ? 10 : 18) : labels.length > 6 ? 26 : 60;
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       labels,

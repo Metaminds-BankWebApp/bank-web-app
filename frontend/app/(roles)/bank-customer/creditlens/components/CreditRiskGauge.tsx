@@ -9,17 +9,19 @@ import {
   Plugin,
 } from "chart.js";
 import { Doughnut } from "react-chartjs-2";
+import { getCreditLensRiskScoreColor } from "@/src/lib/creditlens-risk";
 
 ChartJS.register(ArcElement, Tooltip);
 
-type Props = { value: number };
+type Props = { value: number; riskLabel?: string | null };
 const SEGMENTS = [33, 33, 34];
 
 /**
  * Animated semicircle gauge used to visualize the current CreditLens score.
  */
-export default function CreditRiskGauge({ value }: Props) {
+export default function CreditRiskGauge({ value, riskLabel }: Props) {
   const safeValue = Math.max(0, Math.min(100, value));
+  const pointerColor = useMemo(() => getCreditLensRiskScoreColor(riskLabel), [riskLabel]);
   const chartRef = useRef<ChartJS<"doughnut"> | null>(null);
   const animatedValueRef = useRef(0);
 
@@ -63,6 +65,7 @@ export default function CreditRiskGauge({ value }: Props) {
     };
   }, [safeValue]);
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       datasets: [
@@ -78,6 +81,7 @@ export default function CreditRiskGauge({ value }: Props) {
     []
   );
 
+  // Builds the custom gauge labels and decorations.
   const gaugeDecorPlugin = useMemo<Plugin<"doughnut">>(
     () => ({
       id: "gaugeDecor",
@@ -161,7 +165,7 @@ export default function CreditRiskGauge({ value }: Props) {
         ctx.lineTo(rightX, rightY);
         ctx.closePath();
 
-        ctx.fillStyle = "#fbbf24";
+        ctx.fillStyle = pointerColor;
         ctx.fill();
         ctx.lineWidth = 2;
         ctx.strokeStyle = "rgba(0,0,0,0.35)";
@@ -170,9 +174,10 @@ export default function CreditRiskGauge({ value }: Props) {
         ctx.restore();
       },
     }),
-    []
+    [pointerColor]
   );
 
+  // Builds chart options for the CreditLens visualization.
   const options = useMemo<ChartOptions<"doughnut">>(
     () => ({
       rotation: -90,
