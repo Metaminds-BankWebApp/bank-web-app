@@ -57,7 +57,7 @@ export default function PublicCustomerCreditLensPage() {
   return (
     <div className="w-full overflow-x-hidden px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
       <div className="flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:h-[calc(100dvh-2rem)] lg:min-h-0 lg:overflow-hidden">
-        <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Dashboard" subtitle="" name="John Doe" role="Public Customer" />
+        <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Dashboard" />
 
         {isLoading && !dashboard ? (
           <StateCard
@@ -121,13 +121,14 @@ export default function PublicCustomerCreditLensPage() {
                     Credit risk score in this last 6 months
                   </h4>
 
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => router.push("/public-customer/creditlens/trends")}
                     className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/25 bg-white/5 px-3 py-1 text-sm text-white/75 transition-colors hover:bg-white/10 hover:text-white sm:text-base"
                   >
                     Show All
                     <span aria-hidden>-&gt;</span>
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="min-h-0 flex-1">
@@ -164,12 +165,12 @@ export default function PublicCustomerCreditLensPage() {
                   </div>
 
                   <div className="mt-5 sm:mt-6">
-                    <button
+                    <Button
                       onClick={() => router.push("/public-customer/creditlens/insight")}
                       className="rounded-md bg-white px-4 py-2 text-base font-medium text-[#072033] hover:bg-white/90"
                     >
                       {dashboard.insightActionLabel}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

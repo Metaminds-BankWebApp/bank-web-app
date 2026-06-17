@@ -8,6 +8,11 @@ import PopupModal from "@/src/components/ui/popup-modal";
 
 export type Ticket = { id: string; feature: string; category: string; priority: string; status: string; officer: string; updated: string; subject?: string };
 
+const creditLensPanel =
+  "creditlens-card creditlens-card-hover rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_18px_50px_-35px_rgba(2,44,67,0.35)]";
+const creditLensPrimary = "bg-[#14517c] text-white hover:bg-[#103f61]";
+const creditLensText = "text-[#0b2447]";
+
 /**
  * Bank-customer CreditLens support page with FAQs, officer contact shortcuts, and ticket creation.
  */
@@ -20,19 +25,19 @@ export default function CreditLensCustomerHelp() {
   ]);
 
   return (
-    <div className="min-h-screen bg-[#ffffff] px-1 pt-2 sm:space-y-5 sm:px-2 lg:min-h-[calc(100dvh-2rem)] lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
-      <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Help & Support" name="You" role="Bank Customer" className="mb-6" />
+    <div className="min-h-screen px-1 pt-2 text-[#0b2447] sm:space-y-5 sm:px-2 lg:min-h-[calc(100dvh-2rem)] lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
+      <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Help & Support" className="mb-6" />
 
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-8 mb-6">
-          <h1 className="text-2xl font-semibold text-[#063154]">Help & Support</h1>
-          <p className="mt-1 text-sm text-[#063154]/80">Get answers fast, track your requests, or contact your assigned officer.</p>
+      <main className="mx-auto max-w-6xl p-3 sm:p-6">
+        <div className="creditlens-card creditlens-card-hover mb-6 rounded-2xl border border-[#66a8d0]/35 bg-[#14517c] p-8 text-white shadow-[0_24px_44px_-30px_rgba(2,18,33,0.82)] md:rounded-[26px]">
+          <h1 className="text-2xl font-semibold text-white">Help & Support</h1>
+          <p className="mt-1 text-sm text-white/80">Get answers fast, track your requests, or contact your assigned officer.</p>
 
           <div className="mt-6">
-            <Input placeholder="Search help articles… (e.g., OTP not received, loan eligibility, transaction failed)" value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} className="h-12 bg-white rounded-[12px]" />
+            <Input placeholder="Search help articles... (e.g., OTP not received, loan eligibility, transaction failed)" value={search} onChange={(e: ChangeEvent<HTMLInputElement>) => setSearch(e.target.value)} className="h-12 rounded-xl bg-white text-slate-900" />
             <div className="mt-4 flex flex-wrap gap-2">
               {["Transaction failed","OTP not received","Loan eligibility","Credit report issue","Spending insights"].map((c)=> (
-                <button key={c} className="px-3 py-1 rounded-full bg-[#063154]/8 text-[#063154] text-sm">{c}</button>
+                <button key={c} className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/15">{c}</button>
               ))}
             </div>
           </div>
@@ -47,13 +52,13 @@ export default function CreditLensCustomerHelp() {
             { id: "r5", title: "Security & Fraud Help", desc: "Report fraud or secure your account." },
             { id: "r6", title: "Contact Assigned Officer", desc: "Message your relationship officer directly." },
           ].map((c)=> (
-            <div key={c.id} className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div key={c.id} className={`${creditLensPanel} flex flex-col justify-between p-4 transition-shadow hover:shadow-md`}>
               <div>
-                <h4 className="font-semibold text-[#063154]">{c.title}</h4>
-                <p className="text-sm text-[#063154]/80 mt-1">{c.desc}</p>
+                <h4 className={`font-semibold ${creditLensText}`}>{c.title}</h4>
+                <p className="mt-1 text-sm text-slate-600">{c.desc}</p>
               </div>
               <div className="mt-4">
-                <Button className="bg-[#2F9D94]" onClick={() => setOpenTicket(true)}>Go Now</Button>
+                <Button className={creditLensPrimary} onClick={() => setOpenTicket(true)}>Go Now</Button>
               </div>
             </div>
           ))}
@@ -61,12 +66,12 @@ export default function CreditLensCustomerHelp() {
 
         <FeatureHelp title="CreditLens Help" description="Understand your credit score, readiness and reports." faqs={["Why is my credit score not showing?","What affects my score?","Why is the feature locked?","How to dispute a credit item?","How is readiness calculated?"]} troubleshooterOptions={[{key:'missing','label':'Missing score'},{key:'locked','label':'Feature locked'},{key:'data','label':'Incorrect data'}]} openTicket={() => setOpenTicket(true)} />
 
-        <section className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-6">
-          <h3 className="text-lg font-semibold text-[#063154]">My Support Requests</h3>
+        <section className={`${creditLensPanel} mb-6 p-6`}>
+          <h3 className={`text-lg font-semibold ${creditLensText}`}>My Support Requests</h3>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-xs text-[#063154]/80">
+                <tr className="text-left text-xs text-slate-500">
                   <th className="px-2 py-2">Ticket</th>
                   <th>Feature</th>
                   <th>Category</th>
@@ -79,27 +84,27 @@ export default function CreditLensCustomerHelp() {
               </thead>
               <tbody>
                 {tickets.map((t: Ticket) => (
-                  <tr key={t.id} className="bg-white border-t border-[#E8E8E8]"><td className="px-2 py-3">{t.id}</td><td>{t.feature}</td><td>{t.category}</td><td>{t.priority}</td><td>{t.status}</td><td>{t.officer}</td><td>{t.updated}</td><td><Button variant="outline">View</Button></td></tr>
+                  <tr key={t.id} className="border-t border-slate-200 bg-white"><td className="px-2 py-3">{t.id}</td><td>{t.feature}</td><td>{t.category}</td><td>{t.priority}</td><td>{t.status}</td><td>{t.officer}</td><td>{t.updated}</td><td><Button variant="outline">View</Button></td></tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="mt-4"><Button className="bg-[#2F9D94]" onClick={() => setOpenTicket(true)}>Create New Support Ticket</Button></div>
+          <div className="mt-4"><Button className={creditLensPrimary} onClick={() => setOpenTicket(true)}>Create New Support Ticket</Button></div>
         </section>
 
-        <div className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-6">
-          <h4 className="text-lg font-semibold text-[#063154]">Quick Feedback</h4>
-          <p className="text-sm text-[#063154]/80 mt-1">Share a rating and short message.</p>
+        <div className={`${creditLensPanel} mb-6 p-6`}>
+          <h4 className={`text-lg font-semibold ${creditLensText}`}>Quick Feedback</h4>
+          <p className="mt-1 text-sm text-slate-600">Share a rating and short message.</p>
           <div className="mt-3 flex gap-2 items-center">
-            {[1,2,3,4,5].map(n=> <button key={n} className="px-3 py-1 bg-white rounded-md">{n}★</button>)}
+            {[1,2,3,4,5].map(n=> <button key={n} className="rounded-md border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-[#14517c] transition hover:bg-slate-50">{n}</button>)}
             <Input placeholder="Short message" className="ml-2 bg-white" />
-            <Button className="bg-[#2F9D94]">Send</Button>
+            <Button className={creditLensPrimary}>Send</Button>
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-[#063154]/5 p-4 rounded-[12px]">
-          <p className="text-sm text-[#063154]/90">PrimeCore will never ask for your OTP or password. If you suspect fraud, report immediately.</p>
-          <Button className="bg-[#2F9D94]" onClick={() => setOpenFraud(true)}>Report Fraud</Button>
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-sky-50/80 p-4">
+          <p className="text-sm text-[#0b2447]">PrimeCore will never ask for your OTP or password. If you suspect fraud, report immediately.</p>
+          <Button className={creditLensPrimary} onClick={() => setOpenFraud(true)}>Report Fraud</Button>
         </div>
 
         <PopupModal open={openTicket} onOpenChange={setOpenTicket} title="Create Support Ticket">
@@ -116,30 +121,29 @@ export default function CreditLensCustomerHelp() {
 
 // Renders the feature help content and support actions.
 function FeatureHelp({ title, description, faqs, troubleshooterOptions, openTicket }: { title: string; description: string; faqs: string[]; troubleshooterOptions: { key: string; label: string }[]; openTicket: () => void }) {
-  const [active, setActive] = useState<string | null>(null);
   const [choice, setChoice] = useState<string | null>(null);
   return (
-    <section className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-6">
-      <h2 className="text-xl font-semibold text-[#063154]">{title}</h2>
-      <p className="text-sm text-[#063154]/80 mt-1">{description}</p>
+    <section className={`${creditLensPanel} mb-6 p-6`}>
+      <h2 className={`text-xl font-semibold ${creditLensText}`}>{title}</h2>
+      <p className="mt-1 text-sm text-slate-600">{description}</p>
 
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           {faqs.map((q:string)=> (
-            <details key={q} className="bg-white p-3 rounded-lg border border-[#E8E8E8] mb-2"><summary className="font-medium text-[#063154]">{q}</summary><p className="mt-2 text-sm text-[#063154]/80">Short answer and next steps to resolve the issue.</p></details>
+            <details key={q} className="mb-2 rounded-lg border border-slate-200 bg-white p-3"><summary className={`font-medium ${creditLensText}`}>{q}</summary><p className="mt-2 text-sm text-slate-600">Short answer and next steps to resolve the issue.</p></details>
           ))}
         </div>
 
         <div>
-          <div className="bg-white p-4 rounded-lg border border-[#E8E8E8]">
-            <h3 className="font-semibold text-[#063154]">Troubleshooter</h3>
-            <p className="text-sm text-[#063154]/80 mt-1">What issue are you facing?</p>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <h3 className={`font-semibold ${creditLensText}`}>Troubleshooter</h3>
+            <p className="mt-1 text-sm text-slate-600">What issue are you facing?</p>
             <div className="mt-3 flex flex-col gap-2">
               {troubleshooterOptions.map((o) => (
-                <button key={o.key} onClick={() => setChoice(o.key)} className={`px-3 py-2 rounded-md ${choice===o.key? 'bg-[#2F9D94] text-white':'bg-white border'}`}>{o.label}</button>
+                <button key={o.key} onClick={() => setChoice(o.key)} className={`rounded-md border px-3 py-2 text-sm font-medium transition ${choice===o.key? 'border-[#14517c] bg-[#14517c] text-white':'border-slate-200 bg-white text-[#0b2447] hover:bg-slate-50'}`}>{o.label}</button>
               ))}
             </div>
-            {choice && (<div className="mt-3 bg-[#063154]/5 p-3 rounded-md"><ol className="list-decimal list-inside text-sm text-[#063154]/80"><li>Step 1: Check profile and data.</li><li>Step 2: Re-sync or upload missing docs.</li><li>Step 3: Contact support if still unresolved.</li></ol><div className="mt-3"><Button className="bg-[#2F9D94]" onClick={openTicket}>Go Fix It</Button></div></div>)}
+            {choice && (<div className="mt-3 rounded-md bg-sky-50/80 p-3"><ol className="list-inside list-decimal text-sm text-slate-600"><li>Step 1: Check profile and data.</li><li>Step 2: Re-sync or upload missing docs.</li><li>Step 3: Contact support if still unresolved.</li></ol><div className="mt-3"><Button className={creditLensPrimary} onClick={openTicket}>Go Fix It</Button></div></div>)}
           </div>
         </div>
       </div>
@@ -197,8 +201,8 @@ function TicketForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t: 
       </div>
 
       <div className="flex items-center justify-between">
-        <small className="text-xs text-[#063154]/80">The ticket will be sent to your assigned officer and monitored by admin.</small>
-        <div className="flex gap-2"><Button variant="outline" onClick={onClose}>Cancel</Button><Button className="bg-[#2F9D94]" onClick={handleSubmit}>Submit Ticket</Button></div>
+        <small className="text-xs text-slate-500">The ticket will be sent to your assigned officer and monitored by admin.</small>
+        <div className="flex gap-2"><Button variant="outline" onClick={onClose}>Cancel</Button><Button className={creditLensPrimary} onClick={handleSubmit}>Submit Ticket</Button></div>
       </div>
     </div>
   );
@@ -222,7 +226,7 @@ function FraudForm({ onClose }: { onClose: () => void }){
         <label className="text-sm">Description</label>
         <textarea className="w-full rounded-md p-2 border" rows={4} value={desc} onChange={(e: ChangeEvent<HTMLTextAreaElement>)=> setDesc(e.target.value)} />
       </div>
-      <div className="flex items-center justify-end gap-2"><Button variant="outline" onClick={onClose}>Cancel</Button><Button className="bg-[#2F9D94]" onClick={handleSubmit}>Report</Button></div>
+      <div className="flex items-center justify-end gap-2"><Button variant="outline" onClick={onClose}>Cancel</Button><Button className={creditLensPrimary} onClick={handleSubmit}>Report</Button></div>
     </div>
   );
 }
