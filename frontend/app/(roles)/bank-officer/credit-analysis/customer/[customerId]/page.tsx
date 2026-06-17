@@ -8,6 +8,9 @@ import { Button } from "@/src/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/src/components/ui/card";
 import ModuleHeader from "@/src/components/ui/module-header";
 
+/**
+ * Officer-side customer profile view linked from the CreditLens analysis area.
+ */
 export default function CreditAnalysisCustomerPage() {
   // Simple customer profile summary pulled from route/query context with a quick back action.
   const params = useParams<{ customerId: string }>();
@@ -75,6 +78,7 @@ export default function CreditAnalysisCustomerPage() {
   );
 }
 
+// Renders one label-value row in a customer detail panel.
 function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 p-3">

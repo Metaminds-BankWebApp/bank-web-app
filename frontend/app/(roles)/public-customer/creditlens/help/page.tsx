@@ -9,6 +9,9 @@ import PopupModal from "@/src/components/ui/popup-modal";
 
 export type Ticket = { id: string; summary: string; status: string; updated: string };
 
+/**
+ * Public-customer CreditLens support page with FAQs, quick actions, and lightweight ticket creation.
+ */
 export default function CreditLensHelpPage() {
   const [search, setSearch] = useState("");
   const [troubleshooter, setTroubleshooter] = useState<string | null>(null);
@@ -203,11 +206,13 @@ export default function CreditLensHelpPage() {
   );
 }
 
+// Renders the public customer support request form.
 function SupportForm({ onClose, onCreate }: { onClose: () => void; onCreate: (t: Ticket) => void }) {
   const [type, setType] = useState("CreditLens");
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
 
+  // Submits the support form and closes the dialog.
   const handleSubmit = () => {
     const ticket = { id: `T-${Math.floor(1000 + Math.random() * 9000)}`, summary: title || "New issue", status: "Open", updated: new Date().toISOString().slice(0,10) };
     onCreate(ticket);

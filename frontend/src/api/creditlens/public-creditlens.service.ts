@@ -1,5 +1,7 @@
+import axios from "axios";
 import apiClient, { toApiError } from "@/src/api/client";
 import { PUBLIC_CREDITLENS_ENDPOINTS } from "@/src/api/endpoints";
+import { ApiError } from "@/src/types/api-error";
 import type {
   CreditDashboardResponse,
   CreditInsightsResponse,
@@ -9,6 +11,11 @@ import type {
   SelfCreditEvaluationSummaryResponse,
 } from "@/src/types/dto/public-creditlens.dto";
 
+/**
+ * Public-customer CreditLens API client.
+ * Each function wraps one backend endpoint and normalizes transport errors into the shared ApiError shape.
+ */
+// Creates a new public-customer CreditLens evaluation through the API.
 export async function createPublicCreditEvaluation(): Promise<SelfCreditEvaluationResponse> {
   try {
     const { data } = await apiClient.post<SelfCreditEvaluationResponse>(
@@ -20,6 +27,7 @@ export async function createPublicCreditEvaluation(): Promise<SelfCreditEvaluati
   }
 }
 
+// Loads the latest public-customer CreditLens evaluation.
 export async function getCurrentPublicCreditEvaluation(): Promise<SelfCreditEvaluationResponse> {
   try {
     const { data } = await apiClient.get<SelfCreditEvaluationResponse>(
@@ -31,6 +39,7 @@ export async function getCurrentPublicCreditEvaluation(): Promise<SelfCreditEval
   }
 }
 
+// Loads the public-customer CreditLens dashboard data.
 export async function getPublicCreditDashboard(): Promise<CreditDashboardResponse> {
   try {
     const { data } = await apiClient.get<CreditDashboardResponse>(
@@ -42,6 +51,7 @@ export async function getPublicCreditDashboard(): Promise<CreditDashboardRespons
   }
 }
 
+// Loads public-customer CreditLens trend data for the selected range.
 export async function getPublicCreditTrends(range: "6m" | "12m" = "6m"): Promise<CreditTrendResponse> {
   try {
     const { data } = await apiClient.get<CreditTrendResponse>(
@@ -54,6 +64,7 @@ export async function getPublicCreditTrends(range: "6m" | "12m" = "6m"): Promise
   }
 }
 
+// Loads public-customer CreditLens insight cards.
 export async function getPublicCreditInsights(): Promise<CreditInsightsResponse> {
   try {
     const { data } = await apiClient.get<CreditInsightsResponse>(
@@ -65,6 +76,7 @@ export async function getPublicCreditInsights(): Promise<CreditInsightsResponse>
   }
 }
 
+// Loads public-customer CreditLens report data.
 export async function getPublicCreditReport(): Promise<CreditReportResponse> {
   try {
     const { data } = await apiClient.get<CreditReportResponse>(
@@ -76,6 +88,51 @@ export async function getPublicCreditReport(): Promise<CreditReportResponse> {
   }
 }
 
+// Downloads a public-customer CreditLens PDF report.
+export async function downloadPublicCreditReportPdf(selfEvaluationId: number): Promise<Blob> {
+  try {
+    const { data } = await apiClient.get<Blob>(
+      PUBLIC_CREDITLENS_ENDPOINTS.reportPdf(selfEvaluationId),
+      {
+        responseType: "blob",
+        headers: {
+          Accept: "application/pdf",
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+      try {
+        const parsed = JSON.parse(await error.response.data.text()) as { message?: string; [key: string]: unknown };
+        const message = typeof parsed.message === "string" && parsed.message
+          ? parsed.message
+          : "Unable to prepare the CreditLens PDF report.";
+
+        throw new ApiError({
+          message,
+          code: "UNKNOWN_ERROR",
+          status: error.response.status,
+          details: parsed,
+        });
+      } catch (blobError) {
+        if (blobError instanceof ApiError) {
+          throw blobError;
+        }
+
+        throw new ApiError({
+          message: "Unable to prepare the CreditLens PDF report.",
+          code: "UNKNOWN_ERROR",
+          status: error.response.status,
+        });
+      }
+    }
+
+    throw toApiError(error);
+  }
+}
+
+// Loads public-customer CreditLens evaluation history.
 export async function getPublicCreditEvaluationHistory(): Promise<SelfCreditEvaluationSummaryResponse[]> {
   try {
     const { data } = await apiClient.get<SelfCreditEvaluationSummaryResponse[]>(
@@ -87,6 +144,7 @@ export async function getPublicCreditEvaluationHistory(): Promise<SelfCreditEval
   }
 }
 
+// Loads one public-customer CreditLens evaluation by id.
 export async function getPublicCreditEvaluationById(
   selfEvaluationId: number,
 ): Promise<SelfCreditEvaluationResponse> {

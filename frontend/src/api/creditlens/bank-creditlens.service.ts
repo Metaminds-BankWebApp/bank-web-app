@@ -1,5 +1,7 @@
+import axios from "axios";
 import apiClient, { toApiError } from "@/src/api/client";
 import { BANK_CREDITLENS_ENDPOINTS } from "@/src/api/endpoints";
+import { ApiError } from "@/src/types/api-error";
 import type {
   BankCreditEvaluationResponse,
   BankCreditEvaluationSummaryResponse,
@@ -9,6 +11,11 @@ import type {
   CreditTrendResponse,
 } from "@/src/types/dto/bank-creditlens.dto";
 
+/**
+ * Bank-customer CreditLens API client.
+ * Each function wraps one backend endpoint and normalizes transport errors into the shared ApiError shape.
+ */
+// Loads the latest bank-customer CreditLens evaluation.
 export async function getCurrentBankCreditEvaluation(): Promise<BankCreditEvaluationResponse> {
   try {
     const { data } = await apiClient.get<BankCreditEvaluationResponse>(
@@ -20,6 +27,7 @@ export async function getCurrentBankCreditEvaluation(): Promise<BankCreditEvalua
   }
 }
 
+// Loads the bank-customer CreditLens dashboard data.
 export async function getBankCreditDashboard(): Promise<CreditDashboardResponse> {
   try {
     const { data } = await apiClient.get<CreditDashboardResponse>(
@@ -31,6 +39,7 @@ export async function getBankCreditDashboard(): Promise<CreditDashboardResponse>
   }
 }
 
+// Loads bank-customer CreditLens trend data for the selected range.
 export async function getBankCreditTrends(range: "6m" | "12m" = "6m"): Promise<CreditTrendResponse> {
   try {
     const { data } = await apiClient.get<CreditTrendResponse>(
@@ -43,6 +52,7 @@ export async function getBankCreditTrends(range: "6m" | "12m" = "6m"): Promise<C
   }
 }
 
+// Loads bank-customer CreditLens insight cards.
 export async function getBankCreditInsights(): Promise<CreditInsightsResponse> {
   try {
     const { data } = await apiClient.get<CreditInsightsResponse>(
@@ -54,6 +64,7 @@ export async function getBankCreditInsights(): Promise<CreditInsightsResponse> {
   }
 }
 
+// Loads bank-customer CreditLens report data.
 export async function getBankCreditReport(): Promise<CreditReportResponse> {
   try {
     const { data } = await apiClient.get<CreditReportResponse>(
@@ -65,6 +76,51 @@ export async function getBankCreditReport(): Promise<CreditReportResponse> {
   }
 }
 
+// Downloads a bank-customer CreditLens PDF report.
+export async function downloadBankCreditReportPdf(bankEvaluationId: number): Promise<Blob> {
+  try {
+    const { data } = await apiClient.get<Blob>(
+      BANK_CREDITLENS_ENDPOINTS.reportPdf(bankEvaluationId),
+      {
+        responseType: "blob",
+        headers: {
+          Accept: "application/pdf",
+        },
+      },
+    );
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.data instanceof Blob) {
+      try {
+        const parsed = JSON.parse(await error.response.data.text()) as { message?: string; [key: string]: unknown };
+        const message = typeof parsed.message === "string" && parsed.message
+          ? parsed.message
+          : "Unable to prepare the CreditLens PDF report.";
+
+        throw new ApiError({
+          message,
+          code: "UNKNOWN_ERROR",
+          status: error.response.status,
+          details: parsed,
+        });
+      } catch (blobError) {
+        if (blobError instanceof ApiError) {
+          throw blobError;
+        }
+
+        throw new ApiError({
+          message: "Unable to prepare the CreditLens PDF report.",
+          code: "UNKNOWN_ERROR",
+          status: error.response.status,
+        });
+      }
+    }
+
+    throw toApiError(error);
+  }
+}
+
+// Loads bank-customer CreditLens evaluation history.
 export async function getBankCreditEvaluationHistory(): Promise<BankCreditEvaluationSummaryResponse[]> {
   try {
     const { data } = await apiClient.get<BankCreditEvaluationSummaryResponse[]>(
@@ -76,6 +132,7 @@ export async function getBankCreditEvaluationHistory(): Promise<BankCreditEvalua
   }
 }
 
+// Loads one bank-customer CreditLens evaluation by id.
 export async function getBankCreditEvaluationById(
   bankEvaluationId: number,
 ): Promise<BankCreditEvaluationResponse> {

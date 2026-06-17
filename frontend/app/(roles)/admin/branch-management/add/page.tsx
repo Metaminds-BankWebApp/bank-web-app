@@ -232,28 +232,6 @@ export default function AddBranchPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold mb-2">TOTAL CUSTOMERS</label>
-                    <input
-                      type="text"
-                      value="0"
-                      readOnly
-                      className="w-full px-4 py-3 rounded-lg border text-sm bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold mb-2">TOTAL OFFICERS</label>
-                    <input
-                      type="text"
-                      value="0"
-                      readOnly
-                      className="w-full px-4 py-3 rounded-lg border text-sm bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
-                  <div>
                     <label className="block text-xs font-semibold mb-2">CONTACT NUMBER</label>
                     <input
                       type="text"
@@ -269,6 +247,12 @@ export default function AddBranchPage() {
                       <p className="mt-1 text-xs text-red-600">{errors.contact}</p>
                     ) : null}
                   </div>
+                </div>
+
+                
+
+                <div className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
+                  
 
                   <div>
                     <label className="block text-xs font-semibold mb-2">EMAIL ADDRESS</label>

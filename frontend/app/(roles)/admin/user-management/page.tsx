@@ -5,7 +5,7 @@ import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 import { ConfirmationModal, useToast } from "@/src/components/ui";
-import { Pencil, Search, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Search, Trash2, X } from "lucide-react";
 import {
   deleteAdminUser,
   getAdminUsers,
@@ -282,6 +282,18 @@ export default function UserManagementPage() {
   }, [searchField, searchQuery, users]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 0) {
+      return [];
+    }
+
+    const maxVisibleButtons = 3;
+    let start = Math.max(1, currentPage - 1);
+    const end = Math.min(totalPages, start + maxVisibleButtons - 1);
+    start = Math.max(1, end - maxVisibleButtons + 1);
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  }, [currentPage, totalPages]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -462,7 +474,7 @@ export default function UserManagementPage() {
               avatarStatusDot
               name="Kamal Edirisinghe"
               role="Admin"
-              title="User Management"
+              title="Customer Management"
             />
           </div>
 
@@ -624,7 +636,7 @@ export default function UserManagementPage() {
                             </td>
                             <td className="px-6 py-4">
                               <span
-                                className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${
+                                className={`inline-flex min-w-[7.5rem] justify-center px-3 py-1 rounded-full text-xs font-semibold ${
                                   user.status === "ACTIVE"
                                     ? "bg-green-100 text-green-700"
                                     : user.status === "INACTIVE"
@@ -673,22 +685,23 @@ export default function UserManagementPage() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  className="px-3 py-2 rounded-lg border text-gray-600 disabled:opacity-40"
+                  className="px-3 py-2 rounded-lg border text-gray-600 disabled:opacity-40 flex items-center justify-center"
+                  aria-label="Previous page"
                 >
-                  {"<"}
+                  <ChevronLeft size={16} />
                 </button>
 
-                {Array.from({ length: totalPages }).map((_, index) => (
+                {visiblePages.map((page) => (
                   <button
-                    key={index}
-                    onClick={() => setCurrentPage(index + 1)}
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
                     className={`px-4 py-2 rounded-lg ${
-                      currentPage === index + 1
+                      currentPage === page
                         ? "bg-[#0B3B66] text-white"
                         : "border text-gray-700"
                     }`}
                   >
-                    {index + 1}
+                    {page}
                   </button>
                 ))}
 
@@ -697,9 +710,10 @@ export default function UserManagementPage() {
                   onClick={() =>
                     setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                   }
-                  className="px-3 py-2 rounded-lg border text-gray-600 disabled:opacity-40"
+                  className="px-3 py-2 rounded-lg border text-gray-600 disabled:opacity-40 flex items-center justify-center"
+                  aria-label="Next page"
                 >
-                  {">"}
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>

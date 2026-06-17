@@ -11,6 +11,7 @@ import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
+import { useToast } from "@/src/components/ui";
 import { Badge } from "@/src/components/ui/badge";
 import {
   Select,
@@ -36,6 +37,7 @@ import {
   UserRound,
 } from "lucide-react";
 import {
+  downloadOfficerCreditReportPdf,
   getOfficerCreditCurrentEvaluation,
   getOfficerCreditCustomerProfile,
   getOfficerCreditEvaluationHistory,
@@ -44,6 +46,7 @@ import {
   getOfficerCreditTrends,
 } from "@/src/api/creditlens/officer-creditlens.service";
 import { ApiError } from "@/src/types/api-error";
+import { getCreditLensRiskScoreTextClass } from "@/src/lib/creditlens-risk";
 import { getBankCustomerFinancialRecordById } from "@/src/api/customers/bank-customer-financial.service";
 import type {
   BankCreditAnalysisCustomerProfileResponse,
@@ -71,6 +74,7 @@ type TrendRange = "6m" | "12m";
 type LabelTone = "Low" | "Medium" | "High";
 
 type OfficerReportSnapshot = {
+  evaluationId: number;
   month: string;
   lastUpdatedIso: string;
   income: number;
@@ -98,6 +102,9 @@ const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "reports", label: "Reports" },
 ];
 
+/**
+ * Officer-side CreditLens evaluation workspace for reviewing one customer's latest and historical results.
+ */
 export default function CreditAnalysisEvaluationPage() {
   // Detailed customer evaluation view: load base data first, then fetch each tab on demand.
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
@@ -105,6 +112,7 @@ export default function CreditAnalysisEvaluationPage() {
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [reportFileType, setReportFileType] = useState<ReportFileType>("pdf");
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
 
   const [profile, setProfile] = useState<BankCreditAnalysisCustomerProfileResponse | null>(null);
   const [currentEvaluation, setCurrentEvaluation] = useState<BankCreditEvaluationResponse | null>(null);
@@ -372,6 +380,7 @@ export default function CreditAnalysisEvaluationPage() {
     return reportData.find((snapshot) => snapshot.month === selectedMonth) ?? newestReportSnapshot;
   }, [newestReportSnapshot, reportData, selectedMonth]);
 
+  // Builds the report date stamp used in filenames.
   const reportDateStamp = useMemo(
     () => new Date().toISOString().slice(0, 10).replace(/-/g, ""),
     [],
@@ -649,7 +658,7 @@ export default function CreditAnalysisEvaluationPage() {
                             className="h-10 w-full rounded-xl bg-[#3e9fd3] px-5 text-white hover:bg-[#3587b3] sm:w-auto"
                           >
                             <Download className="mr-2 h-4 w-4" />
-                            Download Full Report
+                            Download PDF Report
                           </Button>
                         </div>
 
@@ -739,6 +748,9 @@ export default function CreditAnalysisEvaluationPage() {
           fileBaseName={reportFileBaseName}
           fileType={reportFileType}
           onFileTypeChange={setReportFileType}
+          supportedFileTypes={["pdf"]}
+          isDownloading={isDownloadingReport}
+          onDownload={handleConfirmDownload}
           monthLabel={selectedMonth ?? currentReportSnapshot.month}
           score={currentReportSnapshot.score}
           riskLabel={currentReportSnapshot.riskLabel}
@@ -748,6 +760,7 @@ export default function CreditAnalysisEvaluationPage() {
   );
 }
 
+// Renders the officer customer CreditLens overview tab.
 function OverviewTab({
   customerName,
   profile,
@@ -821,7 +834,7 @@ function OverviewTab({
               <div className="mx-auto h-55 w-full max-w-85">
                 <CreditRiskGauge value={evaluation.totalRiskPoints} />
                 <div className="-mt-16 text-center">
-                  <div className="text-5xl font-bold tracking-tight text-[#fbbf24]">{evaluation.totalRiskPoints}</div>
+                  <div className={`text-5xl font-bold tracking-tight ${getCreditLensRiskScoreTextClass(evaluation.riskLabel)}`}>{evaluation.totalRiskPoints}</div>
                   <div className="mt-1 text-base text-slate-200">{evaluation.riskLabel}</div>
                 </div>
               </div>
@@ -839,6 +852,7 @@ function OverviewTab({
   );
 }
 
+// Renders a shared tab container for officer CreditLens panels.
 function CreditLensTabShell({
   title,
   subtitle,
@@ -862,6 +876,9 @@ function CreditLensTabShell({
   );
 }
 
+/**
+ * Reusable panel state card for loading, empty, and error blocks inside the evaluation workspace.
+ */
 function PanelStateCard({
   title,
   description,
@@ -888,6 +905,7 @@ function PanelStateCard({
   );
 }
 
+// Renders the call-to-action banner used in CreditLens panels.
 function ActionBanner({
   title,
   description,
@@ -919,6 +937,7 @@ function ActionBanner({
   );
 }
 
+// Renders one compact detail tile in the officer view.
 function DetailTile({
   icon,
   label,
@@ -939,6 +958,7 @@ function DetailTile({
   );
 }
 
+// Renders one small statistic item.
 function MiniStat({
   title,
   value,
@@ -957,6 +977,7 @@ function MiniStat({
   );
 }
 
+// Keeps the latest evaluation for each month in history.
 function buildLatestHistoryByMonth(
   history: BankCreditEvaluationSummaryResponse[],
 ): Map<string, BankCreditEvaluationSummaryResponse> {
@@ -975,6 +996,7 @@ function buildLatestHistoryByMonth(
   return entries;
 }
 
+// Maps officer report snapshots into the shared report UI model.
 function mapOfficerReportSnapshots(
   report: CreditReportResponse,
   latestHistoryByMonth: Map<string, BankCreditEvaluationSummaryResponse>,
@@ -990,6 +1012,7 @@ function mapOfficerReportSnapshots(
         : undefined;
 
       return {
+        evaluationId: snapshot.evaluationId,
         month: snapshot.monthLabel,
         lastUpdatedIso: snapshot.lastUpdated,
         income: snapshot.income,
@@ -1017,6 +1040,7 @@ function mapOfficerReportSnapshots(
     .sort((left, right) => Date.parse(left.lastUpdatedIso) - Date.parse(right.lastUpdatedIso));
 }
 
+// Adds remaining loan balances for report totals.
 function sumRemainingLoanBalance(record: {
   loans: Array<{
     remainingBalance: number;
@@ -1025,6 +1049,7 @@ function sumRemainingLoanBalance(record: {
   return record.loans.reduce((total, loan) => total + loan.remainingBalance, 0);
 }
 
+// Normalizes risk labels into display tones.
 function normalizeLabel(value?: string): LabelTone {
   const normalized = (value ?? "").trim().toLowerCase();
 
@@ -1037,14 +1062,17 @@ function normalizeLabel(value?: string): LabelTone {
   return "Medium";
 }
 
+// Rounds report metric values for display.
 function roundMetric(value: number): number {
   return Number(value.toFixed(1));
 }
 
+// Formats report values as LKR currency.
 function formatCurrency(value: number): string {
   return `LKR ${value.toLocaleString()}`;
 }
 
+// Formats date values for CreditLens display.
 function formatDate(value?: string | null): string {
   if (!value) {
     return "Not available";
@@ -1062,6 +1090,19 @@ function formatDate(value?: string | null): string {
   });
 }
 
+// Downloads a generated report blob in the browser.
+function downloadBlob(filename: string, blob: Blob) {
+  const downloadUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(downloadUrl);
+}
+
+// Converts a date string into a month key for report grouping.
 function toMonthKey(value: string): string {
   const parsed = new Date(value);
   if (!Number.isNaN(parsed.getTime())) {
@@ -1071,6 +1112,7 @@ function toMonthKey(value: string): string {
   return value.slice(0, 7);
 }
 
+// Chooses a chart color for a CreditLens factor name.
 function factorColor(name: string): string {
   const normalized = name.toLowerCase();
 

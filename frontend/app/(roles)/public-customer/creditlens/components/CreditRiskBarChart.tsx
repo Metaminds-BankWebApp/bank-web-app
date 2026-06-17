@@ -21,6 +21,9 @@ type Props = {
 const defaultLabels = ["April", "May", "June", "July", "August", "September"];
 const defaultValues = [80, 50, 90, 70, 60, 55];
 
+/**
+ * Expanded bar chart used on the trends page to compare monthly CreditLens scores.
+ */
 export default function CreditRiskBarChart({ labels = defaultLabels, values = defaultValues }: Props) {
   const PURPLE = "rgba(168,85,247,0.75)";
   const GREEN = "rgba(34,197,94,0.80)";
@@ -45,6 +48,7 @@ export default function CreditRiskBarChart({ labels = defaultLabels, values = de
 
   const barThickness = isMobile ? (labels.length > 6 ? 10 : 18) : labels.length > 6 ? 26 : 60;
 
+  // Builds chart data from current CreditLens values.
   const data = useMemo(
     () => ({
       labels,

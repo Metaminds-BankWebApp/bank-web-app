@@ -84,10 +84,11 @@ const statusMeta: Record<TransactionStatus, { label: string; variant: "success" 
   cancelled: { label: "Cancelled", variant: "outline" },
 }
 
+const statusBadgeClassName = "min-w-[112px] justify-center whitespace-nowrap px-3 py-1"
+
 export default function Page() {
   const [records, setRecords] = React.useState<TransactionRecord[]>([])
-  const [accountQuery, setAccountQuery] = React.useState("")
-  const [nameQuery, setNameQuery] = React.useState("")
+  const [searchQuery, setSearchQuery] = React.useState("")
   const [dateQuery, setDateQuery] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(true)
   const [loadError, setLoadError] = React.useState("")
@@ -133,25 +134,22 @@ export default function Page() {
 
   const filteredData = React.useMemo(() => {
     return records.filter((record) => {
-      const accountMatch = accountQuery.trim()
-        ? record.receiverAcc.includes(accountQuery.trim()) || record.senderAcc.includes(accountQuery.trim())
-        : true
-
-      const normalizedNameQuery = nameQuery.trim().toLowerCase()
-      const nameMatch = normalizedNameQuery
-        ? record.receiverName.toLowerCase().includes(normalizedNameQuery) ||
-          record.senderName.toLowerCase().includes(normalizedNameQuery)
+      const normalizedSearchQuery = searchQuery.trim().toLowerCase()
+      const searchMatch = normalizedSearchQuery
+        ? record.receiverAcc.toLowerCase().includes(normalizedSearchQuery) ||
+          record.senderAcc.toLowerCase().includes(normalizedSearchQuery) ||
+          record.receiverName.toLowerCase().includes(normalizedSearchQuery) ||
+          record.senderName.toLowerCase().includes(normalizedSearchQuery)
         : true
 
       const dateMatch = dateQuery ? record.date === dateQuery : true
 
-      return accountMatch && nameMatch && dateMatch
+      return searchMatch && dateMatch
     })
-  }, [records, accountQuery, nameQuery, dateQuery])
+  }, [records, searchQuery, dateQuery])
 
   function clearFilters() {
-    setAccountQuery("")
-    setNameQuery("")
+    setSearchQuery("")
     setDateQuery("")
   }
 
@@ -173,24 +171,11 @@ export default function Page() {
                 <Search className="w-4 h-4" />
               </span>
               <Input
-                value={accountQuery}
-                onChange={(event) => setAccountQuery(event.target.value)}
-                placeholder="Search account no"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search account no or name"
                 className="pl-10 w-full"
-                aria-label="Search by account number"
-              />
-            </div>
-
-            <div className="relative max-w-md w-full sm:w-64">
-              <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-(--primecore-foreground)/60">
-                <Search className="w-4 h-4" />
-              </span>
-              <Input
-                value={nameQuery}
-                onChange={(event) => setNameQuery(event.target.value)}
-                placeholder="Search by name"
-                className="pl-10 w-full"
-                aria-label="Search by name"
+                aria-label="Search by account number or name"
               />
             </div>
           </div>
@@ -250,7 +235,9 @@ export default function Page() {
                       <td className="px-4 py-3 align-middle">{row.senderAcc}</td>
                       <td className="px-4 py-4 align-middle">{row.amount}</td>
                       <td className="px-4 py-3 align-middle">
-                        <Badge variant={statusMeta[row.status].variant}>{statusMeta[row.status].label}</Badge>
+                        <Badge className={statusBadgeClassName} variant={statusMeta[row.status].variant}>
+                          {statusMeta[row.status].label}
+                        </Badge>
                       </td>
                       <td className="px-4 py-3 align-middle">{row.date || "-"}</td>
                       <td className="px-4 py-3 align-middle">{row.reference}</td>

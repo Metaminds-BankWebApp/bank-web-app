@@ -45,6 +45,7 @@ function formatMoney(value: number): string {
 }
 
 const monthOptions = [
+  { value: 0, label: "All months" },
   { value: 1, label: "January" },
   { value: 2, label: "February" },
   { value: 3, label: "March" },
@@ -75,11 +76,12 @@ export function SpendIqCategoryAnalysisPage() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { fromDate, toDate } = monthBounds(selectedYear, selectedMonth);
+      const isAllMonths = selectedMonth === 0;
+      const dateRange = isAllMonths ? undefined : monthBounds(selectedYear, selectedMonth);
       const [categoryData, expenseData, budgetData] = await Promise.all([
         getSpendIqCategories(),
-        getSpendIqExpenses({ fromDate, toDate }),
-        getSpendIqBudgets({ month: selectedMonth, year: selectedYear }),
+        getSpendIqExpenses(dateRange),
+        isAllMonths ? getSpendIqBudgets() : getSpendIqBudgets({ month: selectedMonth, year: selectedYear }),
       ]);
       setCategories(categoryData);
       setExpenses(expenseData);
@@ -107,7 +109,10 @@ export function SpendIqCategoryAnalysisPage() {
     }
 
     for (const budget of budgets) {
-      budgetByCategory.set(budget.categoryId, Number(budget.budgetAmount ?? 0));
+      budgetByCategory.set(
+        budget.categoryId,
+        round2((budgetByCategory.get(budget.categoryId) ?? 0) + Number(budget.budgetAmount ?? 0)),
+      );
     }
 
     const totalSpent = Array.from(spentByCategory.values()).reduce((acc, value) => acc + value, 0);
@@ -138,15 +143,17 @@ export function SpendIqCategoryAnalysisPage() {
   const maxAmount = topSpendingRows.reduce((max, row) => Math.max(max, row.amount), 0);
 
   function openCategoryTransactions(categoryName: string) {
-    const { fromDate, toDate } = monthBounds(selectedYear, selectedMonth);
     const transactionsPath = pathname.endsWith("/category")
       ? pathname.replace(/\/category$/, "/category/transactions")
       : "/public-customer/spendiq/category/transactions";
     const query = new URLSearchParams({
       category: categoryName,
-      fromDate,
-      toDate,
     });
+    if (selectedMonth !== 0) {
+      const { fromDate, toDate } = monthBounds(selectedYear, selectedMonth);
+      query.set("fromDate", fromDate);
+      query.set("toDate", toDate);
+    }
     router.push(`${transactionsPath}?${query.toString()}`);
   }
 
@@ -181,6 +188,7 @@ export function SpendIqCategoryAnalysisPage() {
                 max={3000}
                 value={selectedYear}
                 onChange={(event) => setSelectedYear(Number(event.target.value))}
+                disabled={selectedMonth === 0}
                 className="w-full h-10 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm"
               />
             </div>

@@ -82,6 +82,7 @@ export const PUBLIC_CREDITLENS_ENDPOINTS = {
   trends: "/creditlens/public/trends",
   insights: "/creditlens/public/insights",
   report: "/creditlens/public/report",
+  reportPdf: (selfEvaluationId: number) => `/creditlens/public/report/${selfEvaluationId}/pdf`,
   history: "/creditlens/public/history",
   byId: (selfEvaluationId: number) => `/creditlens/public/evaluations/${selfEvaluationId}`,
 } as const;
@@ -92,8 +93,18 @@ export const BANK_CREDITLENS_ENDPOINTS = {
   trends: "/creditlens/bank/trends",
   insights: "/creditlens/bank/insights",
   report: "/creditlens/bank/report",
+  reportPdf: (bankEvaluationId: number) => `/creditlens/bank/report/${bankEvaluationId}/pdf`,
   history: "/creditlens/bank/history",
   byId: (bankEvaluationId: number) => `/creditlens/bank/evaluations/${bankEvaluationId}`,
+} as const;
+
+export const BANK_LOANSENSE_ENDPOINTS = {
+  current: "/loansense/bank/current",
+  history: "/loansense/bank/history",
+  byId: (loansenseEvaluationId: number) =>
+    `/loansense/bank/evaluations/${loansenseEvaluationId}`,
+  loanType: (loanType: string) =>
+    `/loansense/bank/loan-types/${encodeURIComponent(loanType)}`,
 } as const;
 
 export const USER_PROFILE_ENDPOINTS = {
@@ -108,14 +119,22 @@ export const ADMIN_ENDPOINTS = {
   branches: "/admin/branches",
   users: "/admin/users",
   dashboardSummary: "/admin/dashboard/summary",
+  dashboardRecentActions: "/admin/dashboard/recent-actions",
+  dashboardMonthlyUserGrowth: "/admin/dashboard/monthly-user-growth",
+  auditLogs: "/admin/audit-logs",
+  auditLogFilters: "/admin/audit-logs/filters",
+  auditLogRecent: "/admin/audit-logs/recent",
+  loanPolicies: "/admin/loan-policies",
 } as const;
 
 export const TRANSACT_ENDPOINTS = {
-  // Bank officer reads transaction history through the same transact module.
+  dashboardCurrentBalance: "/bank-customers/transact/dashboard/current-balance",
+  dashboardSummary: "/bank-customers/transact/dashboard/summary",
   transactionsInitiate: "/bank-customers/transact/transactions/initiate",
   transactionsVerifyOtp: "/bank-customers/transact/transactions/verify-otp",
   transactionsResendOtp: "/bank-customers/transact/transactions/resend-otp",
   transactionsHistory: "/bank-customers/transact/transactions/history",
+  transactionsHistoryReport: "/bank-customers/transact/transactions/history/report",
   bankOfficerTransactionsHistory: "/bank-officers/transact/transactions",
   transactionByReference: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}`,
   beneficiaries: "/bank-customers/transact/beneficiaries",

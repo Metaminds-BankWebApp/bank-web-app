@@ -56,11 +56,17 @@ const toneClasses: Record<string, ToneClasses> = {
   },
 };
 
+/**
+ * Shared helper utilities for rendering CreditLens insight card tones, icons, and tooltips.
+ */
 export function getInsightToneClasses(tone?: string): ToneClasses {
   const normalizedTone = (tone ?? "").trim().toLowerCase();
   return toneClasses[normalizedTone] ?? toneClasses.slate;
 }
 
+/**
+ * Maps backend icon keys to the Lucide icon used by the CreditLens insight cards.
+ */
 export function CreditInsightIcon({
   iconKey,
   className = "h-5 w-5",
@@ -96,6 +102,9 @@ export function CreditInsightIcon({
   }
 }
 
+/**
+ * Displays the inline explanation tooltip for a CreditLens factor or insight item.
+ */
 export function CreditInsightInfoButton({
   tooltip,
 }: {

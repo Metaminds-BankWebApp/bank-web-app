@@ -17,13 +17,16 @@ type Props = {
   insufficientHistoryDescription?: string;
 };
 
+/**
+ * Narrative summary card that explains the direction and quality of the recent CreditLens trend.
+ */
 export default function TrendSummaryCard({
   riskLabel = "Moderate Risk",
   riskDelta = -25,
   trendText = "Improved since April",
   biggestDriver = "Reduced DTI pressure",
   momentumText = "Average drop of 5 risk pts per month",
-  nextTarget = "Below 40 to Low Risk",
+  nextTarget = "33 or below to Low Risk",
   hasSufficientHistory = true,
   insufficientHistoryTitle = "Not enough trend history yet",
   insufficientHistoryDescription = "At least 2 monthly evaluations are needed before CreditLens can show score movement, biggest drivers, and monthly momentum.",

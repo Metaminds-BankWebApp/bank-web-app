@@ -46,6 +46,7 @@ const tabOptions: Array<{ key: "all" | RiskType; label: string }> = [
   { key: "high", label: "High Risk" },
 ];
 
+// Converts backend risk text into the dashboard risk type.
 function toRiskType(value: string): RiskType {
   const normalized = (value ?? "").trim().toUpperCase();
   if (normalized === "LOW") return "low";
@@ -53,11 +54,15 @@ function toRiskType(value: string): RiskType {
   return "high";
 }
 
+// Builds initials for profile avatars or customer rows.
 function buildInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? "").join("") || "--";
 }
 
+/**
+ * Officer-facing CreditLens portfolio dashboard with search, filters, export, and quick risk counts.
+ */
 export default function CreditAnalysisPage() {
   // Portfolio view for officer risk analysis with search, filters, sorting, and export.
   const router = useRouter();
@@ -118,10 +123,10 @@ export default function CreditAnalysisPage() {
         scoreFilter === "all"
           ? true
           : scoreFilter === "low"
-            ? item.totalRiskPoints < 40
+            ? item.totalRiskPoints <= 33
             : scoreFilter === "medium"
-              ? item.totalRiskPoints >= 40 && item.totalRiskPoints < 70
-              : item.totalRiskPoints >= 70;
+              ? item.totalRiskPoints > 33 && item.totalRiskPoints <= 66
+              : item.totalRiskPoints > 66;
       return byTab && byQuery && byScore;
     });
 
@@ -253,9 +258,9 @@ export default function CreditAnalysisPage() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Risk Scores</SelectItem>
-                          <SelectItem value="low">Low Risk (below 40)</SelectItem>
-                          <SelectItem value="medium">Medium Risk (40-69)</SelectItem>
-                          <SelectItem value="high">High Risk (70+)</SelectItem>
+                          <SelectItem value="low">Low Risk (0-33)</SelectItem>
+                          <SelectItem value="medium">Medium Risk (34-66)</SelectItem>
+                          <SelectItem value="high">High Risk (67+)</SelectItem>
                         </SelectContent>
                       </Select>
 
@@ -387,6 +392,9 @@ export default function CreditAnalysisPage() {
   );
 }
 
+/**
+ * Summary metric card used in the officer portfolio header.
+ */
 function StatCard({
   title,
   value,
@@ -411,6 +419,9 @@ function StatCard({
   );
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the officer dashboard.
+ */
 function StateCard({
   title,
   description,
@@ -437,6 +448,7 @@ function StateCard({
   );
 }
 
+// Chooses badge styles from the risk type.
 function badgeClasses(risk: RiskType): string {
   if (risk === "low") {
     return "bg-emerald-100 text-emerald-700";
@@ -447,6 +459,7 @@ function badgeClasses(risk: RiskType): string {
   return "bg-amber-100 text-amber-700";
 }
 
+// Chooses avatar styles from the risk type.
 function avatarClasses(risk: RiskType): string {
   if (risk === "low") {
     return "bg-cyan-100 text-cyan-600";
@@ -457,6 +470,7 @@ function avatarClasses(risk: RiskType): string {
   return "bg-amber-100 text-amber-600";
 }
 
+// Chooses indicator styles from the risk type.
 function indicatorClasses(risk: RiskType): string {
   if (risk === "low") {
     return "bg-emerald-500";
@@ -467,6 +481,7 @@ function indicatorClasses(risk: RiskType): string {
   return "bg-amber-500";
 }
 
+// Formats date values for CreditLens display.
 function formatDate(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {

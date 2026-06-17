@@ -40,6 +40,47 @@ export type TransactionResponse = {
   transactionDate: string;
 };
 
+export type CurrentBalanceResponse = {
+  accountNumber: string;
+  currentBalance: number;
+};
+
+export type TransactDashboardSummaryResponse = {
+  accountNumber: string;
+  currentBalance: number;
+  totalTransactions: number;
+  totalSent: number;
+  totalReceived: number;
+  timeline: {
+    labels: string[];
+    values: number[];
+  };
+  transactionStatus: {
+    successCount: number;
+    failedCount: number;
+    pendingOtpCount: number;
+    cancelledCount: number;
+  };
+  otpStatus: {
+    sentCount: number;
+    verifiedCount: number;
+    expiredCount: number;
+    failedCount: number;
+  };
+  savedBeneficiaries: number;
+  recentTransactions: Array<{
+    transactionId: number;
+    referenceNo: string;
+    transactionDate: string;
+    direction: "SENT" | "RECEIVED" | string;
+    counterpartyAccountNo: string;
+    counterpartyName: string;
+    amount: number;
+    status: string;
+    remark: string;
+  }>;
+};
+
 export type CreateBeneficiaryRequest = {
   beneficiaryAccountNo: string;
   nickName: string;

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2, Search, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Trash2, Search, X } from "lucide-react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
@@ -55,7 +55,7 @@ type OfficerEditForm = AdminBankOfficerUpdateRequest & {
   status: AdminBankOfficerStatus;
 };
 
-const officerEmailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;
+const officerEmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
 const officerContactRegex = /^(?:070|071|072|074|075|076|077|078)\d{7}$/;
 const officerSearchOptions: Array<{ value: OfficerSearchField; label: string }> = [
   { value: "ALL", label: "All Fields" },
@@ -111,7 +111,9 @@ function StatusBadge({ status }: { status: StatusType }) {
       : "bg-yellow-100 text-yellow-700";
 
   return (
-    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${classes}`}>
+    <span
+      className={`inline-flex min-w-[7.5rem] justify-center px-3 py-1 rounded-full text-xs font-semibold ${classes}`}
+    >
       {status}
     </span>
   );
@@ -388,7 +390,7 @@ export default function Page() {
     if (!payload.email.trim()) {
       errors.email = "Email address is required.";
     } else if (!officerEmailRegex.test(payload.email.trim())) {
-      errors.email = "Email must be in the format name@primecore.com.";
+      errors.email = "Email must be in the format name@gmail.com.";
     }
     if (!payload.contactNumber.trim()) {
       errors.contactNumber = "Contact number is required.";
@@ -507,6 +509,18 @@ export default function Page() {
     filteredOfficers.length === 0 ? 0 : (currentPage - 1) * officersPerPage + 1;
   const showingTo =
     filteredOfficers.length === 0 ? 0 : Math.min(currentPage * officersPerPage, filteredOfficers.length);
+  const visiblePages = useMemo(() => {
+    if (totalPages <= 0) {
+      return [];
+    }
+
+    const maxVisibleButtons = 3;
+    let start = Math.max(1, currentPage - 1);
+    const end = Math.min(totalPages, start + maxVisibleButtons - 1);
+    start = Math.max(1, end - maxVisibleButtons + 1);
+
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  }, [currentPage, totalPages]);
 
   const summary = useMemo(() => {
     const activeCount = officers.filter((officer) => officer.status === "Active").length;
@@ -702,36 +716,35 @@ export default function Page() {
                 <button
                   onClick={() => setCurrentPage((previous) => Math.max(previous - 1, 1))}
                   disabled={currentPage === 1 || totalPages === 0}
-                  className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                  className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40 flex items-center justify-center"
+                  aria-label="Previous page"
                 >
-                  &lt;
+                  <ChevronLeft size={16} />
                 </button>
 
-                {Array.from({ length: totalPages }).map((_, index) => {
-                  const page = index + 1;
-                  return (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-2 rounded-lg ${
-                        currentPage === page
-                          ? "bg-[#0B3B66] text-white"
-                          : "border text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  );
-                })}
+                {visiblePages.map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg ${
+                      currentPage === page
+                        ? "bg-[#0B3B66] text-white"
+                        : "border text-gray-700 hover:bg-gray-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
 
                 <button
                   onClick={() =>
                     setCurrentPage((previous) => Math.min(previous + 1, Math.max(totalPages, 1)))
                   }
                   disabled={totalPages === 0 || currentPage === totalPages}
-                  className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40"
+                  className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40 flex items-center justify-center"
+                  aria-label="Next page"
                 >
-                  &gt;
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>

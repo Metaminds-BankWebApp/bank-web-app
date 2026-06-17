@@ -11,8 +11,6 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { useToast } from "@/src/components/ui/toast";
 
-const DEFAULT_EXPENSE_LIMIT = 20;
-
 function paymentLabel(value: string): string {
   if (value === "BANK_TRANSFER") return "Bank Transfer";
   if (value === "CARD") return "Card";
@@ -140,14 +138,11 @@ export function SpendIqHistoryPage() {
     [sortedExpenses, startDate, endDate, categoryFilter, paymentFilter],
   );
 
-  const visibleExpenses = useMemo(
-    () => (hasActiveFilter ? filteredExpenses : filteredExpenses.slice(0, DEFAULT_EXPENSE_LIMIT)),
-    [filteredExpenses, hasActiveFilter],
-  );
+  const visibleExpenses = filteredExpenses;
 
   const summaryText = hasActiveFilter
     ? `${visibleExpenses.length} matching expense${visibleExpenses.length === 1 ? "" : "s"}`
-    : `Showing latest ${visibleExpenses.length} of ${sortedExpenses.length} expenses`;
+    : `Showing all ${sortedExpenses.length} expense${sortedExpenses.length === 1 ? "" : "s"}`;
 
   function clearFilters() {
     setStartDate("");

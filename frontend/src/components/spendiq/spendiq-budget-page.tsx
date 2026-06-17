@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertTriangle, Pencil } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Dialog } from "@/src/components/ui/dialog";
 import ModuleHeader from "@/src/components/ui/module-header";
@@ -25,6 +25,9 @@ type BudgetRow = {
   remainingAmount: number;
   usagePercentage: number;
 };
+
+const BUDGET_NEAR_LIMIT_PERCENTAGE = 80;
+const BUDGET_OVER_LIMIT_PERCENTAGE = 100;
 
 function monthBounds(year: number, month: number): { fromDate: string; toDate: string } {
   const from = new Date(Date.UTC(year, month - 1, 1));
@@ -152,6 +155,7 @@ const monthOptions = [
 export function SpendIqBudgetPage() {
   const { showToast } = useToast();
   const today = new Date();
+  const lastBudgetWarningKeyRef = useRef("");
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
@@ -256,8 +260,8 @@ export function SpendIqBudgetPage() {
 
   const suggestions = useMemo(() => {
     const messages: string[] = [];
-    const overBudget = rows.filter((row) => row.budgetAmount > 0 && row.usagePercentage > 100);
-    const nearLimit = rows.filter((row) => row.budgetAmount > 0 && row.usagePercentage >= 80 && row.usagePercentage <= 100);
+    const overBudget = rows.filter((row) => row.budgetAmount > 0 && row.usagePercentage > BUDGET_OVER_LIMIT_PERCENTAGE);
+    const nearLimit = rows.filter((row) => row.budgetAmount > 0 && row.usagePercentage >= BUDGET_NEAR_LIMIT_PERCENTAGE && row.usagePercentage <= BUDGET_OVER_LIMIT_PERCENTAGE);
     const noBudgetButSpent = rows.filter((row) => row.budgetAmount === 0 && row.spentAmount > 0);
 
     if (summary.budgetUsagePercentage >= 90) {
@@ -288,6 +292,46 @@ export function SpendIqBudgetPage() {
 
     return messages.slice(0, 3);
   }, [rows, summary.budgetUsagePercentage]);
+
+  const budgetAlerts = useMemo(() => {
+    const overBudget = rows.filter((row) => row.budgetAmount > 0 && row.usagePercentage > BUDGET_OVER_LIMIT_PERCENTAGE);
+    const nearLimit = rows.filter((row) => row.budgetAmount > 0 && row.usagePercentage >= BUDGET_NEAR_LIMIT_PERCENTAGE && row.usagePercentage <= BUDGET_OVER_LIMIT_PERCENTAGE);
+
+    return {
+      overBudget,
+      nearLimit,
+      hasWarnings: overBudget.length > 0 || nearLimit.length > 0,
+    };
+  }, [rows]);
+
+  useEffect(() => {
+    if (isLoading || !budgetAlerts.hasWarnings) return;
+
+    const warningKey = [
+      selectedYear,
+      selectedMonth,
+      budgetAlerts.overBudget.map((row) => `${row.categoryId}:${row.usagePercentage}`).join("|"),
+      budgetAlerts.nearLimit.map((row) => `${row.categoryId}:${row.usagePercentage}`).join("|"),
+    ].join(":");
+
+    if (lastBudgetWarningKeyRef.current === warningKey) return;
+    lastBudgetWarningKeyRef.current = warningKey;
+
+    if (budgetAlerts.overBudget.length > 0) {
+      showToast({
+        type: "error",
+        title: "Budget limit exceeded",
+        description: `${budgetAlerts.overBudget.map((row) => row.categoryName).join(", ")} ${budgetAlerts.overBudget.length === 1 ? "is" : "are"} over budget.`,
+      });
+      return;
+    }
+
+    showToast({
+      type: "info",
+      title: "Budget limit warning",
+      description: `${budgetAlerts.nearLimit.map((row) => row.categoryName).join(", ")} ${budgetAlerts.nearLimit.length === 1 ? "is" : "are"} close to the budget limit.`,
+    });
+  }, [budgetAlerts, isLoading, selectedMonth, selectedYear, showToast]);
 
   const visibleBudgetRows = useMemo(
     () => rows.filter((row) => row.budgetAmount > 0 || row.spentAmount > 0),
@@ -440,6 +484,42 @@ export function SpendIqBudgetPage() {
         />
       </div>
 
+      {!isLoading && budgetAlerts.hasWarnings ? (
+        <div
+          className={`rounded-2xl border p-5 shadow-md ${
+            budgetAlerts.overBudget.length > 0
+              ? "border-red-200 bg-red-50 text-red-900 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-100"
+              : "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-100"
+          }`}
+          role="alert"
+        >
+          <div className="flex gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div className="space-y-3">
+              <div>
+                <h2 className="text-sm font-bold">
+                  {budgetAlerts.overBudget.length > 0 ? "Budget limit exceeded" : "Budget limit warning"}
+                </h2>
+                <p className="mt-1 text-sm opacity-90">
+                  {budgetAlerts.overBudget.length > 0
+                    ? "Some categories are over their budget limit. Reduce spending or update the limit before adding more expenses."
+                    : "Some categories are close to their budget limit. Keep an eye on spending before they go over budget."}
+                </p>
+              </div>
+
+              <div className="grid gap-2 md:grid-cols-2">
+                {budgetAlerts.overBudget.map((row) => (
+                  <BudgetWarningRow key={`over-${row.categoryId}`} row={row} tone="danger" />
+                ))}
+                {budgetAlerts.nearLimit.map((row) => (
+                  <BudgetWarningRow key={`near-${row.categoryId}`} row={row} tone="warning" />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-6 space-y-5 border border-transparent dark:border-slate-800">
         <div className="grid md:grid-cols-2 gap-4 items-end">
           <div>
@@ -494,16 +574,24 @@ export function SpendIqBudgetPage() {
           {!isLoading &&
             visibleBudgetRows.map((row) => {
               const status =
-                row.budgetAmount <= 0 ? "No Budget" : row.usagePercentage > 100 ? "Over Limit" : row.usagePercentage >= 80 ? "Near Limit" : "On Track";
+                row.budgetAmount <= 0 ? "No Budget" : row.usagePercentage > BUDGET_OVER_LIMIT_PERCENTAGE ? "Over Limit" : row.usagePercentage >= BUDGET_NEAR_LIMIT_PERCENTAGE ? "Near Limit" : "On Track";
               const progressWidth = Math.max(0, Math.min(row.usagePercentage, 100));
               const progressColor =
                 row.budgetAmount <= 0
                   ? "bg-slate-400"
-                  : row.usagePercentage > 100
+                  : row.usagePercentage > BUDGET_OVER_LIMIT_PERCENTAGE
                     ? "bg-red-500"
-                    : row.usagePercentage >= 80
+                    : row.usagePercentage >= BUDGET_NEAR_LIMIT_PERCENTAGE
                       ? "bg-amber-500"
                       : "bg-emerald-500";
+              const statusClass =
+                row.budgetAmount <= 0
+                  ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                  : row.usagePercentage > BUDGET_OVER_LIMIT_PERCENTAGE
+                    ? "bg-red-100 text-red-700 dark:bg-red-950/70 dark:text-red-200"
+                    : row.usagePercentage >= BUDGET_NEAR_LIMIT_PERCENTAGE
+                      ? "bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-200"
+                      : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-200";
 
               return (
                 <div
@@ -514,10 +602,25 @@ export function SpendIqBudgetPage() {
                     <h3 className="text-lg font-bold text-[#0b1a3a] dark:text-cyan-300 tracking-wide">
                       {row.categoryName}
                     </h3>
-                    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${statusClass}`}>
                       {status}
                     </span>
                   </div>
+
+                  {row.budgetAmount > 0 && row.usagePercentage >= BUDGET_NEAR_LIMIT_PERCENTAGE ? (
+                    <div className={`flex items-start gap-2 rounded-lg px-3 py-2 text-xs ${
+                      row.usagePercentage > BUDGET_OVER_LIMIT_PERCENTAGE
+                        ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-200"
+                        : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+                    }`}>
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>
+                        {row.usagePercentage > BUDGET_OVER_LIMIT_PERCENTAGE
+                          ? `${row.categoryName} is over budget by ${formatMoney(Math.abs(row.remainingAmount))}.`
+                          : `${row.categoryName} is close to the limit with ${formatMoney(row.remainingAmount)} remaining.`}
+                      </span>
+                    </div>
+                  ) : null}
 
                   <div className="grid grid-cols-3 gap-3 text-xs">
                     <div>
@@ -674,6 +777,28 @@ export function SpendIqBudgetPage() {
         </div>
       </Dialog>
       </div>
+    </div>
+  );
+}
+
+function BudgetWarningRow({ row, tone }: { row: BudgetRow; tone: "danger" | "warning" }) {
+  const isDanger = tone === "danger";
+
+  return (
+    <div className={`rounded-lg border px-3 py-2 text-sm ${
+      isDanger
+        ? "border-red-200 bg-white/70 dark:border-red-900/60 dark:bg-red-950/30"
+        : "border-amber-200 bg-white/70 dark:border-amber-900/60 dark:bg-amber-950/30"
+    }`}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-semibold">{row.categoryName}</span>
+        <span className="text-xs font-bold">{row.usagePercentage}% used</span>
+      </div>
+      <p className="mt-1 text-xs opacity-85">
+        {isDanger
+          ? `Over by ${formatMoney(Math.abs(row.remainingAmount))}`
+          : `${formatMoney(row.remainingAmount)} remaining`}
+      </p>
     </div>
   );
 }

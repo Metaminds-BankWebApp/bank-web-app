@@ -1,12 +1,65 @@
 import apiClient, { toApiError } from "@/src/api/client";
 import { TRANSACT_ENDPOINTS } from "@/src/api/endpoints";
 import type {
+  CurrentBalanceResponse,
   CreateTransactionRequest,
   ResendTransactionOtpRequest,
+  TransactDashboardSummaryResponse,
   TransactionInitiateResponse,
   TransactionResponse,
   VerifyTransactionOtpRequest,
 } from "@/src/types/dto/transact.dto";
+
+type DownloadTransactionHistoryReportParams = {
+  fromDate?: string;
+  toDate?: string;
+};
+
+type DownloadTransactionHistoryReportResult = {
+  fileName: string;
+  blob: Blob;
+};
+
+function resolveFileNameFromContentDisposition(contentDisposition?: string): string {
+  if (!contentDisposition) {
+    return "transaction-statement.pdf";
+  }
+
+  const utfMatch = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utfMatch?.[1]) {
+    return decodeURIComponent(utfMatch[1]);
+  }
+
+  const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i);
+  if (quotedMatch?.[1]) {
+    return quotedMatch[1];
+  }
+
+  const plainMatch = contentDisposition.match(/filename=([^;]+)/i);
+  if (plainMatch?.[1]) {
+    return plainMatch[1].trim();
+  }
+
+  return "transaction-statement.pdf";
+}
+
+export async function getCurrentBalance(): Promise<CurrentBalanceResponse> {
+  try {
+    const { data } = await apiClient.get<CurrentBalanceResponse>(TRANSACT_ENDPOINTS.dashboardCurrentBalance);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getDashboardSummary(): Promise<TransactDashboardSummaryResponse> {
+  try {
+    const { data } = await apiClient.get<TransactDashboardSummaryResponse>(TRANSACT_ENDPOINTS.dashboardSummary);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
 
 export async function initiateTransaction(payload: CreateTransactionRequest): Promise<TransactionInitiateResponse> {
   // Start transfer request and receive transaction reference/OTP state.
@@ -58,11 +111,38 @@ export async function getBankOfficerTransactionHistory(): Promise<TransactionRes
   }
 }
 
+export async function downloadTransactionHistoryReport(
+  params: DownloadTransactionHistoryReportParams,
+): Promise<DownloadTransactionHistoryReportResult> {
+  try {
+    const { data, headers } = await apiClient.get<Blob>(TRANSACT_ENDPOINTS.transactionsHistoryReport, {
+      responseType: "blob",
+      headers: {
+        Accept: "application/pdf",
+      },
+      params: {
+        fromDate: params.fromDate,
+        toDate: params.toDate,
+      },
+    });
+
+    const contentDisposition = headers["content-disposition"] as string | undefined;
+    return {
+      fileName: resolveFileNameFromContentDisposition(contentDisposition),
+      blob: data,
+    };
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export const transactionService = {
-  // Single object export keeps page imports simple and consistent.
+  getCurrentBalance,
+  getDashboardSummary,
   initiateTransaction,
   verifyTransactionOtp,
   resendTransactionOtp,
   getTransactionHistory,
   getBankOfficerTransactionHistory,
+  downloadTransactionHistoryReport,
 };

@@ -44,11 +44,13 @@ export function OtpVerificationForm() {
     setError(null);
     setIsSubmitting(true);
 
+    let resetToken = "";
     try {
-      await authService.verifyOtp({
+      const response = await authService.verifyOtp({
         email: rawEmail,
         otp: otp.trim(),
       });
+      resetToken = response.resetToken ?? "";
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
       const message = apiError?.message ?? "Unable to verify OTP. Please try again.";
@@ -68,7 +70,18 @@ export function OtpVerificationForm() {
       description: "You can now set a new password.",
     });
 
-    router.push(`/reset-password?email=${encodeURIComponent(rawEmail)}`);
+    if (!resetToken) {
+      setError("OTP verified, but reset token was missing. Please request a new code.");
+      setIsSubmitting(false);
+      showToast({
+        type: "error",
+        title: "Reset token missing",
+        description: "Please request a new OTP and try again.",
+      });
+      return;
+    }
+
+    router.push(`/reset-password?email=${encodeURIComponent(rawEmail)}&token=${encodeURIComponent(resetToken)}`);
     setIsSubmitting(false);
   }
 

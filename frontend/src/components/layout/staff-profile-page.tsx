@@ -39,6 +39,7 @@ type StaffProfilePageProps = {
   roleLabel: StaffRoleLabel;
 };
 
+// Renders the shared staff profile page for admin and officer users.
 export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
   const { showToast } = useToast();
   const setAuthProfile = useAuthStore((state) => state.setProfile);
@@ -91,6 +92,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     void loadProfile();
   }, [loadRequestId, setAuthProfile]);
 
+  // Updates validation errors for one profile field.
   const updateFieldError = (fieldKey: string, errorMessage?: string) => {
     setFieldErrors((prev) => {
       const next = { ...prev };
@@ -100,6 +102,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     });
   };
 
+  // Applies password validation errors to the profile form.
   const applyPasswordErrors = (nextSecurityValues: Record<string, string>) => {
     const passwordErrors = validatePasswordGroup(nextSecurityValues);
     setFieldErrors((prev) => {
@@ -111,6 +114,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     });
   };
 
+  // Handles edits to profile personal information fields.
   const handlePersonalChange = (field: ProfileFieldItem, value: string) => {
     if (field.readOnly) return;
 
@@ -121,6 +125,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     }
   };
 
+  // Handles username and password field changes.
   const handleSecurityChange = (field: ProfileFieldItem, value: string) => {
     if (field.readOnly) return;
 
@@ -136,6 +141,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     }
   };
 
+  // Resets the form back to the saved profile values.
   const handleCancel = () => {
     if (!profile) {
       return;
@@ -148,6 +154,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     setShowPassword({});
   };
 
+  // Saves the current form changes through the API.
   const handleSave = async () => {
     if (!profile) {
       return;
@@ -223,10 +230,12 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     }
   };
 
+  // Shows or hides one password field.
   const togglePasswordVisibility = (fieldKey: string) => {
     setShowPassword((prev) => ({ ...prev, [fieldKey]: !prev[fieldKey] }));
   };
 
+  // Uploads the selected profile image and refreshes profile state.
   const handleProfileImageUpload = async (file: File) => {
     const response = await uploadMyUserProfileImage(file);
     setProfile(response.profile);
@@ -238,6 +247,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     });
   };
 
+  // Removes the saved profile image and refreshes profile state.
   const handleProfileImageRemove = async () => {
     const response = await removeMyUserProfileImage();
     setProfile(response.profile);
@@ -249,6 +259,7 @@ export function StaffProfilePage({ role, roleLabel }: StaffProfilePageProps) {
     });
   };
 
+  // Renders profile content based on loading and data state.
   const renderContent = () => {
     if (!profileView) {
       return (

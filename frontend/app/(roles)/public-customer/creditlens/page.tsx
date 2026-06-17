@@ -8,14 +8,19 @@ import RiskFactorBars from "./components/RiskFactorBars";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { getPublicCreditDashboard } from "@/src/api/creditlens/public-creditlens.service";
+import { getCreditLensRiskScoreTextClass } from "@/src/lib/creditlens-risk";
 import type { CreditDashboardResponse } from "@/src/types/dto/public-creditlens.dto";
 
+/**
+ * Public-customer CreditLens dashboard landing page.
+ */
 export default function PublicCustomerCreditLensPage() {
   const router = useRouter();
   const [dashboard, setDashboard] = useState<CreditDashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Loads CreditLens dashboard data from the backend.
   const loadDashboard = async () => {
     try {
       setIsLoading(true);
@@ -36,6 +41,7 @@ export default function PublicCustomerCreditLensPage() {
     void loadDashboard();
   }, []);
 
+  // Memoizes dashboard factors for stable rendering.
   const factors = useMemo(
     () =>
       dashboard?.factors.map((factor) => ({
@@ -84,10 +90,10 @@ export default function PublicCustomerCreditLensPage() {
                   <h3 className="text-lg font-semibold text-white/90 sm:text-xl lg:text-2xl xl:text-3xl">Your Credit Risk Score</h3>
 
                   <div className="mt-4 relative h-[220px] w-full max-w-[360px] sm:h-[250px] sm:max-w-[420px] lg:h-[380px] xl:h-[430px] xl:max-w-[560px]">
-                    <CreditRiskGauge value={dashboard.score} />
+                    <CreditRiskGauge value={dashboard.score} riskLabel={dashboard.riskLabel} />
 
                     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-end pb-8 sm:pb-10">
-                      <div className="text-4xl font-extrabold tracking-tight text-[#fbbf24] sm:text-5xl lg:text-6xl xl:text-7xl">
+                      <div className={`text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl ${getCreditLensRiskScoreTextClass(dashboard.riskLabel)}`}>
                         {dashboard.score}
                       </div>
                       <div className="mt-1 text-base text-white/80 sm:mt-2 sm:text-lg lg:text-xl xl:text-2xl">
@@ -180,6 +186,9 @@ export default function PublicCustomerCreditLensPage() {
   );
 }
 
+/**
+ * Reusable empty, loading, and error state shell for the dashboard.
+ */
 function StateCard({
   title,
   description,
