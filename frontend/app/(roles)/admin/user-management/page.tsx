@@ -139,6 +139,37 @@ function matchesUserStatus(statusLabel: string, normalizedQuery: string): boolea
   return normalizedStatus.includes(normalizedQuery);
 }
 
+function SummaryCard({
+  label,
+  value,
+  variant = "light",
+}: {
+  label: string;
+  value: string | number;
+  variant?: "dark" | "medium" | "soft" | "light";
+}) {
+  const classes =
+    variant === "dark"
+      ? "bg-[#0d3b66] text-white"
+      : variant === "medium"
+      ? "bg-[#446892] text-white"
+      : variant === "soft"
+      ? "bg-[#6f8fb6] text-[#13365f]"
+      : "bg-[#9fb1c9] text-[#15375f]";
+
+  const titleClass =
+    variant === "dark" || variant === "medium" ? "text-white/75" : "text-[#15375f]/80";
+
+  return (
+    <div
+      className={`rounded-2xl p-6 shadow-[0_16px_26px_-20px_rgba(11,43,89,0.85)] flex flex-col justify-between ${classes}`}
+    >
+      <span className={`text-xs font-semibold tracking-wide ${titleClass}`}>{label}</span>
+      <span className="mt-3 text-2xl font-bold leading-none">{value}</span>
+    </div>
+  );
+}
+
 // Main component for listing, filtering, and updating user accounts.
 export default function UserManagementPage() {
   const { showToast } = useToast();
@@ -190,9 +221,7 @@ export default function UserManagementPage() {
       }
 
       try {
-        const data = await getAdminUsers({
-          customerType: filter,
-        });
+        const data = await getAdminUsers({ customerType: "ALL" });
 
         if (!mounted) {
           return;
@@ -229,7 +258,7 @@ export default function UserManagementPage() {
     return () => {
       mounted = false;
     };
-  }, [filter, showToast]);
+  }, [showToast]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -238,11 +267,12 @@ export default function UserManagementPage() {
   // Builds derived UI values from API data to keep rendering simple.
   const filteredUsers = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
-    if (!normalized) {
-      return users;
-    }
 
     return users.filter((user) => {
+      if (filter !== "ALL" && user.customerType !== filter) {
+        return false;
+      }
+
       const id = resolveCustomerId(user);
       const name = user.fullName || "-";
       const email = user.email || "-";
@@ -285,7 +315,21 @@ export default function UserManagementPage() {
       }
       return matchesUserStatus(statusLabel, normalized);
     });
-  }, [searchField, searchQuery, users]);
+  }, [filter, searchField, searchQuery, users]);
+
+  const summary = useMemo(() => {
+    const totalCustomers = users.length;
+    const bankCustomers = users.filter((user) => user.customerType === "BANK").length;
+    const publicCustomers = users.filter((user) => user.customerType === "PUBLIC").length;
+    const activeCustomers = users.filter((user) => user.status === "ACTIVE").length;
+
+    return {
+      totalCustomers,
+      bankCustomers,
+      publicCustomers,
+      activeCustomers,
+    };
+  }, [users]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
   // Builds derived UI values from API data to keep rendering simple.
@@ -487,6 +531,13 @@ export default function UserManagementPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-6 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <SummaryCard label="TOTAL CUSTOMERS" value={summary.totalCustomers} variant="dark" />
+              <SummaryCard label="BANK CUSTOMERS" value={summary.bankCustomers} variant="medium" />
+              <SummaryCard label="PUBLIC CUSTOMERS" value={summary.publicCustomers} variant="soft" />
+              <SummaryCard label="ACTIVE CUSTOMERS" value={summary.activeCustomers} />
+            </div>
+
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium text-gray-600">Customer Type:</span>
               <button
