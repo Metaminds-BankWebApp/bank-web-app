@@ -25,9 +25,12 @@ type TransferFormErrors = {
 const OTP_LENGTH = 6
 
 export default function Page() {
+  // Router handles post-transaction navigation.
   const router = useRouter()
+  // Stores refs for each OTP input so focus can move automatically.
   const inputsRef = useRef<Array<HTMLInputElement | null>>([])
 
+  // Core transfer form states.
   const [showOtp, setShowOtp] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
   const [accountNumber, setAccountNumber] = useState("")
@@ -43,6 +46,7 @@ export default function Page() {
   })
   const [submitError, setSubmitError] = useState("")
 
+  // OTP verification states.
   const [otpValues, setOtpValues] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [otpError, setOtpError] = useState("")
   const [seconds, setSeconds] = useState(59)
@@ -50,10 +54,12 @@ export default function Page() {
   const [otpSentToEmail, setOtpSentToEmail] = useState("")
   const [verifiedTransaction, setVerifiedTransaction] = useState<TransactionResponse | null>(null)
 
+  // Loading states for transfer and OTP actions.
   const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [isResendingOtp, setIsResendingOtp] = useState(false)
 
+  // Runs the OTP countdown timer while the OTP modal is open.
   useEffect(() => {
     if (!showOtp || seconds <= 0) {
       return
@@ -64,6 +70,7 @@ export default function Page() {
     return () => clearInterval(timer)
   }, [seconds, showOtp])
 
+  // Accepts only single numeric OTP characters and advances focus to next input.
   const handleOtpChange = (index: number, value: string) => {
     if (!/^[0-9]*$/.test(value)) {
       return
@@ -78,6 +85,7 @@ export default function Page() {
     }
   }
 
+  // Keeps account number numeric-only and clears related errors as user types.
   const handleAccountNumberChange = (value: string) => {
     const digitsOnly = value.replace(/\D/g, "").slice(0, 10)
     setAccountNumber(digitsOnly)
@@ -89,6 +97,7 @@ export default function Page() {
     }
   }
 
+  // Sanitizes amount input to decimal format with up to 2 fraction digits.
   const handleAmountChange = (value: string) => {
     const sanitized = value.replace(/[^0-9.]/g, "")
     if (!/^\d*\.?\d{0,2}$/.test(sanitized)) {
@@ -103,6 +112,7 @@ export default function Page() {
     }
   }
 
+  // Updates beneficiary name and clears beneficiary-related error state.
   const handleBeneficiaryChange = (value: string) => {
     setBeneficiary(value)
     if (formErrors.beneficiary) {
@@ -113,6 +123,7 @@ export default function Page() {
     }
   }
 
+  // Updates remark text and clears remark-related error state.
   const handleRemarkChange = (value: string) => {
     setRemark(value)
     if (formErrors.remark) {
@@ -123,6 +134,7 @@ export default function Page() {
     }
   }
 
+  // Validates transfer form inputs and sets first relevant error for quick feedback.
   const validateTransferForm = (): boolean => {
     const nextErrors: TransferFormErrors = {
       accountNumber: "",
@@ -168,6 +180,7 @@ export default function Page() {
     return !hasErrors
   }
 
+  // Initiates transfer request, opens OTP modal on success, and maps API field errors.
   const handleTransfer = async () => {
     if (isSubmittingTransfer) {
       return
@@ -241,6 +254,7 @@ export default function Page() {
     }
   }
 
+  // Verifies entered OTP against the transaction reference and opens success modal.
   const handleVerify = async () => {
     if (isVerifyingOtp) {
       return
@@ -281,6 +295,7 @@ export default function Page() {
     }
   }
 
+  // Requests a fresh OTP once countdown allows resending.
   const handleResendOtp = async () => {
     if (isResendingOtp || seconds > 0) {
       return
@@ -313,6 +328,7 @@ export default function Page() {
     }
   }
 
+  // Computes whether required fields are valid to enable transfer button.
   const isFormValid = useMemo(() => {
     const parsedAmount = Number.parseFloat(amount || "0")
     return (
@@ -326,6 +342,7 @@ export default function Page() {
 
   return (
     <div className="relative min-h-full">
+      {/* Main page content gets blurred when OTP/success modal is displayed. */}
       <div className={showOtp || showSuccess ? "blur-sm pointer-events-none" : ""}>
         <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
           <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transfer" name="John Deo" />
@@ -340,6 +357,7 @@ export default function Page() {
           </div>
 
           <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 max-w-6xl mx-auto w-full rounded-xl p-4 sm:mt-8 sm:p-6 lg:p-8">
+            {/* Transfer form with inline validation and submission state. */}
             <form className="space-y-9" onSubmit={(event) => event.preventDefault()} noValidate>
               {submitError && (
                 <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -425,6 +443,7 @@ export default function Page() {
         </div>
       </div>
 
+      {/* OTP verification modal shown after successful transfer initiation. */}
       {showOtp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <Card className="transact-card bg-white max-w-2xl w-full rounded-3xl p-4 shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-8">
@@ -498,6 +517,7 @@ export default function Page() {
         </div>
       )}
 
+      {/* Success modal shown after OTP verification completes. */}
       {showSuccess && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <Card className="transact-card bg-white max-w-2xl w-full rounded-3xl p-6 text-center shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-10">
