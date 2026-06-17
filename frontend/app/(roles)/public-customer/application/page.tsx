@@ -1811,7 +1811,7 @@ export default function PublicCustomerApplicationPage() {
 
                    <Button 
                      onClick={handleAddCard}
-                     className="w-40 h-12 bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20 mt-4"
+                     className="w-full h-12 bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20"
                    >
                       <Plus className="w-5 h-5 mr-2" /> Add Card to List
                    </Button>
@@ -1917,8 +1917,8 @@ export default function PublicCustomerApplicationPage() {
                      </div>
                    </div>
 
-                   <Button className="w-full h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg mt-2" onClick={handleAddLiability}>
-                      <Plus className="w-4 h-4 mr-2" /> Add Other Obligation
+                   <Button className="w-full h-12 bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white font-semibold rounded-lg shadow-lg shadow-blue-500/20" onClick={handleAddLiability}>
+                      <Plus className="w-5 h-5 mr-2" /> Add Other Obligation
                    </Button>
 
                    <div className="mt-8 pt-8 border-t border-slate-100">
@@ -2111,7 +2111,7 @@ export default function PublicCustomerApplicationPage() {
                     <ArrowLeft size={16} className="mr-2" /> Back
                  </Button>
                  <Button onClick={submitApplication} disabled={isSubmitting} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white px-12 py-6 rounded-lg font-bold text-lg shadow-xl shadow-blue-500/20">
-                    {isSubmitting ? "Submitting..." : "Submit Application"}
+                    {isSubmitting ? "Submitting..." : "Submit "}
                  </Button>
               </div>
           </div>
