@@ -1,10 +1,48 @@
-﻿import { Card, CardContent, CardHeader } from "@/src/components/ui";
+﻿"use client";
+
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader } from "@/src/components/ui";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import ModuleHeader from "@/src/components/ui/module-header";
 import Link from "next/link";
+import { getOfficerCreditDashboard } from "@/src/api/creditlens/officer-creditlens.service";
+import type { BankCreditAnalysisDashboardResponse } from "@/src/types/dto/officer-creditlens.dto";
 
 export default function BankOfficerRolePage() {
+   const [dashboardCounts, setDashboardCounts] = useState<BankCreditAnalysisDashboardResponse | null>(null);
+
+   // Pull the officer-level portfolio counts from the backend so the four
+   // summary cards reflect the current customer distribution.
+   useEffect(() => {
+      let mounted = true;
+
+      const loadDashboardCounts = async () => {
+         try {
+            const response = await getOfficerCreditDashboard();
+            if (mounted) {
+               setDashboardCounts(response);
+            }
+         } catch {
+            if (mounted) {
+               setDashboardCounts(null);
+            }
+         }
+      };
+
+      void loadDashboardCounts();
+
+      return () => {
+         mounted = false;
+      };
+   }, []);
+
+   const totalCustomers = dashboardCounts?.totalCustomers ?? 0;
+   const lowRiskCount = dashboardCounts?.lowRiskCount ?? 0;
+   const mediumRiskCount = dashboardCounts?.mediumRiskCount ?? 0;
+   const highRiskCount = dashboardCounts?.highRiskCount ?? 0;
+
+  // Main dashboard for officers: quick portfolio snapshot plus shortcuts to daily tasks.
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
       <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
@@ -169,7 +207,7 @@ export default function BankOfficerRolePage() {
                            <span className="text-xs"></span>
                         </div>
                         <div>
-                           <p className="text-2xl font-bold mb-1">2,450</p>
+                           <p className="text-2xl font-bold mb-1">{totalCustomers.toLocaleString()}</p>
                            <p className="text-[10px] text-[#0d3b66]/80">— 10.6% <span className="opacity-60">From last week</span></p>
                         </div>
                      </CardContent>
@@ -183,7 +221,7 @@ export default function BankOfficerRolePage() {
                            <span className="text-xs text-gray-400"></span>
                         </div>
                         <div>
-                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">1,820</p>
+                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">{lowRiskCount.toLocaleString()}</p>
                            <p className="text-[10px] text-green-500">— 1.5% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>
@@ -197,7 +235,7 @@ export default function BankOfficerRolePage() {
                            <span className="text-xs text-gray-400"></span>
                         </div>
                         <div>
-                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">420</p>
+                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">{mediumRiskCount.toLocaleString()}</p>
                            <p className="text-[10px] text-green-500">— 3.6% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>
@@ -211,7 +249,7 @@ export default function BankOfficerRolePage() {
                            <span className="text-xs text-gray-400"></span>
                         </div>
                         <div>
-                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">210</p>
+                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">{highRiskCount.toLocaleString()}</p>
                            <p className="text-[10px] text-red-500">— 1.5% <span className="text-gray-400">From last week</span></p>
                         </div>
                      </CardContent>

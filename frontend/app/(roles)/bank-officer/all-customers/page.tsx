@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -36,7 +36,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table";
-import { Checkbox } from "@/src/components/ui/checkbox";
 import {
    Select,
    SelectContent,
@@ -44,20 +43,24 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/src/components/ui/select";
+import FilterPanel from "@/src/components/filters/FilterPanel";
 
 type Customer = {
-  userId: number;
-  id: string;
-  name: string;
-  nic: string;
-  email: string;
-  phone: string;
-  riskLevel: "LOW" | "MEDIUM" | "HIGH";
-  creditScore: number;
-    status: "ACTIVE" | "INACTIVE" | "DRAFT" | "PENDING_STEP_2" | "PENDING_STEP_3" | "PENDING_STEP_4" | "PENDING_STEP_5" | "PENDING_STEP_6" | "PENDING_STEP_7" | "COMPLETED";
-  lastUpdated: string;
+   userId: number;
+   id: string;
+   name: string;
+   nic: string;
+   email: string;
+   phone: string;
+   riskLevel: "LOW" | "MEDIUM" | "HIGH";
+   creditScore: number;
+   status: "ACTIVE" | "INACTIVE" | "DRAFT" | "PENDING_STEP_2" | "PENDING_STEP_3" | "PENDING_STEP_4" | "PENDING_STEP_5" | "PENDING_STEP_6" | "PENDING_STEP_7" | "COMPLETED";
+   lastUpdated: string;
 };
 
+// Map the backend DTO to the local view model. Risk level and credit
+// score are supplied by the server (credit evaluation) and are the
+// canonical values for filtering/sorting/display.
 function toDisplayDate(isoDateTime: string | null): string {
    if (!isoDateTime) {
       return "-";
@@ -65,7 +68,7 @@ function toDisplayDate(isoDateTime: string | null): string {
 
    const parsed = new Date(isoDateTime);
    if (Number.isNaN(parsed.getTime())) {
-      return isoDateTime;
+      return isoDateTime as string;
    }
 
    return parsed.toLocaleDateString("en-US", {
@@ -75,22 +78,9 @@ function toDisplayDate(isoDateTime: string | null): string {
    });
 }
 
-function deriveRiskAndScore(source: BankCustomerSummaryResponse): { riskLevel: Customer["riskLevel"]; creditScore: number } {
-   const seedText = `${source.nic}-${source.userId}`;
-   const hash = Array.from(seedText).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-   const creditScore = 500 + (hash % 351);
-
-   if (creditScore >= 700) {
-      return { riskLevel: "LOW", creditScore };
-   }
-   if (creditScore >= 600) {
-      return { riskLevel: "MEDIUM", creditScore };
-   }
-   return { riskLevel: "HIGH", creditScore };
-}
-
 function mapApiCustomer(customer: BankCustomerSummaryResponse): Customer {
-   const { riskLevel, creditScore } = deriveRiskAndScore(customer);
+   const riskLevel = (customer.riskLevel ?? "MEDIUM") as Customer["riskLevel"];
+   const creditScore = customer.creditScore ?? 650;
    const normalizedStatus = customer.status.toUpperCase();
    const status: Customer["status"] =
       normalizedStatus === "ACTIVE" ||
@@ -106,7 +96,7 @@ function mapApiCustomer(customer: BankCustomerSummaryResponse): Customer {
          ? (normalizedStatus as Customer["status"])
          : "DRAFT";
 
-  return {
+   return {
       userId: customer.userId,
       id: customer.customerId,
       name: customer.fullName || customer.email,
@@ -199,40 +189,57 @@ export default function AllCustomersPage() {
    const [deleteRequestNote, setDeleteRequestNote] = useState("");
    const [isSubmittingDeleteRequest, setIsSubmittingDeleteRequest] = useState(false);
 
-   useEffect(() => {
-      let mounted = true;
+   // Customer worklist for officers: load, filter, inspect details, and submit admin requests.
 
-      const fetchCustomers = async () => {
+   // Debounce search term to avoid frequent requests. The debounced value is
+   // used when calling the server; the backend performs search and
+   // filtering, so this reduces network churn for fast typing.
+   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+   useEffect(() => {
+      const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 450);
+      return () => clearTimeout(t);
+   }, [searchTerm]);
+
+   // Refetch when filters or sort change. These effects call the officer
+   // endpoint with the compact filter contract. The backend performs the
+   // canonical filtering and sorting using credit evaluation data and the
+   // customer/profile fields.
+   useEffect(() => {
+       let mounted = true;
+       const fetch = async () => {
          setIsLoading(true);
          setLoadError(null);
          try {
-            const data = await getBankCustomersForOfficer();
-            if (!mounted) {
-               return;
-            }
+           const filters = {
+             search: debouncedSearchTerm || undefined,
+             status: statusFilter === "all" ? undefined : statusFilter,
+             riskLevel: activeRisk === "all" ? undefined : activeRisk,
+             sortBy: sortBy,
+           } as const;
 
-            setCustomers(data.map(mapApiCustomer));
+           const data = await getBankCustomersForOfficer(filters);
+           if (!mounted) return;
+           setCustomers(data.map(mapApiCustomer));
          } catch (error) {
-            if (!mounted) {
-               return;
-            }
-
-            const message = error instanceof ApiError ? error.message : "Failed to load customers.";
-            setLoadError(message);
-            setCustomers([]);
+              if (!mounted) return;
+              // Log the raw error to the console for debugging (developer-only).
+              // This helps reveal whether the failure is a network, auth, or
+              // server-side issue.
+              // eslint-disable-next-line no-console
+              console.error("Failed to fetch officer customers:", error);
+              const message = error instanceof ApiError ? error.message : String(error ?? "Failed to load customers.");
+              setLoadError(message || "Failed to load customers.");
+           setCustomers([]);
          } finally {
-            if (mounted) {
-               setIsLoading(false);
-            }
+           if (mounted) setIsLoading(false);
          }
-      };
+       };
 
-      void fetchCustomers();
-
-      return () => {
+       void fetch();
+       return () => {
          mounted = false;
-      };
-   }, []);
+       };
+     }, [debouncedSearchTerm, statusFilter, activeRisk, sortBy]);
 
    const riskCounts = useMemo(() => {
       return {
@@ -243,6 +250,7 @@ export default function AllCustomersPage() {
       };
    }, [customers]);
 
+   // Show only customers that match the officer's search, filters, and sort choice.
    const visibleCustomers = useMemo(() => {
       const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -279,6 +287,7 @@ export default function AllCustomersPage() {
       });
    }, [activeRisk, customers, searchTerm, sortBy, statusFilter]);
 
+   // Export the same customer rows currently visible in the table.
    const handleExport = () => {
       const header = ["Name", "NIC", "Email", "Phone", "Status", "Last Updated"];
 
@@ -304,6 +313,7 @@ export default function AllCustomersPage() {
       URL.revokeObjectURL(url);
    };
 
+   // When the officer selects a customer, load personal + financial details for the side panel.
    useEffect(() => {
       if (!selectedCustomer) {
          setSelectedCustomerPersonal(null);
@@ -348,8 +358,10 @@ export default function AllCustomersPage() {
             if (!mounted) {
                return;
             }
-            const message = error instanceof ApiError ? error.message : "Failed to load customer details.";
-            setDetailLoadError(message);
+               // eslint-disable-next-line no-console
+               console.error("Failed to load customer details:", error);
+               const message = error instanceof ApiError ? error.message : String(error ?? "Failed to load customer details.");
+               setDetailLoadError(message || "Failed to load customer details.");
          } finally {
             if (mounted) {
                setIsDetailLoading(false);
@@ -386,6 +398,7 @@ export default function AllCustomersPage() {
       };
    }, [selectedCustomerFinancial]);
 
+   // Send a delete request to admin (officer does not delete directly here).
    const submitDeleteRequest = async () => {
       if (!deleteRequestTarget) {
          return;
@@ -547,7 +560,6 @@ export default function AllCustomersPage() {
              <Table>
                 <TableHeader className="bg-sky-50/70 sticky top-0 z-10">
                    <TableRow>
-                      <TableHead className="w-12.5 pl-6"><Checkbox /></TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Name</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">NIC</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contact Info</TableHead>
@@ -559,7 +571,6 @@ export default function AllCustomersPage() {
                 <TableBody>
                    {visibleCustomers.map((customer) => (
                       <TableRow key={customer.id} className="hover:bg-slate-50/50">
-                         <TableCell className="pl-6"><Checkbox /></TableCell>
                          <TableCell>
                             <div className="flex items-center gap-3">
                                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
@@ -660,11 +671,6 @@ export default function AllCustomersPage() {
                   title={selectedCustomer ? `${selectedCustomer.name} — Customer Profile` : "Customer Profile"}
                   description="Detailed personal and financial data grouped into tabs for quick review."
                    size="lg"
-                  footer={
-                     <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => setSelectedCustomer(null)}>
-                        Close
-                     </Button>
-                  }
                >
                   {selectedCustomer && (
                      <div className="space-y-4">
@@ -980,7 +986,7 @@ export default function AllCustomersPage() {
                         <Button
                            type="button"
                            variant="outline"
-                           className="border-white/30 text-white hover:bg-white/10"
+                           className="border-slate-300 text-slate-700 hover:bg-slate-100"
                            onClick={() => setDeleteRequestTarget(null)}
                            disabled={isSubmittingDeleteRequest}
                         >
@@ -998,18 +1004,18 @@ export default function AllCustomersPage() {
                   }
                >
                   <div className="space-y-4">
-                     <div className="rounded-lg border border-white/20 bg-white/5 p-3 text-sm">
-                        <p><span className="font-semibold">Customer:</span> {deleteRequestTarget?.name ?? "-"}</p>
-                        <p><span className="font-semibold">NIC:</span> {deleteRequestTarget?.nic ?? "-"}</p>
-                        <p><span className="font-semibold">Customer Code:</span> {deleteRequestTarget?.id ?? "-"}</p>
+                     <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                        <p><span className="font-semibold text-slate-700">Customer:</span> <span className="text-slate-600">{deleteRequestTarget?.name ?? "-"}</span></p>
+                        <p><span className="font-semibold text-slate-700">NIC:</span> <span className="text-slate-600">{deleteRequestTarget?.nic ?? "-"}</span></p>
+                        <p><span className="font-semibold text-slate-700">Customer Code:</span> <span className="text-slate-600">{deleteRequestTarget?.id ?? "-"}</span></p>
                      </div>
 
                      <div>
-                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-sky-100/90">
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                            Reason
                         </label>
                         <Select value={deleteRequestReason} onValueChange={setDeleteRequestReason}>
-                           <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                           <SelectTrigger className="border-slate-200 bg-white text-slate-800">
                               <SelectValue placeholder="Select reason" />
                            </SelectTrigger>
                            <SelectContent>
@@ -1022,14 +1028,14 @@ export default function AllCustomersPage() {
                      </div>
 
                      <div>
-                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-sky-100/90">
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                            Note To Admin (Optional)
                         </label>
                         <textarea
                            value={deleteRequestNote}
                            onChange={(event) => setDeleteRequestNote(event.target.value)}
                            rows={4}
-                           className="w-full rounded-md border border-white/20 bg-white/10 p-2 text-sm text-white placeholder:text-sky-100/60 focus:outline-none"
+                           className="w-full rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                            placeholder="Provide context for admin review..."
                         />
                      </div>
@@ -1040,6 +1046,3 @@ export default function AllCustomersPage() {
     </AuthGuard>
   );
 }
-
-
-

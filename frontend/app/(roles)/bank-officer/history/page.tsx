@@ -95,6 +95,7 @@ export default function HistoryPage() {
    const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
    const [sortBy, setSortBy] = useState<"date-desc" | "date-asc">("date-desc");
 
+   // Build the visible history list from tab, search, date, status, and sort selections.
    const visibleHistory = useMemo(() => {
       const latestDate = new Date(Math.max(...historyData.map((item) => new Date(item.date).getTime())));
 
@@ -132,6 +133,7 @@ export default function HistoryPage() {
       });
    }, [dateRange, searchTerm, selectedTab, sortBy, statusFilter]);
 
+   // Export only the records that currently match filters.
    const handleExport = () => {
       const header = ["Date", "Time", "Customer", "Customer ID", "Action Type", "Performed By", "Status"];
       const rows = visibleHistory.map((item) => [
@@ -157,6 +159,7 @@ export default function HistoryPage() {
       URL.revokeObjectURL(url);
    };
 
+   // Build a simple explanation block for the selected activity type.
    const getActivityDetails = (actionType: string) => {
       if (/Credit Re-evaluation/i.test(actionType)) {
          return {

@@ -19,6 +19,7 @@ export function CRIBRetrieval({
   const [errors, setErrors] = useState<CRIBRetrievalErrors>({});
   const [errorMessage, setErrorMessage] = useState("");
 
+  // Simulate short retrieval time, then persist CRIB-ready status for this record.
   useEffect(() => {
     let isMounted = true;
 
@@ -66,6 +67,7 @@ export function CRIBRetrieval({
     };
   }, [formData.creditScore, onSaveCribRetrievalStep, updateFormData]);
 
+  // Before moving on, re-check that CRIB status/score fields are valid.
   const handleNext = () => {
     if (errorMessage) {
       return;

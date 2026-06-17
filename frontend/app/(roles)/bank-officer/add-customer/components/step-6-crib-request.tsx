@@ -15,6 +15,7 @@ export function CRIBRequest({
   onSaveCribRequestStep,
   isSavingCribRequestStep,
 }: StepProps) {
+  // This local status is for the visual request timeline only.
   const [requestStatus, setRequestStatus] = useState<"draft" | "processing" | "sent" | "connected" | "retrieved">("draft");
   const [requestType, setRequestType] = useState("FULL_REPORT");
   const [consentGiven, setConsentGiven] = useState(false);
@@ -23,6 +24,7 @@ export function CRIBRequest({
 
   const wait = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration));
 
+  // Save CRIB request, animate progress updates, then continue to the next step.
   const handleInitiateRequest = async () => {
     if (!consentGiven || !onSaveCribRequestStep) {
       return;

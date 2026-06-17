@@ -2,7 +2,6 @@
 
 import { useEffect } from "react";
 import { X } from "lucide-react";
-import { Button } from "@/src/components/ui/button";
 
 type PopupModalProps = {
   open: boolean;
@@ -50,47 +49,53 @@ export default function PopupModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-3 sm:p-6" style={{ zIndex: 120 }}>
-      <button
-        aria-label="Close modal"
+    <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6" style={{ zIndex: 120 }}>
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
         onClick={() => onOpenChange(false)}
-        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
       />
 
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative z-10 w-full ${sizeClass[size]} overflow-hidden rounded-[30px] border border-slate-200/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.97)_100%)] text-slate-800 shadow-[0_32px_90px_-35px_rgba(15,23,42,0.55)] backdrop-blur-xl`}
+        className={`relative z-10 w-full ${sizeClass[size]} flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl bg-white text-left align-middle shadow-2xl transition-all sm:max-h-[calc(100vh-4rem)]`}
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[linear-gradient(135deg,rgba(13,59,102,0.98)_0%,rgba(18,95,153,0.94)_52%,rgba(96,165,250,0.9)_100%)]" />
-        <div className="pointer-events-none absolute inset-x-0 top-28 h-px bg-white/60" />
-        <div className="pointer-events-none absolute -left-10 top-10 h-44 w-44 rounded-full bg-sky-300/20 blur-[76px]" />
-        <div className="pointer-events-none absolute right-4 top-4 h-56 w-56 rounded-full bg-white/25 blur-[90px]" />
-
-        <div className="relative flex items-start justify-between gap-4 px-5 pb-4 pt-4 text-white sm:px-6">
-          <div className="max-w-3xl">
-            {title && <h3 className="text-xl font-semibold tracking-tight sm:text-[1.75rem]">{title}</h3>}
-            {description && <p className="mt-1 text-sm leading-6 text-sky-50/82">{description}</p>}
+        {(title || description) && (
+          <div className="flex shrink-0 items-start justify-between border-b border-slate-100 px-6 py-5">
+            <div>
+              {title && <h3 className="text-lg font-semibold leading-6 text-slate-900">{title}</h3>}
+              {description && <p className="mt-1.5 text-sm text-slate-500">{description}</p>}
+            </div>
+            <button
+              type="button"
+              className="ml-4 inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#3e9fd3]"
+              onClick={() => onOpenChange(false)}
+            >
+              <span className="sr-only">Close</span>
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
           </div>
+        )}
+
+        {!title && !description && (
           <button
             type="button"
-            aria-label="Close modal"
+            className="absolute right-4 top-4 z-20 inline-flex shrink-0 items-center justify-center rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#3e9fd3]"
             onClick={() => onOpenChange(false)}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/12 transition-colors hover:bg-white/20"
           >
-            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
+        )}
+
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {children}
         </div>
 
-        <div className="relative max-h-[calc(100vh-8rem)] overflow-y-auto px-5 pb-4 sm:px-6">{children}</div>
-
-        {footer ? (
-          <div className="relative flex flex-col-reverse gap-2 border-t border-slate-200/80 bg-white/85 px-5 py-3.5 shadow-[0_-10px_30px_-24px_rgba(15,23,42,0.35)] sm:flex-row sm:justify-end sm:px-6">{footer}</div>
-        ) : (
-          <div className="relative flex flex-col-reverse gap-2 border-t border-slate-200/80 bg-white/85 px-5 py-3.5 shadow-[0_-10px_30px_-24px_rgba(15,23,42,0.35)] sm:flex-row sm:justify-end sm:px-6">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="border-slate-300 text-slate-700 hover:bg-slate-100">
-              Close
-            </Button>
+        {footer && (
+          <div className="shrink-0 border-t border-slate-100 bg-slate-50 px-6 py-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            {footer}
           </div>
         )}
       </div>

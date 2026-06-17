@@ -87,8 +87,6 @@ export default function TransactCustomerHelp(){
   );
 }
 
-import { useState as useState2 } from "react";
-
 function TicketForm({ onClose, onCreate }: { onClose: () => void; onCreate: () => void }){
   const [subject,setSubject]=useState('');
   const [desc,setDesc]=useState('');

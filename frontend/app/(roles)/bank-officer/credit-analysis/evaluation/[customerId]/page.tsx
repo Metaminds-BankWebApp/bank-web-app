@@ -12,7 +12,6 @@ import { AuthGuard } from "@/src/components/auth";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Badge } from "@/src/components/ui/badge";
-import { Progress } from "@/src/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -33,7 +32,6 @@ import {
   Mail,
   Phone,
   ReceiptText,
-  ShieldCheck,
   TriangleAlert,
   UserRound,
 } from "lucide-react";
@@ -101,6 +99,7 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 ];
 
 export default function CreditAnalysisEvaluationPage() {
+  // Detailed customer evaluation view: load base data first, then fetch each tab on demand.
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [trendRange, setTrendRange] = useState<TrendRange>("6m");
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
@@ -131,6 +130,7 @@ export default function CreditAnalysisEvaluationPage() {
   const bankCustomerId = Number(params.customerId);
   const hasValidBankCustomerId = Number.isFinite(bankCustomerId) && bankCustomerId > 0;
 
+  // Base load for profile, latest evaluation, and historical entries.
   useEffect(() => {
     if (!hasValidBankCustomerId) {
       setBaseError("The selected bank customer is invalid.");
@@ -181,6 +181,7 @@ export default function CreditAnalysisEvaluationPage() {
     };
   }, [bankCustomerId, hasValidBankCustomerId]);
 
+  // Load trend chart data only when the Trends tab is active.
   useEffect(() => {
     if (!hasValidBankCustomerId || activeTab !== "trends") {
       return;
@@ -220,6 +221,7 @@ export default function CreditAnalysisEvaluationPage() {
     };
   }, [activeTab, bankCustomerId, hasValidBankCustomerId, trendRange]);
 
+  // Load insight cards only when the Credit Insights tab is active.
   useEffect(() => {
     if (!hasValidBankCustomerId || activeTab !== "credit-insights") {
       return;
@@ -259,6 +261,7 @@ export default function CreditAnalysisEvaluationPage() {
     };
   }, [activeTab, bankCustomerId, hasValidBankCustomerId]);
 
+  // Load report snapshots only when the Reports tab is active.
   useEffect(() => {
     if (!hasValidBankCustomerId || activeTab !== "reports") {
       return;
@@ -345,6 +348,7 @@ export default function CreditAnalysisEvaluationPage() {
   const latestEvaluationDate = currentEvaluation?.createdAt || profile?.latestEvaluationDate || null;
   const hasSufficientTrendHistory = (trendData?.points.length ?? 0) >= 2;
 
+  // Normalize factor colors once so the overview chart can render directly.
   const overviewFactors = useMemo(
     () =>
       currentEvaluation?.factors.map((factor) => ({
@@ -357,6 +361,7 @@ export default function CreditAnalysisEvaluationPage() {
   );
 
   const newestReportSnapshot = reportData[reportData.length - 1] ?? null;
+  // Resolve the currently selected monthly snapshot (fallback to latest).
   const currentReportSnapshot = useMemo(() => {
     if (!newestReportSnapshot) {
       return null;
@@ -372,6 +377,7 @@ export default function CreditAnalysisEvaluationPage() {
     [],
   );
 
+  // Build a safe filename for downloaded report exports.
   const reportFileBaseName = useMemo(() => {
     const rawMonthLabel = selectedMonth ?? currentReportSnapshot?.month ?? "creditlens-report";
     const safeMonthLabel = rawMonthLabel
@@ -381,6 +387,8 @@ export default function CreditAnalysisEvaluationPage() {
     return `credit-analysis-report-${safeMonthLabel}-${reportDateStamp}`;
   }, [currentReportSnapshot?.month, reportDateStamp, selectedMonth]);
 
+  // Backward-compatible reload tied to route id changes.
+  // Keeps profile/evaluation fresh if this page is opened with a new customer id.
   useEffect(() => {
     let mounted = true;
 
@@ -528,7 +536,7 @@ export default function CreditAnalysisEvaluationPage() {
                                 setTrendRange(value);
                               }
                             }}>
-                              <SelectTrigger className="h-9 w-[142px] border-white/20 bg-white/10 text-slate-100">
+                              <SelectTrigger className="h-9 w-35.5 border-white/20 bg-white/10 text-slate-100">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent className="border-white/20 bg-[#14345f] text-slate-100">
@@ -538,7 +546,7 @@ export default function CreditAnalysisEvaluationPage() {
                             </Select>
                           </div>
 
-                          <div className="min-h-[320px]">
+                          <div className="min-h-80">
                             <CreditRiskBarChart labels={trendData.labels} values={trendData.values} />
                           </div>
                         </div>
@@ -617,9 +625,9 @@ export default function CreditAnalysisEvaluationPage() {
                     ) : currentReportSnapshot ? (
                       <div className="flex h-full flex-col gap-6">
                         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="w-full sm:w-[220px]">
+                          <div className="w-full sm:w-55">
                             <Select value={selectedMonth ?? currentReportSnapshot.month} onValueChange={setSelectedMonth}>
-                              <SelectTrigger className="h-10 border-white/20 bg-white/10 text-slate-100 data-[placeholder]:text-slate-300">
+                              <SelectTrigger className="h-10 border-white/20 bg-white/10 text-slate-100 data-placeholder:text-slate-300">
                                 <SelectValue placeholder="Select Month" />
                               </SelectTrigger>
                               <SelectContent className="border-white/20 bg-[#14345f] text-slate-100">
@@ -810,7 +818,7 @@ function OverviewTab({
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-              <div className="mx-auto h-[220px] w-full max-w-[340px]">
+              <div className="mx-auto h-55 w-full max-w-85">
                 <CreditRiskGauge value={evaluation.totalRiskPoints} />
                 <div className="-mt-16 text-center">
                   <div className="text-5xl font-bold tracking-tight text-[#fbbf24]">{evaluation.totalRiskPoints}</div>
@@ -827,81 +835,6 @@ function OverviewTab({
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <OverviewMetricTile
-          title="Monthly Income"
-          value={formatCurrency(evaluation.totalMonthlyIncome)}
-          helper="Verified bank-customer income"
-          tone="green"
-        />
-        <OverviewMetricTile
-          title="Monthly Debt Payment"
-          value={formatCurrency(evaluation.totalMonthlyDebtPayment)}
-          helper="Loans, card minimums, and liabilities"
-          tone="orange"
-        />
-        <OverviewMetricTile
-          title="Missed Payments"
-          value={String(evaluation.missedPaymentsCount)}
-          helper="Tracked in the last 12 months"
-          tone="red"
-        />
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="creditlens-card creditlens-card-hover rounded-2xl border border-slate-200/70 bg-white/95 p-6 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.35)]">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Credit Pressure</p>
-              <h3 className="mt-1 text-xl font-semibold text-slate-900">Borrowing and utilization indicators</h3>
-            </div>
-            <div className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
-              {evaluation.dtiBand}
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-5">
-            <OverviewBar
-              label="Debt-to-Income"
-              valueLabel={`${formatPercentageFromRatio(evaluation.dtiRatio)} (${evaluation.dtiPoints}/25)`}
-              percentage={Math.min(100, Math.max(0, (evaluation.dtiPoints / 25) * 100))}
-              colorClass="[&>div]:bg-emerald-500"
-            />
-            <OverviewBar
-              label="Credit Utilization"
-              valueLabel={`${formatPercentageFromRatio(evaluation.creditUtilizationRatio)} (${evaluation.utilizationPoints}/20)`}
-              percentage={Math.min(100, Math.max(0, (evaluation.utilizationPoints / 20) * 100))}
-              colorClass="[&>div]:bg-rose-500"
-            />
-            <OverviewBar
-              label="Payment History"
-              valueLabel={`${evaluation.paymentHistoryPoints}/30`}
-              percentage={Math.min(100, Math.max(0, (evaluation.paymentHistoryPoints / 30) * 100))}
-              colorClass="[&>div]:bg-amber-500"
-            />
-          </div>
-        </div>
-
-        <div className="creditlens-card creditlens-card-hover rounded-2xl border border-slate-200/70 bg-white/95 p-6 shadow-[0_18px_60px_-45px_rgba(2,44,67,0.35)]">
-          <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-sky-50 p-3 text-sky-700">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Evaluation Notes</p>
-              <h3 className="mt-1 text-xl font-semibold text-slate-900">Officer-side summary</h3>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4">
-            <DetailRow label="Evaluation Source" value={evaluation.evaluationSource} />
-            <DetailRow label="Active Facilities" value={String(evaluation.activeFacilitiesCount)} />
-            <DetailRow label="Card Outstanding" value={formatCurrency(evaluation.totalCardOutstanding)} />
-            <DetailRow label="Card Limit" value={formatCurrency(evaluation.totalCardLimit)} />
-            <DetailRow label="Remarks" value={evaluation.remarks || "No officer remarks recorded"} />
-          </div>
-        </div>
-      </section>
     </div>
   );
 }
@@ -943,7 +876,7 @@ function PanelStateCard({
     : "bg-sky-100 text-sky-700";
 
   return (
-    <div className="creditlens-card flex h-full min-h-[240px] items-center justify-center rounded-2xl border border-white/15 bg-white/5 p-8 text-center md:rounded-[26px]">
+    <div className="creditlens-card flex h-full min-h-60 items-center justify-center rounded-2xl border border-white/15 bg-white/5 p-8 text-center md:rounded-[26px]">
       <div className="max-w-xl space-y-3">
         <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-2xl ${iconClass}`}>
           <TriangleAlert className="h-6 w-6" />
@@ -1001,7 +934,7 @@ function DetailTile({
         {icon}
         <span className="text-sm font-medium">{label}</span>
       </div>
-      <div className="mt-2 break-words text-sm font-semibold text-white">{value}</div>
+      <div className="mt-2 wrap-break-word text-sm font-semibold text-white">{value}</div>
     </div>
   );
 }
@@ -1024,72 +957,10 @@ function MiniStat({
   );
 }
 
-function OverviewMetricTile({
-  title,
-  value,
-  helper,
-  tone,
-}: {
-  title: string;
-  value: string;
-  helper: string;
-  tone: "green" | "orange" | "red";
-}) {
-  const toneClass = tone === "green"
-    ? "border-emerald-200 bg-emerald-50/70 text-emerald-700"
-    : tone === "orange"
-      ? "border-amber-200 bg-amber-50/70 text-amber-700"
-      : "border-rose-200 bg-rose-50/70 text-rose-700";
-
-  return (
-    <div className={`creditlens-card creditlens-card-hover rounded-2xl border bg-white/92 p-5 shadow-[0_16px_50px_-40px_rgba(2,44,67,0.45)] ${toneClass}`}>
-      <div className="text-sm font-medium">{title}</div>
-      <div className="mt-3 text-2xl font-bold">{value}</div>
-      <div className="mt-2 text-xs">{helper}</div>
-    </div>
-  );
-}
-
-function OverviewBar({
-  label,
-  valueLabel,
-  percentage,
-  colorClass,
-}: {
-  label: string;
-  valueLabel: string;
-  percentage: number;
-  colorClass: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="font-medium text-white">{label}</span>
-        <span className="text-slate-200">{valueLabel}</span>
-      </div>
-      <Progress value={percentage} className={`h-3 bg-white/15 ${colorClass}`} />
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-3 text-sm last:border-b-0 last:pb-0">
-      <span className="text-slate-500">{label}</span>
-      <span className="max-w-[65%] text-right font-medium text-slate-900">{value}</span>
-    </div>
-  );
-}
-
 function buildLatestHistoryByMonth(
   history: BankCreditEvaluationSummaryResponse[],
 ): Map<string, BankCreditEvaluationSummaryResponse> {
+  // Keep only the newest evaluation entry for each month.
   const entries = new Map<string, BankCreditEvaluationSummaryResponse>();
 
   for (const item of history) {
@@ -1109,6 +980,7 @@ function mapOfficerReportSnapshots(
   latestHistoryByMonth: Map<string, BankCreditEvaluationSummaryResponse>,
   financialRecordMap: Map<number, { loanRemainingBalance: number }>,
 ): OfficerReportSnapshot[] {
+  // Merge report snapshots with matching monthly history + financial details.
   return report.snapshots
     .map((snapshot) => {
       const monthKey = toMonthKey(snapshot.lastUpdated);
@@ -1188,10 +1060,6 @@ function formatDate(value?: string | null): string {
     month: "short",
     year: "numeric",
   });
-}
-
-function formatPercentageFromRatio(value: number): string {
-  return `${(value * 100).toFixed(1)}%`;
 }
 
 function toMonthKey(value: string): string {

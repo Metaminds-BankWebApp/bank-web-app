@@ -33,6 +33,7 @@ export interface AdminBankOfficerGeneratedPasswordResponse {
 }
 
 export async function getAdminBankOfficers(): Promise<AdminBankOfficerSummaryResponse[]> {
+  // Load officer list for admin management table.
   try {
     const { data } = await apiClient.get<AdminBankOfficerSummaryResponse[]>(ADMIN_ENDPOINTS.bankOfficers);
     return data;
@@ -45,6 +46,7 @@ export async function generateAdminBankOfficerUsername(
   firstName: string,
   lastName: string
 ): Promise<AdminBankOfficerGeneratedUsernameResponse> {
+  // Suggest a username while creating a new officer account.
   try {
     const { data } = await apiClient.post<AdminBankOfficerGeneratedUsernameResponse>(
       `${ADMIN_ENDPOINTS.bankOfficers}/credentials/username`,
@@ -60,6 +62,7 @@ export async function generateAdminBankOfficerUsername(
 }
 
 export async function generateAdminBankOfficerPassword(): Promise<AdminBankOfficerGeneratedPasswordResponse> {
+  // Generate a temporary password for onboarding.
   try {
     const { data } = await apiClient.get<AdminBankOfficerGeneratedPasswordResponse>(
       `${ADMIN_ENDPOINTS.bankOfficers}/credentials/password`
@@ -74,6 +77,7 @@ export async function updateAdminBankOfficerStatus(
   userId: number,
   status: AdminBankOfficerStatus
 ): Promise<AdminBankOfficerSummaryResponse> {
+  // Change account status (active/inactive/locked) without editing full profile.
   try {
     const { data } = await apiClient.patch<AdminBankOfficerSummaryResponse>(
       `${ADMIN_ENDPOINTS.bankOfficers}/${userId}/status`,
@@ -92,6 +96,7 @@ export async function updateAdminBankOfficer(
   userId: number,
   payload: AdminBankOfficerUpdateRequest
 ): Promise<AdminBankOfficerSummaryResponse> {
+  // Update core officer profile details.
   try {
     const { data } = await apiClient.put<AdminBankOfficerSummaryResponse>(
       `${ADMIN_ENDPOINTS.bankOfficers}/${userId}`,
@@ -106,6 +111,7 @@ export async function updateAdminBankOfficer(
 export async function deleteAdminBankOfficer(
   userId: number
 ): Promise<AdminBankOfficerSummaryResponse> {
+  // Remove/deactivate an officer record from admin flow.
   try {
     const { data } = await apiClient.delete<AdminBankOfficerSummaryResponse>(
       `${ADMIN_ENDPOINTS.bankOfficers}/${userId}`

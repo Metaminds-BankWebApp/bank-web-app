@@ -59,6 +59,7 @@ function buildInitials(name: string): string {
 }
 
 export default function CreditAnalysisPage() {
+  // Portfolio view for officer risk analysis with search, filters, sorting, and export.
   const router = useRouter();
   const [dashboard, setDashboard] = useState<BankCreditAnalysisDashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +70,7 @@ export default function CreditAnalysisPage() {
   const [scoreFilter, setScoreFilter] = useState<"all" | "low" | "medium" | "high">("all");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
 
+  // Load the officer's credit dashboard once when the page opens.
   useEffect(() => {
     let isActive = true;
 
@@ -103,6 +105,7 @@ export default function CreditAnalysisPage() {
 
   // dashboard is loaded in the primary effect above; no duplicate loader here
 
+  // Build the table list based on active tab, search text, filters, and sort option.
   const filteredRows = useMemo(() => {
     const sourceRows = dashboard?.customers ?? [];
     const filtered = sourceRows.filter((item) => {
@@ -142,6 +145,7 @@ export default function CreditAnalysisPage() {
     });
   }, [activeTab, dashboard?.customers, query, scoreFilter, sortBy]);
 
+  // Export exactly what the officer currently sees in the table.
   const handleExport = () => {
     const header = ["Customer Code", "Customer Name", "Risk Score", "Risk Badge", "Evaluation Date"];
     const rows = filteredRows.map((customer) => [

@@ -386,24 +386,18 @@ export function validateLiabilitiesStep(formData: CustomerFormData): Liabilities
 }
 
 export function validateCRIBRetrievalStep(formData: CustomerFormData): CRIBRetrievalErrors {
+  // CRIB must be either completed+ready or clearly failed before submission can continue.
   const errors: CRIBRetrievalErrors = {};
   const requestStatus = (formData.cribRequestStatus || "").trim().toUpperCase();
   const reportStatus = (formData.cribReportStatus || "").trim().toUpperCase();
   const isCribReady = requestStatus === "COMPLETED" && reportStatus === "READY";
-  const isCribNotFound = requestStatus === "FAILED" && reportStatus === "FAILED";
 
-  if (formData.cribRequestType && !formData.cribRequestType.trim()) {
+  if (!requestStatus || !reportStatus || (!isCribReady && requestStatus !== "FAILED" && reportStatus !== "FAILED")) {
     errors.creditScore = "Complete CRIB linking before continuing.";
   }
 
-  if (!isCribReady && !isCribNotFound) {
-    errors.creditScore = "Complete CRIB linking before continuing.";
-  }
-
-  if (isCribReady) {
-    if (formData.creditScore === undefined || formData.creditScore === null) {
-      errors.creditScore = "Complete CRIB linking before continuing.";
-    } else if (formData.creditScore < 300 || formData.creditScore > 900) {
+  if (formData.creditScore !== undefined && formData.creditScore !== null) {
+    if (formData.creditScore < 300 || formData.creditScore > 900) {
       errors.creditScore = "Credit score must be between 300 and 900.";
     }
   }
@@ -427,6 +421,7 @@ export function validateCustomerSubmission(
   formData: CustomerFormData,
   options: PersonalDetailsValidationOptions = {}
 ): SubmissionValidationResult {
+  // Validate in wizard order so we can jump user straight to the first broken step.
   const step1Errors = validatePersonalDetailsStep(formData, {
     allowPasswordUnchanged: options.allowPasswordUnchanged,
   });

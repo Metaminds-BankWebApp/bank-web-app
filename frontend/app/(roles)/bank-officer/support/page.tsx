@@ -34,6 +34,7 @@ export default function SupportConsolePage() {
   const [openEscalate, setOpenEscalate] = useState(false);
   const [openCase, setOpenCase] = useState(false);
 
+  // Filter the ticket list, then open a ticket to review details and take action.
   const filtered = tickets.filter((t) => {
     if (filters.status !== "All" && t.status !== filters.status) return false;
     if (filters.priority !== "All" && t.priority !== filters.priority) return false;
@@ -42,6 +43,7 @@ export default function SupportConsolePage() {
     return true;
   });
 
+  // Top KPI numbers are recalculated from the current ticket list.
   const stats = {
     open: tickets.filter((t) => t.status === "Open").length,
     high: tickets.filter((t) => t.priority === "High").length,
