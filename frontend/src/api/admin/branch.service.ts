@@ -2,6 +2,7 @@ import apiClient, { toApiError } from "@/src/api/client";
 import { ADMIN_ENDPOINTS } from "@/src/api/endpoints";
 import type { BranchRequest, BranchResponse, BranchStatus } from "@/src/types/dto/branch.dto";
 
+// Fetches AdminBranches data from the backend API.
 export async function getAdminBranches(): Promise<BranchResponse[]> {
   try {
     const { data } = await apiClient.get<BranchResponse[]>(ADMIN_ENDPOINTS.branches);
@@ -11,6 +12,7 @@ export async function getAdminBranches(): Promise<BranchResponse[]> {
   }
 }
 
+// Creates AdminBranch using the backend API.
 export async function createAdminBranch(payload: BranchRequest): Promise<BranchResponse> {
   try {
     const { data } = await apiClient.post<BranchResponse>(ADMIN_ENDPOINTS.branches, payload);
@@ -20,6 +22,7 @@ export async function createAdminBranch(payload: BranchRequest): Promise<BranchR
   }
 }
 
+// Updates AdminBranch using the backend API.
 export async function updateAdminBranch(
   branchId: number,
   payload: BranchRequest
@@ -35,6 +38,7 @@ export async function updateAdminBranch(
   }
 }
 
+// Updates AdminBranchStatus using the backend API.
 export async function updateAdminBranchStatus(
   branchId: number,
   status: BranchStatus
@@ -53,6 +57,7 @@ export async function updateAdminBranchStatus(
   }
 }
 
+// Deletes AdminBranch using the backend API.
 export async function deleteAdminBranch(branchId: number): Promise<BranchResponse> {
   try {
     const { data } = await apiClient.delete<BranchResponse>(

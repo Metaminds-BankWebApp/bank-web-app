@@ -6,6 +6,7 @@ import type {
   AdminAuditLogSearchParams,
 } from "@/src/types/dto/admin-audit-log.dto";
 
+// Fetches AdminAuditLogs data from the backend API.
 export async function getAdminAuditLogs(
   params?: AdminAuditLogSearchParams
 ): Promise<AdminAuditLogPageResponse> {
@@ -33,6 +34,7 @@ export async function getAdminAuditLogs(
   }
 }
 
+// Fetches AdminAuditLogFilters data from the backend API.
 export async function getAdminAuditLogFilters(): Promise<AdminAuditLogFilterOptionsResponse> {
   try {
     const { data } = await apiClient.get<AdminAuditLogFilterOptionsResponse>(

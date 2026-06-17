@@ -1,3 +1,7 @@
+/**
+ * Feature page component for Admin or LoanSense workflows.
+ */
+
 import type { BranchFormData, BranchFormErrors } from "./types";
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;

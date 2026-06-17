@@ -1,4 +1,8 @@
-﻿"use client";
+"use client";
+/**
+ * Admin dashboard page with summary cards, growth chart, quick actions, recent actions, and current loan-rate widgets.
+ */
+
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -349,6 +353,7 @@ function createFallbackMonthlyGrowthPoints(
   return points;
 }
 
+// Main dashboard component that composes summary cards, charts, and recent admin actions.
 export default function DashboardPage() {
   const { showToast } = useToast();
   const [customerType, setCustomerType] = useState<CustomerType>("ALL");
@@ -370,6 +375,7 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadDashboardSummary = async () => {
       setIsSummaryLoading(true);
       try {
@@ -408,6 +414,7 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadMonthlyUserGrowth = async () => {
       setIsMonthlyUserGrowthLoading(true);
       try {
@@ -447,6 +454,7 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadRecentActions = async (showLoading = true, showErrorToast = true) => {
       if (showLoading) {
         setIsRecentActionsLoading(true);
@@ -494,6 +502,7 @@ export default function DashboardPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadLoanPolicies = async () => {
       setIsLoanRatesLoading(true);
       try {
@@ -530,6 +539,7 @@ export default function DashboardPage() {
     };
   }, [showToast]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const metricCards = useMemo(
     () =>
       metricCardConfig.map((card) => {
@@ -549,6 +559,7 @@ export default function DashboardPage() {
     [dashboardSummary, isSummaryLoading]
   );
 
+  // Builds derived UI values from API data to keep rendering simple.
   const chartPoints = useMemo(() => {
     if (monthlyUserGrowth?.points?.length) {
       return monthlyUserGrowth.points;
@@ -556,11 +567,13 @@ export default function DashboardPage() {
     return createFallbackMonthlyGrowthPoints(CHART_MONTH_WINDOW);
   }, [monthlyUserGrowth]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const chartLabels = useMemo(
     () => chartPoints.map((point) => point.label),
     [chartPoints]
   );
 
+  // Builds derived UI values from API data to keep rendering simple.
   const chartValues = useMemo(
     () => ({
       ALL: chartPoints.map((point) => point.totalUsers ?? 0),
@@ -570,6 +583,7 @@ export default function DashboardPage() {
     [chartPoints]
   );
 
+  // Builds derived UI values from API data to keep rendering simple.
   const chartBarColors = useMemo(() => {
     const highlightedIndex = Math.max(0, chartLabels.length - 1);
     return chartLabels.map((_, index) =>
@@ -824,3 +838,5 @@ export default function DashboardPage() {
     </AuthGuard>
   );
 }
+
+

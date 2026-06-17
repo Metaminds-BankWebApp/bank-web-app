@@ -1,4 +1,7 @@
 "use client";
+/**
+ * Admin settings page shell rendered from a shared staff layout component.
+ */
 
 import { useState } from "react";
 import { AuthGuard } from "@/src/components/auth";
@@ -15,6 +18,7 @@ import {
   Switch,
 } from "@/src/components/ui";
 
+// Entry page for admin settings preferences.
 export default function AdminSettingsPage() {
   const [auditTrailEnabled, setAuditTrailEnabled] = useState(true);
   const [sessionTimeoutEnabled, setSessionTimeoutEnabled] = useState(true);
@@ -265,3 +269,5 @@ export default function AdminSettingsPage() {
     </AuthGuard>
   );
 }
+
+

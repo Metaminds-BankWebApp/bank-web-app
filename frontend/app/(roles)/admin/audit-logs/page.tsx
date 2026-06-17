@@ -1,4 +1,7 @@
 "use client";
+/**
+ * Admin audit-log page with filters, concise action rows, and paginated results.
+ */
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
@@ -117,6 +120,7 @@ function toAuditLogRow(record: AdminAuditLogRecordResponse): AuditLogRow {
   };
 }
 
+// Main component for browsing, filtering, and paging audit logs.
 export default function AuditLogsPage() {
   const { showToast } = useToast();
   const [search, setSearch] = useState("");
@@ -146,6 +150,7 @@ export default function AuditLogsPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadFilters = async () => {
       try {
         const data = await getAdminAuditLogFilters();
@@ -184,6 +189,7 @@ export default function AuditLogsPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadAuditLogs = async () => {
       setIsLoading(true);
       try {
@@ -239,6 +245,7 @@ export default function AuditLogsPage() {
     }
   }, [currentPage, totalPages]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const showingFrom = useMemo(() => {
     if (totalElements === 0) {
       return 0;
@@ -246,6 +253,7 @@ export default function AuditLogsPage() {
     return (currentPage - 1) * logsPerPage + 1;
   }, [currentPage, logsPerPage, totalElements]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const showingTo = useMemo(() => {
     if (totalElements === 0) {
       return 0;
@@ -253,6 +261,7 @@ export default function AuditLogsPage() {
     return Math.min(currentPage * logsPerPage, totalElements);
   }, [currentPage, logsPerPage, totalElements]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const visiblePages = useMemo(() => {
     if (totalPages <= 0) {
       return [];
@@ -465,3 +474,6 @@ export default function AuditLogsPage() {
     </AuthGuard>
   );
 }
+
+
+
