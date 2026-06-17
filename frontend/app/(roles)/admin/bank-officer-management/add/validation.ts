@@ -1,3 +1,7 @@
+/**
+ * Feature page component for Admin or LoanSense workflows.
+ */
+
 import type { OfficerFormData, OfficerFormErrors } from "./types";
 
 export const SRI_LANKA_PROVINCES = [
@@ -15,6 +19,7 @@ export const SRI_LANKA_PROVINCES = [
 const provinceSet = new Set(
   SRI_LANKA_PROVINCES.map((province) => province.toLowerCase())
 );
+
 const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
 const contactRegex = /^(?:077|076|078|070|072|074|075|071)\d{7}$/;
 const nicRegex = /^(?:\d{9}[VvXx]|\d{12})$/;
@@ -25,7 +30,10 @@ export function validateOfficerForm(formData: OfficerFormData): OfficerFormError
 
   if (!formData.firstName.trim()) {
     errors.firstName = "First name is required.";
+  }else if (formData.firstName.trim().length < 3) {
+    errors.firstName = "First name should contain at least more than 3 characters.";
   }
+   
 
   if (!formData.lastName.trim()) {
     errors.lastName = "Last name is required.";

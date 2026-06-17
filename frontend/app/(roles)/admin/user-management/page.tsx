@@ -1,4 +1,7 @@
 "use client";
+/**
+ * Admin user-management page with search, status updates, and paginated user records.
+ */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
@@ -136,6 +139,7 @@ function matchesUserStatus(statusLabel: string, normalizedQuery: string): boolea
   return normalizedStatus.includes(normalizedQuery);
 }
 
+// Main component for listing, filtering, and updating user accounts.
 export default function UserManagementPage() {
   const { showToast } = useToast();
   const [filter, setFilter] = useState<AdminCustomerType>("ALL");
@@ -176,6 +180,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadUsers = async () => {
       setError(null);
       if (hasLoadedOnceRef.current) {
@@ -230,6 +235,7 @@ export default function UserManagementPage() {
     setCurrentPage(1);
   }, [filter, searchField, searchQuery]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const filteredUsers = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
     if (!normalized) {
@@ -282,6 +288,7 @@ export default function UserManagementPage() {
   }, [searchField, searchQuery, users]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
+  // Builds derived UI values from API data to keep rendering simple.
   const visiblePages = useMemo(() => {
     if (totalPages <= 0) {
       return [];
@@ -301,6 +308,7 @@ export default function UserManagementPage() {
     }
   }, [currentPage, totalPages]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * usersPerPage;
     return filteredUsers.slice(start, start + usersPerPage);
@@ -878,4 +886,7 @@ export default function UserManagementPage() {
     </AuthGuard>
   );
 }
+
+
+
 

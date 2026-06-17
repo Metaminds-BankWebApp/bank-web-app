@@ -1,4 +1,7 @@
 "use client";
+/**
+ * Admin loan-policy management page for viewing and bulk-updating interest rates.
+ */
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
@@ -106,6 +109,7 @@ function mapPoliciesToCards(policies: AdminLoanPolicyResponse[]): LoanCard[] {
     .filter((loan): loan is LoanCard => loan !== null);
 }
 
+// Main component for viewing and updating loan policy rates.
 export default function PolicyManagementPage() {
   const { showToast } = useToast();
   const [loans, setLoans] = useState<LoanCard[]>([]);
@@ -117,6 +121,7 @@ export default function PolicyManagementPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadPolicies = async () => {
       setIsLoading(true);
       setError(null);
@@ -169,6 +174,7 @@ export default function PolicyManagementPage() {
     };
   }, [showToast]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const hasUnsavedChanges = useMemo(() => {
     if (loans.length !== savedLoans.length) {
       return true;
@@ -343,3 +349,6 @@ export default function PolicyManagementPage() {
     </AuthGuard>
   );
 }
+
+
+

@@ -1,4 +1,7 @@
 "use client";
+/**
+ * LoanSense help page shell that reuses the shared customer help layout.
+ */
 
 import React, { useState } from "react";
 import ModuleHeader from "@/src/components/ui/module-header";
@@ -6,6 +9,7 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import PopupModal from "@/src/components/ui/popup-modal";
 
+// Entry page for LoanSense help content and guidance.
 export default function LoanSenseCustomerHelp(){
   const [search,setSearch]=useState('');
   const [openTicket,setOpenTicket]=useState(false);
@@ -18,7 +22,7 @@ export default function LoanSenseCustomerHelp(){
         <div className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-8 mb-6">
           <h1 className="text-2xl font-semibold text-[#063154]">Help & Support</h1>
           <p className="mt-1 text-sm text-[#063154]/80">Get answers fast, track your requests, or contact your assigned officer.</p>
-          <div className="mt-6"><Input placeholder="Search help articles… (e.g., OTP not received, loan eligibility, transaction failed)" value={search} onChange={(e)=>setSearch(e.target.value)} className="h-12 bg-white rounded-xl" /></div>
+          <div className="mt-6"><Input placeholder="Search help articlesÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦ (e.g., OTP not received, loan eligibility, transaction failed)" value={search} onChange={(e)=>setSearch(e.target.value)} className="h-12 bg-white rounded-xl" /></div>
         </div>
 
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -31,7 +35,7 @@ export default function LoanSenseCustomerHelp(){
 
         <div className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-6"><h3 className="text-lg font-semibold text-[#063154]">My Support Requests</h3><div className="mt-3">{/* simplified list UI */}<p className="text-sm text-[#063154]/80">No recent tickets</p></div><div className="mt-4"><Button className="bg-[#2F9D94]" onClick={()=> setOpenTicket(true)}>Create New Support Ticket</Button></div></div>
 
-        <section className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-24"><h3 className="text-lg font-semibold text-[#063154]">Quick Feedback</h3><div className="mt-3 flex items-center gap-2">{[1,2,3,4,5].map(n=> <button key={n} className="px-3 py-1 bg-white rounded-md">{n}★</button>)}<Input placeholder="Short message" className="ml-2 bg-white" /><Button className="bg-[#2F9D94]">Send</Button></div></section>
+        <section className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-24"><h3 className="text-lg font-semibold text-[#063154]">Quick Feedback</h3><div className="mt-3 flex items-center gap-2">{[1,2,3,4,5].map(n=> <button key={n} className="px-3 py-1 bg-white rounded-md">{n}ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ÃƒÆ’Ã¢â‚¬Â¦ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¦</button>)}<Input placeholder="Short message" className="ml-2 bg-white" /><Button className="bg-[#2F9D94]">Send</Button></div></section>
 
         <div className="flex items-center justify-between bg-[#063154]/5 p-4 rounded-xl"><p className="text-sm text-[#063154]/90">PrimeCore will never ask for your OTP or password. If you suspect fraud, report immediately.</p><Button className="bg-[#2F9D94]" onClick={()=> setOpenFraud(true)}>Report Fraud</Button></div>
 
@@ -106,3 +110,6 @@ function FraudForm({ onClose }: { onClose: () => void }){
     </div>
   );
 }
+
+
+

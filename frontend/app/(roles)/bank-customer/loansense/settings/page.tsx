@@ -1,6 +1,11 @@
+/**
+ * LoanSense settings page shell that reuses the shared customer settings layout.
+ */
+
 import { FeatureSettingsPage } from "@/src/components/feature-settings-page";
 import ModuleHeader from "@/src/components/ui/module-header";
 
+// Entry page for LoanSense user settings.
 export default function LoanSenseSettingsPage() {
   return (
     <div className="flex min-h-screen flex-col gap-8 bg-transparent p-4 font-sans text-slate-800 md:p-8">
@@ -11,3 +16,6 @@ export default function LoanSenseSettingsPage() {
     </div>
   );
 }
+
+
+

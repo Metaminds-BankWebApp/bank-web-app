@@ -7,6 +7,7 @@ import type {
   AdminUserStatus,
 } from "@/src/types/dto/admin-user-management.dto";
 
+// Fetches AdminUsers data from the backend API.
 export async function getAdminUsers(params?: {
   customerType?: AdminCustomerType;
   search?: string;
@@ -27,6 +28,7 @@ export async function getAdminUsers(params?: {
   }
 }
 
+// Updates AdminUserStatus using the backend API.
 export async function updateAdminUserStatus(
   userId: number,
   status: AdminUserStatus
@@ -45,6 +47,7 @@ export async function updateAdminUserStatus(
   }
 }
 
+// Updates AdminUserDetails using the backend API.
 export async function updateAdminUserDetails(
   userId: number,
   payload: AdminUserManagementUpdateRequest
@@ -60,6 +63,7 @@ export async function updateAdminUserDetails(
   }
 }
 
+// Deletes AdminUser using the backend API.
 export async function deleteAdminUser(
   userId: number
 ): Promise<AdminUserManagementUserResponse> {
