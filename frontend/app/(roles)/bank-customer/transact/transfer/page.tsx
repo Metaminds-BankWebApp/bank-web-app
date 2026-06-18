@@ -433,7 +433,7 @@ export default function Page() {
                   type="button"
                   onClick={handleTransfer}
                   disabled={!isFormValid || isSubmittingTransfer}
-                  className={`w-full sm:w-auto ${!isFormValid || isSubmittingTransfer ? "bg-[#061e3d]/60 cursor-not-allowed opacity-70" : "bg-[#061e3d]"} text-[#ffffff] inline-flex items-center justify-center gap-2 px-7 py-5.5 rounded-full font-medium transition-all duration-200`}
+                  className={`w-full sm:w-auto ${!isFormValid || isSubmittingTransfer ? "bg-[#061e3d]/60 hover:bg-[#061e3d] cursor-not-allowed opacity-70" : "bg-[#061e3d]"} text-[#ffffff] inline-flex items-center justify-center gap-2 px-7 py-5.5 rounded-full font-medium transition-all duration-200`}
                 >
                   {isSubmittingTransfer ? "Transferring..." : "Transfer Amount"}
                 </Button>
