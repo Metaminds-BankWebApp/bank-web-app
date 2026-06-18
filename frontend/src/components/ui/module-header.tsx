@@ -39,7 +39,7 @@ type ModuleHeaderProps = {
 
 const THEME_BG: Record<ModuleHeaderTheme, string> = {
   creditlens: "bg-[linear-gradient(90deg,#0b2447,#09203a)]",
-  transact: "bg-[linear-gradient(90deg,#0B3E5A,#0a3046)]",
+  transact: "bg-[linear-gradient(90deg,#0B3E5A,#061e3d)]",
   loansense: "bg-[linear-gradient(90deg,#0d3b66,#0a2f51)]",
   spendiq: "bg-[linear-gradient(90deg,#0b1a3a,#0a234c)]",
   staff: "bg-[linear-gradient(90deg,#0b1a3a,#0a234c)]",

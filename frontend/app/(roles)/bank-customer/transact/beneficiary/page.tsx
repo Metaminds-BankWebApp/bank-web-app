@@ -213,12 +213,12 @@ export default function Page() {
             </div>
 
             {/* Form submit action row. */}
-            <div className="flex justify-end mt-2 sm:mt-4">
+            <div className="flex justify-end ">
               <Button
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto bg-[#155E63] hover:bg-[#134e52] text-white px-8 py-5 rounded-xl disabled:opacity-60"
+                className="w-full sm:w-auto bg-[#061e3d] hover:bg-[#0a3046] text-white px-8 py-5 rounded-xl disabled:opacity-60"
               >
                 Save
               </Button>

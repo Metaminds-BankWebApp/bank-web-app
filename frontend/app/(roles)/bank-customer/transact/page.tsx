@@ -377,7 +377,7 @@ export default function TransactDashboard() {
                   key={index}
                   className={`transact-card transact-card-hover rounded-2xl p-4 sm:p-6 min-h-[120px] sm:min-h-[150px] flex flex-col justify-between ${
                     item.dark
-                      ? "border border-[#0B3E5A]/25 bg-[linear-gradient(150deg,#0B3E5A_0%,#0a3046_100%)] text-white shadow-[0_20px_44px_-32px_rgba(2,18,33,0.78)]"
+                      ? "border border-[#061e3d]/25 bg-[linear-gradient(150deg,#061e3d_0%,#0a3046_100%)] text-white shadow-[0_20px_44px_-32px_rgba(2,18,33,0.78)]"
                       : "transact-creditlens-shade bg-[#e0f7fa] text-[#0e4f62]"
                   }`}
                 >
