@@ -66,7 +66,7 @@ export default function TrendsPage() {
   return (
     <div className="w-full overflow-x-hidden px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
       <div className="flex min-h-[calc(100dvh-1.25rem)] flex-col gap-4 sm:gap-5 lg:h-[calc(100dvh-2rem)] lg:min-h-0 lg:overflow-hidden">
-        <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Trends" subtitle="" name="John Doe" role="Public Customer" />
+        <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Trends" />
 
         {isLoading && !trendData ? (
           <StateCard

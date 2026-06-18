@@ -256,7 +256,7 @@ export default function BankOfficerRolePage() {
              <Card className="border-none shadow-sm">
                <CardHeader className="pb-2"><h2 className="text-lg font-semibold text-[#0d3b66]">Recent customers</h2></CardHeader>
                <CardContent className="overflow-x-auto p-0">
-                 <table className="w-full min-w-[800px] text-left text-sm">
+                 <table className="primecore-data-table w-full min-w-[800px] text-left text-sm">
                    <thead className="bg-gray-50/50">
                      <tr>
                        <th className="px-6 py-3 font-medium text-gray-500">Name Customer</th>
@@ -309,5 +309,4 @@ export default function BankOfficerRolePage() {
     </AuthGuard>
   );
 }
-
 

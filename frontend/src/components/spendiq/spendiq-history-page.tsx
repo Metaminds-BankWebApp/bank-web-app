@@ -7,6 +7,21 @@ import { getSpendIqExpenses } from "@/src/api/spendiq/spendiq.service";
 import { toApiError } from "@/src/api/client";
 import type { SpendIqExpenseResponse, SpendIqPaymentMethod } from "@/src/types/dto/spendiq.dto";
 import { Button } from "@/src/components/ui/button";
+import {
+  DataTableActionGroup,
+  DataTableFilterGroup,
+  DataTableFooter,
+  DataTablePanel,
+  DataTableToolbar,
+} from "@/src/components/ui/data-table-layout";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/src/components/ui/table";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { useToast } from "@/src/components/ui/toast";
@@ -174,32 +189,32 @@ export function SpendIqHistoryPage() {
         </p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-6 space-y-6 border border-transparent dark:border-slate-800">
-        <div className="grid md:grid-cols-6 gap-6 items-end">
-          <div className="flex flex-col space-y-2">
+      <DataTableToolbar>
+        <DataTableFilterGroup className="flex-1">
+          <div className="flex w-full flex-col space-y-2 sm:w-44">
             <label className="text-xs font-medium text-gray-500 dark:text-slate-400">Start Date</label>
             <input
               type="date"
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-slate-400 focus:ring-1 focus:ring-[#0b1a3a] dark:focus:ring-slate-400 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
 
-          <div className="flex flex-col space-y-2">
+          <div className="flex w-full flex-col space-y-2 sm:w-44">
             <label className="text-xs font-medium text-gray-500 dark:text-slate-400">End Date</label>
             <input
               type="date"
               value={endDate}
               onChange={(event) => setEndDate(event.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-[#0b1a3a] dark:focus:border-slate-400 focus:ring-1 focus:ring-[#0b1a3a] dark:focus:ring-slate-400 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+              className="h-10 w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
             />
           </div>
 
-          <div className="flex flex-col space-y-2">
+          <div className="flex w-full flex-col space-y-2 sm:w-48">
             <label className="text-xs font-medium text-gray-500 dark:text-slate-400">Category</label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full py-6 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+              <SelectTrigger className="h-10 w-full rounded-lg border-slate-200 bg-slate-50/70 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
@@ -213,10 +228,10 @@ export function SpendIqHistoryPage() {
             </Select>
           </div>
 
-          <div className="flex flex-col space-y-2">
+          <div className="flex w-full flex-col space-y-2 sm:w-44">
             <label className="text-xs font-medium text-gray-500 dark:text-slate-400">Payment Type</label>
             <Select value={paymentFilter} onValueChange={(value) => setPaymentFilter(value as "ALL" | SpendIqPaymentMethod)}>
-              <SelectTrigger className="w-full py-6 border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-900 dark:text-slate-100">
+              <SelectTrigger className="h-10 w-full rounded-lg border-slate-200 bg-slate-50/70 text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
@@ -228,77 +243,76 @@ export function SpendIqHistoryPage() {
             </Select>
           </div>
 
-          <div className="flex justify-end">
+        </DataTableFilterGroup>
+
+        <DataTableActionGroup>
             <Button
               type="button"
               variant="outline"
               onClick={clearFilters}
-              className="border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="h-10 rounded-lg border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Reset Filters
             </Button>
-          </div>
 
-          <div className="flex justify-end">
             <Button
               type="button"
               variant="outline"
               onClick={exportCsv}
-              className="border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="h-10 rounded-lg border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               <Download size={16} />
               Export CSV
             </Button>
-          </div>
-        </div>
-      </div>
+        </DataTableActionGroup>
+      </DataTableToolbar>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-6 border border-transparent dark:border-slate-800">
-        <div className="flex justify-between items-center mb-6">
+      <DataTablePanel>
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Expense Records</h2>
           <span className="text-xs text-gray-500 dark:text-slate-400">{summaryText}</span>
         </div>
 
         {isLoading ? (
-          <div className="py-10 text-sm text-slate-500 dark:text-slate-400">Loading expenses...</div>
+          <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">Loading expenses...</div>
         ) : visibleExpenses.length === 0 ? (
-          <div className="py-10 text-sm text-slate-500 dark:text-slate-400">No expense records found for the selected filters.</div>
+          <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">No expense records found for the selected filters.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-slate-200 dark:border-slate-700 text-gray-500 dark:text-slate-400">
-                <tr>
-                  <th className="text-left py-3">Date</th>
-                  <th className="text-left py-3">Category</th>
-                  <th className="text-left py-3">Amount</th>
-                  <th className="text-left py-3">Payment Type</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Payment Type</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {visibleExpenses.map((expense) => (
-                  <tr
+                  <TableRow
                     key={expense.expenseId}
-                    className="border-b border-slate-200 dark:border-slate-800 last:border-none hover:bg-gray-50 dark:hover:bg-slate-800/60 transition"
                   >
-                    <td className="py-4 text-slate-700 dark:text-slate-200">{formatDate(expense.expenseDate)}</td>
-                    <td>
+                    <TableCell>{formatDate(expense.expenseDate)}</TableCell>
+                    <TableCell>
                       <span className="px-3 py-1 text-xs rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200">
                         {expense.categoryName}
                       </span>
-                    </td>
-                    <td className="font-semibold text-red-500">-{formatAmount(Number(expense.amount))}</td>
-                    <td>
+                    </TableCell>
+                    <TableCell className="font-semibold text-red-500">-{formatAmount(Number(expense.amount))}</TableCell>
+                    <TableCell>
                       <span className="px-3 py-1 text-xs rounded-full bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200">
                         {paymentLabel(expense.paymentType)}
                       </span>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
         )}
-      </div>
+        <DataTableFooter>
+          <span>{summaryText}</span>
+        </DataTableFooter>
+      </DataTablePanel>
     </div>
   );
 }

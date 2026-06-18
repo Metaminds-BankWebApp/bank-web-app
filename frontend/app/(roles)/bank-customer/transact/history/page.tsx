@@ -2,10 +2,22 @@
 
 import * as React from "react"
 import { Search } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/src/components/ui/badge"
+import {
+  Button,
+  DataTableActionGroup,
+  DataTableFilterGroup,
+  DataTableFooter,
+  DataTablePanel,
+  DataTableStatusBadge,
+  DataTableToolbar,
+  Input,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/src/components/ui"
 import ModuleHeader from "@/src/components/ui/module-header"
 import { TransactionHistoryExport } from "@/src/components/ui/transaction-history-export"
 import { transactionService } from "@/src/api/transact/transaction.service"
@@ -26,24 +38,18 @@ type TransactionRecord = {
   reference: string
 }
 
-// Formats numeric amounts into LKR-style currency strings with 2 decimal places.
 const amountFormatter = new Intl.NumberFormat("en-LK", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })
 
-// Normalizes a date-like value into YYYY-MM-DD for table display and filtering.
 function toDateOnly(value: string): string {
   const trimmed = (value ?? "").trim()
   const match = trimmed.match(/^(\d{4}-\d{2}-\d{2})/)
-  if (match) {
-    return match[1]
-  }
+  if (match) return match[1]
 
   const parsed = new Date(trimmed)
-  if (Number.isNaN(parsed.getTime())) {
-    return ""
-  }
+  if (Number.isNaN(parsed.getTime())) return ""
 
   const year = parsed.getFullYear()
   const month = String(parsed.getMonth() + 1).padStart(2, "0")
@@ -51,22 +57,14 @@ function toDateOnly(value: string): string {
   return `${year}-${month}-${day}`
 }
 
-// Maps backend status values into UI-friendly status keys.
 function toStatus(value: string): TransactionStatus {
   const normalized = (value ?? "").trim().toUpperCase()
-  if (normalized === "SUCCESS") {
-    return "success"
-  }
-  if (normalized === "PENDING_OTP") {
-    return "pending"
-  }
-  if (normalized === "CANCELLED") {
-    return "cancelled"
-  }
+  if (normalized === "SUCCESS") return "success"
+  if (normalized === "PENDING_OTP") return "pending"
+  if (normalized === "CANCELLED") return "cancelled"
   return "failed"
 }
 
-// Converts API transaction payload into the table row shape used by this page.
 function mapTransaction(tx: TransactionResponse): TransactionRecord {
   return {
     id: String(tx.transactionId),
@@ -81,28 +79,20 @@ function mapTransaction(tx: TransactionResponse): TransactionRecord {
   }
 }
 
-// Shared label + badge style mapping per transaction status.
-const statusMeta: Record<TransactionStatus, { label: string; variant: "success" | "warning" | "danger" | "outline" }> = {
-  success: { label: "Success", variant: "success" },
-  failed: { label: "Failed", variant: "danger" },
-  pending: { label: "Pending OTP", variant: "warning" },
-  cancelled: { label: "Cancelled", variant: "outline" },
+const statusMeta: Record<TransactionStatus, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
+  success: { label: "Success", tone: "success" },
+  failed: { label: "Failed", tone: "danger" },
+  pending: { label: "Pending OTP", tone: "warning" },
+  cancelled: { label: "Cancelled", tone: "neutral" },
 }
 
-// Keeps all status badges aligned to the same width and spacing.
-const statusBadgeClassName = "min-w-[112px] justify-center whitespace-nowrap px-3 py-1"
-
 export default function Page() {
-  // Table data and filter states.
   const [records, setRecords] = React.useState<TransactionRecord[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
   const [dateQuery, setDateQuery] = React.useState("")
-
-  // Loading and API error states.
   const [isLoading, setIsLoading] = React.useState(true)
   const [loadError, setLoadError] = React.useState("")
 
-  // Loads transaction history once on mount and safely ignores updates after unmount.
   React.useEffect(() => {
     let mounted = true
 
@@ -112,14 +102,10 @@ export default function Page() {
 
       try {
         const transactions = await transactionService.getTransactionHistory()
-        if (!mounted) {
-          return
-        }
-        setRecords(transactions.map(mapTransaction))
+        if (mounted) setRecords(transactions.map(mapTransaction))
       } catch (error) {
-        if (!mounted) {
-          return
-        }
+        if (!mounted) return
+
         let message = "Unable to load transaction history. Please try again."
         if (error instanceof ApiError) {
           message = error.message || message
@@ -129,20 +115,17 @@ export default function Page() {
         setLoadError(message)
         setRecords([])
       } finally {
-        if (mounted) {
-          setIsLoading(false)
-        }
+        if (mounted) setIsLoading(false)
       }
     }
 
-    loadHistory()
+    void loadHistory()
 
     return () => {
       mounted = false
     }
   }, [])
 
-  // Applies text and date filters to the loaded records.
   const filteredData = React.useMemo(() => {
     return records.filter((record) => {
       const normalizedSearchQuery = searchQuery.trim().toLowerCase()
@@ -159,7 +142,6 @@ export default function Page() {
     })
   }, [records, searchQuery, dateQuery])
 
-  // Resets all active filters back to default values.
   function clearFilters() {
     setSearchQuery("")
     setDateQuery("")
@@ -169,102 +151,101 @@ export default function Page() {
     <div className="bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transaction History" name="John Deo" />
 
-      {/* Main transaction history card with filters, export action, and table. */}
-      <Card className="transact-card transact-card-hover bg-white transact-creditlens-shade creditlens-delay-1 max-w-6xl mx-auto mt-6 w-full rounded-xl p-4 sm:mt-30 sm:p-6 lg:p-8">
-        {/* API load error banner. */}
-        {loadError && (
-          <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
-            {loadError}
-          </div>
-        )}
-
-        {/* Filter controls and PDF export action row. */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 flex-1">
-            <div className="relative max-w-md w-full sm:w-64">
-              <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-(--primecore-foreground)/60">
-                <Search className="w-4 h-4" />
+      <div className="mx-auto mt-6 w-full max-w-6xl">
+        <DataTableToolbar>
+          <DataTableFilterGroup className="flex-1">
+            <div className="relative w-full sm:max-w-xs">
+              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                <Search className="h-4 w-4" />
               </span>
               <Input
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search account no or name"
-                className="pl-10 w-full"
+                className="h-10 w-full rounded-lg border-slate-200 bg-slate-50/70 pl-10"
                 aria-label="Search by account number or name"
               />
             </div>
-          </div>
 
-          <div className="flex w-full md:w-auto items-center gap-3">
             <input
               type="date"
               value={dateQuery}
               onChange={(event) => setDateQuery(event.target.value)}
-              className="bg-transparent border rounded-md px-3 py-2 text-sm h-9"
+              className="h-10 rounded-lg border border-slate-200 bg-slate-50/70 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-200"
               aria-label="Filter by date"
             />
+          </DataTableFilterGroup>
 
-            <Button variant="outline" size="md" className="!px-4 flex-1 md:flex-none items-center" onClick={clearFilters}>
+          <DataTableActionGroup>
+            <Button variant="outline" size="md" className="h-10 rounded-lg border-slate-200 bg-white px-4 text-slate-600" onClick={clearFilters}>
               Clear
             </Button>
-
             <TransactionHistoryExport records={filteredData} />
-          </div>
-        </div>
+          </DataTableActionGroup>
+        </DataTableToolbar>
 
-        {/* Scrollable transaction table area. */}
-        <div className="overflow-x-auto">
-          <div className="overflow-y-auto max-h-[48vh]">
-            <table className="w-full text-sm min-w-[760px]">
-              <thead className="bg-(--primecore-surface-soft)">
-                <tr className="text-left text-xs text-(--primecore-foreground)/80">
-                  <th className="px-4 py-3">Receiver’s name</th>
-                  <th className="px-4 py-3">Receiver’s acc no</th>
-                  <th className="px-4 py-3">Sender’s name</th>
-                  <th className="px-4 py-3">Sender’s acc no</th>
-                  <th className="px-4 py-4">Amount</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Date</th>
-                  <th className="px-4 py-3">Reference no</th>
-                </tr>
-              </thead>
+        <DataTablePanel>
+          {loadError ? (
+            <div className="m-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+              {loadError}
+            </div>
+          ) : null}
 
-              <tbody>
-                {isLoading ? (
-                  <tr>
-                    <td className="px-4 py-6 text-sm text-(--primecore-foreground)/70" colSpan={8}>
-                      Loading transaction history...
-                    </td>
-                  </tr>
-                ) : filteredData.length === 0 ? (
-                  <tr>
-                    <td className="px-4 py-6 text-sm text-(--primecore-foreground)/70" colSpan={8}>
-                      No transactions found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredData.map((row) => (
-                    <tr key={row.id} className="hover:bg-(--primecore-surface)/50 border-b border-(--primecore-border)">
-                      <td className="px-4 py-3 align-middle">{row.receiverName}</td>
-                      <td className="px-4 py-3 align-middle">{row.receiverAcc}</td>
-                      <td className="px-4 py-3 align-middle">{row.senderName}</td>
-                      <td className="px-4 py-3 align-middle">{row.senderAcc}</td>
-                      <td className="px-4 py-4 align-middle">{row.amount}</td>
-                      <td className="px-4 py-3 align-middle">
-                        <Badge className={statusBadgeClassName} variant={statusMeta[row.status].variant}>
-                          {statusMeta[row.status].label}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 align-middle">{row.date || "-"}</td>
-                      <td className="px-4 py-3 align-middle">{row.reference}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </Card>
+          <Table className="min-w-[760px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Receiver&apos;s name</TableHead>
+                <TableHead>Receiver&apos;s acc no</TableHead>
+                <TableHead>Sender&apos;s name</TableHead>
+                <TableHead>Sender&apos;s acc no</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Reference no</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell className="py-10 text-center text-sm text-slate-500" colSpan={8}>
+                    Loading transaction history...
+                  </TableCell>
+                </TableRow>
+              ) : filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell className="py-10 text-center text-sm text-slate-500" colSpan={8}>
+                    No transactions found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredData.map((row) => (
+                  <TableRow key={row.id}>
+                    <TableCell>{row.receiverName}</TableCell>
+                    <TableCell>{row.receiverAcc}</TableCell>
+                    <TableCell>{row.senderName}</TableCell>
+                    <TableCell>{row.senderAcc}</TableCell>
+                    <TableCell className="font-semibold">{row.amount}</TableCell>
+                    <TableCell>
+                      <DataTableStatusBadge tone={statusMeta[row.status].tone}>
+                        {statusMeta[row.status].label}
+                      </DataTableStatusBadge>
+                    </TableCell>
+                    <TableCell>{row.date || "-"}</TableCell>
+                    <TableCell>{row.reference}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+
+          <DataTableFooter>
+            <span>
+              Showing <span className="font-semibold text-slate-800">{filteredData.length === 0 ? 0 : 1}-{filteredData.length}</span> of{" "}
+              <span className="font-semibold text-slate-800">{filteredData.length}</span> transactions
+            </span>
+          </DataTableFooter>
+        </DataTablePanel>
+      </div>
     </div>
   )
 }

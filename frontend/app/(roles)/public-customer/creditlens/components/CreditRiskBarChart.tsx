@@ -31,14 +31,6 @@ export default function CreditRiskBarChart({ labels = defaultLabels, values = de
 
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [isMobile, setIsMobile] = useState(false);
-  const [chartValues, setChartValues] = useState<number[]>(() => values.map(() => 0));
-
-  useEffect(() => {
-    setChartValues(values.map(() => 0));
-    const raf = requestAnimationFrame(() => setChartValues(values));
-    return () => cancelAnimationFrame(raf);
-  }, [values]);
-
   useEffect(() => {
     const updateViewport = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     updateViewport();
@@ -55,7 +47,7 @@ export default function CreditRiskBarChart({ labels = defaultLabels, values = de
       datasets: [
         {
           label: "Credit Risk Score",
-          data: chartValues,
+          data: values,
           borderRadius: 12,
           borderSkipped: false as const,
           barThickness,
@@ -63,7 +55,7 @@ export default function CreditRiskBarChart({ labels = defaultLabels, values = de
         },
       ],
     }),
-    [barThickness, chartValues, hoverIndex, labels]
+    [barThickness, hoverIndex, labels, values]
   );
 
   const options: ChartOptions<"bar"> = {

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, CheckCircle2, Info, Menu, Plus, TriangleAlert, X } from "lucide-react";
 import { getMyUserProfile, resolveUserProfileImageUrl } from "@/src/api/profile/user-profile.service";
@@ -168,6 +169,7 @@ export default function ModuleHeader({
     if (menuMode === "feature-layout") return Boolean(featureLayout);
     return false;
   }, [featureLayout, menuMode]);
+  const isFeatureLayoutHeader = menuMode === "feature-layout";
 
   const resolvedRightContent = useMemo(() => {
     if (rightContent !== undefined) return rightContent;
@@ -255,11 +257,12 @@ export default function ModuleHeader({
     </>
   );
 
-  return (
+  const headerContent = (
     <>
       <header
         className={cn(
           "flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3 text-white shadow-sm sm:p-4",
+          isFeatureLayoutHeader && "shrink-0",
           THEME_BG[theme],
           className
         )}
@@ -407,4 +410,14 @@ export default function ModuleHeader({
       ) : null}
     </>
   );
+
+  if (isFeatureLayoutHeader && featureLayout) {
+    if (!featureLayout.headerPortalElement) {
+      return null;
+    }
+
+    return createPortal(headerContent, featureLayout.headerPortalElement);
+  }
+
+  return headerContent;
 }

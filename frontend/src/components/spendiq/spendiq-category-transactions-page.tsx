@@ -6,7 +6,9 @@ import { getSpendIqExpenses } from "@/src/api/spendiq/spendiq.service";
 import { toApiError } from "@/src/api/client";
 import type { SpendIqExpenseResponse } from "@/src/types/dto/spendiq.dto";
 import { Button } from "@/src/components/ui/button";
+import { DataTablePanel } from "@/src/components/ui/data-table-layout";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { useToast } from "@/src/components/ui/toast";
 
 function formatDate(value: string): string {
@@ -93,8 +95,8 @@ export function SpendIqCategoryTransactionsPage() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-6 border border-transparent dark:border-slate-800">
-        <div className="flex justify-between items-center mb-4">
+      <DataTablePanel>
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Transactions</h3>
           <Button type="button" variant="outline" onClick={() => window.history.back()}>
             Back
@@ -102,40 +104,38 @@ export function SpendIqCategoryTransactionsPage() {
         </div>
 
         {!category ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">Category parameter is missing.</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Category parameter is missing.</p>
         ) : isLoading ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">Loading transactions...</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">Loading transactions...</p>
         ) : categoryExpenses.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">No transactions found for this category in the selected period.</p>
+          <p className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">No transactions found for this category in the selected period.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
-                <tr>
-                  <th className="text-left py-3">Date</th>
-                  <th className="text-left py-3">Category</th>
-                  <th className="text-left py-3">Amount</th>
-                  <th className="text-left py-3">Payment Type</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Payment Type</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {categoryExpenses.map((expense) => (
-                  <tr key={expense.expenseId} className="border-b border-slate-200 dark:border-slate-800 last:border-none">
-                    <td className="py-4 text-slate-700 dark:text-slate-200">{formatDate(expense.expenseDate)}</td>
-                    <td className="py-4">
+                  <TableRow key={expense.expenseId}>
+                    <TableCell>{formatDate(expense.expenseDate)}</TableCell>
+                    <TableCell>
                       <span className="px-3 py-1 text-xs rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200">
                         {expense.categoryName}
                       </span>
-                    </td>
-                    <td className="py-4 font-semibold text-red-500">-{formatAmount(Number(expense.amount))}</td>
-                    <td className="py-4 text-slate-700 dark:text-slate-200">{paymentLabel(expense.paymentType)}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell className="font-semibold text-red-500">-{formatAmount(Number(expense.amount))}</TableCell>
+                    <TableCell>{paymentLabel(expense.paymentType)}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
         )}
-      </div>
+      </DataTablePanel>
     </div>
   );
 }
