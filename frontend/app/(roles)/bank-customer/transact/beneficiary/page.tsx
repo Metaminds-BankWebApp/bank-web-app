@@ -140,8 +140,8 @@ export default function Page() {
 
       <section className="max-w-6xl mx-auto mt-20 sm:mt-8">
         {/* Beneficiary creation form card. */}
-        <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 mt-20 w-full rounded-xl p-4 sm:mt-20 sm:min-h-[420px] sm:p-6 lg:p-8">
-          <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit} noValidate>
+        <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 mt-20 w-full rounded-xl p-4 sm:mt-20 sm:min-h-[650px] sm:p-6 lg:p-8">
+          <form className="space-y-6 sm:space-y-10" onSubmit={handleSubmit} noValidate>
             {/* Top-level submit error message. */}
             {submitError && (
               <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
