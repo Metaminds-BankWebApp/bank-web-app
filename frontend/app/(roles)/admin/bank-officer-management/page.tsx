@@ -1,4 +1,7 @@
 "use client";
+/**
+ * Admin officer-management page with filters, actions, and paginated officer records.
+ */
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -235,6 +238,7 @@ function mapApiOfficer(officer: AdminBankOfficerSummaryResponse): OfficerData {
   };
 }
 
+// Main component for listing and managing bank officers.
 export default function Page() {
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
@@ -264,6 +268,7 @@ export default function Page() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadOfficers = async () => {
       setIsLoading(true);
       setLoadError(null);
@@ -455,6 +460,7 @@ export default function Page() {
     }
   };
 
+  // Builds derived UI values from API data to keep rendering simple.
   const filteredOfficers = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
 
@@ -509,6 +515,7 @@ export default function Page() {
     filteredOfficers.length === 0 ? 0 : (currentPage - 1) * officersPerPage + 1;
   const showingTo =
     filteredOfficers.length === 0 ? 0 : Math.min(currentPage * officersPerPage, filteredOfficers.length);
+  // Builds derived UI values from API data to keep rendering simple.
   const visiblePages = useMemo(() => {
     if (totalPages <= 0) {
       return [];
@@ -522,6 +529,7 @@ export default function Page() {
     return Array.from({ length: end - start + 1 }, (_, index) => start + index);
   }, [currentPage, totalPages]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const summary = useMemo(() => {
     const activeCount = officers.filter((officer) => officer.status === "Active").length;
     const inactiveCount = officers.filter((officer) => officer.status === "Inactive").length;
@@ -935,3 +943,6 @@ export default function Page() {
     </AuthGuard>
   );
 }
+
+
+

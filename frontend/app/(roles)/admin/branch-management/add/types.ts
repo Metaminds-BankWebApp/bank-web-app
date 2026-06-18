@@ -1,3 +1,7 @@
+/**
+ * Feature page component for Admin or LoanSense workflows.
+ */
+
 export type BranchStatus = "ACTIVE" | "INACTIVE" | "MAINTENANCE";
 
 export type BranchFormData = {

@@ -5,6 +5,7 @@ import type {
   AdminLoanPolicyResponse,
 } from "@/src/types/dto/admin-loan-policy.dto";
 
+// Fetches AdminLoanPolicies data from the backend API.
 export async function getAdminLoanPolicies(): Promise<AdminLoanPolicyResponse[]> {
   try {
     const { data } = await apiClient.get<AdminLoanPolicyResponse[]>(
@@ -16,6 +17,7 @@ export async function getAdminLoanPolicies(): Promise<AdminLoanPolicyResponse[]>
   }
 }
 
+// Updates AdminLoanPolicyInterestRates using the backend API.
 export async function updateAdminLoanPolicyInterestRates(
   payload: AdminBulkLoanPolicyInterestRateUpdateRequest
 ): Promise<AdminLoanPolicyResponse[]> {

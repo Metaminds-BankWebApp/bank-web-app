@@ -1,4 +1,7 @@
 "use client";
+/**
+ * Admin add-branch page for capturing branch details and creating a new branch record.
+ */
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -76,6 +79,7 @@ function mapApiMessageToBranchField(message: string): BranchFormErrors {
   return {};
 }
 
+// Form page for creating a new branch record.
 export default function AddBranchPage() {
   const { showToast } = useToast();
   const [formData, setFormData] = useState<BranchFormData>(getInitialFormData);
@@ -339,3 +343,6 @@ export default function AddBranchPage() {
     </AuthGuard>
   );
 }
+
+
+

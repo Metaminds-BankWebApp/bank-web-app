@@ -1,4 +1,7 @@
 "use client";
+/**
+ * Admin branch-management page with search, status updates, and paginated branch records.
+ */
 
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
@@ -179,6 +182,7 @@ function mapApiBranch(branch: BranchResponse): BranchData {
   };
 }
 
+// Main component for listing and managing branch records.
 export default function Page() {
   const { showToast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
@@ -204,6 +208,7 @@ export default function Page() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadBranches = async () => {
       setIsLoading(true);
       setLoadError(null);
@@ -376,6 +381,7 @@ export default function Page() {
     }
   };
 
+  // Builds derived UI values from API data to keep rendering simple.
   const filteredBranches = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
 
@@ -436,6 +442,7 @@ export default function Page() {
     filteredBranches.length === 0
       ? 0
       : Math.min(currentPage * branchesPerPage, filteredBranches.length);
+  // Builds derived UI values from API data to keep rendering simple.
   const visiblePages = useMemo(() => {
     if (totalPages <= 0) {
       return [];
@@ -449,6 +456,7 @@ export default function Page() {
     return Array.from({ length: end - start + 1 }, (_, index) => start + index);
   }, [currentPage, totalPages]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const summary = useMemo(() => {
     const activeBranches = branches.filter((branch) => branch.status === "Active").length;
     const totalOfficers = branches.reduce((sum, branch) => sum + branch.officers, 0);
@@ -831,3 +839,6 @@ export default function Page() {
     </AuthGuard>
   );
 }
+
+
+

@@ -1,4 +1,7 @@
 "use client";
+/**
+ * LoanSense history page with loan-type and date filters plus paginated monthly eligibility records.
+ */
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -74,6 +77,7 @@ function FilterChip({
   );
 }
 
+// Main component for filtering and paging monthly eligibility history records.
 export default function LoanSenseHistoryPage() {
   const { showToast } = useToast();
   const [loanFilter, setLoanFilter] = useState<LoanFilter>("ALL");
@@ -86,6 +90,7 @@ export default function LoanSenseHistoryPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadHistory = async () => {
       setIsLoading(true);
       setError(null);
@@ -129,7 +134,9 @@ export default function LoanSenseHistoryPage() {
     setCurrentPage(1);
   }, [dateFilter, loanFilter]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const grouped = useMemo(() => historyItems, [historyItems]);
+  // Builds derived UI values from API data to keep rendering simple.
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(grouped.length / rowsPerPage)),
     [grouped.length]
@@ -141,6 +148,7 @@ export default function LoanSenseHistoryPage() {
     }
   }, [currentPage, totalPages]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const paginatedRows = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
     return grouped.slice(start, start + rowsPerPage);
@@ -151,6 +159,7 @@ export default function LoanSenseHistoryPage() {
   const showingTo =
     grouped.length === 0 ? 0 : Math.min(currentPage * rowsPerPage, grouped.length);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const visiblePages = useMemo(() => {
     if (totalPages <= 0) {
       return [];
@@ -325,3 +334,5 @@ export default function LoanSenseHistoryPage() {
     </main>
   );
 }
+
+

@@ -1,4 +1,7 @@
 "use client";
+/**
+ * LoanSense overview page for bank customers, showing overall eligibility, risk indicators, and loan-category recommendations.
+ */
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -112,6 +115,7 @@ function getStatusSummaryClass(status: LoanSenseEligibilityStatus): string {
   return "bg-red-50 border border-red-200 text-red-700";
 }
 
+// Main dashboard component showing overall and per-loan eligibility insights.
 export default function LoanSenseDashboardPage() {
   const { showToast } = useToast();
   const [evaluation, setEvaluation] = useState<LoanSenseEvaluationResponse | null>(null);
@@ -123,6 +127,7 @@ export default function LoanSenseDashboardPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadEvaluation = async () => {
       setIsLoading(true);
       setError(null);
@@ -159,6 +164,7 @@ export default function LoanSenseDashboardPage() {
     };
   }, [showToast]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const orderedLoanOptions = useMemo(() => {
     if (!evaluation) {
       return [] as LoanSenseLoanOptionResponse[];
@@ -174,6 +180,7 @@ export default function LoanSenseDashboardPage() {
       .filter((option): option is LoanSenseLoanOptionResponse => Boolean(option));
   }, [evaluation]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const policyLimitPercent = useMemo(() => {
     if (!evaluation || evaluation.monthlyIncome <= 0) {
       return 0;
@@ -181,6 +188,7 @@ export default function LoanSenseDashboardPage() {
     return (evaluation.maxAllowedEmi / evaluation.monthlyIncome) * 100;
   }, [evaluation]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const dbrProgress = useMemo(() => {
     if (!evaluation || policyLimitPercent <= 0) {
       return 0;
@@ -578,3 +586,5 @@ export default function LoanSenseDashboardPage() {
     </main>
   );
 }
+
+
