@@ -350,7 +350,7 @@ export default function Page() {
           <div className="flex justify-end mt-14 pr-[7rem]">
             <Link
               href="/bank-customer/transact/beneficiary"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#e6f4f6] text-[#155E63] rounded-full font-medium hover:bg-[#d1ecef] transition-all duration-200"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#061e3d] text-[#ffffff] rounded-full font-medium hover:bg-[#0a3046] transition-all duration-200"
             >
               + Add Beneficiary
             </Link>
@@ -433,7 +433,7 @@ export default function Page() {
                   type="button"
                   onClick={handleTransfer}
                   disabled={!isFormValid || isSubmittingTransfer}
-                  className={`w-full sm:w-auto ${!isFormValid || isSubmittingTransfer ? "bg-[#155E63]/60 cursor-not-allowed opacity-70" : "bg-[#155E63] hover:bg-[#134e52]"} text-white px-8 py-5 rounded-xl`}
+                  className={`w-full sm:w-auto ${!isFormValid || isSubmittingTransfer ? "bg-[#061e3d]/60 cursor-not-allowed opacity-70" : "bg-[#061e3d]"} text-white px-8 py-5 rounded-xl`}
                 >
                   {isSubmittingTransfer ? "Transferring..." : "Transfer Amount"}
                 </Button>

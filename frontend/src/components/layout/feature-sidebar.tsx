@@ -84,7 +84,7 @@ export const featureMeta: Record<FeatureKey, FeatureMeta> = {
       PUBLIC_CUSTOMER: "/public-customer/transact",
       BANK_CUSTOMER: "/bank-customer/transact",
     },
-    colorClass: "bg-[#0B3E5A]", 
+    colorClass: "bg-[#061e3d]", 
   },
 };
 
