@@ -20,6 +20,7 @@ type FeatureLayoutContextValue = {
   openMobileSidebar: () => void;
   closeMobileSidebar: () => void;
   isMobileSidebarOpen: boolean;
+  headerPortalElement: HTMLDivElement | null;
 };
 
 // Context used to control the mobile sidebar state from nested components.
@@ -54,6 +55,7 @@ export function useFeatureLayout() {
 export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
   // Local UI state to track whether the mobile sidebar is visible.
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [headerPortalElement, setHeaderPortalElement] = useState<HTMLDivElement | null>(null);
 
   // Shorthand booleans to pick styling and background for specific features.
   const isCreditLens = feature === "creditlens";
@@ -79,8 +81,9 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
       openMobileSidebar: () => setIsMobileSidebarOpen(true),
       closeMobileSidebar: () => setIsMobileSidebarOpen(false),
       isMobileSidebarOpen,
+      headerPortalElement,
     }),
-    [isMobileSidebarOpen]
+    [headerPortalElement, isMobileSidebarOpen]
   );
 
   return (
@@ -144,7 +147,7 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
           */}
           <main
             className={cn(
-              "min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto rounded-none p-3 sm:p-4 lg:p-0",
+              "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-none",
               isCreditLens
                 ? "bg-[#e9eff7] lg:rounded-l-[32px]"
                 : isTransact
@@ -164,7 +167,13 @@ export function FeatureLayout({ children, role, feature }: FeatureLayoutProps) {
                 : undefined
             }
           >
-            {children}
+            <div
+              ref={setHeaderPortalElement}
+              className="shrink-0 px-3 pb-4 pt-3 sm:px-4 sm:pb-5 sm:pt-4 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10 [&:empty]:hidden"
+            />
+            <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-0">
+              {children}
+            </div>
           </main>
         </div>
       </FeatureLayoutContext.Provider>

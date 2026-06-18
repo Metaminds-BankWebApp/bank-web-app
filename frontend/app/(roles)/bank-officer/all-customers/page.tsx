@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -28,6 +28,7 @@ import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
 import { useToast } from "@/src/components/ui/toast";
 import PopupModal from "@/src/components/ui/popup-modal";
+import { DataTablePagination } from "@/src/components/ui/data-table-layout";
 import {
   Table,
   TableBody,
@@ -36,7 +37,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table";
-import { Checkbox } from "@/src/components/ui/checkbox";
 import {
    Select,
    SelectContent,
@@ -44,20 +44,24 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/src/components/ui/select";
+import FilterPanel from "@/src/components/filters/FilterPanel";
 
 type Customer = {
-  userId: number;
-  id: string;
-  name: string;
-  nic: string;
-  email: string;
-  phone: string;
-  riskLevel: "LOW" | "MEDIUM" | "HIGH";
-  creditScore: number;
-    status: "ACTIVE" | "INACTIVE" | "DRAFT" | "PENDING_STEP_2" | "PENDING_STEP_3" | "PENDING_STEP_4" | "PENDING_STEP_5" | "PENDING_STEP_6" | "PENDING_STEP_7" | "COMPLETED";
-  lastUpdated: string;
+   userId: number;
+   id: string;
+   name: string;
+   nic: string;
+   email: string;
+   phone: string;
+   riskLevel: "LOW" | "MEDIUM" | "HIGH";
+   creditScore: number;
+   status: "ACTIVE" | "INACTIVE" | "DRAFT" | "PENDING_STEP_2" | "PENDING_STEP_3" | "PENDING_STEP_4" | "PENDING_STEP_5" | "PENDING_STEP_6" | "PENDING_STEP_7" | "COMPLETED";
+   lastUpdated: string;
 };
 
+// Map the backend DTO to the local view model. Risk level and credit
+// score are supplied by the server (credit evaluation) and are the
+// canonical values for filtering/sorting/display.
 function toDisplayDate(isoDateTime: string | null): string {
    if (!isoDateTime) {
       return "-";
@@ -65,7 +69,7 @@ function toDisplayDate(isoDateTime: string | null): string {
 
    const parsed = new Date(isoDateTime);
    if (Number.isNaN(parsed.getTime())) {
-      return isoDateTime;
+      return isoDateTime as string;
    }
 
    return parsed.toLocaleDateString("en-US", {
@@ -75,22 +79,9 @@ function toDisplayDate(isoDateTime: string | null): string {
    });
 }
 
-function deriveRiskAndScore(source: BankCustomerSummaryResponse): { riskLevel: Customer["riskLevel"]; creditScore: number } {
-   const seedText = `${source.nic}-${source.userId}`;
-   const hash = Array.from(seedText).reduce((acc, char) => acc + char.charCodeAt(0), 0);
-   const creditScore = 500 + (hash % 351);
-
-   if (creditScore >= 700) {
-      return { riskLevel: "LOW", creditScore };
-   }
-   if (creditScore >= 600) {
-      return { riskLevel: "MEDIUM", creditScore };
-   }
-   return { riskLevel: "HIGH", creditScore };
-}
-
 function mapApiCustomer(customer: BankCustomerSummaryResponse): Customer {
-   const { riskLevel, creditScore } = deriveRiskAndScore(customer);
+   const riskLevel = (customer.riskLevel ?? "MEDIUM") as Customer["riskLevel"];
+   const creditScore = customer.creditScore ?? 650;
    const normalizedStatus = customer.status.toUpperCase();
    const status: Customer["status"] =
       normalizedStatus === "ACTIVE" ||
@@ -106,7 +97,7 @@ function mapApiCustomer(customer: BankCustomerSummaryResponse): Customer {
          ? (normalizedStatus as Customer["status"])
          : "DRAFT";
 
-  return {
+   return {
       userId: customer.userId,
       id: customer.customerId,
       name: customer.fullName || customer.email,
@@ -175,6 +166,8 @@ const customerDetailTabs: Array<{ id: CustomerDetailTab; label: string }> = [
    { id: "liabilities", label: "Liabilities" },
 ];
 
+const customersPerPage = 10;
+
 export default function AllCustomersPage() {
   const router = useRouter();
    const { showToast } = useToast();
@@ -198,41 +191,53 @@ export default function AllCustomersPage() {
    const [deleteRequestReason, setDeleteRequestReason] = useState("CUSTOMER_REQUEST");
    const [deleteRequestNote, setDeleteRequestNote] = useState("");
    const [isSubmittingDeleteRequest, setIsSubmittingDeleteRequest] = useState(false);
+   const [currentPage, setCurrentPage] = useState(1);
 
    useEffect(() => {
-      let mounted = true;
+      const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 450);
+      return () => clearTimeout(t);
+   }, [searchTerm]);
 
-      const fetchCustomers = async () => {
+   // Refetch when filters or sort change. These effects call the officer
+   // endpoint with the compact filter contract. The backend performs the
+   // canonical filtering and sorting using credit evaluation data and the
+   // customer/profile fields.
+   useEffect(() => {
+       let mounted = true;
+       const fetch = async () => {
          setIsLoading(true);
          setLoadError(null);
          try {
-            const data = await getBankCustomersForOfficer();
-            if (!mounted) {
-               return;
-            }
+           const filters = {
+             search: debouncedSearchTerm || undefined,
+             status: statusFilter === "all" ? undefined : statusFilter,
+             riskLevel: activeRisk === "all" ? undefined : activeRisk,
+             sortBy: sortBy,
+           } as const;
 
-            setCustomers(data.map(mapApiCustomer));
+           const data = await getBankCustomersForOfficer(filters);
+           if (!mounted) return;
+           setCustomers(data.map(mapApiCustomer));
          } catch (error) {
-            if (!mounted) {
-               return;
-            }
-
-            const message = error instanceof ApiError ? error.message : "Failed to load customers.";
-            setLoadError(message);
-            setCustomers([]);
+              if (!mounted) return;
+              // Log the raw error to the console for debugging (developer-only).
+              // This helps reveal whether the failure is a network, auth, or
+              // server-side issue.
+              // eslint-disable-next-line no-console
+              console.error("Failed to fetch officer customers:", error);
+              const message = error instanceof ApiError ? error.message : String(error ?? "Failed to load customers.");
+              setLoadError(message || "Failed to load customers.");
+           setCustomers([]);
          } finally {
-            if (mounted) {
-               setIsLoading(false);
-            }
+           if (mounted) setIsLoading(false);
          }
-      };
+       };
 
-      void fetchCustomers();
-
-      return () => {
+       void fetch();
+       return () => {
          mounted = false;
-      };
-   }, []);
+       };
+     }, [debouncedSearchTerm, statusFilter, activeRisk, sortBy]);
 
    const riskCounts = useMemo(() => {
       return {
@@ -243,6 +248,7 @@ export default function AllCustomersPage() {
       };
    }, [customers]);
 
+   // Show only customers that match the officer's search, filters, and sort choice.
    const visibleCustomers = useMemo(() => {
       const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -279,6 +285,24 @@ export default function AllCustomersPage() {
       });
    }, [activeRisk, customers, searchTerm, sortBy, statusFilter]);
 
+   const totalPages = Math.ceil(visibleCustomers.length / customersPerPage);
+   const paginatedCustomers = useMemo(() => {
+      const start = (currentPage - 1) * customersPerPage;
+      return visibleCustomers.slice(start, start + customersPerPage);
+   }, [currentPage, visibleCustomers]);
+   const showingFrom = visibleCustomers.length === 0 ? 0 : (currentPage - 1) * customersPerPage + 1;
+   const showingTo = visibleCustomers.length === 0 ? 0 : Math.min(currentPage * customersPerPage, visibleCustomers.length);
+
+   useEffect(() => {
+      setCurrentPage(1);
+   }, [activeRisk, searchTerm, sortBy, statusFilter]);
+
+   useEffect(() => {
+      if (currentPage > totalPages) {
+         setCurrentPage(Math.max(totalPages, 1));
+      }
+   }, [currentPage, totalPages]);
+
    const handleExport = () => {
       const header = ["Name", "NIC", "Email", "Phone", "Status", "Last Updated"];
 
@@ -304,6 +328,7 @@ export default function AllCustomersPage() {
       URL.revokeObjectURL(url);
    };
 
+   // When the officer selects a customer, load personal + financial details for the side panel.
    useEffect(() => {
       if (!selectedCustomer) {
          setSelectedCustomerPersonal(null);
@@ -348,8 +373,10 @@ export default function AllCustomersPage() {
             if (!mounted) {
                return;
             }
-            const message = error instanceof ApiError ? error.message : "Failed to load customer details.";
-            setDetailLoadError(message);
+               // eslint-disable-next-line no-console
+               console.error("Failed to load customer details:", error);
+               const message = error instanceof ApiError ? error.message : String(error ?? "Failed to load customer details.");
+               setDetailLoadError(message || "Failed to load customer details.");
          } finally {
             if (mounted) {
                setIsDetailLoading(false);
@@ -386,6 +413,7 @@ export default function AllCustomersPage() {
       };
    }, [selectedCustomerFinancial]);
 
+   // Send a delete request to admin (officer does not delete directly here).
    const submitDeleteRequest = async () => {
       if (!deleteRequestTarget) {
          return;
@@ -424,9 +452,10 @@ export default function AllCustomersPage() {
             <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
                       <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="All Customers" className="mb-6 shrink-0" />
 
-          <div className="creditlens-card creditlens-card-hover creditlens-delay-1 flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="flex-1 min-h-0 space-y-6 overflow-y-auto">
              {/* Toolbar */}
-             <div className="p-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between gap-4 bg-slate-50/40">
+             <div className="primecore-table-toolbar flex-col items-stretch">
+             <div className="flex flex-col lg:flex-row justify-between gap-4">
                 <div className="relative max-w-sm flex-1">
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                    <Input 
@@ -457,7 +486,7 @@ export default function AllCustomersPage() {
              </div>
 
                    {showFilters && (
-                      <div className="px-6 pb-4 grid grid-cols-1 gap-3 border-b border-slate-100 md:grid-cols-3">
+                      <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
                          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | Customer["status"])}>
                             <SelectTrigger className="bg-slate-50 border-slate-200">
                                <SelectValue placeholder="Filter by status" />
@@ -505,9 +534,12 @@ export default function AllCustomersPage() {
                          </Button>
                       </div>
                    )}
+             </div>
+
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
 
              {/* Status Tabs */}
-             <div className="px-6 py-4 flex gap-3 overflow-x-auto">
+             <div className="border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50/50 p-2">
                          <Badge
                             className={`px-4 py-1.5 cursor-pointer ${activeRisk === "all" ? "bg-[#0d3b66] text-white hover:bg-[#0a2e50]" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                             onClick={() => setActiveRisk("all")}
@@ -538,16 +570,15 @@ export default function AllCustomersPage() {
              </div>
 
              {/* Table Container */}
-             <div className="flex-1 overflow-auto min-h-0">
+             <div className="overflow-x-auto">
              {loadError && (
                 <div className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                    {loadError}
                 </div>
              )}
              <Table>
-                <TableHeader className="bg-sky-50/70 sticky top-0 z-10">
+                <TableHeader className="bg-sky-50/70">
                    <TableRow>
-                      <TableHead className="w-12.5 pl-6"><Checkbox /></TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Name</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">NIC</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Contact Info</TableHead>
@@ -557,9 +588,8 @@ export default function AllCustomersPage() {
                    </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {visibleCustomers.map((customer) => (
+                   {paginatedCustomers.map((customer) => (
                       <TableRow key={customer.id} className="hover:bg-slate-50/50">
-                         <TableCell className="pl-6"><Checkbox /></TableCell>
                          <TableCell>
                             <div className="flex items-center gap-3">
                                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600">
@@ -615,7 +645,7 @@ export default function AllCustomersPage() {
 
                             {!isLoading && visibleCustomers.length === 0 && (
                                <TableRow>
-                                  <TableCell colSpan={7} className="py-10 text-center text-sm text-slate-500">
+                                  <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
                                      No customers found for the selected filters.
                                   </TableCell>
                                </TableRow>
@@ -623,7 +653,7 @@ export default function AllCustomersPage() {
 
                             {isLoading && (
                                <TableRow>
-                                     <TableCell colSpan={7} className="py-10 text-center text-sm text-slate-500">
+                                     <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
                                      Loading customers...
                                   </TableCell>
                                </TableRow>
@@ -635,19 +665,12 @@ export default function AllCustomersPage() {
              {/* Footer / Pagination */}
              <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 bg-slate-50/30 rounded-b-xl shrink-0">
                          <span>
-                            Showing <span className="font-bold text-slate-700">{visibleCustomers.length === 0 ? 0 : 1}-{visibleCustomers.length}</span> of <span className="font-bold text-slate-700">{visibleCustomers.length}</span>
+                            Showing <span className="font-bold text-slate-700">{showingFrom}-{showingTo}</span> of <span className="font-bold text-slate-700">{visibleCustomers.length}</span>
                          </span>
                  
-                 <div className="flex gap-1">
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500"><span className="sr-only">Previous</span>&lt;</Button>
-                    <Button variant="primary" size="sm" className="h-8 w-8 p-0 bg-[#3e9fd3]">1</Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500">2</Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500">3</Button>
-                    <span className="flex items-center justify-center h-8 w-8 text-slate-400">...</span>
-                    <Button variant="outline" size="sm" className="h-8 w-auto px-2 text-slate-500">245</Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500"><span className="sr-only">Next</span>&gt;</Button>
-                 </div>
+                 <DataTablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
              </div>
+          </div>
           </div>
 
                <PopupModal
@@ -660,11 +683,6 @@ export default function AllCustomersPage() {
                   title={selectedCustomer ? `${selectedCustomer.name} — Customer Profile` : "Customer Profile"}
                   description="Detailed personal and financial data grouped into tabs for quick review."
                    size="lg"
-                  footer={
-                     <Button variant="outline" className="border-slate-300 text-slate-700 hover:bg-slate-100" onClick={() => setSelectedCustomer(null)}>
-                        Close
-                     </Button>
-                  }
                >
                   {selectedCustomer && (
                      <div className="space-y-4">
@@ -980,7 +998,7 @@ export default function AllCustomersPage() {
                         <Button
                            type="button"
                            variant="outline"
-                           className="border-white/30 text-white hover:bg-white/10"
+                           className="border-slate-300 text-slate-700 hover:bg-slate-100"
                            onClick={() => setDeleteRequestTarget(null)}
                            disabled={isSubmittingDeleteRequest}
                         >
@@ -998,18 +1016,18 @@ export default function AllCustomersPage() {
                   }
                >
                   <div className="space-y-4">
-                     <div className="rounded-lg border border-white/20 bg-white/5 p-3 text-sm">
-                        <p><span className="font-semibold">Customer:</span> {deleteRequestTarget?.name ?? "-"}</p>
-                        <p><span className="font-semibold">NIC:</span> {deleteRequestTarget?.nic ?? "-"}</p>
-                        <p><span className="font-semibold">Customer Code:</span> {deleteRequestTarget?.id ?? "-"}</p>
+                     <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+                        <p><span className="font-semibold text-slate-700">Customer:</span> <span className="text-slate-600">{deleteRequestTarget?.name ?? "-"}</span></p>
+                        <p><span className="font-semibold text-slate-700">NIC:</span> <span className="text-slate-600">{deleteRequestTarget?.nic ?? "-"}</span></p>
+                        <p><span className="font-semibold text-slate-700">Customer Code:</span> <span className="text-slate-600">{deleteRequestTarget?.id ?? "-"}</span></p>
                      </div>
 
                      <div>
-                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-sky-100/90">
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                            Reason
                         </label>
                         <Select value={deleteRequestReason} onValueChange={setDeleteRequestReason}>
-                           <SelectTrigger className="border-white/20 bg-white/10 text-white">
+                           <SelectTrigger className="border-slate-200 bg-white text-slate-800">
                               <SelectValue placeholder="Select reason" />
                            </SelectTrigger>
                            <SelectContent>
@@ -1022,14 +1040,14 @@ export default function AllCustomersPage() {
                      </div>
 
                      <div>
-                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-sky-100/90">
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                            Note To Admin (Optional)
                         </label>
                         <textarea
                            value={deleteRequestNote}
                            onChange={(event) => setDeleteRequestNote(event.target.value)}
                            rows={4}
-                           className="w-full rounded-md border border-white/20 bg-white/10 p-2 text-sm text-white placeholder:text-sky-100/60 focus:outline-none"
+                           className="w-full rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
                            placeholder="Provide context for admin review..."
                         />
                      </div>
@@ -1040,6 +1058,3 @@ export default function AllCustomersPage() {
     </AuthGuard>
   );
 }
-
-
-

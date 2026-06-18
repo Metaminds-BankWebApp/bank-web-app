@@ -505,11 +505,13 @@ export function SpendIqAddPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm overflow-hidden">
-          <h2 className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-6">Recent Records (Last 10)</h2>
+        <div className="primecore-table-shell dark:bg-slate-900 dark:border-slate-800">
+          <div className="border-b border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900">
+            <h2 className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Recent Records (Last 10)</h2>
+          </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[960px]">
+            <table className="primecore-data-table w-full min-w-[960px]">
               <thead>
                 <tr className="text-left border-b border-slate-100 dark:border-slate-800">
                   <th className="pb-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Date</th>

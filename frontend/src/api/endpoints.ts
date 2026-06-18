@@ -9,6 +9,7 @@ export const AUTH_ENDPOINTS = {
 } as const;
 
 export const REGISTRATION_ENDPOINTS = {
+  // Step-1 onboarding routes used by officers to create or continue customer identity details.
   bankCustomer: {
     stepOneDraft: "/bank-officers/customers/step-1/draft",
     stepOneContinue: "/bank-officers/customers/step-1/continue",
@@ -23,6 +24,7 @@ export const REGISTRATION_ENDPOINTS = {
 } as const;
 
 export const CUSTOMER_ENDPOINTS = {
+  // Officer-owned customer lookup and helper actions for the onboarding wizard.
   bankOfficerCustomers: "/bank-officers/customers",
   verifyBankAccount: "/bank-officers/customers/accounts/verify",
   bankOfficerCustomerByUser: (userId: number) => `/bank-officers/customers/user/${userId}`,
@@ -31,6 +33,8 @@ export const CUSTOMER_ENDPOINTS = {
 } as const;
 
 export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
+  // Each endpoint saves one financial step so the wizard can continue step-by-step.
+  // CRIB linking/review endpoints are part of the same flow and run before final submission.
   saveIncomeStep: (bankCustomerId: number) =>
     `/bank-officers/customers/${bankCustomerId}/financial-records/steps/income/continue`,
   saveLoanStep: (bankCustomerId: number) =>

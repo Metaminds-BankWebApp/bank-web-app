@@ -6,6 +6,7 @@ import type {
   AdminRecentActionResponse,
 } from "@/src/types/dto/admin-dashboard.dto";
 
+// Fetches AdminDashboardSummary data from the backend API.
 export async function getAdminDashboardSummary(): Promise<AdminDashboardSummaryResponse> {
   try {
     const { data } = await apiClient.get<AdminDashboardSummaryResponse>(
@@ -17,6 +18,7 @@ export async function getAdminDashboardSummary(): Promise<AdminDashboardSummaryR
   }
 }
 
+// Fetches AdminRecentActions data from the backend API.
 export async function getAdminRecentActions(params?: {
   hours?: number;
   limit?: number;
@@ -37,6 +39,7 @@ export async function getAdminRecentActions(params?: {
   }
 }
 
+// Fetches AdminMonthlyUserGrowth data from the backend API.
 export async function getAdminMonthlyUserGrowth(params?: {
   months?: number;
 }): Promise<AdminMonthlyUserGrowthResponse> {

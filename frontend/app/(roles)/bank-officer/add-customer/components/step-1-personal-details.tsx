@@ -261,7 +261,7 @@ export function PersonalDetails({
               disabled={Boolean(isGeneratingCredentials || !formData.firstName.trim() || !formData.lastName.trim())}
               className="border-slate-200 text-slate-700 hover:bg-slate-100"
             >
-              {isGeneratingCredentials ? "Generating..." : "Generate Username"}
+              {isGeneratingCredentials ? "Generating..." : "Generate Credentials"}
             </Button>
             <Button
               type="button"

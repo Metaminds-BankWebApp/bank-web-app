@@ -10,6 +10,7 @@ type ThemeMode = "system" | "light" | "dark";
 type DensityMode = "comfortable" | "compact";
 
 export default function BankOfficerSettingsPage() {
+  // Keep profile, preferences, security, and account actions in one place for officers.
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
   const [density, setDensity] = useState<DensityMode>("comfortable");
 

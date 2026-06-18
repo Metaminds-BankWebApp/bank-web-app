@@ -6,8 +6,6 @@ import { AuthGuard } from "@/src/components/auth";
 import { 
   Search, 
    Download,
-  ChevronLeft, 
-  ChevronRight,
 } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
@@ -29,6 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui/table";
+import { DataTablePagination } from "@/src/components/ui/data-table-layout";
 
 const historyData = [
   {
@@ -95,6 +94,7 @@ export default function HistoryPage() {
    const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
    const [sortBy, setSortBy] = useState<"date-desc" | "date-asc">("date-desc");
 
+   // Build the visible history list from tab, search, date, status, and sort selections.
    const visibleHistory = useMemo(() => {
       const latestDate = new Date(Math.max(...historyData.map((item) => new Date(item.date).getTime())));
 
@@ -132,6 +132,7 @@ export default function HistoryPage() {
       });
    }, [dateRange, searchTerm, selectedTab, sortBy, statusFilter]);
 
+   // Export only the records that currently match filters.
    const handleExport = () => {
       const header = ["Date", "Time", "Customer", "Customer ID", "Action Type", "Performed By", "Status"];
       const rows = visibleHistory.map((item) => [
@@ -157,6 +158,7 @@ export default function HistoryPage() {
       URL.revokeObjectURL(url);
    };
 
+   // Build a simple explanation block for the selected activity type.
    const getActivityDetails = (actionType: string) => {
       if (/Credit Re-evaluation/i.test(actionType)) {
          return {
@@ -363,15 +365,7 @@ export default function HistoryPage() {
                         <p className="text-sm text-slate-500">
                            Showing <span className="font-medium text-slate-800">{visibleHistory.length === 0 ? 0 : 1}-{visibleHistory.length}</span> of <span className="font-medium text-slate-800">{visibleHistory.length}</span> activities
                         </p>
-                <div className="flex items-center gap-2">
-                   <Button variant="outline" size="icon" className="h-8 w-8 bg-white" disabled><ChevronLeft size={14} /></Button>
-                   <Button size="icon" className="h-8 w-8 bg-[#3e9fd3] hover:bg-[#328ab8] text-white text-xs">1</Button>
-                   <Button variant="outline" size="icon" className="h-8 w-8 bg-white text-xs hover:bg-slate-50">2</Button>
-                   <Button variant="outline" size="icon" className="h-8 w-8 bg-white text-xs hover:bg-slate-50">3</Button>
-                   <span className="text-slate-400 text-xs">...</span>
-                   <Button variant="outline" size="icon" className="h-8 w-8 bg-white text-xs hover:bg-slate-50">43</Button>
-                   <Button variant="outline" size="icon" className="h-8 w-8 bg-white"><ChevronRight size={14} /></Button>
-                </div>
+                <DataTablePagination currentPage={1} totalPages={visibleHistory.length === 0 ? 0 : 1} />
              </div>
           </div>
 
@@ -430,5 +424,4 @@ export default function HistoryPage() {
     </AuthGuard>
   );
 }
-
 

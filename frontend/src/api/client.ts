@@ -35,7 +35,6 @@ function isPublicAuthRequest(url?: string): boolean {
   if (!url) {
     return false;
   }
-
   return PUBLIC_AUTH_ENDPOINTS.some((endpoint) => url.includes(endpoint));
 }
 

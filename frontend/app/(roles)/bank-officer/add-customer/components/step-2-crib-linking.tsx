@@ -15,16 +15,19 @@ export function CribLinking({
   onSaveCribLinkingStep,
   isSavingCribLinkingStep,
 }: StepProps) {
+  // This local status only drives the timeline animation on this screen.
   const [requestStatus, setRequestStatus] = useState<"draft" | "processing" | "sent" | "connected" | "retrieved">("draft");
   const [requestType, setRequestType] = useState(formData.cribRequestType || "FULL_REPORT");
   const [consentGiven, setConsentGiven] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
+  // If CRIB already returned data, show that in the side snapshot.
   const hasPrefilledCribData =
     formData.loans.length > 0 || formData.creditCards.length > 0 || formData.liabilities.length > 0;
 
   const wait = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration));
 
+  // Send CRIB request, show progress states, and move to next step when linking is done.
   const handleInitiateRequest = async () => {
     if (!consentGiven || !onSaveCribLinkingStep) {
       return;

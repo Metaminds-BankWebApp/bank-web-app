@@ -1,11 +1,14 @@
 "use client";
+/**
+ * Admin audit-log page with filters, concise action rows, and paginated results.
+ */
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { useToast } from "@/src/components/ui";
+import { Search } from "lucide-react";
+import { DataTablePagination, useToast } from "@/src/components/ui";
 import { ApiError } from "@/src/types/api-error";
 import {
   getAdminAuditLogFilters,
@@ -117,6 +120,7 @@ function toAuditLogRow(record: AdminAuditLogRecordResponse): AuditLogRow {
   };
 }
 
+// Main component for browsing, filtering, and paging audit logs.
 export default function AuditLogsPage() {
   const { showToast } = useToast();
   const [search, setSearch] = useState("");
@@ -146,6 +150,7 @@ export default function AuditLogsPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadFilters = async () => {
       try {
         const data = await getAdminAuditLogFilters();
@@ -184,6 +189,7 @@ export default function AuditLogsPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadAuditLogs = async () => {
       setIsLoading(true);
       try {
@@ -239,6 +245,7 @@ export default function AuditLogsPage() {
     }
   }, [currentPage, totalPages]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const showingFrom = useMemo(() => {
     if (totalElements === 0) {
       return 0;
@@ -246,6 +253,7 @@ export default function AuditLogsPage() {
     return (currentPage - 1) * logsPerPage + 1;
   }, [currentPage, logsPerPage, totalElements]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const showingTo = useMemo(() => {
     if (totalElements === 0) {
       return 0;
@@ -253,28 +261,14 @@ export default function AuditLogsPage() {
     return Math.min(currentPage * logsPerPage, totalElements);
   }, [currentPage, logsPerPage, totalElements]);
 
-  const visiblePages = useMemo(() => {
-    if (totalPages <= 0) {
-      return [];
-    }
-
-    const maxVisibleButtons = 3;
-    let start = Math.max(1, currentPage - 1);
-    const end = Math.min(totalPages, start + maxVisibleButtons - 1);
-
-    start = Math.max(1, end - maxVisibleButtons + 1);
-
-    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
-  }, [currentPage, totalPages]);
-
   const statusStyle = (status: LogStatus) => {
     if (status === "Success") {
-      return "bg-green-100 text-green-700";
+      return "border border-emerald-100 bg-emerald-50 text-emerald-600";
     }
     if (status === "Failure") {
-      return "bg-red-100 text-red-600";
+      return "border border-red-100 bg-red-50 text-red-600";
     }
-    return "bg-blue-100 text-blue-600";
+    return "border border-blue-100 bg-blue-50 text-blue-600";
   };
 
   return (
@@ -299,12 +293,12 @@ export default function AuditLogsPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="primecore-table-toolbar flex-col items-stretch lg:flex-row">
               <div className="col-span-1 lg:col-span-2">
                 <label className="text-xs font-semibold text-gray-500 uppercase">
                   Search Logs
                 </label>
-                <div className="mt-2 flex items-center bg-gray-100 rounded-lg px-3 py-2">
+                <div className="mt-2 flex items-center rounded-lg bg-slate-50 px-3 py-2">
                   <Search size={16} className="text-gray-400 mr-2" />
                   <input
                     type="text"
@@ -323,7 +317,7 @@ export default function AuditLogsPage() {
                 <select
                   value={roleFilter}
                   onChange={(event) => setRoleFilter(event.target.value)}
-                  className="mt-2 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm"
+                  className="mt-2 w-full rounded-lg bg-slate-50 px-3 py-2 text-sm"
                 >
                   <option value={ALL_FILTER_OPTION}>{ALL_FILTER_OPTION}</option>
                   {roleOptions.map((role) => (
@@ -341,7 +335,7 @@ export default function AuditLogsPage() {
                 <select
                   value={actionFilter}
                   onChange={(event) => setActionFilter(event.target.value)}
-                  className="mt-2 w-full bg-gray-100 rounded-lg px-3 py-2 text-sm"
+                  className="mt-2 w-full rounded-lg bg-slate-50 px-3 py-2 text-sm"
                 >
                   <option value={ALL_FILTER_OPTION}>{ALL_FILTER_OPTION}</option>
                   {actionOptions.map((actionType) => (
@@ -353,9 +347,9 @@ export default function AuditLogsPage() {
               </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="primecore-table-shell">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1000px] text-sm">
+                <table className="primecore-data-table w-full min-w-[1000px] text-sm">
                   <thead className="bg-gray-50 border-b">
                     <tr>
                       {[
@@ -403,7 +397,7 @@ export default function AuditLogsPage() {
                           <td className="px-6 py-4 text-blue-600">{log.target}</td>
                           <td className="px-6 py-4">
                             <span
-                              className={`inline-flex min-w-[7.75rem] justify-center px-3 py-1 rounded-full text-xs font-semibold ${statusStyle(
+                              className={`inline-flex min-w-[7.75rem] justify-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusStyle(
                                 log.status
                               )}`}
                             >
@@ -417,46 +411,12 @@ export default function AuditLogsPage() {
                 </table>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 bg-slate-50/50 p-4">
                 <div className="text-sm text-gray-500">
                   Showing {showingFrom} to {showingTo} of {totalElements} logs
                 </div>
 
-                <div className="flex items-center gap-2 mt-3 sm:mt-0">
-                  <button
-                    disabled={currentPage === 1 || totalPages === 0}
-                    onClick={() => setCurrentPage((previous) => Math.max(previous - 1, 1))}
-                    className="px-3 py-1 border rounded-lg disabled:opacity-40 flex items-center justify-center"
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-
-                  {visiblePages.map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1 rounded-lg ${
-                        currentPage === page ? "bg-[#0B3B66] text-white" : "border"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  <button
-                    disabled={totalPages === 0 || currentPage === totalPages}
-                    onClick={() =>
-                      setCurrentPage((previous) =>
-                        Math.min(previous + 1, Math.max(totalPages, 1))
-                      )
-                    }
-                    className="px-3 py-1 border rounded-lg disabled:opacity-40 flex items-center justify-center"
-                    aria-label="Next page"
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
+                <DataTablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} className="mt-3 sm:mt-0" />
               </div>
             </div>
           </div>

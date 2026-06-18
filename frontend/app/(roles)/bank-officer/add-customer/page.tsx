@@ -518,6 +518,8 @@ export default function AddCustomerPage() {
    const [hasAutoLoadedNicEdit, setHasAutoLoadedNicEdit] = useState(false);
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
 
+   // Step-by-step onboarding screen for creating or continuing a bank-customer profile.
+   // Restore unfinished onboarding data if the officer refreshes or comes back later.
    useEffect(() => {
       try {
          const rawDraft = window.localStorage.getItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
@@ -554,6 +556,7 @@ export default function AddCustomerPage() {
       }
    }, []);
 
+   // Save current progress locally on every important change.
    useEffect(() => {
       const draft: StoredAddCustomerDraft = {
          step,
@@ -672,6 +675,7 @@ export default function AddCustomerPage() {
       });
    };
 
+   // Move to next step and save step data before leaving financial steps.
   const handleNext = () => {
       if (step < steps.length) {
          void (async () => {
@@ -736,6 +740,7 @@ export default function AddCustomerPage() {
       window.localStorage.removeItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
   };
 
+      // Convert current form fields into the backend format for income step.
       const toEnumToken = (value?: string) => {
          if (!value) return undefined;
          return value
@@ -750,6 +755,7 @@ export default function AddCustomerPage() {
          return Number.isFinite(parsed) ? parsed : 0;
       };
 
+      // Build the income payload from detailed rows, or from fallback income fields.
       const buildIncomePayload = (): BankCustomerIncomeStepRequest => {
          if (formData.incomes.length > 0) {
             return {
@@ -822,6 +828,7 @@ export default function AddCustomerPage() {
          missedPayments: formData.missedPaymentsLast12Months,
       });
 
+      // Save only the financial part that belongs to the current step.
       const persistFinancialStep = async (currentStep: number) => {
          if (!createdBankCustomerId) {
             throw new Error("Please complete step 1 to create the bank customer before adding financial data.");
@@ -847,6 +854,7 @@ export default function AddCustomerPage() {
          }
       };
 
+      // Request CRIB data and auto-fill related financial fields when available.
       const saveCribLinkingStep = async (requestType: string) => {
          if (!createdBankCustomerId) {
             throw new Error("Please complete step 1 to create the bank customer before adding CRIB data.");
@@ -927,7 +935,7 @@ export default function AddCustomerPage() {
       };
    };
 
-   const resolveExistingBankCustomerIdByNic = async (nic: string): Promise<number | null> => {
+  const resolveExistingBankCustomerIdByNic = async (nic: string): Promise<number | null> => {
       const normalizedNic = nic.trim();
       if (!normalizedNic) {
          return null;
@@ -943,6 +951,7 @@ export default function AddCustomerPage() {
       }
    };
 
+   // Search by NIC to reuse existing customer data and avoid re-entering everything.
    const lookupCustomerByNic = async (nicOverride?: string) => {
       const nic = (nicOverride ?? formData.nic).trim();
       if (!nic) {
@@ -1018,6 +1027,7 @@ export default function AddCustomerPage() {
       }
    };
 
+   // If NIC is passed in URL, load that customer automatically for quick editing.
    useEffect(() => {
       if (hasAutoLoadedNicEdit || typeof window === "undefined") {
          return;
@@ -1033,6 +1043,7 @@ export default function AddCustomerPage() {
       void lookupCustomerByNic(nicFromQuery);
    }, [hasAutoLoadedNicEdit]);
 
+   // Check whether the entered account number exists before continuing.
    const verifyStepOneAccount = async () => {
       const accountNumber = formData.bankAccount.replace(/\s+/g, "").trim();
       if (!accountNumber) {
@@ -1079,6 +1090,7 @@ export default function AddCustomerPage() {
       }
    };
 
+   // Auto-generate login credentials for the customer from first and last name.
    const generateStepOneCredentials = async () => {
       if (!formData.firstName.trim() || !formData.lastName.trim()) {
          setSubmitError("First name and last name are required before generating credentials.");
@@ -1107,6 +1119,7 @@ export default function AddCustomerPage() {
       }
    };
 
+   // Save only step 1 data as draft (create new or update existing customer step).
    const saveStepOneDraft = async () => {
       setIsSavingDraftStepOne(true);
       setSubmitError("");
@@ -1142,6 +1155,7 @@ export default function AddCustomerPage() {
       }
    };
 
+   // Finalize step 1 after account verification and move onboarding forward.
    const continueStepOne = async () => {
       setIsSubmittingStepOne(true);
       setSubmitError("");
@@ -1183,6 +1197,11 @@ export default function AddCustomerPage() {
             const customerIdentity = await getOwnedBankCustomerIdentityByUserId(response.userId);
             setCreatedBankCustomerId(customerIdentity.bankCustomerId);
          }
+
+         updateFormData({
+            password: "",
+            confirmPassword: "",
+         });
       } catch (error) {
          if (error instanceof ApiError) {
             const fieldErrors = extractStepOneFieldErrors(error);
@@ -1202,6 +1221,7 @@ export default function AddCustomerPage() {
       }
    };
 
+   // Complete CRIB review and persist final onboarding status and score.
    const completeCribReviewStep = async () => {
       if (!createdBankCustomerId) {
          throw new Error("Please complete step 1 to create the bank customer before finishing onboarding.");
@@ -1420,31 +1440,27 @@ export default function AddCustomerPage() {
                <div className="space-y-5">
                   <div className="grid grid-cols-2 gap-3">
                      <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">Request Status</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">CRIB Request</p>
                         <p className="text-xs font-semibold text-slate-700 mt-1">{formData.cribRequestStatus || "PENDING"}</p>
                      </div>
                      <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">Report Status</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">CRIB Report</p>
                         <p className="text-xs font-semibold text-slate-700 mt-1">{formData.cribReportStatus || "NOT_READY"}</p>
                      </div>
                   </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-50/50">
-                     <span className="text-xs text-slate-400 font-medium">Credit Score</span>
-                     <span className="text-xs font-bold text-slate-700 text-right">
-                        {typeof formData.creditScore === "number" ? formData.creditScore : "-"}
-                     </span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-50/50">
-                     <span className="text-xs text-slate-400 font-medium">Credit Inquiries</span>
-                     <span className="text-xs font-bold text-slate-700 text-right">
-                        {typeof formData.inquiryCount === "number" ? formData.inquiryCount : "-"}
-                     </span>
-                  </div>
-                  <div className="flex justify-between items-center pb-2 border-b border-slate-50/50">
-                     <span className="text-xs text-slate-400 font-medium">Active Loans</span>
-                     <span className="text-xs font-bold text-slate-700 text-right">
-                        {typeof formData.activeLoansCount === "number" ? formData.activeLoansCount : formData.loans.length}
-                     </span>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 space-y-1">
+                     <div className="flex justify-between items-center">
+                        <span className="text-xs text-blue-600 font-semibold">Loans</span>
+                        <span className="text-xs font-bold text-blue-700">{typeof formData.activeLoansCount === "number" ? formData.activeLoansCount : formData.loans.length}</span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                        <span className="text-xs text-blue-600 font-semibold">Credit Cards</span>
+                        <span className="text-xs font-bold text-blue-700">{formData.creditCards.length}</span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                        <span className="text-xs text-blue-600 font-semibold">Liabilities</span>
+                        <span className="text-xs font-bold text-blue-700">{formData.liabilities.length}</span>
+                     </div>
                   </div>
                   <div className="flex justify-between items-center pb-2 border-b border-slate-50/50">
                      <span className="text-xs text-slate-400 font-medium">Total Active Loan Value</span>
@@ -1956,28 +1972,56 @@ export default function AddCustomerPage() {
          case 7:
             return (
                <div className="space-y-4">
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 space-y-2">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 space-y-3">
                      <div className="flex justify-between items-center text-xs">
                         <span className="text-slate-500 font-medium">Customer</span>
                         <span className="font-semibold text-slate-700">{customerFullName || "-"}</span>
                      </div>
-                     <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-500 font-medium">Income Sources</span>
-                        <span className="font-semibold text-slate-700">{formData.incomes.length}</span>
-                     </div>
-                     <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-500 font-medium">Loans</span>
-                        <span className="font-semibold text-slate-700">{formData.loans.length}</span>
-                     </div>
-                     <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-500 font-medium">Credit Cards</span>
-                        <span className="font-semibold text-slate-700">{formData.creditCards.length}</span>
-                     </div>
-                     <div className="flex justify-between items-center text-xs">
-                        <span className="text-slate-500 font-medium">Liabilities</span>
-                        <span className="font-semibold text-slate-700">{formData.liabilities.length}</span>
+                     <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="rounded-md bg-white border border-slate-100 px-2 py-2">
+                           <p className="text-slate-400 uppercase font-bold text-[10px]">Personal</p>
+                           <p className="font-semibold text-slate-700 mt-1">{formData.nic || "-"}</p>
+                        </div>
+                        <div className="rounded-md bg-white border border-slate-100 px-2 py-2">
+                           <p className="text-slate-400 uppercase font-bold text-[10px]">Account</p>
+                           <p className="font-semibold text-slate-700 mt-1">{formData.bankAccount || "-"}</p>
+                        </div>
+                        <div className="rounded-md bg-white border border-slate-100 px-2 py-2">
+                           <p className="text-slate-400 uppercase font-bold text-[10px]">Income</p>
+                           <p className="font-semibold text-slate-700 mt-1">{formData.incomes.length} sources</p>
+                        </div>
+                        <div className="rounded-md bg-white border border-slate-100 px-2 py-2">
+                           <p className="text-slate-400 uppercase font-bold text-[10px]">Verification</p>
+                           <p className="font-semibold text-slate-700 mt-1">{formData.isAccountVerified ? "Verified" : "Pending"}</p>
+                        </div>
                      </div>
                   </div>
+
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 space-y-3">
+                     <div className="flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-medium">CRIB</span>
+                        <span className="font-semibold text-slate-700">{formData.cribRequestStatus || "PENDING"} / {formData.cribReportStatus || "NOT_READY"}</span>
+                     </div>
+                     <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="rounded-md bg-white border border-slate-100 px-2 py-2">
+                           <p className="text-slate-400 uppercase font-bold text-[10px]">Loans</p>
+                           <p className="font-semibold text-slate-700 mt-1">{formData.loans.length}</p>
+                        </div>
+                        <div className="rounded-md bg-white border border-slate-100 px-2 py-2">
+                           <p className="text-slate-400 uppercase font-bold text-[10px]">Cards</p>
+                           <p className="font-semibold text-slate-700 mt-1">{formData.creditCards.length}</p>
+                        </div>
+                        <div className="rounded-md bg-white border border-slate-100 px-2 py-2">
+                           <p className="text-slate-400 uppercase font-bold text-[10px]">Liabilities</p>
+                           <p className="font-semibold text-slate-700 mt-1">{formData.liabilities.length}</p>
+                        </div>
+                        <div className="rounded-md bg-white border border-slate-100 px-2 py-2">
+                           <p className="text-slate-400 uppercase font-bold text-[10px]">Monthly Income</p>
+                           <p className="font-semibold text-slate-700 mt-1">{formatAmount(totalMonthlyIncome)}</p>
+                        </div>
+                     </div>
+                  </div>
+
                   <div className="space-y-2">
                      <button
                         type="button"
@@ -2043,6 +2087,7 @@ export default function AddCustomerPage() {
       case 5: return <CreditCards {...props} />;
       case 6: return <Liabilities {...props} />;
       case 7: return <Review {...props} onCompleteCribReviewStep={completeCribReviewStep} isCompletingCribReviewStep={isCompletingCribReviewStep} />;
+         case 7: return <Review {...props} onCompleteCribReviewStep={completeCribReviewStep} onEditStep={setStep} isCompletingCribReviewStep={isCompletingCribReviewStep} />;
          default: return <PersonalDetails {...props} serverStepOneErrors={serverStepOneErrors} onClearServerStepOneError={clearServerStepOneError} />;
     }
   };
@@ -2152,5 +2197,3 @@ export default function AddCustomerPage() {
     </AuthGuard>
   );
 }
-
-

@@ -34,6 +34,7 @@ export default function SupportConsolePage() {
   const [openEscalate, setOpenEscalate] = useState(false);
   const [openCase, setOpenCase] = useState(false);
 
+  // Filter the ticket list, then open a ticket to review details and take action.
   const filtered = tickets.filter((t) => {
     if (filters.status !== "All" && t.status !== filters.status) return false;
     if (filters.priority !== "All" && t.priority !== filters.priority) return false;
@@ -42,6 +43,7 @@ export default function SupportConsolePage() {
     return true;
   });
 
+  // Top KPI numbers are recalculated from the current ticket list.
   const stats = {
     open: tickets.filter((t) => t.status === "Open").length,
     high: tickets.filter((t) => t.priority === "High").length,
@@ -69,9 +71,8 @@ export default function SupportConsolePage() {
 
             {/* Ticket Management Split */}
             <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-              <div className="lg:col-span-7">
-                <div className="creditlens-card creditlens-card-hover creditlens-delay-2 rounded-2xl bg-[#bdd8e71f] border border-[#BCC5CC] shadow-sm p-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+              <div className="lg:col-span-7 space-y-6">
+                <div className="primecore-table-toolbar flex-col items-stretch sm:flex-row">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full">
                       <Input placeholder="Search by Ticket ID or Customer ID" value={filters.query} onChange={(e: ChangeEvent<HTMLInputElement>)=> setFilters({ ...filters, query: e.target.value })} className="w-full sm:w-[320px] bg-white" />
                       <select value={filters.status} onChange={(e: ChangeEvent<HTMLSelectElement>)=> setFilters({ ...filters, status: e.target.value })} className="rounded-md p-2 border w-full sm:w-auto">
@@ -95,10 +96,11 @@ export default function SupportConsolePage() {
                         <option>Transact</option>
                       </select>
                     </div>
-                  </div>
+                </div>
 
-                  <div className="overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
-                    <table className="w-full text-sm table-auto">
+                <div className="primecore-table-shell">
+                  <div className="overflow-x-auto">
+                    <table className="primecore-data-table w-full text-sm table-auto">
                       <thead className="sticky top-0 bg-[#F7F6F2]">
                         <tr className="text-left text-xs text-[#063154]/80">
                           <th className="px-3 py-2">Ticket</th>
@@ -207,13 +209,13 @@ function StatCard({ label, value, color, delayClass }: { label: string; value: n
 }
 
 function PriorityBadge({ p }: { p: string }) {
-  const bg = p === 'High' ? 'bg-red-100 text-red-700' : p === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700';
-  return <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${bg}`}>{p}</span>;
+  const bg = p === 'High' ? 'border-red-100 bg-red-50 text-red-600' : p === 'Medium' ? 'border-amber-100 bg-amber-50 text-amber-600' : 'border-emerald-100 bg-emerald-50 text-emerald-600';
+  return <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider ${bg}`}>{p}</span>;
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const bg = status === 'Open' ? 'bg-blue-100 text-[#063154]' : status === 'In Progress' ? 'bg-sky-100 text-[#0d3b66]' : status === 'Escalated' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700';
-  return <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${bg}`}>{status}</span>;
+  const bg = status === 'Open' ? 'border-blue-100 bg-blue-50 text-blue-600' : status === 'In Progress' ? 'border-amber-100 bg-amber-50 text-amber-600' : status === 'Escalated' ? 'border-red-100 bg-red-50 text-red-600' : 'border-emerald-100 bg-emerald-50 text-emerald-600';
+  return <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-wider ${bg}`}>{status}</span>;
 }
 
 function TicketPreview({ ticket, onEscalate, onCreateCase }: { ticket: Ticket; onEscalate: () => void; onCreateCase: () => void }) {

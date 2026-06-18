@@ -15,6 +15,7 @@ import type {
  * Builds the officer-scoped CreditLens route prefix for a specific bank customer.
  */
 function officerCustomerBase(bankCustomerId: number): string {
+  // Keep all officer customer CreditLens routes consistent from one base path.
   return `/creditlens/officer/customers/${bankCustomerId}`;
 }
 
@@ -23,6 +24,7 @@ function officerCustomerBase(bankCustomerId: number): string {
  */
 // Loads the officer CreditLens dashboard data.
 export async function getOfficerCreditDashboard(): Promise<BankCreditAnalysisDashboardResponse> {
+  // Portfolio-level summary shown on officer credit-analysis list page.
   try {
     const { data } = await apiClient.get<BankCreditAnalysisDashboardResponse>(
       "/creditlens/officer/dashboard",
@@ -37,6 +39,7 @@ export async function getOfficerCreditDashboard(): Promise<BankCreditAnalysisDas
 export async function getOfficerCreditCustomerProfile(
   bankCustomerId: number,
 ): Promise<BankCreditAnalysisCustomerProfileResponse> {
+  // Identity and account context for one selected customer.
   try {
     const { data } = await apiClient.get<BankCreditAnalysisCustomerProfileResponse>(
       `${officerCustomerBase(bankCustomerId)}/profile`,
@@ -51,6 +54,7 @@ export async function getOfficerCreditCustomerProfile(
 export async function getOfficerCreditCurrentEvaluation(
   bankCustomerId: number,
 ): Promise<BankCreditEvaluationResponse> {
+  // Latest evaluation snapshot for overview tab.
   try {
     const { data } = await apiClient.get<BankCreditEvaluationResponse>(
       `${officerCustomerBase(bankCustomerId)}/current`,
@@ -65,6 +69,7 @@ export async function getOfficerCreditCurrentEvaluation(
 export async function getOfficerCreditEvaluationHistory(
   bankCustomerId: number,
 ): Promise<BankCreditEvaluationSummaryResponse[]> {
+  // Historical evaluations used for trend/report month selection.
   try {
     const { data } = await apiClient.get<BankCreditEvaluationSummaryResponse[]>(
       `${officerCustomerBase(bankCustomerId)}/history`,
@@ -80,6 +85,7 @@ export async function getOfficerCreditEvaluationById(
   bankCustomerId: number,
   bankEvaluationId: number,
 ): Promise<BankCreditEvaluationResponse> {
+  // Fetch a single evaluation when a specific record is opened.
   try {
     const { data } = await apiClient.get<BankCreditEvaluationResponse>(
       `${officerCustomerBase(bankCustomerId)}/evaluations/${bankEvaluationId}`,
@@ -95,6 +101,7 @@ export async function getOfficerCreditTrends(
   bankCustomerId: number,
   range: "6m" | "12m" = "6m",
 ): Promise<CreditTrendResponse> {
+  // Trend chart data for selected time window.
   try {
     const { data } = await apiClient.get<CreditTrendResponse>(
       `${officerCustomerBase(bankCustomerId)}/trends`,
@@ -110,6 +117,7 @@ export async function getOfficerCreditTrends(
 export async function getOfficerCreditInsights(
   bankCustomerId: number,
 ): Promise<CreditInsightsResponse> {
+  // Insight cards (risk drivers + positive signals + tips).
   try {
     const { data } = await apiClient.get<CreditInsightsResponse>(
       `${officerCustomerBase(bankCustomerId)}/insights`,
@@ -124,6 +132,7 @@ export async function getOfficerCreditInsights(
 export async function getOfficerCreditReport(
   bankCustomerId: number,
 ): Promise<CreditReportResponse> {
+  // Monthly report snapshots used in report tab and export flow.
   try {
     const { data } = await apiClient.get<CreditReportResponse>(
       `${officerCustomerBase(bankCustomerId)}/report`,

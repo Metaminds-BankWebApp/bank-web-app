@@ -8,5 +8,6 @@ import type {
 export async function registerBankOfficer(
   payload: StepOneRegistrationRequest
 ): Promise<StepOneRegistrationResponse> {
+  // Create a new bank-officer account from admin onboarding form data.
   return postStepOneRegistration(REGISTRATION_ENDPOINTS.bankOfficer.create, payload);
 }

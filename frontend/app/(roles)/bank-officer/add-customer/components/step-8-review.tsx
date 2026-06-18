@@ -10,11 +10,11 @@ export function Review({
   onNext,
   onBack,
   onCompleteCribReviewStep,
+   onEditStep,
   isCompletingCribReviewStep,
 }: StepProps) {
    const [errorMessage, setErrorMessage] = useState("");
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
-   const creditScore = typeof formData.creditScore === "number" ? formData.creditScore : null;
    const totalMonthlyIncome = formData.incomes.reduce((total, income) => total + (Number(income.amount) || 0), 0);
    const totalBusinessIncome = formData.incomes
       .filter((income) => income.type === "Business Person")
@@ -22,6 +22,11 @@ export function Review({
    const primarySalaryIncome = formData.incomes.find((income) => income.type === "Salary Worker");
    const primaryEmploymentType = primarySalaryIncome?.employmentType || formData.employmentType || "-";
    const primarySalaryAmount = primarySalaryIncome?.amount || formData.monthlySalary || "0.00";
+   const totalLoanEmi = formData.loans.reduce((total, loan) => total + (parseFloat(loan.monthlyEmi) || 0), 0);
+   const totalLoanBalance = formData.loans.reduce((total, loan) => total + (parseFloat(loan.remainingBalance) || 0), 0);
+   const totalCardLimit = formData.creditCards.reduce((total, card) => total + (parseFloat(card.limit) || 0), 0);
+   const totalCardOutstanding = formData.creditCards.reduce((total, card) => total + (parseFloat(card.outstandingBalance) || 0), 0);
+   const totalLiabilityAmount = formData.liabilities.reduce((total, item) => total + (parseFloat(item.monthlyAmount) || 0), 0);
 
    const handleSubmit = async () => {
       setErrorMessage("");
@@ -43,97 +48,119 @@ export function Review({
         <p className="text-sm text-slate-500 mt-1">Review all information before submitting for customer creation.</p>
       </div>
       
-      <div className="p-8 space-y-8">
-        {/* Financial Snapshot */}
-        <div className="bg-[#0b1e3b] rounded-xl p-6 text-white grid grid-cols-1 lg:grid-cols-2 gap-8 relative overflow-hidden">
-           <div className="relative z-10 space-y-6">
-              <div>
-                 <p className="text-[10px] text-blue-300 font-bold uppercase tracking-widest mb-1">Total Monthly Income</p>
-                 <p className="text-3xl font-bold text-white">LKR {totalMonthlyIncome.toFixed(2)}</p>
-                 <p className="text-xs text-blue-200/60 mt-1">+ LKR {totalBusinessIncome.toFixed(2)} Business Income</p>
-              </div>
+         <div className="p-8 space-y-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+               <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">Personal Details</h3>
+                     <button type="button" onClick={() => onEditStep?.(1)} className="text-[10px] font-bold text-[#3e9fd3] hover:underline uppercase transition-colors">Edit</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                     <div className="text-slate-500">Full Name</div>
+                     <div className="font-medium text-slate-800 text-right">{customerFullName || "-"}</div>
+                     <div className="text-slate-500">NIC Number</div>
+                     <div className="font-medium text-slate-800 text-right">{formData.nic || "-"}</div>
+                     <div className="text-slate-500">Province</div>
+                     <div className="font-medium text-slate-800 text-right">{formData.province || "-"}</div>
+                     <div className="text-slate-500">Address</div>
+                     <div className="font-medium text-slate-800 text-right">{formData.address || "-"}</div>
+                  </div>
+               </section>
 
-              <div className="flex gap-8">
-                 <div>
-                    <p className="text-[10px] text-blue-300 font-bold uppercase tracking-widest mb-1">Total EMI</p>
-                    <p className="text-lg font-bold text-white">LKR {formData.loans.reduce((acc, loan) => acc + (parseFloat(loan.monthlyEmi) || 0), 0).toFixed(2)}</p>
-                 </div>
-                 <div>
-                    <p className="text-[10px] text-blue-300 font-bold uppercase tracking-widest mb-1">Other Oblig.</p>
-                    <p className="text-lg font-bold text-white">LKR {formData.liabilities.reduce((acc, item) => acc + (parseFloat(item.monthlyAmount) || 0), 0).toFixed(2)}</p>
-                 </div>
-              </div>
-           </div>
-           
-           <div className="relative z-10 space-y-6 flex flex-col justify-between">
-              <div>
-                 <div className="flex justify-between items-end mb-2">
-                    <p className="text-[10px] text-blue-300 font-bold uppercase tracking-widest">CRIB Credit Score</p>
-                    <p className="text-xl font-bold text-emerald-400">{creditScore ?? "N/A"}</p>
-                 </div>
-                 <div className="h-1.5 w-full bg-blue-900/50 rounded-full overflow-hidden">
-                    <div 
-                        className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
-                        style={{ width: `${creditScore !== null ? (creditScore / 900) * 100 : 0}%` }}
-                    ></div>
-                 </div>
-              </div>
+               <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">Account & Employment</h3>
+                     <button type="button" onClick={() => onEditStep?.(1)} className="text-[10px] font-bold text-[#3e9fd3] hover:underline uppercase transition-colors">Edit</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                     <div className="text-slate-500">Primary Employment</div>
+                     <div className="font-medium text-slate-800 text-right">{primaryEmploymentType}</div>
+                     <div className="text-slate-500">Monthly Net</div>
+                     <div className="font-medium text-slate-800 text-right">LKR {primarySalaryAmount}</div>
+                     <div className="text-slate-500">Income Sources</div>
+                     <div className="font-medium text-slate-800 text-right">{formData.incomes.length}</div>
+                     <div className="text-slate-500">Account Verification</div>
+                     <div className="font-medium text-slate-800 text-right">{formData.isAccountVerified ? "Verified" : "Pending"}</div>
+                  </div>
+               </section>
 
-              <div className="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/10">
-                 <span className="text-xs font-medium text-blue-200">Missed Payments (12m)</span>
-                 <span className={`px-2 py-1 rounded text-xs font-bold ${formData.missedPaymentsLast12Months === 0 ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
-                    {formData.missedPaymentsLast12Months === 0 ? "0 - Clean Record" : `${formData.missedPaymentsLast12Months} Missed`}
-                 </span>
-              </div>
-           </div>
+               <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">Financial Snapshot</h3>
+                     <button type="button" onClick={() => onEditStep?.(3)} className="text-[10px] font-bold text-[#3e9fd3] hover:underline uppercase transition-colors">Edit</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Monthly Income</p>
+                        <p className="font-semibold text-slate-800 mt-1">LKR {totalMonthlyIncome.toFixed(2)}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Business Income</p>
+                        <p className="font-semibold text-slate-800 mt-1">LKR {totalBusinessIncome.toFixed(2)}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Total EMI</p>
+                        <p className="font-semibold text-slate-800 mt-1">LKR {totalLoanEmi.toFixed(2)}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Other Oblig.</p>
+                        <p className="font-semibold text-slate-800 mt-1">LKR {totalLiabilityAmount.toFixed(2)}</p>
+                     </div>
+                  </div>
+               </section>
 
-           {/* Decorative */}
-           <div className="absolute top-0 right-0 -mt-10 -mr-10 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"></div>
-        </div>
+               <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">Portfolio Summary</h3>
+                     <button type="button" onClick={() => onEditStep?.(4)} className="text-[10px] font-bold text-[#3e9fd3] hover:underline uppercase transition-colors">Edit</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Loans</p>
+                        <p className="font-semibold text-slate-800 mt-1">{formData.loans.length} items</p>
+                        <p className="text-[11px] text-slate-500 mt-1">Balance LKR {totalLoanBalance.toFixed(2)}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Credit Cards</p>
+                        <p className="font-semibold text-slate-800 mt-1">{formData.creditCards.length} items</p>
+                        <p className="text-[11px] text-slate-500 mt-1">Limit LKR {totalCardLimit.toFixed(2)}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Outstanding</p>
+                        <p className="font-semibold text-slate-800 mt-1">LKR {totalCardOutstanding.toFixed(2)}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Liabilities</p>
+                        <p className="font-semibold text-slate-800 mt-1">{formData.liabilities.length} items</p>
+                     </div>
+                  </div>
+               </section>
 
-        {/* Details Summary */}
-        <div className="space-y-6">
-           <div>
-              <div className="flex items-center justify-between mb-4">
-                 <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">Personal Details</h3>
-                 <button className="text-[10px] font-bold text-[#3e9fd3] hover:underline uppercase transition-colors">Edit</button>
-              </div>
-              <div className="grid grid-cols-2 text-sm gap-y-2">
-                 <div className="text-slate-500">Full Name</div>
-                 <div className="font-medium text-slate-800 text-right">{customerFullName || "-"}</div>
-                 <div className="text-slate-500">NIC Number</div>
-                 <div className="font-medium text-slate-800 text-right">{formData.nic}</div>
-                 <div className="text-slate-500">Province</div>
-                 <div className="font-medium text-slate-800 text-right">{formData.province || "-"}</div>
-                 <div className="text-slate-500">Address</div>
-                 <div className="font-medium text-slate-800 text-right">{formData.address || "-"}</div>
-              </div>
-           </div>
-           
-           <div className="border-t border-slate-100 pt-6">
-              <div className="flex items-center justify-between mb-4">
-                 <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">Employment</h3>
-                 <button className="text-[10px] font-bold text-[#3e9fd3] hover:underline uppercase transition-colors">Edit</button>
-              </div>
-              <div className="grid grid-cols-2 text-sm gap-y-2">
-                 <div className="text-slate-500">Primary Employment</div>
-                 <div className="font-medium text-slate-800 text-right">{primaryEmploymentType}</div>
-                 <div className="text-slate-500">Monthly Net</div>
-                 <div className="font-medium text-slate-800 text-right">LKR {primarySalaryAmount}</div>
-                 <div className="text-slate-500">Income Sources</div>
-                 <div className="font-medium text-slate-800 text-right">{formData.incomes.length}</div>
-                 <div className="text-slate-500">CRIB Request Status</div>
-                 <div className="font-medium text-slate-800 text-right">{formData.cribRequestStatus || "-"}</div>
-                 <div className="text-slate-500">CRIB Report Status</div>
-                 <div className="font-medium text-slate-800 text-right">{formData.cribReportStatus || "-"}</div>
-              </div>
-           </div>
-        </div>
-        
-        <div className="bg-blue-50/50 p-4 rounded-lg flex gap-3 text-xs text-slate-600 leading-relaxed border border-blue-100">
-           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 text-[#3e9fd3] mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="16" y2="12"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>
-           <p>Final credit score will be generated after evaluation. All data will be transmitted via secure 256-bit encryption.</p>
-        </div>
+               <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                     <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">Final Checklist</h3>
+                     <button type="button" onClick={() => onEditStep?.(2)} className="text-[10px] font-bold text-[#3e9fd3] hover:underline uppercase transition-colors">Edit</button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">CRIB Request</p>
+                        <p className="font-semibold text-slate-800 mt-1">{formData.cribRequestStatus || "PENDING"}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">CRIB Report</p>
+                        <p className="font-semibold text-slate-800 mt-1">{formData.cribReportStatus || "NOT_READY"}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Missed Payments</p>
+                        <p className="font-semibold text-slate-800 mt-1">{formData.missedPaymentsLast12Months || 0}</p>
+                     </div>
+                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <p className="text-[10px] text-slate-400 uppercase font-bold">Summary Status</p>
+                        <p className="font-semibold text-slate-800 mt-1">Ready to submit</p>
+                     </div>
+                  </div>
+               </section>
+            </div>
       </div>
 
       {errorMessage && (

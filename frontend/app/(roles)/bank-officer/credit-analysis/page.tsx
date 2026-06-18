@@ -64,6 +64,7 @@ function buildInitials(name: string): string {
  * Officer-facing CreditLens portfolio dashboard with search, filters, export, and quick risk counts.
  */
 export default function CreditAnalysisPage() {
+  // Portfolio view for officer risk analysis with search, filters, sorting, and export.
   const router = useRouter();
   const [dashboard, setDashboard] = useState<BankCreditAnalysisDashboardResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,6 +75,7 @@ export default function CreditAnalysisPage() {
   const [scoreFilter, setScoreFilter] = useState<"all" | "low" | "medium" | "high">("all");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
 
+  // Load the officer's credit dashboard once when the page opens.
   useEffect(() => {
     let isActive = true;
 
@@ -108,6 +110,7 @@ export default function CreditAnalysisPage() {
 
   // dashboard is loaded in the primary effect above; no duplicate loader here
 
+  // Build the table list based on active tab, search text, filters, and sort option.
   const filteredRows = useMemo(() => {
     const sourceRows = dashboard?.customers ?? [];
     const filtered = sourceRows.filter((item) => {
@@ -147,7 +150,7 @@ export default function CreditAnalysisPage() {
     });
   }, [activeTab, dashboard?.customers, query, scoreFilter, sortBy]);
 
-  // Exports the currently filtered customer rows.
+  // Export exactly what the officer currently sees in the table.
   const handleExport = () => {
     const header = ["Customer Code", "Customer Name", "Risk Score", "Risk Badge", "Evaluation Date"];
     const rows = filteredRows.map((customer) => [
@@ -221,8 +224,9 @@ export default function CreditAnalysisPage() {
                   </div>
                 </div>
 
-                <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                  <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50/40">
+                <div className="space-y-6">
+                  <div className="primecore-table-toolbar flex-col items-stretch">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div className="relative w-full md:max-w-lg">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                       <Input
@@ -248,7 +252,7 @@ export default function CreditAnalysisPage() {
                   </div>
 
                   {showFilters && (
-                    <div className="p-4 md:px-6 border-b border-slate-100 grid gap-3 md:grid-cols-3 bg-white">
+                    <div className="grid w-full gap-3 md:grid-cols-3">
                       <Select value={scoreFilter} onValueChange={(value) => setScoreFilter(value as "all" | "low" | "medium" | "high")}>
                         <SelectTrigger>
                           <SelectValue placeholder="Risk score range" />
@@ -288,8 +292,11 @@ export default function CreditAnalysisPage() {
                       </Button>
                     </div>
                   )}
+                  </div>
 
-                  <div className="px-4 md:px-6 py-3 border-b border-slate-100 bg-sky-50/50">
+                  <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+
+                  <div className="border-b border-slate-100 bg-slate-50/50 p-2">
                     <div className="inline-flex p-1 rounded-lg bg-sky-100/70 gap-1">
                       {tabOptions.map((tab) => (
                         <button
@@ -374,11 +381,12 @@ export default function CreditAnalysisPage() {
                     </TableBody>
                   </Table>
 
-                  <div className="p-4 bg-sky-50/70 border-t border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 p-4">
                     <p className="text-sm text-slate-500">
                       Showing <span className="font-semibold text-slate-800">{filteredRows.length}</span> of {dashboard.customers.length}
                     </p>
                   </div>
+                </div>
                 </div>
               </>
             ) : null}

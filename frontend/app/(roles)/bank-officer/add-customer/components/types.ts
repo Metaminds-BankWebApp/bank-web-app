@@ -54,6 +54,7 @@ export interface CustomerFormData {
   }[];
   
   missedPaymentsLast12Months: number;
+  // CRIB-related fields are populated during linking/retrieval and reused in review/reporting.
   cribRequestType?: string;
   cribRequestStatus?: string;
   cribReportStatus?: string;
@@ -119,6 +120,7 @@ export interface StepProps {
   onSaveCribRequestStep?: (requestType: string) => Promise<unknown>;
   onSaveCribRetrievalStep?: (payload?: { requestStatus?: string; reportStatus?: string }) => Promise<unknown>;
   onCompleteCribReviewStep?: () => Promise<unknown>;
+  onEditStep?: (step: number) => void;
   isSavingCribRequestStep?: boolean;
   isSavingCribRetrievalStep?: boolean;
   isCompletingCribReviewStep?: boolean;

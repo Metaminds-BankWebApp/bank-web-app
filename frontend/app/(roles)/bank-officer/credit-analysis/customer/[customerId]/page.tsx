@@ -12,6 +12,7 @@ import ModuleHeader from "@/src/components/ui/module-header";
  * Officer-side customer profile view linked from the CreditLens analysis area.
  */
 export default function CreditAnalysisCustomerPage() {
+  // Simple customer profile summary pulled from route/query context with a quick back action.
   const params = useParams<{ customerId: string }>();
   const searchParams = useSearchParams();
   const customerName = searchParams.get("name") || "Amila Silva";

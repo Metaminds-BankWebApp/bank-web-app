@@ -45,9 +45,6 @@ export default function InsightPage() {
         theme="creditlens"
         menuMode="feature-layout"
         title="Credit Insight"
-        subtitle=""
-        name="Kamal Edirisinghe"
-        role="Public Customer"
       />
 
       <div className="pb-0 pt-1 sm:pt-2 lg:px-2 xl:px-3">

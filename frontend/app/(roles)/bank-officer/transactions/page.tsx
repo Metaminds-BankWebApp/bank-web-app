@@ -147,6 +147,7 @@ function getTransactionDetails(transaction: TransactionRow) {
 }
 
 export default function TransactionsPage() {
+  // Load transaction history, then let officers narrow it and review/export what they need.
   const [transactions, setTransactions] = useState<TransactionRow[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionRow | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -157,6 +158,7 @@ export default function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
+  // Load officer transaction history once when this page opens.
   useEffect(() => {
     let mounted = true;
 
@@ -198,6 +200,7 @@ export default function TransactionsPage() {
     };
   }, []);
 
+  // Build the final table rows using search, date, type, amount, and sort rules.
   const visibleTransactions = useMemo(() => {
     if (transactions.length === 0) {
       return [];
@@ -245,6 +248,7 @@ export default function TransactionsPage() {
     });
   }, [amountFilter, dateRange, searchTerm, sortBy, transactions, typeFilter]);
 
+  // Compute summary cards from the full fetched list.
   const summary = useMemo(() => {
     const totalVolume = transactions.reduce((sum, transaction) => sum + transaction.amountValue, 0);
     const pendingTransfers = transactions.filter((transaction) => transaction.status === "pending").length;
@@ -260,6 +264,7 @@ export default function TransactionsPage() {
     };
   }, [transactions]);
 
+  // Export only the transactions currently visible after filtering.
   const handleExport = () => {
     const header = ["Date", "Time", "Reference No", "Receiver Name", "Sender Account", "Receiver Account", "Remark", "Amount (LKR)", "Status"];
     const rows = visibleTransactions.map((transaction) => [
