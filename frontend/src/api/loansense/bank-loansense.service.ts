@@ -6,6 +6,7 @@ import type {
   LoanTypeDetailResponse,
 } from "@/src/types/dto/bank-loansense.dto";
 
+// Fetches CurrentLoanSenseEvaluation data from the backend API.
 export async function getCurrentLoanSenseEvaluation(): Promise<LoanSenseEvaluationResponse> {
   try {
     const { data } = await apiClient.get<LoanSenseEvaluationResponse>(
@@ -17,6 +18,7 @@ export async function getCurrentLoanSenseEvaluation(): Promise<LoanSenseEvaluati
   }
 }
 
+// Fetches LoanSenseHistory data from the backend API.
 export async function getLoanSenseHistory(params?: {
   loanType?: string;
   months?: number;
@@ -37,6 +39,7 @@ export async function getLoanSenseHistory(params?: {
   }
 }
 
+// Fetches LoanSenseEvaluationById data from the backend API.
 export async function getLoanSenseEvaluationById(
   loansenseEvaluationId: number
 ): Promise<LoanSenseEvaluationResponse> {
@@ -50,6 +53,7 @@ export async function getLoanSenseEvaluationById(
   }
 }
 
+// Fetches LoanSenseLoanTypeDetail data from the backend API.
 export async function getLoanSenseLoanTypeDetail(
   loanType: string
 ): Promise<LoanTypeDetailResponse> {

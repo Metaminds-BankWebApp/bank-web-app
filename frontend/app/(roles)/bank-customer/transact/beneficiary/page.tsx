@@ -12,14 +12,20 @@ import { beneficiaryService } from "@/src/api/transact/beneficiary.service"
 import { ApiError } from "@/src/types/api-error"
 
 export default function Page() {
+  // Router is used to redirect after a successful beneficiary creation.
   const router = useRouter()
+
+  // Form input states.
   const [accountNumber, setAccountNumber] = useState("")
   const [nickName, setNickName] = useState("")
   const [remark, setRemark] = useState("")
+
+  // Validation and submission states.
   const [errors, setErrors] = useState<{ [k: string]: string }>({})
   const [submitError, setSubmitError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Validates all fields and returns an error map keyed by field name.
   const validate = () => {
     const e: { [k: string]: string } = {}
     const normalizedAccountNumber = accountNumber.trim()
@@ -40,6 +46,7 @@ export default function Page() {
     return e
   }
 
+  // Restricts account number input to digits and clears related errors while typing.
   const handleAccountNumberChange = (value: string) => {
     const digitsOnly = value.replace(/\D/g, "").slice(0, 20)
     setAccountNumber(digitsOnly)
@@ -51,6 +58,7 @@ export default function Page() {
     }
   }
 
+  // Submits the form after validation, then creates beneficiary and redirects.
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault()
 
@@ -71,7 +79,7 @@ export default function Page() {
     }
 
     setIsSubmitting(true)
-
+    // exception handling
     try {
       const me = await authService.me()
       if (String(me.roleName).toUpperCase() !== "BANK_CUSTOMER" || !me.bankCustomerId) {
@@ -131,31 +139,33 @@ export default function Page() {
       <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Account Detail" name="John deo" />
 
       <section className="max-w-6xl mx-auto mt-6 sm:mt-8">
-
-  <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 mt-6 w-full rounded-xl p-4 sm:mt-35 sm:min-h-[420px] sm:p-6 lg:p-8">
+        {/* Beneficiary creation form card. */}
+        <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 mt-6 w-full rounded-xl p-4 sm:mt-35 sm:min-h-[420px] sm:p-6 lg:p-8">
           <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit} noValidate>
+            {/* Top-level submit error message. */}
             {submitError && (
               <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
                 {submitError}
               </div>
             )}
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="space-y-2 sm:col-span-2">
+            {/* Account and nickname input section. */}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="accountNumber">Account number</Label>
                 <Input
-                                  id="accountNumber"
-                                  type="text"
-                                  inputMode="numeric"
-                                  pattern="[0-9]*"
-                                  placeholder="Enter account number"
-                                  maxLength={20}
-                                  value={accountNumber}
-                                  onChange={(e) => handleAccountNumberChange((e as React.ChangeEvent<HTMLInputElement>).target.value)}
-                                  aria-invalid={!!errors.accountNumber}
-                                />
+                  id="accountNumber"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="Enter account number"
+                  maxLength={20}
+                  value={accountNumber}
+                  onChange={(e) => handleAccountNumberChange((e as React.ChangeEvent<HTMLInputElement>).target.value)}
+                  aria-invalid={!!errors.accountNumber}
+                />
               </div>
-        <div className="space-y-2 sm:col-span-2">
+              <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="nickName">Nick name</Label>
                 <Input
                   id="nickName"
@@ -165,20 +175,21 @@ export default function Page() {
                   value={nickName}
                   aria-invalid={!!errors.nickName}
                   required
-          onChange={(e) => {
-            setNickName(e.target.value)
-            if (errors.nickName) {
-              setErrors((prev) => ({ ...prev, nickName: "" }))
-            }
-            if (submitError) {
-              setSubmitError("")
-            }
-          }}
-          className="w-full"
+                  onChange={(e) => {
+                    setNickName(e.target.value)
+                    if (errors.nickName) {
+                      setErrors((prev) => ({ ...prev, nickName: "" }))
+                    }
+                    if (submitError) {
+                      setSubmitError("")
+                    }
+                  }}
+                  className="w-full"
                 />
               </div>
             </div>
 
+            {/* Beneficiary remark/description field. */}
             <div className="space-y-2">
               <Label htmlFor="remark">Remark</Label>
               <textarea
@@ -201,6 +212,7 @@ export default function Page() {
               />
             </div>
 
+            {/* Form submit action row. */}
             <div className="flex justify-end mt-2 sm:mt-4">
               <Button
                 type="submit"
@@ -211,10 +223,8 @@ export default function Page() {
                 Save
               </Button>
             </div>
-
           </form>
         </Card>
-
       </section>
     </div>
   )

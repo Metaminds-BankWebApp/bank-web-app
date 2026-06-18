@@ -32,6 +32,7 @@ export interface AdminBankOfficerGeneratedPasswordResponse {
   password: string;
 }
 
+// Fetches AdminBankOfficers data from the backend API.
 export async function getAdminBankOfficers(): Promise<AdminBankOfficerSummaryResponse[]> {
   // Load officer list for admin management table.
   try {
@@ -42,6 +43,7 @@ export async function getAdminBankOfficers(): Promise<AdminBankOfficerSummaryRes
   }
 }
 
+// Calls the backend API for generateAdminBankOfficerUsername.
 export async function generateAdminBankOfficerUsername(
   firstName: string,
   lastName: string
@@ -61,6 +63,7 @@ export async function generateAdminBankOfficerUsername(
   }
 }
 
+// Calls the backend API for generateAdminBankOfficerPassword.
 export async function generateAdminBankOfficerPassword(): Promise<AdminBankOfficerGeneratedPasswordResponse> {
   // Generate a temporary password for onboarding.
   try {
@@ -73,6 +76,7 @@ export async function generateAdminBankOfficerPassword(): Promise<AdminBankOffic
   }
 }
 
+// Updates AdminBankOfficerStatus using the backend API.
 export async function updateAdminBankOfficerStatus(
   userId: number,
   status: AdminBankOfficerStatus
@@ -92,6 +96,7 @@ export async function updateAdminBankOfficerStatus(
   }
 }
 
+// Updates AdminBankOfficer using the backend API.
 export async function updateAdminBankOfficer(
   userId: number,
   payload: AdminBankOfficerUpdateRequest
@@ -108,6 +113,7 @@ export async function updateAdminBankOfficer(
   }
 }
 
+// Deletes AdminBankOfficer using the backend API.
 export async function deleteAdminBankOfficer(
   userId: number
 ): Promise<AdminBankOfficerSummaryResponse> {

@@ -1,11 +1,14 @@
 "use client";
+/**
+ * Admin user-management page with search, status updates, and paginated user records.
+ */
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import { ConfirmationModal, useToast } from "@/src/components/ui";
-import { ChevronLeft, ChevronRight, Pencil, Search, Trash2, X } from "lucide-react";
+import { ConfirmationModal, DataTablePagination, useToast } from "@/src/components/ui";
+import { Pencil, Search, Trash2, X } from "lucide-react";
 import {
   deleteAdminUser,
   getAdminUsers,
@@ -136,6 +139,38 @@ function matchesUserStatus(statusLabel: string, normalizedQuery: string): boolea
   return normalizedStatus.includes(normalizedQuery);
 }
 
+function SummaryCard({
+  label,
+  value,
+  variant = "light",
+}: {
+  label: string;
+  value: string | number;
+  variant?: "dark" | "medium" | "soft" | "light";
+}) {
+  const classes =
+    variant === "dark"
+      ? "bg-[#0d3b66] text-white"
+      : variant === "medium"
+      ? "bg-[#446892] text-white"
+      : variant === "soft"
+      ? "bg-[#6f8fb6] text-[#13365f]"
+      : "bg-[#9fb1c9] text-[#15375f]";
+
+  const titleClass =
+    variant === "dark" || variant === "medium" ? "text-white/75" : "text-[#15375f]/80";
+
+  return (
+    <div
+      className={`rounded-2xl p-6 shadow-[0_16px_26px_-20px_rgba(11,43,89,0.85)] flex flex-col justify-between ${classes}`}
+    >
+      <span className={`text-xs font-semibold tracking-wide ${titleClass}`}>{label}</span>
+      <span className="mt-3 text-2xl font-bold leading-none">{value}</span>
+    </div>
+  );
+}
+
+// Main component for listing, filtering, and updating user accounts.
 export default function UserManagementPage() {
   const { showToast } = useToast();
   const [filter, setFilter] = useState<AdminCustomerType>("ALL");
@@ -176,6 +211,7 @@ export default function UserManagementPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadUsers = async () => {
       setError(null);
       if (hasLoadedOnceRef.current) {
@@ -185,9 +221,7 @@ export default function UserManagementPage() {
       }
 
       try {
-        const data = await getAdminUsers({
-          customerType: filter,
-        });
+        const data = await getAdminUsers({ customerType: "ALL" });
 
         if (!mounted) {
           return;
@@ -224,19 +258,21 @@ export default function UserManagementPage() {
     return () => {
       mounted = false;
     };
-  }, [filter, showToast]);
+  }, [showToast]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [filter, searchField, searchQuery]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const filteredUsers = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
-    if (!normalized) {
-      return users;
-    }
 
     return users.filter((user) => {
+      if (filter !== "ALL" && user.customerType !== filter) {
+        return false;
+      }
+
       const id = resolveCustomerId(user);
       const name = user.fullName || "-";
       const email = user.email || "-";
@@ -279,21 +315,23 @@ export default function UserManagementPage() {
       }
       return matchesUserStatus(statusLabel, normalized);
     });
-  }, [searchField, searchQuery, users]);
+  }, [filter, searchField, searchQuery, users]);
+
+  const summary = useMemo(() => {
+    const totalCustomers = users.length;
+    const bankCustomers = users.filter((user) => user.customerType === "BANK").length;
+    const publicCustomers = users.filter((user) => user.customerType === "PUBLIC").length;
+    const activeCustomers = users.filter((user) => user.status === "ACTIVE").length;
+
+    return {
+      totalCustomers,
+      bankCustomers,
+      publicCustomers,
+      activeCustomers,
+    };
+  }, [users]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / usersPerPage));
-  const visiblePages = useMemo(() => {
-    if (totalPages <= 0) {
-      return [];
-    }
-
-    const maxVisibleButtons = 3;
-    let start = Math.max(1, currentPage - 1);
-    const end = Math.min(totalPages, start + maxVisibleButtons - 1);
-    start = Math.max(1, end - maxVisibleButtons + 1);
-
-    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
-  }, [currentPage, totalPages]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -301,6 +339,7 @@ export default function UserManagementPage() {
     }
   }, [currentPage, totalPages]);
 
+  // Builds derived UI values from API data to keep rendering simple.
   const paginatedUsers = useMemo(() => {
     const start = (currentPage - 1) * usersPerPage;
     return filteredUsers.slice(start, start + usersPerPage);
@@ -479,7 +518,15 @@ export default function UserManagementPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 pb-6 space-y-6">
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <SummaryCard label="TOTAL CUSTOMERS" value={summary.totalCustomers} variant="dark" />
+              <SummaryCard label="BANK CUSTOMERS" value={summary.bankCustomers} variant="medium" />
+              <SummaryCard label="PUBLIC CUSTOMERS" value={summary.publicCustomers} variant="soft" />
+              <SummaryCard label="ACTIVE CUSTOMERS" value={summary.activeCustomers} />
+            </div>
+
+            <div className="primecore-table-toolbar flex-col items-stretch">
+              <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium text-gray-600">Customer Type:</span>
               <button
                 className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
@@ -511,9 +558,9 @@ export default function UserManagementPage() {
               >
                 Public Customers
               </button>
-            </div>
+              </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex flex-1 flex-col sm:flex-row gap-3">
                 <select
                   value={searchField}
@@ -546,6 +593,7 @@ export default function UserManagementPage() {
               {isRefreshing ? (
                 <span className="self-center text-xs text-gray-400">Refreshing...</span>
               ) : null}
+              </div>
             </div>
 
             {error ? (
@@ -554,9 +602,9 @@ export default function UserManagementPage() {
               </div>
             ) : null}
 
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="primecore-table-shell">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-sm">
+                <table className="primecore-data-table w-full min-w-[900px] text-sm">
                   <thead className="bg-gray-50 border-b">
                     <tr>
                       {[
@@ -636,12 +684,12 @@ export default function UserManagementPage() {
                             </td>
                             <td className="px-6 py-4">
                               <span
-                                className={`inline-flex min-w-[7.5rem] justify-center px-3 py-1 rounded-full text-xs font-semibold ${
+                                className={`inline-flex min-w-[7.5rem] justify-center px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider ${
                                   user.status === "ACTIVE"
-                                    ? "bg-green-100 text-green-700"
+                                    ? "border-emerald-100 bg-emerald-50 text-emerald-600"
                                     : user.status === "INACTIVE"
-                                    ? "bg-gray-200 text-gray-700"
-                                    : "bg-red-100 text-red-700"
+                                    ? "border-slate-200 bg-slate-100 text-slate-600"
+                                    : "border-red-100 bg-red-50 text-red-600"
                                 }`}
                               >
                                 {getStatusLabel(user.status)}
@@ -674,47 +722,13 @@ export default function UserManagementPage() {
                   </tbody>
                 </table>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between mt-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-100 bg-slate-50/50 p-4 text-sm text-slate-500">
               <div className="text-sm text-gray-600">
                 Showing {fromIndex} to {toIndex} of {filteredUsers.length} customers
               </div>
 
-              <div className="flex items-center gap-2 mt-3 sm:mt-0">
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  className="px-3 py-2 rounded-lg border text-gray-600 disabled:opacity-40 flex items-center justify-center"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                {visiblePages.map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-4 py-2 rounded-lg ${
-                      currentPage === page
-                        ? "bg-[#0B3B66] text-white"
-                        : "border text-gray-700"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  className="px-3 py-2 rounded-lg border text-gray-600 disabled:opacity-40 flex items-center justify-center"
-                  aria-label="Next page"
-                >
-                  <ChevronRight size={16} />
-                </button>
+              <DataTablePagination currentPage={currentPage} totalPages={filteredUsers.length === 0 ? 0 : totalPages} onPageChange={setCurrentPage} className="mt-3 sm:mt-0" />
               </div>
             </div>
           </div>
@@ -878,4 +892,3 @@ export default function UserManagementPage() {
     </AuthGuard>
   );
 }
-

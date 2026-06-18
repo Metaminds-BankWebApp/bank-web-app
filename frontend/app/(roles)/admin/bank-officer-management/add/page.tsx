@@ -1,4 +1,7 @@
 "use client";
+/**
+ * Admin add-officer page for generating credentials and creating new officer accounts.
+ */
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -98,6 +101,7 @@ function mapApiMessageToOfficerField(message: string): OfficerFormErrors {
   return {};
 }
 
+// Form page for registering a new bank officer.
 export default function AddOfficerPage() {
   const { showToast } = useToast();
   const router = useRouter();
@@ -115,6 +119,7 @@ export default function AddOfficerPage() {
   useEffect(() => {
     let mounted = true;
 
+    // Loads data required by this view and updates local state.
     const loadBranches = async () => {
       setIsLoadingBranches(true);
       setBranchLoadError(null);
@@ -593,3 +598,6 @@ export default function AddOfficerPage() {
     </AuthGuard>
   );
 }
+
+
+

@@ -28,6 +28,7 @@ import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
 import { useToast } from "@/src/components/ui/toast";
 import PopupModal from "@/src/components/ui/popup-modal";
+import { DataTablePagination } from "@/src/components/ui/data-table-layout";
 import {
   Table,
   TableBody,
@@ -165,6 +166,8 @@ const customerDetailTabs: Array<{ id: CustomerDetailTab; label: string }> = [
    { id: "liabilities", label: "Liabilities" },
 ];
 
+const customersPerPage = 10;
+
 export default function AllCustomersPage() {
   const router = useRouter();
    const { showToast } = useToast();
@@ -188,13 +191,8 @@ export default function AllCustomersPage() {
    const [deleteRequestReason, setDeleteRequestReason] = useState("CUSTOMER_REQUEST");
    const [deleteRequestNote, setDeleteRequestNote] = useState("");
    const [isSubmittingDeleteRequest, setIsSubmittingDeleteRequest] = useState(false);
+   const [currentPage, setCurrentPage] = useState(1);
 
-   // Customer worklist for officers: load, filter, inspect details, and submit admin requests.
-
-   // Debounce search term to avoid frequent requests. The debounced value is
-   // used when calling the server; the backend performs search and
-   // filtering, so this reduces network churn for fast typing.
-   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
    useEffect(() => {
       const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 450);
       return () => clearTimeout(t);
@@ -287,7 +285,24 @@ export default function AllCustomersPage() {
       });
    }, [activeRisk, customers, searchTerm, sortBy, statusFilter]);
 
-   // Export the same customer rows currently visible in the table.
+   const totalPages = Math.ceil(visibleCustomers.length / customersPerPage);
+   const paginatedCustomers = useMemo(() => {
+      const start = (currentPage - 1) * customersPerPage;
+      return visibleCustomers.slice(start, start + customersPerPage);
+   }, [currentPage, visibleCustomers]);
+   const showingFrom = visibleCustomers.length === 0 ? 0 : (currentPage - 1) * customersPerPage + 1;
+   const showingTo = visibleCustomers.length === 0 ? 0 : Math.min(currentPage * customersPerPage, visibleCustomers.length);
+
+   useEffect(() => {
+      setCurrentPage(1);
+   }, [activeRisk, searchTerm, sortBy, statusFilter]);
+
+   useEffect(() => {
+      if (currentPage > totalPages) {
+         setCurrentPage(Math.max(totalPages, 1));
+      }
+   }, [currentPage, totalPages]);
+
    const handleExport = () => {
       const header = ["Name", "NIC", "Email", "Phone", "Status", "Last Updated"];
 
@@ -437,9 +452,10 @@ export default function AllCustomersPage() {
             <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
                       <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="All Customers" className="mb-6 shrink-0" />
 
-          <div className="creditlens-card creditlens-card-hover creditlens-delay-1 flex-1 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="flex-1 min-h-0 space-y-6 overflow-y-auto">
              {/* Toolbar */}
-             <div className="p-6 border-b border-slate-100 flex flex-col lg:flex-row justify-between gap-4 bg-slate-50/40">
+             <div className="primecore-table-toolbar flex-col items-stretch">
+             <div className="flex flex-col lg:flex-row justify-between gap-4">
                 <div className="relative max-w-sm flex-1">
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                    <Input 
@@ -470,7 +486,7 @@ export default function AllCustomersPage() {
              </div>
 
                    {showFilters && (
-                      <div className="px-6 pb-4 grid grid-cols-1 gap-3 border-b border-slate-100 md:grid-cols-3">
+                      <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
                          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | Customer["status"])}>
                             <SelectTrigger className="bg-slate-50 border-slate-200">
                                <SelectValue placeholder="Filter by status" />
@@ -518,9 +534,12 @@ export default function AllCustomersPage() {
                          </Button>
                       </div>
                    )}
+             </div>
+
+             <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
 
              {/* Status Tabs */}
-             <div className="px-6 py-4 flex gap-3 overflow-x-auto">
+             <div className="border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50/50 p-2">
                          <Badge
                             className={`px-4 py-1.5 cursor-pointer ${activeRisk === "all" ? "bg-[#0d3b66] text-white hover:bg-[#0a2e50]" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                             onClick={() => setActiveRisk("all")}
@@ -551,14 +570,14 @@ export default function AllCustomersPage() {
              </div>
 
              {/* Table Container */}
-             <div className="flex-1 overflow-auto min-h-0">
+             <div className="overflow-x-auto">
              {loadError && (
                 <div className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                    {loadError}
                 </div>
              )}
              <Table>
-                <TableHeader className="bg-sky-50/70 sticky top-0 z-10">
+                <TableHeader className="bg-sky-50/70">
                    <TableRow>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">Name</TableHead>
                       <TableHead className="text-xs font-bold text-slate-500 uppercase tracking-wider">NIC</TableHead>
@@ -569,7 +588,7 @@ export default function AllCustomersPage() {
                    </TableRow>
                 </TableHeader>
                 <TableBody>
-                   {visibleCustomers.map((customer) => (
+                   {paginatedCustomers.map((customer) => (
                       <TableRow key={customer.id} className="hover:bg-slate-50/50">
                          <TableCell>
                             <div className="flex items-center gap-3">
@@ -626,7 +645,7 @@ export default function AllCustomersPage() {
 
                             {!isLoading && visibleCustomers.length === 0 && (
                                <TableRow>
-                                  <TableCell colSpan={7} className="py-10 text-center text-sm text-slate-500">
+                                  <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
                                      No customers found for the selected filters.
                                   </TableCell>
                                </TableRow>
@@ -634,7 +653,7 @@ export default function AllCustomersPage() {
 
                             {isLoading && (
                                <TableRow>
-                                     <TableCell colSpan={7} className="py-10 text-center text-sm text-slate-500">
+                                     <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
                                      Loading customers...
                                   </TableCell>
                                </TableRow>
@@ -646,19 +665,12 @@ export default function AllCustomersPage() {
              {/* Footer / Pagination */}
              <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 bg-slate-50/30 rounded-b-xl shrink-0">
                          <span>
-                            Showing <span className="font-bold text-slate-700">{visibleCustomers.length === 0 ? 0 : 1}-{visibleCustomers.length}</span> of <span className="font-bold text-slate-700">{visibleCustomers.length}</span>
+                            Showing <span className="font-bold text-slate-700">{showingFrom}-{showingTo}</span> of <span className="font-bold text-slate-700">{visibleCustomers.length}</span>
                          </span>
                  
-                 <div className="flex gap-1">
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500"><span className="sr-only">Previous</span>&lt;</Button>
-                    <Button variant="primary" size="sm" className="h-8 w-8 p-0 bg-[#3e9fd3]">1</Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500">2</Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500">3</Button>
-                    <span className="flex items-center justify-center h-8 w-8 text-slate-400">...</span>
-                    <Button variant="outline" size="sm" className="h-8 w-auto px-2 text-slate-500">245</Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0 text-slate-500"><span className="sr-only">Next</span>&gt;</Button>
-                 </div>
+                 <DataTablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
              </div>
+          </div>
           </div>
 
                <PopupModal

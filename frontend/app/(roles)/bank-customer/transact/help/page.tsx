@@ -7,13 +7,15 @@ import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import PopupModal from "@/src/components/ui/popup-modal";
 
+// Main Transact help page with FAQs, troubleshooting, and support actions.
 export default function TransactCustomerHelp(){
-  
+  // Modal, troubleshooter, and optional transaction ID states.
   const [openTicket,setOpenTicket]=useState(false);
   const [openFraud,setOpenFraud]=useState(false);
   const [choice,setChoice]=useState<string | null>(null);
   const [txId,setTxId]=useState('');
 
+  // Renders help content cards, support tools, and popups.
   return (
     <div className="min-h-screen bg-transparent px-1 pt-2 sm:px-2 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
       <ModuleHeader theme="transact" menuMode="feature-layout" title="Transact Help" name="You" role="Customer" className="mb-6" />
@@ -75,10 +77,11 @@ export default function TransactCustomerHelp(){
         <section className="rounded-[20px] bg-[#F7F6F2] border border-[#BCC5CC] shadow-sm p-6 mb-24"><h3 className="text-lg font-semibold text-[#063154]">Quick Feedback</h3><div className="mt-3 flex items-center gap-2">{[1,2,3,4,5].map(n=> <button key={n} className="px-3 py-1 bg-white rounded-md">{n}★</button>)}<Input placeholder="Short message" className="ml-2 bg-white" /><Button className="bg-[#2F9D94]">Send</Button></div></section>
 
         <div className="flex items-center justify-between bg-[#063154]/5 p-4 rounded-xl"><p className="text-sm text-[#063154]/90">PrimeCore will never ask for your OTP or password. If you suspect fraud, report immediately.</p><Button className="bg-[#2F9D94]" onClick={()=> setOpenFraud(true)}>Report Fraud</Button></div>
-
+        {/* Support ticket popup. */}
         <PopupModal open={openTicket} onOpenChange={setOpenTicket} title="Create Support Ticket">
           <TicketForm onClose={()=> setOpenTicket(false)} onCreate={()=>{ setOpenTicket(false);}} />
         </PopupModal>
+        {/* Fraud reporting popup. */}
         <PopupModal open={openFraud} onOpenChange={setOpenFraud} title="Report Fraud">
           <FraudForm onClose={()=> setOpenFraud(false)} />
         </PopupModal>
@@ -87,9 +90,15 @@ export default function TransactCustomerHelp(){
   );
 }
 
+import { useState as useState2 } from "react";
+
+// Ticket form content used inside the support ticket popup.
+
 function TicketForm({ onClose, onCreate }: { onClose: () => void; onCreate: () => void }){
+  // Local form fields for creating a support ticket.
   const [subject,setSubject]=useState('');
   const [desc,setDesc]=useState('');
+  // Submits and closes the ticket form modal.
   const handle=()=>{ onCreate(); onClose(); };
   return (
     <div className="space-y-3">
@@ -109,7 +118,9 @@ function TicketForm({ onClose, onCreate }: { onClose: () => void; onCreate: () =
   );
 }
 
+// Fraud report form content used inside the fraud popup.
 function FraudForm({ onClose }: { onClose: () => void }){
+  // Local incident fields for quick fraud reporting.
   const [type,setType]=useState('Unauthorized transfer');
   const [desc,setDesc]=useState('');
   return (
