@@ -6,9 +6,9 @@
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import { ConfirmationModal, useToast } from "@/src/components/ui";
+import { ConfirmationModal, DataTablePagination, useToast } from "@/src/components/ui";
 import React, { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Pencil, Trash2, Search, X } from "lucide-react";
+import { Pencil, Trash2, Search, X } from "lucide-react";
 import Link from "next/link";
 import {
   deleteAdminBranch,
@@ -112,14 +112,14 @@ function SummaryCard({
 function StatusBadge({ status }: { status: StatusType }) {
   const classes =
     status === "Active"
-      ? "bg-green-100 text-green-700"
+      ? "border border-emerald-100 bg-emerald-50 text-emerald-600"
       : status === "Inactive"
-      ? "bg-red-100 text-red-700"
-      : "bg-yellow-100 text-yellow-700";
+      ? "border border-slate-200 bg-slate-100 text-slate-600"
+      : "border border-amber-100 bg-amber-50 text-amber-600";
 
   return (
     <span
-      className={`inline-flex min-w-[7.5rem] justify-center px-3 py-1 rounded-full text-xs font-semibold ${classes}`}
+      className={`inline-flex min-w-[7.5rem] justify-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${classes}`}
     >
       {status}
     </span>
@@ -443,20 +443,6 @@ export default function Page() {
       ? 0
       : Math.min(currentPage * branchesPerPage, filteredBranches.length);
   // Builds derived UI values from API data to keep rendering simple.
-  const visiblePages = useMemo(() => {
-    if (totalPages <= 0) {
-      return [];
-    }
-
-    const maxVisibleButtons = 3;
-    let start = Math.max(1, currentPage - 1);
-    const end = Math.min(totalPages, start + maxVisibleButtons - 1);
-    start = Math.max(1, end - maxVisibleButtons + 1);
-
-    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
-  }, [currentPage, totalPages]);
-
-  // Builds derived UI values from API data to keep rendering simple.
   const summary = useMemo(() => {
     const activeBranches = branches.filter((branch) => branch.status === "Active").length;
     const totalOfficers = branches.reduce((sum, branch) => sum + branch.officers, 0);
@@ -509,7 +495,7 @@ export default function Page() {
               <SummaryCard label="TOTAL CUSTOMERS" value={summary.totalCustomers.toLocaleString()} />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="primecore-table-toolbar flex-col items-stretch sm:flex-row">
               <div className="flex flex-1 flex-col sm:flex-row gap-3">
                 <select
                   value={searchField}
@@ -547,9 +533,9 @@ export default function Page() {
               </Link>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="primecore-table-shell">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[980px] text-sm">
+                <table className="primecore-data-table w-full min-w-[980px] text-sm">
                   <thead className="bg-gray-50 border-b">
                     <tr>
                       {[
@@ -639,47 +625,13 @@ export default function Page() {
                   </tbody>
                 </table>
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 p-4 text-sm text-slate-500">
               <div className="text-sm text-gray-600">
                 Showing {showingFrom} to {showingTo} of {filteredBranches.length} branches
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setCurrentPage((previous) => Math.max(previous - 1, 1))}
-                  disabled={currentPage === 1 || totalPages === 0}
-                  className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40 flex items-center justify-center"
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                {visiblePages.map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg ${
-                      currentPage === page
-                        ? "bg-[#0B3B66] text-white"
-                        : "border text-gray-700 hover:bg-gray-100"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-                <button
-                  onClick={() =>
-                    setCurrentPage((previous) => Math.min(previous + 1, Math.max(totalPages, 1)))
-                  }
-                  disabled={totalPages === 0 || currentPage === totalPages}
-                  className="px-3 py-2 rounded-lg border text-gray-600 hover:bg-gray-100 disabled:opacity-40 flex items-center justify-center"
-                  aria-label="Next page"
-                >
-                  <ChevronRight size={16} />
-                </button>
+              <DataTablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
               </div>
             </div>
           </div>
@@ -839,6 +791,3 @@ export default function Page() {
     </AuthGuard>
   );
 }
-
-
-

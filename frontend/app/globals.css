@@ -156,6 +156,95 @@
 }
 
 @layer components {
+  .primecore-table-shell {
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+    border-radius: 0.75rem;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  }
+
+  .primecore-table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border: 1px solid #f1f5f9;
+    border-radius: 0.75rem;
+    background: #ffffff;
+    padding: 1rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  }
+
+  .primecore-table-toolbar input:not([type="checkbox"]),
+  .primecore-table-toolbar select {
+    height: 2.5rem !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 0.5rem !important;
+    background: #f8fafc !important;
+    color: #334155 !important;
+    font-size: 0.875rem !important;
+    outline: none !important;
+  }
+
+  .primecore-table-toolbar button {
+    min-height: 2.5rem;
+    border-radius: 0.5rem !important;
+  }
+
+  .primecore-table-toolbar input:not([type="checkbox"]):focus,
+  .primecore-table-toolbar select:focus {
+    border-color: #bae6fd !important;
+    box-shadow: 0 0 0 2px rgba(186, 230, 253, 0.65) !important;
+  }
+
+  @media (max-width: 767px) {
+    .primecore-table-toolbar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+
+  .primecore-data-table {
+    width: 100%;
+    color: #334155;
+    border-collapse: collapse;
+  }
+
+  .primecore-data-table thead {
+    background: #f0f9ff;
+    color: #64748b;
+  }
+
+  .primecore-data-table th {
+    height: 2.75rem !important;
+    padding: 0.75rem 1rem !important;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #64748b !important;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .primecore-data-table td {
+    padding: 0.875rem 1rem !important;
+    vertical-align: middle;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .primecore-data-table tbody tr {
+    background: #ffffff;
+    transition: background-color 160ms ease;
+  }
+
+  .primecore-data-table tbody tr:hover {
+    background: #f8fafc;
+  }
+
   .creditlens-card {
     opacity: 0;
     transform: scale(0.985);

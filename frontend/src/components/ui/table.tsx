@@ -3,8 +3,8 @@ import { cn } from "@/src/lib/utils";
 
 export const Table = React.forwardRef<HTMLTableElement, React.TableHTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="w-full overflow-x-auto rounded-xl border border-(--primecore-border) bg-(--primecore-surface)">
-      <table ref={ref} className={cn("w-full caption-bottom text-sm", className)} {...props} />
+    <div className="w-full overflow-x-auto">
+      <table ref={ref} className={cn("w-full caption-bottom text-sm text-slate-700", className)} {...props} />
     </div>
   ),
 );
@@ -14,7 +14,7 @@ export const TableHeader = React.forwardRef<
   React.HTMLAttributes<HTMLTableSectionElement>
 >(
   ({ className, ...props }, ref) => (
-    <thead ref={ref} className={cn("bg-(--primecore-surface-soft) dark:bg-primary/18", className)} {...props} />
+    <thead ref={ref} className={cn("bg-sky-50/70 text-slate-500", className)} {...props} />
   ),
 );
 
@@ -31,7 +31,7 @@ export const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttribut
     <tr
       ref={ref}
       className={cn(
-        "border-b border-(--primecore-border) transition-colors hover:bg-primary/8 dark:hover:bg-primary/14",
+        "border-b border-slate-100 transition-colors hover:bg-slate-50/50",
         className,
       )}
       {...props}
@@ -44,7 +44,7 @@ export const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttr
     <th
       ref={ref}
       className={cn(
-        "h-11 px-4 text-left align-middle text-xs font-semibold uppercase tracking-[0.08em] text-(--primecore-foreground)/75",
+        "h-11 px-4 text-left align-middle text-xs font-bold uppercase tracking-wider text-slate-500",
         className,
       )}
       {...props}
@@ -54,7 +54,7 @@ export const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttr
 
 export const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn("px-4 py-3 align-middle text-(--primecore-foreground)", className)} {...props} />
+    <td ref={ref} className={cn("px-4 py-3.5 align-middle text-slate-700", className)} {...props} />
   ),
 );
 

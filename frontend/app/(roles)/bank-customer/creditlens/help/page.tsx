@@ -66,10 +66,12 @@ export default function CreditLensCustomerHelp() {
 
         <FeatureHelp title="CreditLens Help" description="Understand your credit score, readiness and reports." faqs={["Why is my credit score not showing?","What affects my score?","Why is the feature locked?","How to dispute a credit item?","How is readiness calculated?"]} troubleshooterOptions={[{key:'missing','label':'Missing score'},{key:'locked','label':'Feature locked'},{key:'data','label':'Incorrect data'}]} openTicket={() => setOpenTicket(true)} />
 
-        <section className={`${creditLensPanel} mb-6 p-6`}>
-          <h3 className={`text-lg font-semibold ${creditLensText}`}>My Support Requests</h3>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
+        <section className="primecore-table-shell mb-6">
+          <div className="border-b border-slate-100 bg-slate-50/50 p-4">
+            <h3 className={`text-lg font-semibold ${creditLensText}`}>My Support Requests</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="primecore-data-table w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-slate-500">
                   <th className="px-2 py-2">Ticket</th>
@@ -89,7 +91,7 @@ export default function CreditLensCustomerHelp() {
               </tbody>
             </table>
           </div>
-          <div className="mt-4"><Button className={creditLensPrimary} onClick={() => setOpenTicket(true)}>Create New Support Ticket</Button></div>
+          <div className="border-t border-slate-100 bg-slate-50/50 p-4"><Button className={creditLensPrimary} onClick={() => setOpenTicket(true)}>Create New Support Ticket</Button></div>
         </section>
 
         <div className={`${creditLensPanel} mb-6 p-6`}>
