@@ -20,12 +20,14 @@ import {
   Search, 
   Filter, 
   Download, 
-   Plus
+   Plus,
+   Eye,
+   Pencil,
+   Trash2,
 } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
-import { Badge } from "@/src/components/ui/badge";
 import { useToast } from "@/src/components/ui/toast";
 import PopupModal from "@/src/components/ui/popup-modal";
 import { DataTablePagination } from "@/src/components/ui/data-table-layout";
@@ -44,7 +46,8 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/src/components/ui/select";
-import FilterPanel from "@/src/components/filters/FilterPanel";
+import { SegmentedFilterTabs } from "@/src/components/ui/segmented-filter-tabs";
+import { TableActionIconButton } from "@/src/components/ui/table-action-icon-button";
 
 type Customer = {
    userId: number;
@@ -172,6 +175,7 @@ export default function AllCustomersPage() {
   const router = useRouter();
    const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -223,7 +227,6 @@ export default function AllCustomersPage() {
               // Log the raw error to the console for debugging (developer-only).
               // This helps reveal whether the failure is a network, auth, or
               // server-side issue.
-              // eslint-disable-next-line no-console
               console.error("Failed to fetch officer customers:", error);
               const message = error instanceof ApiError ? error.message : String(error ?? "Failed to load customers.");
               setLoadError(message || "Failed to load customers.");
@@ -237,7 +240,7 @@ export default function AllCustomersPage() {
        return () => {
          mounted = false;
        };
-     }, [debouncedSearchTerm, statusFilter, activeRisk, sortBy]);
+    }, [activeRisk, debouncedSearchTerm, sortBy, statusFilter]);
 
    const riskCounts = useMemo(() => {
       return {
@@ -247,6 +250,13 @@ export default function AllCustomersPage() {
          HIGH: customers.filter((item) => item.riskLevel === "HIGH").length,
       };
    }, [customers]);
+
+   const riskTabOptions: Array<{ key: "all" | Customer["riskLevel"]; label: string }> = [
+      { key: "all", label: `All (${riskCounts.all})` },
+      { key: "LOW", label: `Low Risk (${riskCounts.LOW})` },
+      { key: "MEDIUM", label: `Medium Risk (${riskCounts.MEDIUM})` },
+      { key: "HIGH", label: `High Risk (${riskCounts.HIGH})` },
+   ];
 
    // Show only customers that match the officer's search, filters, and sort choice.
    const visibleCustomers = useMemo(() => {
@@ -373,7 +383,6 @@ export default function AllCustomersPage() {
             if (!mounted) {
                return;
             }
-               // eslint-disable-next-line no-console
                console.error("Failed to load customer details:", error);
                const message = error instanceof ApiError ? error.message : String(error ?? "Failed to load customer details.");
                setDetailLoadError(message || "Failed to load customer details.");
@@ -539,35 +548,7 @@ export default function AllCustomersPage() {
              <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
 
              {/* Status Tabs */}
-             <div className="border-b border-slate-100 flex gap-2 overflow-x-auto bg-slate-50/50 p-2">
-                         <Badge
-                            className={`px-4 py-1.5 cursor-pointer ${activeRisk === "all" ? "bg-[#0d3b66] text-white hover:bg-[#0a2e50]" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
-                            onClick={() => setActiveRisk("all")}
-                         >
-                            All ({riskCounts.all})
-                         </Badge>
-                         <Badge
-                            variant="success"
-                            className={`px-4 py-1.5 cursor-pointer ${activeRisk === "LOW" ? "bg-green-200 text-green-800" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
-                            onClick={() => setActiveRisk("LOW")}
-                         >
-                            Low Risk ({riskCounts.LOW})
-                         </Badge>
-                         <Badge
-                            variant="warning"
-                            className={`px-4 py-1.5 cursor-pointer ${activeRisk === "MEDIUM" ? "bg-amber-200 text-amber-800" : "bg-amber-100 text-amber-700 hover:bg-amber-200"}`}
-                            onClick={() => setActiveRisk("MEDIUM")}
-                         >
-                            Medium Risk ({riskCounts.MEDIUM})
-                         </Badge>
-                         <Badge
-                            variant="danger"
-                            className={`px-4 py-1.5 cursor-pointer ${activeRisk === "HIGH" ? "bg-red-200 text-red-800" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
-                            onClick={() => setActiveRisk("HIGH")}
-                         >
-                            High Risk ({riskCounts.HIGH})
-                         </Badge>
-             </div>
+             <SegmentedFilterTabs items={riskTabOptions} activeKey={activeRisk} onChange={setActiveRisk} />
 
              {/* Table Container */}
              <div className="overflow-x-auto">
@@ -612,32 +593,28 @@ export default function AllCustomersPage() {
                             </div>
                          </TableCell>
                          <TableCell className="text-xs text-slate-500">{customer.lastUpdated}</TableCell>
-                         <TableCell>
-                            <div className="flex justify-end gap-2">
-                               <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                         <TableCell className="text-right">
+                            <div className="flex justify-end gap-1">
+                               <TableActionIconButton
+                                  label={`View ${customer.name}`}
                                   onClick={() => setSelectedCustomer(customer)}
                                >
-                                  View
-                               </Button>
-                               <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                                  <Eye size={16} />
+                               </TableActionIconButton>
+                               <TableActionIconButton
+                                  label={`Edit ${customer.name}`}
+                                  tone="blue"
                                   onClick={() => router.push(`/bank-officer/add-customer?nic=${encodeURIComponent(customer.nic)}`)}
                                >
-                                  Edit
-                               </Button>
-                               <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-8 border-red-200 text-xs text-red-700 hover:bg-red-50"
+                                  <Pencil size={16} />
+                               </TableActionIconButton>
+                               <TableActionIconButton
+                                  label={`Delete ${customer.name}`}
+                                  tone="red"
                                   onClick={() => setDeleteRequestTarget(customer)}
                                >
-                                  Delete
-                               </Button>
+                                  <Trash2 size={16} />
+                               </TableActionIconButton>
                             </div>
                          </TableCell>
                       </TableRow>

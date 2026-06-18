@@ -6,6 +6,7 @@ import { AuthGuard } from "@/src/components/auth";
 import { 
   Search, 
    Download,
+   Eye,
 } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
@@ -19,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
+import { SegmentedFilterTabs } from "@/src/components/ui/segmented-filter-tabs";
 import {
   Table,
   TableBody,
@@ -28,6 +30,15 @@ import {
   TableRow,
 } from "@/src/components/ui/table";
 import { DataTablePagination } from "@/src/components/ui/data-table-layout";
+import { TableActionIconButton } from "@/src/components/ui/table-action-icon-button";
+
+const historyTabs = [
+  { key: "evaluations", label: "Evaluations" },
+  { key: "customer-updates", label: "Customer Updates" },
+  { key: "financial-updates", label: "Financial Data Updates" },
+] as const;
+
+type HistoryTab = (typeof historyTabs)[number]["key"];
 
 const historyData = [
   {
@@ -87,7 +98,7 @@ const historyData = [
 ];
 
 export default function HistoryPage() {
-  const [selectedTab, setSelectedTab] = useState("evaluations");
+  const [selectedTab, setSelectedTab] = useState<HistoryTab>("evaluations");
    const [selectedHistoryItem, setSelectedHistoryItem] = useState<(typeof historyData)[number] | null>(null);
    const [searchTerm, setSearchTerm] = useState("");
    const [dateRange, setDateRange] = useState<"30days" | "60days" | "90days" | "all">("30days");
@@ -268,25 +279,7 @@ export default function HistoryPage() {
           {/* Content */}
           <div className="creditlens-card creditlens-card-hover creditlens-delay-2 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
              {/* Tabs */}
-             <div className="border-b border-slate-100 flex p-2 bg-slate-50/50 gap-2">
-                {[
-                  { id: "evaluations", label: "Evaluations" }, 
-                  { id: "customer-updates", label: "Customer Updates" }, 
-                  { id: "financial-updates", label: "Financial Data Updates" }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setSelectedTab(tab.id)}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                            selectedTab === tab.id 
-                            ? "bg-white text-[#0d3b66] shadow-sm border border-slate-200" 
-                            : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                        }`}
-                    >
-                        {tab.label}
-                    </button>
-                ))}
-             </div>
+             <SegmentedFilterTabs items={historyTabs} activeKey={selectedTab} onChange={setSelectedTab} />
 
              {/* Table */}
              <div className="overflow-x-auto">
@@ -337,14 +330,12 @@ export default function HistoryPage() {
                                </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                               <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 h-8 text-xs font-medium"
+                               <TableActionIconButton
+                                  label={`View details for history item ${item.id}`}
                                   onClick={() => setSelectedHistoryItem(item)}
                                >
-                                  View Details
-                               </Button>
+                                  <Eye size={16} />
+                               </TableActionIconButton>
                             </TableCell>
                          </TableRow>
                                  ))}
@@ -424,4 +415,3 @@ export default function HistoryPage() {
     </AuthGuard>
   );
 }
-

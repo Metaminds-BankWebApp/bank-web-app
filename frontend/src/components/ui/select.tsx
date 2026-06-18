@@ -34,7 +34,7 @@ const Select = ({ children, value, onValueChange, defaultValue }: { children: Re
 
   return (
     <SelectContext.Provider value={{ value: currentValue, onValueChange: handleValueChange, open, setOpen, selectedLabel, setSelectedLabel }}>
-      <div className="relative w-full">{children}</div>
+      <div className={cn("relative w-full", open && "z-[80]")}>{children}</div>
     </SelectContext.Provider>
   )
 }
@@ -85,7 +85,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
       <div
         ref={ref}
         className={cn(
-          "absolute top-full z-50 min-w-[8rem] overflow-hidden rounded-lg border border-[#d6e3f3] bg-white text-slate-950 shadow-lg animate-in fade-in-80 w-full mt-1",
+          "absolute top-full z-[90] mt-1 min-w-[8rem] w-full overflow-hidden rounded-lg border border-[#d6e3f3] bg-white text-slate-950 shadow-lg animate-in fade-in-80",
           ctx?.open ? "block" : "hidden",
           className
         )}

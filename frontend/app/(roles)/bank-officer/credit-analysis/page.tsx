@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
-import { Search, Filter, Download } from "lucide-react";
+import { Search, Filter, Download, Eye } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -24,10 +24,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
+import { SegmentedFilterTabs } from "@/src/components/ui/segmented-filter-tabs";
 import { getOfficerCreditDashboard } from "@/src/api/creditlens/officer-creditlens.service";
 import type {
   BankCreditAnalysisDashboardResponse,
 } from "@/src/types/dto/officer-creditlens.dto";
+import { TableActionIconButton } from "@/src/components/ui/table-action-icon-button";
 
 type RiskType = "low" | "medium" | "high";
 
@@ -296,23 +298,7 @@ export default function CreditAnalysisPage() {
 
                   <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
 
-                  <div className="border-b border-slate-100 bg-slate-50/50 p-2">
-                    <div className="inline-flex p-1 rounded-lg bg-sky-100/70 gap-1">
-                      {tabOptions.map((tab) => (
-                        <button
-                          key={tab.key}
-                          onClick={() => setActiveTab(tab.key)}
-                          className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
-                            activeTab === tab.key
-                              ? "bg-white text-[#0d3b66] shadow-sm"
-                              : "text-slate-500 hover:text-slate-700"
-                          }`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <SegmentedFilterTabs items={tabOptions} activeKey={activeTab} onChange={setActiveTab} />
 
                   <Table>
                     <TableHeader className="bg-sky-50/70">
@@ -352,19 +338,18 @@ export default function CreditAnalysisPage() {
                             </TableCell>
                             <TableCell className="text-slate-500">{formatDate(customer.evaluationDate)}</TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 text-xs bg-sky-50 text-[#0d3b66] border-sky-100"
+                              <div className="flex justify-end">
+                                <TableActionIconButton
+                                  label={`View evaluation for ${customer.fullName}`}
+                                  tone="blue"
                                   onClick={() =>
                                     router.push(
                                       `/bank-officer/credit-analysis/evaluation/${customer.bankCustomerId}?name=${encodeURIComponent(customer.fullName)}`,
                                     )
                                   }
                                 >
-                                  View Evaluation
-                                </Button>
+                                  <Eye size={16} />
+                                </TableActionIconButton>
                               </div>
                             </TableCell>
                           </TableRow>

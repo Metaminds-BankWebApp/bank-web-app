@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   Clock,
   Download,
+  Eye,
   Filter,
   Search,
   TrendingUp,
@@ -33,6 +34,7 @@ import {
 } from "@/src/components/ui/select";
 import { transactionService } from "@/src/api/transact/transaction.service";
 import { ApiError } from "@/src/types/api-error";
+import { TableActionIconButton } from "@/src/components/ui/table-action-icon-button";
 import type { TransactionResponse } from "@/src/types/dto/transact.dto";
 
 type TransactionStatus = "success" | "failed" | "pending";
@@ -516,14 +518,12 @@ export default function TransactionsPage() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 border-slate-200 text-xs text-slate-700 hover:bg-slate-100"
+                            <TableActionIconButton
+                              label={`View transaction ${txn.referenceNo}`}
                               onClick={() => setSelectedTransaction(txn)}
                             >
-                              View
-                            </Button>
+                              <Eye size={16} />
+                            </TableActionIconButton>
                           </TableCell>
                         </TableRow>
                       ))
