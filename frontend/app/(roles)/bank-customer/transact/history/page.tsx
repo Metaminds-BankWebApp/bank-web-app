@@ -151,7 +151,7 @@ export default function Page() {
     <div className="bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transaction History" name="John Deo" />
 
-      <div className="mx-auto mt-6 w-full max-w-6xl">
+      <div className="mx-auto mt-15 w-full max-w-6xl">
         <DataTableToolbar>
           <DataTableFilterGroup className="flex-1">
             <div className="relative w-full sm:max-w-xs">

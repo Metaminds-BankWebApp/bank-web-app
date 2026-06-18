@@ -347,7 +347,7 @@ export default function Page() {
         <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
           <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transfer" name="John Deo" />
 
-          <div className="flex justify-end mt-14 pr-[7rem]">
+          <div className="flex justify-end mt-4 pr-[7rem]">
             <Link
               href="/bank-customer/transact/beneficiary"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#061e3d] text-[#ffffff] rounded-full font-medium hover:bg-[#0a3046] transition-all duration-200"
@@ -433,7 +433,7 @@ export default function Page() {
                   type="button"
                   onClick={handleTransfer}
                   disabled={!isFormValid || isSubmittingTransfer}
-                  className={`w-full sm:w-auto ${!isFormValid || isSubmittingTransfer ? "bg-[#061e3d]/60 cursor-not-allowed opacity-70" : "bg-[#061e3d]"} text-white px-8 py-5 rounded-xl`}
+                  className={`w-full sm:w-auto ${!isFormValid || isSubmittingTransfer ? "bg-[#061e3d]/60 cursor-not-allowed opacity-70" : "bg-[#061e3d]"} text-[#ffffff] inline-flex items-center justify-center gap-2 px-7 py-5.5 rounded-full font-medium transition-all duration-200`}
                 >
                   {isSubmittingTransfer ? "Transferring..." : "Transfer Amount"}
                 </Button>
@@ -507,7 +507,7 @@ export default function Page() {
                   type="button"
                   onClick={handleVerify}
                   disabled={isVerifyingOtp}
-                  className="w-full sm:w-auto bg-[#0B3E5A] hover:bg-[#0B3E5A]/80 text-white rounded-xl px-9 py-5"
+                  className="w-full sm:w-auto bg-[#061e3d] hover:bg-[#061e3d]/80 text-white rounded-xl px-9 py-5"
                 >
                   {isVerifyingOtp ? "Verifying..." : "Verify"}
                 </Button>
@@ -522,8 +522,8 @@ export default function Page() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
           <Card className="transact-card bg-white max-w-2xl w-full rounded-3xl p-6 text-center shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-10">
             <div className="flex justify-center mb-6 sm:mb-10">
-              <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full bg-[#0B3E5A]/40 flex items-center justify-center">
-                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-[#0B3E5A] flex items-center justify-center shadow-lg">
+              <div className="w-24 h-24 sm:w-36 sm:h-36 rounded-full bg-[#061e3d]/40 flex items-center justify-center">
+                <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-[#061e3d] flex items-center justify-center shadow-lg">
                   <Check className="text-white w-10 h-10 sm:w-14 sm:h-14" />
                 </div>
               </div>
@@ -559,7 +559,7 @@ export default function Page() {
 
             <Button
               type="button"
-              className="w-full sm:w-auto bg-[#0B3E5A] hover:bg-[#0B3E5A]/80 text-white rounded-2xl px-10 sm:px-16 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-md"
+              className="w-full sm:w-auto bg-[#061e3d] hover:bg-[#061e3d]/80 text-white rounded-2xl px-10 sm:px-16 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-md"
               onClick={() => router.push("/bank-customer/transact")}
             >
               BACK TO DASHBOARD

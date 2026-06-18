@@ -138,9 +138,9 @@ export default function Page() {
     <div className="bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Account Detail" name="John deo" />
 
-      <section className="max-w-6xl mx-auto mt-6 sm:mt-8">
+      <section className="max-w-6xl mx-auto mt-20 sm:mt-8">
         {/* Beneficiary creation form card. */}
-        <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 mt-6 w-full rounded-xl p-4 sm:mt-35 sm:min-h-[420px] sm:p-6 lg:p-8">
+        <Card className="transact-card transact-card-hover bg-white creditlens-delay-1 mt-20 w-full rounded-xl p-4 sm:mt-20 sm:min-h-[420px] sm:p-6 lg:p-8">
           <form className="space-y-6 sm:space-y-8" onSubmit={handleSubmit} noValidate>
             {/* Top-level submit error message. */}
             {submitError && (
@@ -218,7 +218,7 @@ export default function Page() {
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto bg-[#061e3d] hover:bg-[#0a3046] text-white px-8 py-5 rounded-xl disabled:opacity-60"
+                className="w-full sm:w-auto bg-[#061e3d] hover:bg-[#0a3046] text-white inline-flex items-center justify-center gap-2 px-15 py-2.5 rounded-full font-medium disabled:opacity-60"
               >
                 Save
               </Button>
