@@ -107,6 +107,7 @@ const TABS: Array<{ key: TabKey; label: string }> = [
  */
 export default function CreditAnalysisEvaluationPage() {
   // Detailed customer evaluation view: load base data first, then fetch each tab on demand.
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<TabKey>("overview");
   const [trendRange, setTrendRange] = useState<TrendRange>("6m");
   const [selectedMonth, setSelectedMonth] = useState<string | undefined>(undefined);
@@ -395,6 +396,44 @@ export default function CreditAnalysisEvaluationPage() {
       .replace(/^-+|-+$/g, "");
     return `credit-analysis-report-${safeMonthLabel}-${reportDateStamp}`;
   }, [currentReportSnapshot?.month, reportDateStamp, selectedMonth]);
+
+  const handleConfirmDownload = async ({ fullFileName }: { fileType: ReportFileType; fullFileName: string }) => {
+    if (!currentReportSnapshot) {
+      return;
+    }
+
+    try {
+      setIsDownloadingReport(true);
+      const blob = await downloadOfficerCreditReportPdf(
+        bankCustomerId,
+        currentReportSnapshot.evaluationId,
+      );
+      downloadBlob(fullFileName, blob);
+      setIsDownloadModalOpen(false);
+      showToast({
+        type: "success",
+        title: "Report downloaded",
+        description: fullFileName,
+      });
+    } catch (unknownError) {
+      const apiError = unknownError instanceof ApiError
+        ? unknownError
+        : new ApiError({
+          message: unknownError instanceof Error
+            ? unknownError.message
+            : "Unable to prepare the officer CreditLens PDF report.",
+          code: "UNKNOWN_ERROR",
+        });
+
+      showToast({
+        type: "error",
+        title: "Download failed",
+        description: apiError.message,
+      });
+    } finally {
+      setIsDownloadingReport(false);
+    }
+  };
 
   // Backward-compatible reload tied to route id changes.
   // Keeps profile/evaluation fresh if this page is opened with a new customer id.
