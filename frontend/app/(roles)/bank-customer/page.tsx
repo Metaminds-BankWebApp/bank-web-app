@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AuthGuard } from "@/src/components/auth";
 import { LogoutButton } from "@/src/components/logout-button";
+import { CustomerAppHeaderActions } from "@/src/components/layout/customer-app-header-actions";
 import { 
   Briefcase, 
   CreditCard, 
@@ -89,7 +90,7 @@ export default function BankCustomerRolePage() {
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none -translate-x-1/3 translate-y-1/4"></div>
 
         {/* Header */}
-        <header className="relative z-20 w-full px-8 py-8 flex justify-between items-start">
+        <header className="relative z-20 flex w-full flex-wrap items-start justify-between gap-4 px-4 py-6 sm:px-8 sm:py-8">
           <div className="flex items-center gap-3">
              {/* Logo Icon */}
             <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/20 rotate-3">
@@ -101,7 +102,7 @@ export default function BankCustomerRolePage() {
             </div>
           </div>
           
-          <div className="flex items-center gap-8">
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 md:gap-6">
              {/* Profile Completion Widget */}
              <div className="hidden md:flex flex-col items-end">
                 <div className="flex justify-between w-64 mb-1.5">
@@ -112,6 +113,8 @@ export default function BankCustomerRolePage() {
                    <div className="h-full w-full bg-emerald-400 rounded-full shadow-[0_0_15px_rgba(52,211,153,0.6)]"></div>
                 </div>
              </div>
+
+             <CustomerAppHeaderActions roleSegment="bank-customer" defaultFeature="creditlens" />
              
              <LogoutButton className="text-white/70 hover:text-white hover:bg-white/10" />
           </div>
