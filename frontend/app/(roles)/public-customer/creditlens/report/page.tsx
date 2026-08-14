@@ -176,7 +176,7 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="w-full min-h-[calc(100dvh-1.25rem)] space-y-4 overflow-x-hidden px-1 pt-2 sm:space-y-5 sm:px-2 lg:min-h-[calc(100dvh-2rem)] lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
+    <div className="w-full min-h-[calc(100dvh-1.25rem)] space-y-4 overflow-x-hidden px-1 pt-2 sm:space-y-5 sm:px-2 lg:h-full lg:min-h-0 lg:px-6 lg:pt-4 xl:px-8 2xl:px-10">
       <ModuleHeader theme="creditlens" menuMode="feature-layout" title="Report" />
 
       {isLoading && !current ? (

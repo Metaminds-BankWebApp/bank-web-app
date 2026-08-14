@@ -38,7 +38,7 @@ export default function CreditRiskBarChart({ labels = defaultLabels, values = de
     return () => window.removeEventListener("resize", updateViewport);
   }, []);
 
-  const barThickness = isMobile ? (labels.length > 6 ? 10 : 18) : labels.length > 6 ? 26 : 60;
+  const barThickness = isMobile ? (labels.length > 6 ? 10 : 18) : labels.length > 6 ? 20 : 40;
 
   // Builds chart data from current CreditLens values.
   const data = useMemo(
@@ -97,7 +97,7 @@ export default function CreditRiskBarChart({ labels = defaultLabels, values = de
   };
 
   return (
-    <div className="h-full min-h-[280px] w-full min-w-0 sm:min-h-[320px] lg:min-h-[420px] xl:min-h-[460px]">
+    <div className="h-full min-h-[220px] w-full min-w-0 sm:min-h-[260px] lg:min-h-[240px] xl:min-h-[260px] 2xl:min-h-[300px]">
       <Bar data={data} options={options} />
     </div>
   );
