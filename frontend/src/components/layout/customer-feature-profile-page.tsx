@@ -520,7 +520,7 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
   );
 
   return (
-    <div className={`min-h-screen p-4 md:p-8 ${isTransact || isLoanSense ? "bg-transparent" : "bg-[#f3f4f6]"}`}>
+    <div className={`min-h-screen p-4 md:p-8 ${isCreditLens || isTransact || isLoanSense ? "bg-transparent" : "bg-[#f3f4f6]"}`}>
       {renderFeatureHeader()}
       <ProfileImageUploadDialog
         open={isProfileImageDialogOpen}
@@ -532,8 +532,8 @@ export function CustomerFeatureProfilePage({ featureName, roleLabel }: CustomerF
         onRemove={handleProfileImageRemove}
       />
 
-      <div className="mx-auto my-auto max-h-full w-full max-w-7xl space-y-6 sm:mt-20">
-        <div className={isCreditLens ? "grid gap-6 lg:px-2 xl:grid-cols-[1fr_1.6fr] xl:px-3" : "grid gap-6 xl:grid-cols-[1fr_1.6fr]"}>
+      <div className="w-full space-y-6">
+        <div className="grid gap-6 xl:grid-cols-[1fr_1.8fr]">
           {!profileView ? (
             renderEmptyState()
           ) : (
