@@ -11,9 +11,10 @@ import {
   type NotificationItem,
   type RoleSegment,
   buildNotificationRouteContext,
-  getNotificationsForContext,
+  toNotificationItem,
 } from "@/src/components/notifications/notification-data";
 import { cn } from "@/src/lib/utils";
+import { useNotifications } from "@/src/hooks/use-notifications";
 import { useAuthStore } from "@/src/store";
 
 type CustomerAppHeaderActionsProps = {
@@ -52,7 +53,6 @@ export function CustomerAppHeaderActions({
   const authProfile = useAuthStore((state) => state.profile);
   const setAuthProfile = useAuthStore((state) => state.setProfile);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [dismissedIds, setDismissedIds] = useState<string[]>([]);
   const notificationsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -101,12 +101,18 @@ export function CustomerAppHeaderActions({
     () => buildNotificationRouteContext(roleSegment, defaultFeature),
     [defaultFeature, roleSegment]
   );
+  const {
+    notifications: notificationDtos,
+    unreadCount,
+    loading: notificationsLoading,
+    markRead,
+    dismiss,
+  } = useNotifications({ size: 4, pollIntervalMs: 30_000 });
   const notifications = useMemo(
-    () => getNotificationsForContext(routeContext).filter((item) => !dismissedIds.includes(item.id)),
-    [dismissedIds, routeContext]
+    () => notificationDtos.map((item) => toNotificationItem(item, routeContext)),
+    [notificationDtos, routeContext]
   );
   const previewNotifications = notifications.slice(0, 4);
-  const unreadCount = notifications.filter((item) => item.unread).length;
 
   const resolvedUserName =
     authProfile?.fullName?.trim() ||
@@ -117,10 +123,6 @@ export function CustomerAppHeaderActions({
   const resolvedAvatarSrc =
     resolveUserProfileImageUrl(authProfile?.profilePictureUrl) ??
     `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedUserName)}&background=random`;
-
-  const handleRemoveNotification = (id: string) => {
-    setDismissedIds((current) => (current.includes(id) ? current : [...current, id]));
-  };
 
   return (
     <div className={cn("flex items-center gap-2 sm:gap-3", className)}>
@@ -167,6 +169,7 @@ export function CustomerAppHeaderActions({
                     type="button"
                     onClick={() => {
                       setIsNotificationsOpen(false);
+                      void markRead(item.id);
                       router.push(item.ctaHref || routeContext.notificationsPath || `/${roleSegment}`);
                     }}
                     className={cn(
@@ -187,19 +190,24 @@ export function CustomerAppHeaderActions({
                     <p className="mt-1 text-[11px] text-slate-500">{item.time}</p>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleRemoveNotification(item.id);
-                    }}
-                    className="absolute right-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-                    aria-label="Remove notification"
-                  >
-                    <X size={12} />
-                  </button>
+                  {item.type !== "FINANCIAL_DETAILS_MISSING" ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void dismiss(item.id);
+                      }}
+                      className="absolute right-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                      aria-label="Remove notification"
+                    >
+                      <X size={12} />
+                    </button>
+                  ) : null}
                 </div>
               ))}
+              {!notificationsLoading && previewNotifications.length === 0 ? (
+                <p className="px-3 py-6 text-center text-xs text-slate-500">You are all caught up.</p>
+              ) : null}
             </div>
           </div>
         ) : null}

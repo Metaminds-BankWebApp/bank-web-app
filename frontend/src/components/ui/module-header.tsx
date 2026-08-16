@@ -12,9 +12,10 @@ import type { UserRole } from "@/config/site";
 import { useAuthStore } from "@/src/store";
 import {
   type NotificationItem,
-  getNotificationsForContext,
   resolveNotificationRouteContext,
+  toNotificationItem,
 } from "@/src/components/notifications/notification-data";
+import { useNotifications } from "@/src/hooks/use-notifications";
 
 type ModuleHeaderTheme = "creditlens" | "transact" | "loansense" | "spendiq" | "staff";
 type ModuleHeaderMenuMode = "none" | "feature-layout" | "sidebar-overlay";
@@ -68,6 +69,8 @@ function formatRoleLabel(roleName?: string | null): string | null {
 
 function NotificationBadge({ show, value }: { show: boolean; value: BadgeValue }) {
   if (!show) return null;
+
+  if (typeof value === "number" && value <= 0) return null;
 
   if (value === null) {
     return <span className="absolute -right-1 -top-1 inline-flex h-2 w-2 rounded-full bg-red-500" />;
@@ -207,17 +210,19 @@ export default function ModuleHeader({
   };
 
   const routeContext = useMemo(() => resolveNotificationRouteContext(pathname), [pathname]);
-  const routeKey = `${routeContext.roleSegment}:${routeContext.featureSegment ?? "all"}`;
-  const sourceNotifications = useMemo(() => getNotificationsForContext(routeContext), [routeContext]);
-  const [dismissedByRoute, setDismissedByRoute] = useState<Record<string, string[]>>({});
-  const dismissedIds = useMemo(() => dismissedByRoute[routeKey] ?? [], [dismissedByRoute, routeKey]);
+  const {
+    notifications: sourceNotifications,
+    unreadCount,
+    loading: notificationsLoading,
+    markRead,
+    dismiss,
+  } = useNotifications({ size: 4, pollIntervalMs: 30_000 });
   const notifications = useMemo(
-    () => sourceNotifications.filter((item) => !dismissedIds.includes(item.id)),
-    [dismissedIds, sourceNotifications]
+    () => sourceNotifications.map((item) => toNotificationItem(item, routeContext)),
+    [routeContext, sourceNotifications]
   );
 
   const previewNotifications = useMemo(() => notifications.slice(0, 4), [notifications]);
-  const unreadCount = useMemo(() => notifications.filter((item) => item.unread).length, [notifications]);
   const profilePath = routeContext.profilePath;
   const notificationsPath = routeContext.notificationsPath;
   const resolvedUserName = authProfile?.fullName?.trim() || authIdentity?.fullName?.trim() || authUser?.fullName?.trim() || null;
@@ -226,17 +231,6 @@ export default function ModuleHeader({
     ?? (resolvedUserName ? `https://ui-avatars.com/api/?name=${encodeURIComponent(resolvedUserName)}&background=random` : avatarSrc);
   const resolvedName = resolvedUserName || name || "User";
   const resolvedRole = resolvedUserRole || role || "User";
-
-  const handleRemoveNotification = (id: string) => {
-    setDismissedByRoute((prev) => {
-      const existing = prev[routeKey] ?? [];
-      if (existing.includes(id)) return prev;
-      return {
-        ...prev,
-        [routeKey]: [...existing, id],
-      };
-    });
-  };
 
   const profileContent = (
     <>
@@ -296,7 +290,7 @@ export default function ModuleHeader({
               <Bell size={18} />
               <NotificationBadge
                 show={showBadges}
-                value={typeof notificationBadge === "number" ? notificationBadge : unreadCount || notificationBadge}
+                value={token ? unreadCount : notificationBadge}
               />
             </button>
 
@@ -328,6 +322,7 @@ export default function ModuleHeader({
                         type="button"
                         onClick={() => {
                           setIsNotificationsOpen(false);
+                          void markRead(item.id);
                           if (item.ctaHref) {
                             router.push(item.ctaHref);
                             return;
@@ -352,19 +347,24 @@ export default function ModuleHeader({
                         <p className="mt-1 text-[11px] text-slate-500">{item.time}</p>
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleRemoveNotification(item.id);
-                        }}
-                        className="absolute right-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-                        aria-label="Remove notification"
-                      >
-                        <X size={12} />
-                      </button>
+                      {item.type !== "FINANCIAL_DETAILS_MISSING" ? (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void dismiss(item.id);
+                          }}
+                          className="absolute right-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                          aria-label="Remove notification"
+                        >
+                          <X size={12} />
+                        </button>
+                      ) : null}
                     </div>
                   ))}
+                  {!notificationsLoading && previewNotifications.length === 0 ? (
+                    <p className="px-3 py-6 text-center text-xs text-slate-500">You are all caught up.</p>
+                  ) : null}
                 </div>
               </div>
             ) : null}
