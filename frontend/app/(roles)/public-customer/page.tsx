@@ -1,20 +1,63 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/src/components/auth";
 import { LogoutButton } from "@/src/components/logout-button";
 import { CustomerAppHeaderActions } from "@/src/components/layout/customer-app-header-actions";
+import {
+  getMyPublicCustomerProfile,
+  getPublicCustomerApplicationProgress,
+} from "@/src/api/customers/public-customer-financial.service";
+import { getMyUserProfile } from "@/src/api/profile/user-profile.service";
+import type { PublicCustomerApplicationProgressResponse } from "@/src/types/dto/public-customer-financial.dto";
 import { 
   Briefcase, 
   LineChart, 
   ArrowRight,
   CheckCircle2,
+  CircleMinus,
   Wallet,
   GraduationCap
 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 
 export default function PublicCustomerRolePage() {
+  const [customerName, setCustomerName] = useState("Customer");
+  const [applicationProgress, setApplicationProgress] = useState<PublicCustomerApplicationProgressResponse | null>(null);
+  const [progressLoadFailed, setProgressLoadFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const publicCustomer = await getMyPublicCustomerProfile();
+        const [profile, progress] = await Promise.all([
+          getMyUserProfile().catch(() => null),
+          getPublicCustomerApplicationProgress(publicCustomer.publicCustomerId),
+        ]);
+        if (cancelled) {
+          return;
+        }
+        if (profile) {
+          setCustomerName(profile.fullName || profile.username || "Customer");
+        }
+        setApplicationProgress(progress);
+        setProgressLoadFailed(false);
+      } catch {
+        if (!cancelled) {
+          setApplicationProgress(null);
+          setProgressLoadFailed(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const features = [
     { 
       title: "SpendIQ", 
@@ -23,10 +66,7 @@ export default function PublicCustomerRolePage() {
       icon: LineChart,
       status: "PREVIEW",
       statusColor: "text-amber-500 bg-amber-500/10",
-      progressLabel: "ACCESS LEVEL",
-      progressValue: 100,
-      progressColor: "bg-amber-500",
-      progressText: "100%",
+      accentColor: "bg-amber-500",
       iconColor: "text-amber-600",
       iconBg: "bg-amber-100",
       locked: false
@@ -38,10 +78,7 @@ export default function PublicCustomerRolePage() {
       icon: Briefcase,
       status: "PREVIEW",
       statusColor: "text-purple-500 bg-purple-500/10",
-      progressLabel: "ACCESS LEVEL",
-      progressValue: 80,
-      progressColor: "bg-purple-500",
-      progressText: "80%",
+      accentColor: "bg-purple-500",
       iconColor: "text-purple-600",
       iconBg: "bg-purple-100",
       locked: false
@@ -53,10 +90,7 @@ export default function PublicCustomerRolePage() {
       icon: GraduationCap,
       status: "LOCKED",
       statusColor: "text-slate-400 bg-slate-200/50",
-      progressLabel: "ACCESS LEVEL",
-      progressValue: 0,
-      progressColor: "bg-slate-200",
-      progressText: "Incomplete",
+      accentColor: "bg-slate-300",
       iconColor: "text-slate-400",
       iconBg: "bg-slate-100",
       locked: true
@@ -68,23 +102,27 @@ export default function PublicCustomerRolePage() {
       icon: Wallet,
       status: "LOCKED",
       statusColor: "text-slate-400 bg-slate-200/50",
-      progressLabel: "ACCESS LEVEL",
-      progressValue: 0,
-      progressColor: "bg-slate-200",
-      progressText: "Incomplete",
+      accentColor: "bg-slate-300",
       iconColor: "text-slate-400",
       iconBg: "bg-slate-100",
       locked: true
     },
   ];
 
-  const checklistItems = [
-    { label: "Income Details", checked: true },
-    { label: "Loan Details", checked: true },
-    { label: "Credit Card Details", checked: false },
-    { label: "Liability Details", checked: true },
-    { label: "Review Details", checked: true },
-    
+  const completionPercentage = applicationProgress?.completionPercentage ?? 0;
+  const progressLabel = progressLoadFailed
+    ? "Unavailable"
+    : completionPercentage === 100
+      ? "Complete"
+      : completionPercentage === 0
+        ? "Not started"
+        : "In progress";
+  const checklistItems = applicationProgress?.steps ?? [
+    { code: "INCOME", label: "Income Details", status: "PENDING", completed: false },
+    { code: "LOANS", label: "Loan Details", status: "PENDING", completed: false },
+    { code: "CARDS", label: "Credit Card Details", status: "PENDING", completed: false },
+    { code: "LIABILITIES", label: "Liability Details", status: "PENDING", completed: false },
+    { code: "REVIEW", label: "Review Details", status: "PENDING", completed: false },
   ];
 
   return (
@@ -110,13 +148,16 @@ export default function PublicCustomerRolePage() {
           
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 md:gap-6">
              {/* Profile Completion Widget */}
-             <div className="hidden md:flex flex-col items-end">
+             <div className="flex flex-col items-end">
                 <div className="flex justify-between w-64 mb-1.5">
-                    <span className="text-xs text-white/90 font-medium">80% Profile Completion</span>
-                    <span className="text-xs text-blue-400 font-bold tracking-wider">Getting Started</span>
+                    <span className="text-xs text-white/90 font-medium">{completionPercentage}% Profile Completion</span>
+                    <span className="text-xs text-blue-400 font-bold tracking-wider">{progressLabel}</span>
                 </div>
                 <div className="w-64 h-2 bg-blue-900/50 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
-                   <div className="h-full w-[80%] bg-blue-400 rounded-full shadow-[0_0_15px_rgba(96,165,250,0.6)]"></div>
+                   <div
+                     className="h-full bg-blue-400 rounded-full shadow-[0_0_15px_rgba(96,165,250,0.6)] transition-[width] duration-500"
+                     style={{ width: `${completionPercentage}%` }}
+                   ></div>
                 </div>
              </div>
 
@@ -133,8 +174,8 @@ export default function PublicCustomerRolePage() {
                 {/* Left Column: Text & CTA */}
                 <div className="flex flex-col justify-center space-y-6 sticky top-24">
                     <h1 className="text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight">
-                       Welcome to PrimeCore <br />
-                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">Public Access</span>
+                       Welcome, <br />
+                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-white">{customerName}</span>
                     </h1>
                     
                     <p className="text-slate-300 text-lg max-w-lg leading-relaxed font-light">
@@ -144,7 +185,7 @@ export default function PublicCustomerRolePage() {
                     <div className="pt-2">
                        <Link href="/public-customer/application">
                            <Button className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white rounded-full px-8 py-6 text-base font-semibold shadow-[0_10px_30px_-10px_rgba(62,159,211,0.5)] transition-all hover:scale-105 hover:shadow-[0_20px_40px_-10px_rgba(62,159,211,0.6)]">
-                              Start Application <ArrowRight className="ml-2 w-4 h-4" />
+                              {completionPercentage === 0 ? "Start Application" : completionPercentage === 100 ? "Review Application" : "Continue Application"} <ArrowRight className="ml-2 w-4 h-4" />
                            </Button>
                        </Link>
                     </div>
@@ -184,17 +225,7 @@ export default function PublicCustomerRolePage() {
                                 </p>
                                 </div>
 
-                                <div className="mt-auto">
-                                <div className="flex justify-between items-end mb-2">
-                                    <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{item.progressLabel}</span>
-                                    <span className={`text-[10px] font-bold ${item.progressText === "Ultra" ? "text-blue-600" : item.progressText === "Incomplete" ? "text-slate-400" : item.progressText === "Locked" ? "text-slate-500" : "text-emerald-600"}`}>
-                                        {item.progressText}
-                                    </span>
-                                </div>
-                                <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                    <div className={`h-full ${item.progressColor} rounded-full transition-all duration-1000 ease-out`} style={{ width: `${item.progressValue}%` }}></div>
-                                </div>
-                                </div>
+                                <div className={`mt-auto h-1.5 w-full rounded-full ${item.accentColor}`} aria-hidden="true"></div>
 
                             </div>
                          </Link>
@@ -213,16 +244,19 @@ export default function PublicCustomerRolePage() {
                 </div>
               
               <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-4">
-                 {checklistItems.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
-                       {item.checked ? (
+                 {checklistItems.map((item) => (
+                    <div key={item.code} className="flex items-center gap-3">
+                       {item.status === "COMPLETED" ? (
                           <div className="bg-blue-500 rounded-full p-[2px] shadow-sm shadow-blue-200 flex-shrink-0"><CheckCircle2 className="w-3 h-3 text-white" /></div>
+                       ) : item.status === "SKIPPED" ? (
+                          <CircleMinus className="w-4 h-4 text-amber-500 flex-shrink-0" />
                        ) : (
                           <div className="border-[1.5px] border-slate-300 rounded-full w-4 h-4 flex-shrink-0"></div>
                        )}
-                       <span className={`text-xs font-medium ${item.checked ? "text-slate-400 line-through decoration-slate-300" : "text-slate-600"}`}>
+                       <span className={`text-xs font-medium ${item.status === "COMPLETED" ? "text-slate-400 line-through decoration-slate-300" : item.status === "SKIPPED" ? "text-amber-600" : "text-slate-600"}`}>
                           {item.label}
                        </span>
+                       {item.status === "SKIPPED" && <span className="text-[9px] font-bold uppercase tracking-wide text-amber-500">Skipped</span>}
                     </div>
                  ))}
               </div>

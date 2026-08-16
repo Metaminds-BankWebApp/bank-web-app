@@ -5,17 +5,21 @@ import { AuthGuard } from "@/src/components/auth";
 import { useRouter } from "next/navigation";
 import {
    getCurrentPublicCustomerFinancialRecord,
+   getPublicCustomerApplicationProgress,
    getPublicCustomerCardProviderOptions,
    getMyPublicCustomerProfile,
    savePublicCustomerCardStep,
    savePublicCustomerIncomeStep,
    savePublicCustomerLiabilityStep,
    savePublicCustomerLoanStep,
+   skipPublicCustomerApplicationStep,
+   submitPublicCustomerApplication,
 } from "@/src/api/customers/public-customer-financial.service";
 import { createPublicCreditEvaluation } from "@/src/api/creditlens/public-creditlens.service";
 import type {
    PublicCustomerFinancialStepResponse,
    PublicCustomerFinancialRecordResponse,
+   PublicCustomerApplicationProgressResponse,
    PublicCustomerIncomeStepRequest,
    PublicCustomerLoanStepRequest,
    PublicCustomerCardStepRequest,
@@ -243,8 +247,44 @@ type HydratedPublicCustomerApplicationData = {
   suggestedStep: number;
 };
 
+function mapApplicationProgressToStepStatusTable(
+  progress: PublicCustomerApplicationProgressResponse,
+): { stepStatusTable: ApplicationStepStatusRow[]; suggestedStep: number } {
+  const persistedStatusByCode = new Map(progress.steps.map((item) => [item.code, item.status]));
+  const firstPendingFinancialStep = APPLICATION_STEPS
+    .filter((item) => item.code !== "REVIEW")
+    .find((item) => (persistedStatusByCode.get(item.code) ?? "PENDING") === "PENDING")?.step;
+  const suggestedStep = firstPendingFinancialStep ?? 5;
+
+  const stepStatusTable = createDefaultStepStatusTable().map((row): ApplicationStepStatusRow => {
+    const persistedStatus = persistedStatusByCode.get(row.code) ?? "PENDING";
+    const isPersisted = persistedStatus === "COMPLETED" || persistedStatus === "SKIPPED";
+    const status: ApplicationStepStatus = isPersisted
+      ? persistedStatus
+      : row.step === suggestedStep
+        ? "IN_PROGRESS"
+        : "PENDING";
+
+    return {
+      ...row,
+      status,
+      backendSynced: isPersisted,
+      recordId: isPersisted ? progress.recordId : null,
+      note:
+        persistedStatus === "COMPLETED"
+          ? "Loaded from your saved application."
+          : persistedStatus === "SKIPPED"
+            ? "This section was skipped."
+            : null,
+    };
+  });
+
+  return { stepStatusTable, suggestedStep };
+}
+
 function mapPublicCustomerFinancialRecordToDraftState(
   record: PublicCustomerFinancialRecordResponse,
+  progress: PublicCustomerApplicationProgressResponse,
 ): HydratedPublicCustomerApplicationData {
   type IncomeRecord = PublicCustomerFinancialRecordResponse["incomes"][number];
   type LoanRecord = PublicCustomerFinancialRecordResponse["loans"][number];
@@ -306,48 +346,7 @@ function mapPublicCustomerFinancialRecordToDraftState(
     incomeType = "Business Person";
   }
 
-  const step1Completed = incomes.length > 0;
-  const step2Completed = loans.length > 0;
-  const step3Completed = cards.length > 0;
-  const step4Completed = liabilities.length > 0 || missedPayments > 0;
-  const completedByStep: Record<number, boolean> = {
-    1: step1Completed,
-    2: step2Completed,
-    3: step3Completed,
-    4: step4Completed,
-  };
-
-  const firstIncomplete = [1, 2, 3, 4].find((stepNumber) => !completedByStep[stepNumber]) ?? 5;
-
-  const stepStatusTable: ApplicationStepStatusRow[] = createDefaultStepStatusTable().map((row): ApplicationStepStatusRow => {
-    if (row.step === 5) {
-      return {
-        ...row,
-        status: (firstIncomplete === 5 ? "IN_PROGRESS" : "PENDING") as ApplicationStepStatus,
-        backendSynced: false,
-        recordId: null,
-        note: firstIncomplete === 5 ? "Review and submit your latest saved data." : null,
-      };
-    }
-
-    if (completedByStep[row.step]) {
-      return {
-        ...row,
-        status: "COMPLETED" as ApplicationStepStatus,
-        backendSynced: true,
-        recordId: record.recordId,
-        note: "Loaded from latest saved server data.",
-      };
-    }
-
-    return {
-      ...row,
-      status: (row.step === firstIncomplete ? "IN_PROGRESS" : "PENDING") as ApplicationStepStatus,
-      backendSynced: false,
-      recordId: null,
-      note: null,
-    };
-  });
+  const { stepStatusTable, suggestedStep } = mapApplicationProgressToStepStatusTable(progress);
 
   return {
     formData: {
@@ -382,7 +381,7 @@ function mapPublicCustomerFinancialRecordToDraftState(
       liabilityAmount: toInputValue(liabilities[0]?.amount),
     },
     stepStatusTable,
-    suggestedStep: firstIncomplete,
+    suggestedStep,
   };
 }
 
@@ -399,6 +398,7 @@ export default function PublicCustomerApplicationPage() {
   const [didRestoreLocalDraft, setDidRestoreLocalDraft] = useState(false);
   const [isSavingStep, setIsSavingStep] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [formData, setFormData] = useState<ApplicationFormData>({
     incomes: [] as Income[],
     loans: [] as Loan[],
@@ -680,12 +680,34 @@ export default function PublicCustomerApplicationPage() {
         setResolvedPublicCustomerId(profile.publicCustomerId);
 
         try {
+          const progress = await getPublicCustomerApplicationProgress(profile.publicCustomerId);
+          if (isCancelled) {
+            return;
+          }
+
+          const persistedProgress = mapApplicationProgressToStepStatusTable(progress);
+          setFinancialRecordId(progress.recordId);
+          setSkippedSteps(
+            progress.steps
+              .filter((item) => item.status === "SKIPPED")
+              .map((item) => APPLICATION_STEPS.find((definition) => definition.code === item.code)?.step)
+              .filter((item): item is number => typeof item === "number" && item <= 4),
+          );
+          setStepStatusTable(persistedProgress.stepStatusTable);
+
+          if (!progress.recordId) {
+            if (!didRestoreLocalDraft || restoredDifferentCustomerDraft) {
+              setStep(1);
+            }
+            return;
+          }
+
           const record = await getCurrentPublicCustomerFinancialRecord(profile.publicCustomerId);
           if (isCancelled) {
             return;
           }
 
-          const hydrated = mapPublicCustomerFinancialRecordToDraftState(record);
+          const hydrated = mapPublicCustomerFinancialRecordToDraftState(record, progress);
           setFinancialRecordId(record.recordId);
           setFormData((prev) => ({
             ...hydrated.formData,
@@ -706,7 +728,12 @@ export default function PublicCustomerApplicationPage() {
           setCardProvider(hydrated.cardDraft.cardProvider);
           setLiabilityDesc(hydrated.liabilityDraft.liabilityDesc);
           setLiabilityAmount(hydrated.liabilityDraft.liabilityAmount);
-          setSkippedSteps([]);
+          setSkippedSteps(
+            progress.steps
+              .filter((item) => item.status === "SKIPPED")
+              .map((item) => APPLICATION_STEPS.find((definition) => definition.code === item.code)?.step)
+              .filter((item): item is number => typeof item === "number" && item <= 4),
+          );
           setStepStatusTable(hydrated.stepStatusTable);
           setStep(hydrated.suggestedStep);
 
@@ -744,6 +771,11 @@ export default function PublicCustomerApplicationPage() {
   }, [didRestoreLocalDraft, hasHydratedLocalDraft, resolvedPublicCustomerId, showToast]);
 
   useEffect(() => {
+    if (hasSubmitted) {
+      window.localStorage.removeItem(PUBLIC_CUSTOMER_APPLICATION_DRAFT_KEY);
+      return;
+    }
+
     const draft: PublicCustomerApplicationDraft = {
       step,
       skippedSteps,
@@ -818,6 +850,7 @@ export default function PublicCustomerApplicationPage() {
     province,
     accountErrors,
     stepStatusTable,
+    hasSubmitted,
   ]);
 
   useEffect(() => {
@@ -1204,9 +1237,45 @@ export default function PublicCustomerApplicationPage() {
      return saveFinancialStepByStep(publicCustomerId, step);
   };
 
+  const getMissingStepMessage = (): string | null => {
+    if (step === 1 && formData.incomes.length === 0) {
+      return "Add at least one income source, or choose Skip for this section.";
+    }
+    if (step === 2 && formData.loans.length === 0) {
+      return "Add at least one loan, or choose Skip if you have no loan details to provide.";
+    }
+    if (
+      step === 3 &&
+      formData.cards.length === 0 &&
+      cardLimit.trim().length === 0 &&
+      cardOutstanding.trim().length === 0
+    ) {
+      return "Add at least one credit card, or choose Skip if you have no card details to provide.";
+    }
+    if (step === 4 && formData.liabilities.length === 0 && formData.missedPayments === 0) {
+      return "Add a liability or missed payment, or choose Skip if you have no liability details to provide.";
+    }
+    return null;
+  };
+
    const nextStep = async () => {
       if (isSavingStep || step >= 5) {
          return;
+      }
+
+      const missingStepMessage = getMissingStepMessage();
+      if (missingStepMessage) {
+        updateStepStatus(step, {
+          status: "FAILED",
+          backendSynced: false,
+          note: missingStepMessage,
+        });
+        showToast({
+          title: "This section is not filled yet",
+          description: missingStepMessage,
+          type: "info",
+        });
+        return;
       }
 
       if (step === 3) {
@@ -1267,24 +1336,74 @@ export default function PublicCustomerApplicationPage() {
       }
    };
 
-  const skipStep = () => {
+  const skipStep = async () => {
       if (isSavingStep) {
          return;
       }
-    updateStepStatus(step, {
-      status: "SKIPPED",
-      backendSynced: false,
-      note: "Step skipped by customer.",
-    });
-    setSkippedSteps(prev => (prev.includes(step) ? prev : [...prev, step]));
-    const next = Math.min(step + 1, 5);
-    if (next <= 5) {
-      updateStepStatus(next, {
-        status: "IN_PROGRESS",
-        note: null,
-      });
-    }
-    setStep(next);
+      const currentDefinition = APPLICATION_STEPS.find((item) => item.step === step);
+      if (!currentDefinition || currentDefinition.code === "REVIEW") {
+        return;
+      }
+
+      try {
+        setIsSavingStep(true);
+        updateStepStatus(step, {
+          status: "IN_PROGRESS",
+          backendSynced: false,
+          note: "Saving skipped status...",
+        });
+        const publicCustomerId = await resolvePublicCustomerId();
+        const progress = await skipPublicCustomerApplicationStep(publicCustomerId, currentDefinition.code);
+        const persistedProgress = mapApplicationProgressToStepStatusTable(progress);
+
+        setFinancialRecordId(progress.recordId);
+        setStepStatusTable(persistedProgress.stepStatusTable);
+        setSkippedSteps(
+          progress.steps
+            .filter((item) => item.status === "SKIPPED")
+            .map((item) => APPLICATION_STEPS.find((definition) => definition.code === item.code)?.step)
+            .filter((item): item is number => typeof item === "number" && item <= 4),
+        );
+        setFormData((prev) => ({
+          ...prev,
+          incomes: step === 1 ? [] : prev.incomes,
+          loans: step === 2 ? [] : prev.loans,
+          cards: step === 3 ? [] : prev.cards,
+          liabilities: step === 4 ? [] : prev.liabilities,
+          missedPayments: step === 4 ? 0 : prev.missedPayments,
+        }));
+
+        if (step === 1) {
+          setSalaryAmount("");
+          setBusinessIncomeAmount("");
+        } else if (step === 2) {
+          setLoanType("");
+          setLoanEMI("");
+          setLoanBalance("");
+        } else if (step === 3) {
+          setCardLimit("");
+          setCardOutstanding("");
+        } else if (step === 4) {
+          setLiabilityDesc("");
+          setLiabilityAmount("");
+        }
+
+        setStep(Math.min(step + 1, 5));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not save the skipped section.";
+        updateStepStatus(step, {
+          status: "FAILED",
+          backendSynced: false,
+          note: message,
+        });
+        showToast({
+          title: "Could not skip this section",
+          description: message,
+          type: "error",
+        });
+      } finally {
+        setIsSavingStep(false);
+      }
   };
 
   const prevStep = () => {
@@ -1301,22 +1420,45 @@ export default function PublicCustomerApplicationPage() {
         return;
       }
 
-      setIsSubmitting(true);
-      // Submission without client-side validation per current request
-      // Logic to submit data would go here (send formData + account info to backend)
-      showToast({ 
-         title: "Application Submitted", 
-         description: financialRecordId
-           ? `Financial record #${financialRecordId} submitted. Redirecting to dashboard...`
-           : "Your application has been received. Redirecting to dashboard...",
-         type: "success"
-      });
+      try {
+        setIsSubmitting(true);
+        const publicCustomerId = await resolvePublicCustomerId();
+        const progressBeforeSubmit = await getPublicCustomerApplicationProgress(publicCustomerId);
+        if (progressBeforeSubmit.steps.some((item) => item.code !== "REVIEW" && item.status === "PENDING")) {
+          throw new Error("Complete or skip every financial section before submitting the application.");
+        }
+        const evaluation = await createPublicCreditEvaluation();
+        const progress = await submitPublicCustomerApplication(publicCustomerId);
+        const persistedProgress = mapApplicationProgressToStepStatusTable(progress);
 
-      setTimeout(() => {
-         router.replace("/public-customer"); // Redirect to dashboard
-      }, 1500);
+        setHasSubmitted(true);
+        setFinancialRecordId(progress.recordId);
+        setStepStatusTable(persistedProgress.stepStatusTable);
+        window.localStorage.removeItem(PUBLIC_CUSTOMER_APPLICATION_DRAFT_KEY);
+        showToast({
+          title: "Application submitted",
+          description: `Financial record #${progress.recordId} was saved and evaluation #${evaluation.selfEvaluationId} was generated.`,
+          type: "success",
+        });
 
-      setIsSubmitting(false);
+        setTimeout(() => {
+          router.replace("/public-customer");
+        }, 1200);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Could not submit your application.";
+        updateStepStatus(5, {
+          status: "FAILED",
+          backendSynced: false,
+          note: message,
+        });
+        showToast({
+          title: "Application was not submitted",
+          description: message,
+          type: "error",
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
   };
 
   return (
@@ -1346,9 +1488,10 @@ export default function PublicCustomerApplicationPage() {
                 { id: 3, label: "CARDS" },
                 { id: 4, label: "LIABILITIES" }
               ].map((s) => {
-                const isSkipped = skippedSteps.includes(s.id);
+                const persistedStatus = stepStatusTable.find((item) => item.step === s.id)?.status;
+                const isSkipped = persistedStatus === "SKIPPED" || skippedSteps.includes(s.id);
                 const isCurrent = step === s.id;
-                const isCompleted = step > s.id && !isSkipped;
+                const isCompleted = persistedStatus === "COMPLETED";
 
                 return (
                   <div key={s.id} className="flex flex-col items-center gap-2 bg-slate-50 px-2">
@@ -1357,16 +1500,18 @@ export default function PublicCustomerApplicationPage() {
                          "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-2",
                          isCompleted
                            ? "bg-[#3e9fd3] border-[#3e9fd3] text-white"
+                           : isSkipped
+                             ? "bg-amber-50 border-amber-400 text-amber-600"
                            : isCurrent
                              ? "bg-[#3e9fd3] border-[#3e9fd3] text-white shadow-[0_0_0_4px_rgba(62,159,211,0.2)]"
                              : "bg-white border-slate-200 text-slate-400"
                        )}
                      >
-                        {isCompleted ? <Check size={18} /> : s.id}
+                        {isCompleted ? <Check size={18} /> : isSkipped ? "–" : s.id}
                      </div>
                      <span className={cn(
                        "text-[10px] font-bold tracking-widest uppercase transition-colors duration-300",
-                       isCurrent || isCompleted ? "text-[#3e9fd3]" : "text-slate-400"
+                       isSkipped ? "text-amber-500" : isCurrent || isCompleted ? "text-[#3e9fd3]" : "text-slate-400"
                      )}>
                        {s.label}
                      </span>
