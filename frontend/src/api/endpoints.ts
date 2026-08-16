@@ -150,3 +150,11 @@ export const SPENDIQ_ENDPOINTS = {
   expenseById: (expenseId: number) => `/spendiq/expenses/${expenseId}`,
   incomeById: (incomeId: number) => `/spendiq/incomes/${incomeId}`,
 } as const;
+
+export const NOTIFICATION_ENDPOINTS = {
+  list: "/notifications",
+  unreadCount: "/notifications/unread-count",
+  markRead: (notificationId: number) => `/notifications/${notificationId}/read`,
+  markAllRead: "/notifications/read-all",
+  dismiss: (notificationId: number) => `/notifications/${notificationId}`,
+} as const;

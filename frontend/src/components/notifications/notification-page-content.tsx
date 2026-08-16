@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { BellRing, Info, TriangleAlert, X } from "lucide-react";
 import { cn } from "@/src/lib/utils";
@@ -9,8 +9,9 @@ import {
   type NotificationItem,
   type RoleSegment,
   buildNotificationRouteContext,
-  getNotificationsForContext,
+  toNotificationItem,
 } from "./notification-data";
+import { useNotifications } from "@/src/hooks/use-notifications";
 
 type NotificationPageContentProps = {
   roleSegment: RoleSegment;
@@ -36,19 +37,24 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
     () => buildNotificationRouteContext(roleSegment, featureSegment ?? null),
     [featureSegment, roleSegment]
   );
-  const contextKey = `${roleSegment}:${featureSegment ?? "all"}`;
   const isTransact = context.featureSegment === "transact";
   const isLoanSense = context.featureSegment === "loansense";
-  const sourceNotifications = useMemo(() => getNotificationsForContext(context), [context]);
-  const [dismissedByContext, setDismissedByContext] = useState<Record<string, string[]>>({});
-  const dismissedIds = useMemo(() => dismissedByContext[contextKey] ?? [], [contextKey, dismissedByContext]);
+  const {
+    notifications: sourceNotifications,
+    unreadCount,
+    totalCount,
+    actionNeededCount,
+    loading,
+    error,
+    markRead,
+    markAllRead,
+    dismiss,
+  } = useNotifications({ size: 50, pollIntervalMs: 60_000 });
   const notifications = useMemo(
-    () => sourceNotifications.filter((item) => !dismissedIds.includes(item.id)),
-    [dismissedIds, sourceNotifications]
+    () => sourceNotifications.map((item) => toNotificationItem(item, context)),
+    [context, sourceNotifications]
   );
 
-  const unreadCount = notifications.filter((item) => item.unread).length;
-  const alertCount = notifications.filter((item) => item.kind === "alert").length;
   const metricCardClass = isTransact
     ? "transact-card transact-card-hover transact-creditlens-shade"
     : isLoanSense
@@ -65,23 +71,12 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
     ? "loansense-card loansense-card-hover loansense-creditlens-shade"
     : "";
 
-  const handleDeleteNotification = (id: string) => {
-    setDismissedByContext((prev) => {
-      const existing = prev[contextKey] ?? [];
-      if (existing.includes(id)) return prev;
-      return {
-        ...prev,
-        [contextKey]: [...existing, id],
-      };
-    });
-  };
-
   return (
     <section className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-3">
         <MetricCard cardClassName={metricCardClass} label="Unread" value={String(unreadCount)} icon={<BellRing size={15} />} />
-        <MetricCard cardClassName={metricCardClass} label="Total" value={String(notifications.length)} icon={<Info size={15} />} />
-        <MetricCard cardClassName={metricCardClass} label="Action Needed" value={String(alertCount)} icon={<TriangleAlert size={15} />} />
+        <MetricCard cardClassName={metricCardClass} label="Total" value={String(totalCount)} icon={<Info size={15} />} />
+        <MetricCard cardClassName={metricCardClass} label="Action Needed" value={String(actionNeededCount)} icon={<TriangleAlert size={15} />} />
       </div>
 
       <div
@@ -97,13 +92,35 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
           </div>
           <button
             type="button"
+            onClick={() => void markAllRead()}
+            disabled={unreadCount === 0}
             className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50"
           >
             Mark All As Read
           </button>
         </div>
 
+        {error ? (
+          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            {error}
+          </div>
+        ) : null}
+
         <div className="space-y-3">
+          {loading ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+              Loading notifications...
+            </div>
+          ) : null}
+
+          {!loading && notifications.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 px-4 py-10 text-center">
+              <BellRing className="mx-auto mb-2 text-slate-400" size={24} />
+              <p className="text-sm font-semibold text-slate-700">You are all caught up</p>
+              <p className="mt-1 text-xs text-slate-500">New updates will appear here automatically.</p>
+            </div>
+          ) : null}
+
           {notifications.map((item) => (
             <article
               key={item.id}
@@ -119,14 +136,16 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
                   : "border-slate-100 bg-white"
               )}
             >
-              <button
-                type="button"
-                onClick={() => handleDeleteNotification(item.id)}
-                className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-700"
-                aria-label="Remove notification"
-              >
-                <X size={14} />
-              </button>
+              {item.type !== "FINANCIAL_DETAILS_MISSING" ? (
+                <button
+                  type="button"
+                  onClick={() => void dismiss(item.id)}
+                  className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-700"
+                  aria-label="Remove notification"
+                >
+                  <X size={14} />
+                </button>
+              ) : null}
               <div className="mb-2 flex items-start gap-3">
                 <span className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full", KIND_DOT[item.kind])} />
                 <div className="min-w-0 flex-1">
@@ -150,6 +169,7 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
                   {item.ctaHref ? (
                     <Link
                       href={item.ctaHref}
+                      onClick={() => void markRead(item.id)}
                       className="inline-flex items-center gap-1 rounded-md bg-[#0d3b66] px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#0a2e50]"
                     >
                       {item.ctaLabel ?? "Open"}

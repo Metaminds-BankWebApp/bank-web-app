@@ -1,6 +1,7 @@
 import { LoginForm } from "./login-form";
 import LoginImage from "@/public/login.png";
 import { AuthShell } from "@/app/components/auth-shell";
+import { Suspense } from "react";
 
 export default function LoginPage() {
   return (
@@ -20,7 +21,9 @@ export default function LoginPage() {
       modeTogglePosition="right"
       contentSide="right"
     >
-      <LoginForm />
+      <Suspense fallback={<div className="py-12 text-center text-sm text-slate-500">Loading sign in...</div>}>
+        <LoginForm />
+      </Suspense>
     </AuthShell>
   );
 }

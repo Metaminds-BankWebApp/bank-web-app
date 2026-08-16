@@ -10,7 +10,7 @@ type SegmentedFilterTabItem<TKey extends string> = {
 };
 
 type SegmentedFilterTabsProps<TKey extends string> = {
-  items: Array<SegmentedFilterTabItem<TKey>>;
+  items: readonly SegmentedFilterTabItem<TKey>[];
   activeKey: TKey;
   onChange: (key: TKey) => void;
   className?: string;
