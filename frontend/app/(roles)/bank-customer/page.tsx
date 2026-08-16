@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthGuard } from "@/src/components/auth";
 import { LogoutButton } from "@/src/components/logout-button";
 import { CustomerAppHeaderActions } from "@/src/components/layout/customer-app-header-actions";
+import { getMyUserProfile } from "@/src/api/profile/user-profile.service";
 import { 
   Briefcase, 
   CreditCard, 
@@ -13,6 +15,26 @@ import {
 } from "lucide-react";
 
 export default function BankCustomerRolePage() {
+  const [customerName, setCustomerName] = useState("Customer");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getMyUserProfile()
+      .then((profile) => {
+        if (!cancelled) {
+          setCustomerName(profile.fullName || profile.username || "Customer");
+        }
+      })
+      .catch(() => {
+        // Keep the neutral fallback if profile loading is temporarily unavailable.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const features = [
     { 
       title: "CreditLens", 
@@ -21,10 +43,7 @@ export default function BankCustomerRolePage() {
       icon: Briefcase,
       status: "ACTIVE",
       statusColor: "text-emerald-500 bg-emerald-500/10",
-      progressLabel: "INTEGRITY SCORE",
-      progressValue: 100,
-      progressColor: "bg-emerald-500",
-      progressText: "100%",
+      accentColor: "bg-emerald-500",
       iconColor: "text-emerald-600",
       iconBg: "bg-emerald-100"
     },
@@ -35,10 +54,7 @@ export default function BankCustomerRolePage() {
       icon: LineChart,
       status: "ACTIVE",
       statusColor: "text-emerald-500 bg-emerald-500/10",
-      progressLabel: "ANALYSIS LEVEL",
-      progressValue: 100,
-      progressColor: "bg-amber-500",
-      progressText: "100%",
+      accentColor: "bg-amber-500",
       iconColor: "text-amber-600",
       iconBg: "bg-amber-100"
     },
@@ -49,10 +65,7 @@ export default function BankCustomerRolePage() {
       icon: Wallet,
       status: "ACTIVE",
       statusColor: "text-emerald-500 bg-emerald-500/10",
-      progressLabel: "ELIGIBILITY",
-      progressValue: 100,
-      progressColor: "bg-emerald-500",
-      progressText: "100%",
+      accentColor: "bg-emerald-500",
       iconColor: "text-emerald-600",
       iconBg: "bg-emerald-100"
     },
@@ -63,10 +76,7 @@ export default function BankCustomerRolePage() {
       icon: CreditCard,
       status: "ACTIVE",
       statusColor: "text-blue-500 bg-blue-500/10",
-      progressLabel: "PROCESSING SPEED",
-      progressValue: 100,
-      progressColor: "bg-blue-500",
-      progressText: "100%",
+      accentColor: "bg-blue-500",
       iconColor: "text-blue-600",
       iconBg: "bg-blue-100"
     },
@@ -104,7 +114,7 @@ export default function BankCustomerRolePage() {
           
           <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3 md:gap-6">
              {/* Profile Completion Widget */}
-             <div className="hidden md:flex flex-col items-end">
+             <div className="flex flex-col items-end">
                 <div className="flex justify-between w-64 mb-1.5">
                     <span className="text-xs text-white/90 font-medium">100% Profile Completion</span>
                     <span className="text-xs text-emerald-400 font-bold tracking-wider">Complete</span>
@@ -128,11 +138,11 @@ export default function BankCustomerRolePage() {
                 <div className="flex flex-col justify-center space-y-8">
                     <h1 className="text-5xl md:text-6xl font-bold text-white leading-[1.1] tracking-tight">
                        Welcome back, <br />
-                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-200">Dineth</span>
+                       <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-200">{customerName}</span>
                     </h1>
                     
                     <p className="text-slate-300 text-lg max-w-lg leading-relaxed font-light">
-                       Your financial ecosystem is evolving. Complete your profile to unlock high-yield instruments and AI-driven portfolio insights.
+                       Your verified financial profile is complete and all PrimeCore banking tools are ready to use.
                     </p>
                     
                   
@@ -165,17 +175,7 @@ export default function BankCustomerRolePage() {
                                </p>
                             </div>
 
-                            <div className="mt-auto">
-                               <div className="flex justify-between items-end mb-2">
-                                  <span className="text-[10px] text-slate-400 font-bold tracking-widest uppercase">{item.progressLabel}</span>
-                                  <span className={`text-[10px] font-bold ${item.progressText === "Ultra" ? "text-blue-600" : item.progressText === "Incomplete" ? "text-slate-400" : "text-emerald-600"}`}>
-                                     {item.progressText}
-                                  </span>
-                               </div>
-                               <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                  <div className={`h-full ${item.progressColor} rounded-full transition-all duration-1000 ease-out`} style={{ width: `${item.progressValue}%` }}></div>
-                               </div>
-                            </div>
+                            <div className={`mt-auto h-1.5 w-full rounded-full ${item.accentColor}`} aria-hidden="true"></div>
 
                          </div>
                       </Link>
@@ -189,7 +189,7 @@ export default function BankCustomerRolePage() {
                     <div className="bg-slate-50 p-2 rounded-full">
                         <CheckCircle2 className="w-5 h-5 text-blue-500" />
                     </div>
-                    <span className="text-slate-900 font-bold text-lg">What&apos;s Missing?</span>
+                    <span className="text-slate-900 font-bold text-lg">Application Complete</span>
                 </div>
               
               <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-4">
