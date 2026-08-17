@@ -2,6 +2,8 @@ import apiClient, { toApiError } from "@/src/api/client";
 import { PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS } from "@/src/api/endpoints";
 import type {
   PublicCustomerCardStepRequest,
+  PublicCustomerApplicationProgressResponse,
+  PublicCustomerApplicationStepCode,
   PublicCustomerCardProviderOptionResponse,
   PublicCustomerMeResponse,
   PublicCustomerFinancialRecordResponse,
@@ -85,6 +87,46 @@ export async function savePublicCustomerLiabilityStep(
     const { data } = await apiClient.put<PublicCustomerFinancialStepResponse>(
       PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.saveLiabilityStep(publicCustomerId),
       payload,
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getPublicCustomerApplicationProgress(
+  publicCustomerId: number,
+): Promise<PublicCustomerApplicationProgressResponse> {
+  try {
+    const { data } = await apiClient.get<PublicCustomerApplicationProgressResponse>(
+      PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.progress(publicCustomerId),
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function skipPublicCustomerApplicationStep(
+  publicCustomerId: number,
+  stepCode: Exclude<PublicCustomerApplicationStepCode, "REVIEW">,
+): Promise<PublicCustomerApplicationProgressResponse> {
+  try {
+    const { data } = await apiClient.put<PublicCustomerApplicationProgressResponse>(
+      PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.skipStep(publicCustomerId, stepCode),
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function submitPublicCustomerApplication(
+  publicCustomerId: number,
+): Promise<PublicCustomerApplicationProgressResponse> {
+  try {
+    const { data } = await apiClient.put<PublicCustomerApplicationProgressResponse>(
+      PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS.submit(publicCustomerId),
     );
     return data;
   } catch (error) {

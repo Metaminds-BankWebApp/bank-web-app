@@ -22,7 +22,6 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { Card } from "@/components/ui/card";
 import { authService } from "@/src/api/auth/auth.service";
 import { transactionService } from "@/src/api/transact/transaction.service";
-import type { TransactDashboardSummaryResponse } from "@/src/types/dto/transact.dto";
 
 ChartJS.register(
   CategoryScale,
@@ -86,7 +85,11 @@ const doughnutOptions: ChartOptions<"doughnut"> = {
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: { enabled: false }
+    tooltip: {
+      backgroundColor: "#094151",
+      displayColors: true,
+      padding: 10,
+    }
   }
 };
 
@@ -115,7 +118,6 @@ export default function TransactDashboard() {
     failedCount: 0,
   });
   const [savedBeneficiaries, setSavedBeneficiaries] = useState(0);
-  const [recentTransactions, setRecentTransactions] = useState<TransactDashboardSummaryResponse["recentTransactions"]>([]);
   const [accountNumber, setAccountNumber] = useState("");
   const [isBalanceLoading, setIsBalanceLoading] = useState(true);
   const [balanceError, setBalanceError] = useState("");
@@ -209,7 +211,6 @@ export default function TransactDashboard() {
           failedCount: Number(data.otpStatus?.failedCount ?? 0),
         });
         setSavedBeneficiaries(Number(data.savedBeneficiaries ?? 0));
-        setRecentTransactions(Array.isArray(data.recentTransactions) ? data.recentTransactions : []);
         setAccountNumber((data.accountNumber ?? "").trim());
         setBalanceError("");
       } catch (error) {
@@ -301,20 +302,21 @@ export default function TransactDashboard() {
   }), [timelineLabels, timelineValues]);
 
   const doughnutData = useMemo(() => ({
-    labels: ["Success", "Failed", "Pending OTP"],
+    labels: ["Success", "Failed", "Pending OTP", "Cancelled"],
     datasets: [
       {
         data: [
           Math.max(0, statusSummary.successCount),
           Math.max(0, statusSummary.failedCount),
           Math.max(0, statusSummary.pendingOtpCount),
+          Math.max(0, statusSummary.cancelledCount),
         ],
-        backgroundColor: ["#399FD8", "#0B3E5A", "#7c3aed"],
+        backgroundColor: ["#399FD8", "#0B3E5A", "#0e4f62", "#7dd3fc"],
         borderWidth: 0,
         hoverOffset: 4,
       },
     ],
-  }), [statusSummary.failedCount, statusSummary.pendingOtpCount, statusSummary.successCount]);
+  }), [statusSummary.cancelledCount, statusSummary.failedCount, statusSummary.pendingOtpCount, statusSummary.successCount]);
 
   const currentBalanceNote = balanceError
     ? balanceError
@@ -326,24 +328,16 @@ export default function TransactDashboard() {
     {
       title: "Current Balance",
       amount: isBalanceLoading ? "--" : formattedCurrentBalance,
-      dark: true,
+      variant: "dark",
       note: currentBalanceNote,
       noteIsError: balanceError.length > 0,
       live: true,
       showCurrencyPrefix: true,
     },
     {
-      title: "Total Transactions",
-      amount: isBalanceLoading ? "--" : formattedTotalTransactions,
-      dark: true,
-      note: "",
-      live: false,
-      showCurrencyPrefix: false,
-    },
-    {
       title: "Total Sent",
       amount: isBalanceLoading ? "--" : formattedTotalSent,
-      dark: false,
+      variant: "sent",
       note: "",
       live: false,
       showCurrencyPrefix: true,
@@ -351,10 +345,18 @@ export default function TransactDashboard() {
     {
       title: "Total Received",
       amount: isBalanceLoading ? "--" : formattedTotalReceived,
-      dark: false,
+      variant: "received",
       note: "",
       live: false,
       showCurrencyPrefix: true,
+    },
+    {
+      title: "Total Transactions",
+      amount: isBalanceLoading ? "--" : formattedTotalTransactions,
+      variant: "light",
+      note: "",
+      live: false,
+      showCurrencyPrefix: false,
     },
   ];
 
@@ -376,9 +378,13 @@ export default function TransactDashboard() {
                 <div
                   key={index}
                   className={`transact-card transact-card-hover rounded-2xl p-4 sm:p-6 min-h-[120px] sm:min-h-[150px] flex flex-col justify-between ${
-                    item.dark
+                    item.variant === "dark"
                       ? "border border-[#061e3d]/25 bg-[linear-gradient(150deg,#061e3d_0%,#0a3046_100%)] text-white shadow-[0_20px_44px_-32px_rgba(2,18,33,0.78)]"
-                      : "transact-creditlens-shade bg-[#e0f7fa] text-[#0e4f62]"
+                      : item.variant === "sent"
+                        ? "border border-rose-200 bg-rose-50 text-rose-700 shadow-[0_20px_44px_-32px_rgba(190,24,93,0.4)]"
+                        : item.variant === "received"
+                          ? "border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_20px_44px_-32px_rgba(5,150,105,0.35)]"
+                          : "border border-cyan-200 bg-cyan-50 text-[#0e4f62] shadow-[0_20px_44px_-32px_rgba(14,79,98,0.3)]"
                   }`}
                 >
                   <div className="flex justify-between items-start">
@@ -405,7 +411,7 @@ export default function TransactDashboard() {
                     {item.note ? (
                       <p
                         className={`mt-2 text-xs ${
-                          item.dark
+                          item.variant === "dark"
                             ? item.noteIsError
                               ? "text-red-200"
                               : "text-slate-200/80"
@@ -456,60 +462,31 @@ export default function TransactDashboard() {
                   </div>
                 </div>
 
-                <div className="w-full mt-10 space-y-4 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-medium text-[#0e4f62]">Success</span>
-                    <span className="text-slate-400">{statusSummary.successCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-[#0e4f62]">Failed</span>
-                    <span className="text-slate-400">{statusSummary.failedCount}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="font-medium text-[#0e4f62]">Pending OTP</span>
-                    <span className="text-slate-400">{statusSummary.pendingOtpCount}</span>
-                  </div>
-                  <div className="flex justify-between">
+                <div className="w-full mt-10 grid grid-cols-2 gap-3 text-sm">
+                  {[
+                    { label: "Success", value: statusSummary.successCount, color: "bg-[#399FD8]" },
+                    { label: "Failed", value: statusSummary.failedCount, color: "bg-[#0B3E5A]" },
+                    { label: "Pending OTP", value: statusSummary.pendingOtpCount, color: "bg-[#0e4f62]" },
+                    { label: "Cancelled", value: statusSummary.cancelledCount, color: "bg-sky-300" },
+                  ].map((status) => (
+                    <div key={status.label} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                      <span className="flex items-center gap-2 font-medium text-[#0e4f62]">
+                        <span className={`h-2.5 w-2.5 rounded-full ${status.color}`} />
+                        {status.label}
+                      </span>
+                      <span className="font-semibold text-slate-600">{status.value}</span>
+                    </div>
+                  ))}
+                  <div className="col-span-2 flex justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
                     <span className="font-medium text-[#0e4f62]">Saved Beneficiaries</span>
-                    <span className="text-slate-400">{savedBeneficiaries}</span>
+                    <span className="font-semibold text-slate-600">{savedBeneficiaries}</span>
                   </div>
-                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
+                  <div className="col-span-2 rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs text-slate-600">
                     OTP logs: Sent {otpSummary.sentCount} | Verified {otpSummary.verifiedCount} | Expired {otpSummary.expiredCount} | Failed {otpSummary.failedCount}
                   </div>
                 </div>
               </div>
 
-            </div>
-
-            <div className="mt-8">
-              <div className="transact-card transact-card-hover transact-creditlens-shade rounded-3xl p-5 sm:p-8">
-                <h2 className="text-lg font-bold text-[#0e4f62] mb-4">Recent Transaction History</h2>
-                {recentTransactions.length === 0 ? (
-                  <p className="text-sm text-slate-500">No recent transactions found.</p>
-                ) : (
-                  <div className="space-y-3">
-                    {recentTransactions.map((transaction) => (
-                      <div
-                        key={`${transaction.transactionId}-${transaction.referenceNo}`}
-                        className="rounded-xl border border-slate-100 bg-white p-4 text-sm shadow-sm"
-                      >
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="font-semibold text-[#0e4f62]">
-                            {transaction.direction} • LKR {new Intl.NumberFormat("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(transaction.amount) || 0)}
-                          </p>
-                          <span className="text-xs text-slate-400">{transaction.status}</span>
-                        </div>
-                        <p className="text-xs text-slate-500 mt-1">
-                          Ref: {transaction.referenceNo} | {transaction.counterpartyName} ({transaction.counterpartyAccountNo})
-                        </p>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {new Date(transaction.transactionDate).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
 
           </Card>

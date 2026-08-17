@@ -42,6 +42,25 @@ export interface PublicCustomerFinancialStepResponse {
   message: string;
 }
 
+export type PublicCustomerApplicationStepCode = "INCOME" | "LOANS" | "CARDS" | "LIABILITIES" | "REVIEW";
+export type PublicCustomerApplicationStepStatus = "PENDING" | "COMPLETED" | "SKIPPED";
+
+export interface PublicCustomerApplicationProgressResponse {
+  publicCustomerId: number;
+  recordId: number | null;
+  completionPercentage: number;
+  completedSteps: number;
+  totalSteps: number;
+  overallStatus: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | string;
+  submittedAt: string | null;
+  steps: Array<{
+    code: PublicCustomerApplicationStepCode;
+    label: string;
+    status: PublicCustomerApplicationStepStatus;
+    completed: boolean;
+  }>;
+}
+
 export interface PublicCustomerMeResponse {
   publicCustomerId: number;
   userId: number;

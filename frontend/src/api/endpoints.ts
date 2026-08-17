@@ -71,6 +71,12 @@ export const PUBLIC_CUSTOMER_FINANCIAL_ENDPOINTS = {
     `/public-customers/${publicCustomerId}/financial-records/steps/cards`,
   saveLiabilityStep: (publicCustomerId: number) =>
     `/public-customers/${publicCustomerId}/financial-records/steps/liabilities`,
+  progress: (publicCustomerId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/progress`,
+  skipStep: (publicCustomerId: number, stepCode: string) =>
+    `/public-customers/${publicCustomerId}/financial-records/steps/${encodeURIComponent(stepCode)}/skip`,
+  submit: (publicCustomerId: number) =>
+    `/public-customers/${publicCustomerId}/financial-records/submit`,
   current: (publicCustomerId: number) =>
     `/public-customers/${publicCustomerId}/financial-records/current`,
   history: (publicCustomerId: number) =>
