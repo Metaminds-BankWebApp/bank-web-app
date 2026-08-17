@@ -8,6 +8,10 @@ export const AUTH_ENDPOINTS = {
   resetPassword: "/auth/reset-password",
 } as const;
 
+export const SUPPORT_ENDPOINTS = {
+  requests: "/support/requests",
+} as const;
+
 export const REGISTRATION_ENDPOINTS = {
   // Step-1 onboarding routes used by officers to create or continue customer identity details.
   bankCustomer: {
