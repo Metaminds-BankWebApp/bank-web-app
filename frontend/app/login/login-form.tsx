@@ -38,7 +38,7 @@ export function LoginForm() {
   const token = useAuthStore((state) => state.token);
   const role = useAuthStore((state) => state.role);
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -48,12 +48,12 @@ export function LoginForm() {
 
   useEffect(() => {
     const force = searchParams.get("force") === "true";
-    const prefilledEmail = searchParams.get("email");
+    const prefilledIdentifier = searchParams.get("email");
 
     setForceLogin(force);
 
-    if (prefilledEmail) {
-      setEmail(prefilledEmail.trim());
+    if (prefilledIdentifier) {
+      setIdentifier(prefilledIdentifier.trim());
       setPassword("");
     }
   }, [searchParams]);
@@ -90,8 +90,8 @@ export function LoginForm() {
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!email || !password) {
-      setError("Email and password are required.");
+    if (!identifier.trim() || !password) {
+      setError("Email address or username and password are required.");
       return;
     }
 
@@ -99,7 +99,7 @@ export function LoginForm() {
     setError(null);
 
     try {
-      const response = await authService.login({ email, password });
+      const response = await authService.login({ identifier: identifier.trim(), password });
       const normalizedRole = normalizeRole(response.user.role);
 
       if (!normalizedRole) {
@@ -149,12 +149,12 @@ export function LoginForm() {
 
       <form onSubmit={onSubmit} className="space-y-5">
         <Input
-          label="Email Address"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="name@example.com"
+          label="Email Address or Username"
+          type="text"
+          autoComplete="username"
+          value={identifier}
+          onChange={(event) => setIdentifier(event.target.value)}
+          placeholder="name@example.com or username"
           labelClassName="text-(--primecore-foreground)/70"
           className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
         />

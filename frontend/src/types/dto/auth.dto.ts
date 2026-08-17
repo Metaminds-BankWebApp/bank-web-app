@@ -1,7 +1,7 @@
 export type UserRole = "PUBLIC_CUSTOMER" | "BANK_CUSTOMER" | "BANK_OFFICER" | "ADMIN";
 
 export interface LoginRequest {
-  email: string;
+  identifier: string;
   password: string;
 }
 
