@@ -30,21 +30,6 @@ function normalizeRole(role: string): UserRole | null {
   return null;
 }
 
-function createDemoPayload(email: string, role: UserRole): LoginResponse {
-  const fullName = email.includes("@") ? email.split("@")[0] : "PrimeCore User";
-
-  return {
-    accessToken: `demo-token-${Date.now()}`,
-    tokenType: "Bearer",
-    user: {
-      id: "demo-user",
-      email,
-      fullName,
-      role,
-    },
-  };
-}
-
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -53,9 +38,8 @@ export function LoginForm() {
   const token = useAuthStore((state) => state.token);
   const role = useAuthStore((state) => state.role);
 
-  const [email, setEmail] = useState("demo@primecore.app");
-  const [password, setPassword] = useState("password123");
-  const [selectedRole, setSelectedRole] = useState<UserRole>("PUBLIC_CUSTOMER");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const [forceLogin, setForceLogin] = useState(false);
@@ -65,14 +49,12 @@ export function LoginForm() {
   useEffect(() => {
     const force = searchParams.get("force") === "true";
     const prefilledEmail = searchParams.get("email");
-    const prefilledRole = normalizeRole(searchParams.get("role") ?? "");
 
     setForceLogin(force);
 
     if (prefilledEmail) {
       setEmail(prefilledEmail.trim());
       setPassword("");
-      setSelectedRole(prefilledRole ?? "PUBLIC_CUSTOMER");
     }
   }, [searchParams]);
 
@@ -145,21 +127,6 @@ export function LoginForm() {
       router.replace(redirectPath);
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
-
-      if (apiError && ["NETWORK_ERROR", "NOT_FOUND", "TIMEOUT"].includes(apiError.code)) {
-        const demoPayload = createDemoPayload(email, selectedRole);
-        const redirectPath = login(demoPayload);
-
-        showToast({
-          type: "info",
-          title: "API unavailable",
-          description: `Started demo session as ${toRoleLabel(selectedRole)}.`,
-        });
-
-        router.replace(redirectPath);
-        return;
-      }
-
       const message = apiError?.message ?? "Unable to login. Please try again.";
       setError(message);
 
@@ -221,22 +188,6 @@ export function LoginForm() {
           </Link>
         </div>
 
-        <div className="space-y-1.5">
-          <label htmlFor="login-role" className="text-sm font-medium text-(--primecore-foreground)/70">Role (demo fallback)</label>
-          <select
-            id="login-role"
-            value={selectedRole}
-            onChange={(event) => setSelectedRole(event.target.value as UserRole)}
-            className="h-14 w-full rounded-2xl border border-(--primecore-border) bg-(--primecore-surface) px-4 text-sm text-(--primecore-foreground) focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ring-offset-background"
-          >
-            {roleOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
         {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 
         <Button
@@ -262,9 +213,6 @@ export function LoginForm() {
           </p>
         </div>
 
-        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-          Demo mode: if backend is unavailable, login continues using the selected role.
-        </p>
       </form>
     </section>
   );
