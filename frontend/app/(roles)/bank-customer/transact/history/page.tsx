@@ -142,6 +142,8 @@ export default function Page() {
     })
   }, [records, searchQuery, dateQuery])
 
+  const visibleRowCount = Math.min(filteredData.length, 8)
+
   function clearFilters() {
     setSearchQuery("")
     setDateQuery("")
@@ -191,56 +193,58 @@ export default function Page() {
             </div>
           ) : null}
 
-          <Table className="min-w-[760px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Receiver&apos;s name</TableHead>
-                <TableHead>Receiver&apos;s acc no</TableHead>
-                <TableHead>Sender&apos;s name</TableHead>
-                <TableHead>Sender&apos;s acc no</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Reference no</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+          <div className="max-h-[510px] overflow-auto" aria-label="Scrollable transaction history">
+            <Table className="min-w-[760px]">
+              <TableHeader className="sticky top-0 z-10 bg-white shadow-sm">
                 <TableRow>
-                  <TableCell className="py-10 text-center text-sm text-slate-500" colSpan={8}>
-                    Loading transaction history...
-                  </TableCell>
+                  <TableHead>Receiver&apos;s name</TableHead>
+                  <TableHead>Receiver&apos;s acc no</TableHead>
+                  <TableHead>Sender&apos;s name</TableHead>
+                  <TableHead>Sender&apos;s acc no</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Reference no</TableHead>
                 </TableRow>
-              ) : filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell className="py-10 text-center text-sm text-slate-500" colSpan={8}>
-                    No transactions found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredData.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell>{row.receiverName}</TableCell>
-                    <TableCell>{row.receiverAcc}</TableCell>
-                    <TableCell>{row.senderName}</TableCell>
-                    <TableCell>{row.senderAcc}</TableCell>
-                    <TableCell className="font-semibold">{row.amount}</TableCell>
-                    <TableCell>
-                      <DataTableStatusBadge tone={statusMeta[row.status].tone}>
-                        {statusMeta[row.status].label}
-                      </DataTableStatusBadge>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell className="py-10 text-center text-sm text-slate-500" colSpan={8}>
+                      Loading transaction history...
                     </TableCell>
-                    <TableCell>{row.date || "-"}</TableCell>
-                    <TableCell>{row.reference}</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : filteredData.length === 0 ? (
+                  <TableRow>
+                    <TableCell className="py-10 text-center text-sm text-slate-500" colSpan={8}>
+                      No transactions found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredData.map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>{row.receiverName}</TableCell>
+                      <TableCell>{row.receiverAcc}</TableCell>
+                      <TableCell>{row.senderName}</TableCell>
+                      <TableCell>{row.senderAcc}</TableCell>
+                      <TableCell className="font-semibold">{row.amount}</TableCell>
+                      <TableCell>
+                        <DataTableStatusBadge tone={statusMeta[row.status].tone}>
+                          {statusMeta[row.status].label}
+                        </DataTableStatusBadge>
+                      </TableCell>
+                      <TableCell>{row.date || "-"}</TableCell>
+                      <TableCell>{row.reference}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
           <DataTableFooter>
             <span>
-              Showing <span className="font-semibold text-slate-800">{filteredData.length === 0 ? 0 : 1}-{filteredData.length}</span> of{" "}
+              Showing <span className="font-semibold text-slate-800">{visibleRowCount}</span> at a time of{" "}
               <span className="font-semibold text-slate-800">{filteredData.length}</span> transactions
             </span>
           </DataTableFooter>
