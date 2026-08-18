@@ -214,8 +214,10 @@ export default function ModuleHeader({
     notifications: sourceNotifications,
     unreadCount,
     loading: notificationsLoading,
+    clearing: notificationsClearing,
     markRead,
     dismiss,
+    clearAll,
   } = useNotifications({ size: 4, pollIntervalMs: 30_000 });
   const notifications = useMemo(
     () => sourceNotifications.map((item) => toNotificationItem(item, routeContext)),
@@ -301,18 +303,28 @@ export default function ModuleHeader({
                     <p className="text-sm font-semibold">Notifications</p>
                     <p className="text-xs text-slate-500">{unreadCount} unread updates</p>
                   </div>
-                  {notificationsPath ? (
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsNotificationsOpen(false);
-                        router.push(notificationsPath);
-                      }}
-                      className="rounded-md bg-[#0d3b66] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-[#0a2e50]"
+                      onClick={() => void clearAll()}
+                      disabled={notifications.length === 0 || notificationsClearing}
+                      className="rounded-md border border-slate-200 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      View All
+                      {notificationsClearing ? "Clearing..." : "Clear All"}
                     </button>
-                  ) : null}
+                    {notificationsPath ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsNotificationsOpen(false);
+                          router.push(notificationsPath);
+                        }}
+                        className="rounded-md bg-[#0d3b66] px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-white transition hover:bg-[#0a2e50]"
+                      >
+                        View All
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
@@ -347,19 +359,17 @@ export default function ModuleHeader({
                         <p className="mt-1 text-[11px] text-slate-500">{item.time}</p>
                       </button>
 
-                      {item.type !== "FINANCIAL_DETAILS_MISSING" ? (
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            void dismiss(item.id);
-                          }}
-                          className="absolute right-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
-                          aria-label="Remove notification"
-                        >
-                          <X size={12} />
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void dismiss(item.id);
+                        }}
+                        className="absolute right-2 top-2 z-10 inline-flex h-5 w-5 items-center justify-center rounded text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                        aria-label="Delete notification permanently"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
                   ))}
                   {!notificationsLoading && previewNotifications.length === 0 ? (

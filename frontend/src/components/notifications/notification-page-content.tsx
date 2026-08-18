@@ -46,9 +46,11 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
     actionNeededCount,
     loading,
     error,
+    clearing,
     markRead,
     markAllRead,
     dismiss,
+    clearAll,
   } = useNotifications({ size: 50, pollIntervalMs: 60_000 });
   const notifications = useMemo(
     () => sourceNotifications.map((item) => toNotificationItem(item, context)),
@@ -90,14 +92,24 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
             <h3 className="text-lg font-semibold text-slate-900">{context.moduleLabel} Notifications</h3>
             <p className="text-sm text-slate-500">Recent updates and alerts for {context.roleLabel}</p>
           </div>
-          <button
-            type="button"
-            onClick={() => void markAllRead()}
-            disabled={unreadCount === 0}
-            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50"
-          >
-            Mark All As Read
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void clearAll()}
+              disabled={totalCount === 0 || clearing}
+              className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {clearing ? "Clearing..." : "Clear All"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void markAllRead()}
+              disabled={unreadCount === 0 || clearing}
+              className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Mark All As Read
+            </button>
+          </div>
         </div>
 
         {error ? (
@@ -136,16 +148,14 @@ export function NotificationPageContent({ roleSegment, featureSegment }: Notific
                   : "border-slate-100 bg-white"
               )}
             >
-              {item.type !== "FINANCIAL_DETAILS_MISSING" ? (
-                <button
-                  type="button"
-                  onClick={() => void dismiss(item.id)}
-                  className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-700"
-                  aria-label="Remove notification"
-                >
-                  <X size={14} />
-                </button>
-              ) : null}
+              <button
+                type="button"
+                onClick={() => void dismiss(item.id)}
+                className="absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-slate-200/70 hover:text-slate-700"
+                aria-label="Delete notification permanently"
+              >
+                <X size={14} />
+              </button>
               <div className="mb-2 flex items-start gap-3">
                 <span className={cn("mt-1 h-2.5 w-2.5 shrink-0 rounded-full", KIND_DOT[item.kind])} />
                 <div className="min-w-0 flex-1">
