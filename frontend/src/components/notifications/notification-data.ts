@@ -142,6 +142,8 @@ function resolveActionHref(notification: NotificationDto, context: NotificationR
   const customerId = metadata.customerId;
 
   switch (notification.actionKey) {
+    case "SUPPORT_CONVERSATION":
+      return resolveSupportConversationHref(role, metadata.category, metadata.conversationId);
     case "ADMIN_USER_MANAGEMENT":
       return "/admin/user-management";
     case "ADMIN_LOAN_POLICY":
@@ -170,6 +172,30 @@ function resolveActionHref(notification: NotificationDto, context: NotificationR
   }
 }
 
+function resolveSupportConversationHref(
+  role: RoleSegment | null,
+  category?: string,
+  conversationId?: string,
+): string | undefined {
+  let path: string | undefined;
+  if (role === "admin") path = "/admin/support";
+  if (role === "bank-officer") path = "/bank-officer/support";
+  if (role === "bank-customer") {
+    if (category === "Transact") path = "/bank-customer/transact/help";
+    if (category === "SpendIQ") path = "/bank-customer/spendiq/help";
+    if (category === "LoanSense") path = "/bank-customer/loansense/help";
+    if (category === "CreditLens") path = "/bank-customer/creditlens/help";
+    path ??= "/bank-customer/creditlens/help";
+  }
+  if (role === "public-customer") {
+    if (category === "SpendIQ") path = "/public-customer/spendiq/help";
+    if (category === "CreditLens") path = "/public-customer/creditlens/help";
+    path ??= "/public-customer/creditlens/help";
+  }
+  if (!path) return role ? `/${role}` : undefined;
+  return conversationId ? `${path}?conversationId=${encodeURIComponent(conversationId)}` : path;
+}
+
 function resolveActionLabel(actionKey: string | null): string | undefined {
   if (!actionKey) return undefined;
   if (actionKey.includes("USER_MANAGEMENT")) return "Open User Management";
@@ -178,6 +204,7 @@ function resolveActionLabel(actionKey: string | null): string | undefined {
   if (actionKey.includes("CREDITLENS")) return "Open CreditLens";
   if (actionKey.includes("LOANSENSE")) return "Open LoanSense";
   if (actionKey.includes("SPENDIQ")) return "Open SpendIQ";
+  if (actionKey === "SUPPORT_CONVERSATION") return "Open support conversation";
   if (actionKey === "PUBLIC_FINANCIAL_DETAILS") return "Fill Financial Details";
   return "Open";
 }
