@@ -502,6 +502,7 @@ export default function AddCustomerPage() {
    const [isSubmittingStepOne, setIsSubmittingStepOne] = useState(false);
    const [isLookingUpCustomerByNic, setIsLookingUpCustomerByNic] = useState(false);
    const [hasExistingCustomerMatch, setHasExistingCustomerMatch] = useState(false);
+   const [customerLookupError, setCustomerLookupError] = useState("");
    const [isVerifyingAccount, setIsVerifyingAccount] = useState(false);
    const [isSavingCribLinkingStep, setIsSavingCribLinkingStep] = useState(false);
    const [isCompletingCribReviewStep, setIsCompletingCribReviewStep] = useState(false);
@@ -660,6 +661,7 @@ export default function AddCustomerPage() {
     if (nicUpdated) {
       setHasExistingCustomerMatch(false);
       setCreatedBankCustomerId(null);
+      setCustomerLookupError("");
     }
     if (submitError) {
       setSubmitError("");
@@ -953,7 +955,7 @@ export default function AddCustomerPage() {
 
    // Search by NIC to reuse existing customer data and avoid re-entering everything.
    const lookupCustomerByNic = async (nicOverride?: string) => {
-      const nic = (nicOverride ?? formData.nic).trim();
+      const nic = (nicOverride ?? formData.nic).replace(/\s+/g, "").trim().toUpperCase();
       if (!nic) {
          setSubmitError("NIC number is required.");
          return;
@@ -961,6 +963,7 @@ export default function AddCustomerPage() {
 
       setIsLookingUpCustomerByNic(true);
       setSubmitError("");
+      setCustomerLookupError("");
       setServerStepOneErrors({});
       try {
          const prefill = await findOwnedBankCustomerStepOneByNic(nic);
@@ -1014,7 +1017,7 @@ export default function AddCustomerPage() {
          if (error instanceof ApiError && error.status === 404) {
             setHasExistingCustomerMatch(false);
             setCreatedBankCustomerId(null);
-            setSubmitError("");
+            setCustomerLookupError("Customer not found. Check the NIC and try again.");
             return;
          }
          if (error instanceof ApiError) {
@@ -2077,6 +2080,7 @@ export default function AddCustomerPage() {
                   isSubmittingStepOne={isSubmittingStepOne}
                   isLookingUpCustomerByNic={isLookingUpCustomerByNic}
                   hasExistingCustomerMatch={hasExistingCustomerMatch || createdBankCustomerId !== null}
+                  customerLookupError={customerLookupError}
                   serverStepOneErrors={serverStepOneErrors}
                   onClearServerStepOneError={clearServerStepOneError}
                />

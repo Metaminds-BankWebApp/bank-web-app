@@ -111,6 +111,7 @@ export interface StepProps {
   isLookingUpCustomerByNic?: boolean;
   isGeneratingCredentials?: boolean;
   hasExistingCustomerMatch?: boolean;
+  customerLookupError?: string;
   serverStepOneErrors?: Partial<Record<"nic" | "email" | "username", string>>;
   onClearServerStepOneError?: (field: "nic" | "email" | "username" | "bankAccount") => void;
   onVerifyAccount?: () => Promise<void>;

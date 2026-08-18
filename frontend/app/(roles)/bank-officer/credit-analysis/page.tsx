@@ -192,7 +192,7 @@ export default function CreditAnalysisPage() {
             avatarStatusDot
             name="Kamal Edirisinghe"
             role="Bank Officer"
-            title="Credit Analysis"
+            title="Credit Review"
             className="mb-6 shrink-0"
           />
 
