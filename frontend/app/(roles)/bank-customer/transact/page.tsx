@@ -337,7 +337,7 @@ export default function TransactDashboard() {
     {
       title: "Total Sent",
       amount: isBalanceLoading ? "--" : formattedTotalSent,
-      variant: "sent",
+      variant: "light",
       note: "",
       live: false,
       showCurrencyPrefix: true,
@@ -345,7 +345,7 @@ export default function TransactDashboard() {
     {
       title: "Total Received",
       amount: isBalanceLoading ? "--" : formattedTotalReceived,
-      variant: "received",
+      variant: "light",
       note: "",
       live: false,
       showCurrencyPrefix: true,
@@ -380,11 +380,7 @@ export default function TransactDashboard() {
                   className={`transact-card transact-card-hover rounded-2xl p-4 sm:p-6 min-h-[120px] sm:min-h-[150px] flex flex-col justify-between ${
                     item.variant === "dark"
                       ? "border border-[#061e3d]/25 bg-[linear-gradient(150deg,#061e3d_0%,#0a3046_100%)] text-white shadow-[0_20px_44px_-32px_rgba(2,18,33,0.78)]"
-                      : item.variant === "sent"
-                        ? "border border-rose-200 bg-rose-50 text-rose-700 shadow-[0_20px_44px_-32px_rgba(190,24,93,0.4)]"
-                        : item.variant === "received"
-                          ? "border border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_20px_44px_-32px_rgba(5,150,105,0.35)]"
-                          : "border border-cyan-200 bg-cyan-50 text-[#0e4f62] shadow-[0_20px_44px_-32px_rgba(14,79,98,0.3)]"
+                      : "border border-cyan-200 bg-cyan-50 text-[#0e4f62] shadow-[0_20px_44px_-32px_rgba(14,79,98,0.3)]"
                   }`}
                 >
                   <div className="flex justify-between items-start">

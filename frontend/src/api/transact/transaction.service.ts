@@ -1,4 +1,5 @@
 import apiClient, { toApiError } from "@/src/api/client";
+import { ApiError } from "@/src/types/api-error";
 import { TRANSACT_ENDPOINTS } from "@/src/api/endpoints";
 import type {
   CurrentBalanceResponse,
@@ -136,6 +137,50 @@ export async function downloadTransactionHistoryReport(
   }
 }
 
+export async function downloadTransactionReceipt(referenceNo: string): Promise<Blob> {
+  try {
+    const { data } = await apiClient.get<Blob>(TRANSACT_ENDPOINTS.transactionReceipt(referenceNo), {
+      responseType: "blob",
+      headers: {
+        Accept: "application/pdf",
+      },
+    });
+    return data;
+  } catch (error) {
+    const response = (
+      error as {
+        response?: {
+          status?: number;
+          data?: unknown;
+        };
+      }
+    ).response;
+
+    // PDF requests use a blob response. Decode error blobs so the screen can
+    // show the backend's actual reason instead of Axios's generic status text.
+    if (response?.data instanceof Blob) {
+      const rawBody = await response.data.text();
+      try {
+        const body = JSON.parse(rawBody) as { message?: unknown };
+        if (typeof body.message === "string" && body.message.trim()) {
+          throw new ApiError({
+            message: body.message,
+            code: response.status === 404 ? "NOT_FOUND" : "UNKNOWN_ERROR",
+            status: response.status,
+            details: body,
+          });
+        }
+      } catch (parseError) {
+        if (parseError instanceof ApiError) {
+          throw parseError;
+        }
+      }
+    }
+
+    throw toApiError(error);
+  }
+}
+
 export const transactionService = {
   getCurrentBalance,
   getDashboardSummary,
@@ -145,4 +190,5 @@ export const transactionService = {
   getTransactionHistory,
   getBankOfficerTransactionHistory,
   downloadTransactionHistoryReport,
+  downloadTransactionReceipt,
 };

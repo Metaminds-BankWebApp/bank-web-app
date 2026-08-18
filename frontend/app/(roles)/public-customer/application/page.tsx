@@ -866,6 +866,11 @@ export default function PublicCustomerApplicationPage() {
   // --- Handlers ---
   const includesSalaryDetails = incomeType === "Salary Worker" || incomeType === "Salary Worker + Business Person";
   const includesBusinessDetails = incomeType === "Business Person" || incomeType === "Salary Worker + Business Person";
+  const hasSalaryIncome = formData.incomes.some((income) => income.type === "Salary Worker");
+  const hasBusinessIncome = formData.incomes.some((income) => income.type === "Business Person");
+  const isIncomeStepComplete =
+    (!includesSalaryDetails || hasSalaryIncome) &&
+    (!includesBusinessDetails || hasBusinessIncome);
 
   const clearIncomeError = (field: IncomeField) => {
     setIncomeErrors((prev) => {
@@ -1237,25 +1242,22 @@ export default function PublicCustomerApplicationPage() {
      return saveFinancialStepByStep(publicCustomerId, step);
   };
 
-  const getMissingStepMessage = (): string | null => {
-    if (step === 1 && formData.incomes.length === 0) {
-      return "Add at least one income source, or choose Skip for this section.";
+  const isCurrentOptionalStepEmpty = () => {
+    if (step === 2) {
+      return formData.loans.length === 0 && !loanType && !loanEMI.trim() && !loanBalance.trim();
     }
-    if (step === 2 && formData.loans.length === 0) {
-      return "Add at least one loan, or choose Skip if you have no loan details to provide.";
+    if (step === 3) {
+      return formData.cards.length === 0 && !cardLimit.trim() && !cardOutstanding.trim();
     }
-    if (
-      step === 3 &&
-      formData.cards.length === 0 &&
-      cardLimit.trim().length === 0 &&
-      cardOutstanding.trim().length === 0
-    ) {
-      return "Add at least one credit card, or choose Skip if you have no card details to provide.";
+    if (step === 4) {
+      return (
+        formData.liabilities.length === 0 &&
+        !liabilityDesc.trim() &&
+        !liabilityAmount.trim() &&
+        formData.missedPayments === 0
+      );
     }
-    if (step === 4 && formData.liabilities.length === 0 && formData.missedPayments === 0) {
-      return "Add a liability or missed payment, or choose Skip if you have no liability details to provide.";
-    }
-    return null;
+    return false;
   };
 
    const nextStep = async () => {
@@ -1263,18 +1265,36 @@ export default function PublicCustomerApplicationPage() {
          return;
       }
 
-      const missingStepMessage = getMissingStepMessage();
-      if (missingStepMessage) {
+      if (step === 1 && !isIncomeStepComplete) {
+        const nextIncomeErrors: Partial<Record<IncomeField, string>> = {};
+
+        if (includesSalaryDetails && !hasSalaryIncome) {
+          Object.assign(nextIncomeErrors, validateSalaryIncome());
+        }
+        if (includesBusinessDetails && !hasBusinessIncome) {
+          Object.assign(nextIncomeErrors, validateBusinessIncome());
+        }
+
+        setIncomeErrors(nextIncomeErrors);
+        const message =
+          Object.keys(nextIncomeErrors).length > 0
+            ? "Complete all required income fields and add the income source before continuing."
+            : "Add the completed income source before continuing.";
         updateStepStatus(step, {
           status: "FAILED",
           backendSynced: false,
-          note: missingStepMessage,
+          note: message,
         });
         showToast({
-          title: "This section is not filled yet",
-          description: missingStepMessage,
+          title: "Income details are required",
+          description: message,
           type: "info",
         });
+        return;
+      }
+
+      if (isCurrentOptionalStepEmpty()) {
+        await skipStep();
         return;
       }
 
@@ -1339,6 +1359,14 @@ export default function PublicCustomerApplicationPage() {
   const skipStep = async () => {
       if (isSavingStep) {
          return;
+      }
+      if (step === 1) {
+        showToast({
+          title: "Income details are required",
+          description: "Add at least one income source before continuing.",
+          type: "info",
+        });
+        return;
       }
       const currentDefinition = APPLICATION_STEPS.find((item) => item.step === step);
       if (!currentDefinition || currentDefinition.code === "REVIEW") {
@@ -1424,6 +1452,10 @@ export default function PublicCustomerApplicationPage() {
         setIsSubmitting(true);
         const publicCustomerId = await resolvePublicCustomerId();
         const progressBeforeSubmit = await getPublicCustomerApplicationProgress(publicCustomerId);
+        const incomeStep = progressBeforeSubmit.steps.find((item) => item.code === "INCOME");
+        if (incomeStep?.status !== "COMPLETED") {
+          throw new Error("Add and save at least one income source before submitting the application.");
+        }
         if (progressBeforeSubmit.steps.some((item) => item.code !== "REVIEW" && item.status === "PENDING")) {
           throw new Error("Complete or skip every financial section before submitting the application.");
         }
@@ -1528,7 +1560,7 @@ export default function PublicCustomerApplicationPage() {
              {/* Left: Form */}
              <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 h-fit">
                 <h2 className="text-xl font-bold text-slate-900 mb-2">Income Sources</h2>
-                <p className="text-slate-500 mb-8 text-sm">Tell us about your monthly earnings. You can add multiple income types.</p>
+                <p className="text-slate-500 mb-8 text-sm">Tell us about your monthly earnings. All fields shown for your selected income type are required.</p>
                 
                 <div className="space-y-6">
                    <div>
@@ -2277,10 +2309,12 @@ export default function PublicCustomerApplicationPage() {
                            {step === 1 ? "Loans" : step === 2 ? "Credit Cards" : step === 3 ? "Liabilities" : "Review"}
                         </span>
                      </div>
-                        <Button variant="ghost" onClick={skipStep} disabled={isSavingStep} className="h-10 px-4 text-slate-500 hover:text-slate-900 hover:bg-slate-100">
-                        Skip
-                     </Button>
-                        <Button onClick={nextStep} disabled={isSavingStep} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white gap-2 px-8 h-10 rounded-lg shadow-lg shadow-blue-400/20">
+                        {step > 1 && (
+                          <Button variant="ghost" onClick={skipStep} disabled={isSavingStep} className="h-10 px-4 text-slate-500 hover:text-slate-900 hover:bg-slate-100">
+                            Skip
+                          </Button>
+                        )}
+                        <Button onClick={nextStep} disabled={isSavingStep || (step === 1 && !isIncomeStepComplete)} className="bg-[#3e9fd3] hover:bg-[#2c8ac0] text-white gap-2 px-8 h-10 rounded-lg shadow-lg shadow-blue-400/20">
                            {isSavingStep ? "Saving..." : "Next"} <span className="hidden sm:inline">Section</span> <ArrowRight size={16} />
                      </Button>
                   </div>
