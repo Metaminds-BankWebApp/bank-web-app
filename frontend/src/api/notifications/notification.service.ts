@@ -60,3 +60,11 @@ export async function dismissNotification(notificationId: number): Promise<void>
     throw toApiError(error);
   }
 }
+
+export async function clearAllNotifications(): Promise<void> {
+  try {
+    await apiClient.delete(NOTIFICATION_ENDPOINTS.clearAll);
+  } catch (error) {
+    throw toApiError(error);
+  }
+}

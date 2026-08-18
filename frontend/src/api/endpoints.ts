@@ -167,5 +167,6 @@ export const NOTIFICATION_ENDPOINTS = {
   unreadCount: "/notifications/unread-count",
   markRead: (notificationId: number) => `/notifications/${notificationId}/read`,
   markAllRead: "/notifications/read-all",
+  clearAll: "/notifications",
   dismiss: (notificationId: number) => `/notifications/${notificationId}`,
 } as const;
