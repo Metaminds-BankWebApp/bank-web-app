@@ -1,417 +1,74 @@
-﻿"use client";
+"use client";
 
-import { useMemo, useState } from "react";
-import { Sidebar } from "@/src/components/layout";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Download, Eye, Search } from "lucide-react";
 import { AuthGuard } from "@/src/components/auth";
-import { 
-  Search, 
-   Download,
-   Eye,
-} from "lucide-react";
+import { Sidebar } from "@/src/components/layout";
+import { getOfficerCreditHistory } from "@/src/api/creditlens/officer-creditlens.service";
+import type { OfficerCreditHistoryItemResponse } from "@/src/types/dto/officer-creditlens.dto";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { Badge } from "@/src/components/ui/badge";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
-import { Badge } from "@/src/components/ui/badge";
-import PopupModal from "@/src/components/ui/popup-modal";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/src/components/ui/select";
-import { SegmentedFilterTabs } from "@/src/components/ui/segmented-filter-tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/src/components/ui/table";
-import { DataTablePagination } from "@/src/components/ui/data-table-layout";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { TableActionIconButton } from "@/src/components/ui/table-action-icon-button";
 
-const historyTabs = [
-  { key: "evaluations", label: "Evaluations" },
-  { key: "customer-updates", label: "Customer Updates" },
-  { key: "financial-updates", label: "Financial Data Updates" },
-] as const;
-
-type HistoryTab = (typeof historyTabs)[number]["key"];
-
-const historyData = [
-  {
-    id: 1,
-    date: "Oct 25, 2023",
-    time: "10:45 AM",
-    customer: { name: "Amila Silva", id: "#C-48292", avatar: "AS", color: "bg-blue-100 text-blue-600" },
-    actionType: "Credit Re-evaluation",
-    performedBy: "Officer John Doe",
-    status: "completed",
-  },
-  {
-    id: 2,
-    date: "Oct 25, 2023",
-    time: "10:45 AM",
-    customer: { name: "Amila Silva", id: "#C-48292", avatar: "AS", color: "bg-blue-100 text-blue-600" },
-    actionType: "Credit Re-evaluation",
-    performedBy: "Officer John Doe",
-    status: "completed",
-  },
-  {
-    id: 3,
-    date: "Oct 25, 2023",
-    time: "09:15 AM",
-    customer: { name: "Kasun Perera", id: "#C-48301", avatar: "KP", color: "bg-amber-100 text-amber-600" },
-    actionType: "New Registration",
-    performedBy: "Officer Sarah Jenkins",
-    status: "pending",
-  },
-  {
-    id: 4,
-    date: "Oct 24, 2023",
-    time: "04:30 PM",
-    customer: { name: "Ruwan Fernando", id: "#C-48315", avatar: "RF", color: "bg-red-100 text-red-600" },
-    actionType: "Limit Increase Request",
-    performedBy: "Officer John Doe",
-    status: "failed",
-  },
-  {
-    id: 5,
-    date: "Oct 24, 2023",
-    time: "04:30 PM",
-    customer: { name: "Ruwan Fernando", id: "#C-48315", avatar: "RF", color: "bg-red-100 text-red-600" },
-    actionType: "Limit Increase Request",
-    performedBy: "Officer John Doe",
-    status: "failed",
-  },
-  {
-    id: 6,
-    date: "Oct 24, 2023",
-    time: "11:05 AM",
-    customer: { name: "Malani Jayasinghe", id: "#C-48322", avatar: "MJ", color: "bg-purple-100 text-purple-600" },
-    actionType: "Credit Scoring Refresh",
-    performedBy: "System (Auto)",
-    status: "completed",
-  },
-];
+type RiskFilter = "all" | "LOW" | "MEDIUM" | "HIGH";
+type RangeFilter = "all" | "30" | "90" | "365";
 
 export default function HistoryPage() {
-  const [selectedTab, setSelectedTab] = useState<HistoryTab>("evaluations");
-   const [selectedHistoryItem, setSelectedHistoryItem] = useState<(typeof historyData)[number] | null>(null);
-   const [searchTerm, setSearchTerm] = useState("");
-   const [dateRange, setDateRange] = useState<"30days" | "60days" | "90days" | "all">("30days");
-   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
-   const [sortBy, setSortBy] = useState<"date-desc" | "date-asc">("date-desc");
+  const router = useRouter();
+  const [items, setItems] = useState<OfficerCreditHistoryItemResponse[]>([]);
+  const [query, setQuery] = useState("");
+  const [risk, setRisk] = useState<RiskFilter>("all");
+  const [range, setRange] = useState<RangeFilter>("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-   // Build the visible history list from tab, search, date, status, and sort selections.
-   const visibleHistory = useMemo(() => {
-      const latestDate = new Date(Math.max(...historyData.map((item) => new Date(item.date).getTime())));
+  const loadHistory = async () => {
+    try {
+      setIsLoading(true); setError(null);
+      setItems(await getOfficerCreditHistory());
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load officer history.");
+    } finally { setIsLoading(false); }
+  };
 
-      const filtered = historyData.filter((item) => {
-         const text = `${item.customer.name} ${item.customer.id} ${item.actionType} ${item.performedBy}`.toLowerCase();
-         const matchesSearch = searchTerm.trim().length === 0 ? true : text.includes(searchTerm.toLowerCase());
+  useEffect(() => { void loadHistory(); }, []);
 
-         const matchesTab =
-            selectedTab === "evaluations"
-               ? /credit/i.test(item.actionType)
-               : selectedTab === "customer-updates"
-                  ? /registration|limit increase/i.test(item.actionType)
-                  : /refresh/i.test(item.actionType);
+  const visibleItems = useMemo(() => {
+    const threshold = range === "all" ? null : Date.now() - Number(range) * 86_400_000;
+    return items.filter((item) => `${item.customerName} ${item.customerCode} ${item.evaluationSource}`.toLowerCase().includes(query.toLowerCase()) && (risk === "all" || item.riskLevel.toUpperCase() === risk) && (threshold === null || new Date(item.createdAt).getTime() >= threshold));
+  }, [items, query, range, risk]);
 
-         const matchesStatus = statusFilter === "all" ? true : item.status === statusFilter;
+  const exportCsv = () => {
+    const rows = [["Timestamp", "Customer", "Customer Code", "Activity", "Risk Score", "Risk Level"], ...visibleItems.map((item) => [formatDateTime(item.createdAt), item.customerName, item.customerCode, sourceLabel(item.evaluationSource), String(item.totalRiskPoints), item.riskLabel])];
+    const csv = rows.map((row) => row.map((value) => `"${value.replaceAll('"', '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const link = document.createElement("a");
+    link.href = url; link.download = `creditlens-officer-history-${new Date().toISOString().slice(0, 10)}.csv`; link.click(); URL.revokeObjectURL(url);
+  };
 
-         const rowDate = new Date(item.date);
-         const daysDifference = Math.floor((latestDate.getTime() - rowDate.getTime()) / (1000 * 60 * 60 * 24));
-         const matchesDate =
-            dateRange === "all"
-               ? true
-               : dateRange === "30days"
-                  ? daysDifference <= 30
-                  : dateRange === "60days"
-                     ? daysDifference <= 60
-                     : daysDifference <= 90;
-
-         return matchesSearch && matchesTab && matchesStatus && matchesDate;
-      });
-
-      return [...filtered].sort((left, right) => {
-         const leftDate = new Date(`${left.date} ${left.time}`).getTime();
-         const rightDate = new Date(`${right.date} ${right.time}`).getTime();
-         return sortBy === "date-desc" ? rightDate - leftDate : leftDate - rightDate;
-      });
-   }, [dateRange, searchTerm, selectedTab, sortBy, statusFilter]);
-
-   // Export only the records that currently match filters.
-   const handleExport = () => {
-      const header = ["Date", "Time", "Customer", "Customer ID", "Action Type", "Performed By", "Status"];
-      const rows = visibleHistory.map((item) => [
-         item.date,
-         item.time,
-         item.customer.name,
-         item.customer.id,
-         item.actionType,
-         item.performedBy,
-         item.status,
-      ]);
-
-      const csv = [header, ...rows]
-         .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(","))
-         .join("\n");
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `bank-officer-history-${new Date().toISOString().slice(0, 10)}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
-   };
-
-   // Build a simple explanation block for the selected activity type.
-   const getActivityDetails = (actionType: string) => {
-      if (/Credit Re-evaluation/i.test(actionType)) {
-         return {
-            changes: [
-               "Credit score recalculated using latest transaction behavior",
-               "Risk level updated after debt-to-income re-check",
-               "Officer note saved to profile timeline",
-            ],
-            trigger: "Quarterly risk review",
-         };
-      }
-
-      if (/Registration/i.test(actionType)) {
-         return {
-            changes: [
-               "Customer profile created with base identity details",
-               "KYC document package submitted",
-               "Initial eligibility checks queued",
-            ],
-            trigger: "New customer onboarding",
-         };
-      }
-
-      if (/Limit Increase/i.test(actionType)) {
-         return {
-            changes: [
-               "Customer requested higher credit limit",
-               "Income proof re-validation requested",
-               "Decision flagged for manual officer approval",
-            ],
-            trigger: "Limit adjustment workflow",
-         };
-      }
-
-      return {
-         changes: [
-            "Financial data synchronized from latest statements",
-            "Model confidence check completed",
-            "Customer timeline refreshed",
-         ],
-         trigger: "Automated system update",
-      };
-   };
-
-  return (
-    <AuthGuard requiredRole="BANK_OFFICER">
-         <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
-            <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
-         <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
-               <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="History" className="mb-6 shrink-0" />
-
-          <div className="flex-1 overflow-y-auto min-h-0">
-      
-
-          {/* Controls */}
-          <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
-             <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                        <Select value={dateRange} onValueChange={(value) => setDateRange(value as "30days" | "60days" | "90days" | "all") }>
-                           <SelectTrigger className="min-w-42.5 bg-white">
-                              <SelectValue placeholder="Date range" />
-                           </SelectTrigger>
-                           <SelectContent>
-                              <SelectItem value="30days">Last 30 Days</SelectItem>
-                              <SelectItem value="60days">Last 60 Days</SelectItem>
-                              <SelectItem value="90days">Last 90 Days</SelectItem>
-                              <SelectItem value="all">All Time</SelectItem>
-                           </SelectContent>
-                        </Select>
-
-                        <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | "completed" | "pending" | "failed") }>
-                           <SelectTrigger className="min-w-42.5 bg-white">
-                              <SelectValue placeholder="Status" />
-                           </SelectTrigger>
-                           <SelectContent>
-                              <SelectItem value="all">All Statuses</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
-                              <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="failed">Failed</SelectItem>
-                           </SelectContent>
-                        </Select>
-
-                        <Select value={sortBy} onValueChange={(value) => setSortBy(value as "date-desc" | "date-asc") }>
-                           <SelectTrigger className="min-w-42.5 bg-white">
-                              <SelectValue placeholder="Sort" />
-                           </SelectTrigger>
-                           <SelectContent>
-                              <SelectItem value="date-desc">Newest First</SelectItem>
-                              <SelectItem value="date-asc">Oldest First</SelectItem>
-                           </SelectContent>
-                        </Select>
-             </div>
-
-                   <div className="relative w-full md:w-105 flex gap-2">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                        <Input
-                           placeholder="Search activity..."
-                           className="pl-9 bg-slate-50 border-slate-200"
-                           value={searchTerm}
-                           onChange={(event) => setSearchTerm(event.target.value)}
-                        />
-                        <Button variant="outline" className="shrink-0" onClick={handleExport}>
-                           <Download size={14} className="mr-2" /> Export
-                        </Button>
-             </div>
-          </div>
-
-          {/* Content */}
-          <div className="creditlens-card creditlens-card-hover creditlens-delay-2 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-             {/* Tabs */}
-             <SegmentedFilterTabs items={historyTabs} activeKey={selectedTab} onChange={setSelectedTab} />
-
-             {/* Table */}
-             <div className="overflow-x-auto">
-                <Table>
-                   <TableHeader className="bg-sky-50/70">
-                      <TableRow>
-                         <TableHead className="w-45 text-xs font-bold uppercase text-slate-500">Timestamp</TableHead>
-                         <TableHead className="text-xs font-bold uppercase text-slate-500">Customer</TableHead>
-                         <TableHead className="text-xs font-bold uppercase text-slate-500">Action Type</TableHead>
-                         <TableHead className="text-xs font-bold uppercase text-slate-500">Performed By</TableHead>
-                         <TableHead className="text-xs font-bold uppercase text-slate-500">Status</TableHead>
-                         <TableHead className="text-right text-xs font-bold uppercase text-slate-500">Actions</TableHead>
-                      </TableRow>
-                   </TableHeader>
-                   <TableBody>
-                      {visibleHistory.map((item) => (
-                         <TableRow key={item.id} className="hover:bg-slate-50/50">
-                            <TableCell className="font-medium text-slate-700">
-                               <div className="flex flex-col">
-                                  <span>{item.date}</span>
-                                  <span className="text-xs text-slate-400 font-normal">{item.time}</span>
-                               </div>
-                            </TableCell>
-                            <TableCell>
-                               <div className="flex items-center gap-3">
-                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${item.customer.color}`}>
-                                     {item.customer.avatar}
-                                  </div>
-                                  <div>
-                                     <p className="font-medium text-slate-800">{item.customer.name}</p>
-                                     <p className="text-xs text-slate-400">ID: {item.customer.id}</p>
-                                  </div>
-                               </div>
-                            </TableCell>
-                            <TableCell className="font-semibold text-slate-700">
-                               {item.actionType}
-                            </TableCell>
-                            <TableCell className="text-slate-600">
-                               {item.performedBy}
-                            </TableCell>
-                            <TableCell>
-                               <Badge variant="outline" className={`
-                                  ${item.status === "completed" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : ""}
-                                  ${item.status === "pending" ? "bg-amber-50 text-amber-600 border-amber-100" : ""}
-                                  ${item.status === "failed" ? "bg-red-50 text-red-600 border-red-100" : ""}
-                               `}>
-                                  {item.status.toUpperCase()}
-                               </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                               <TableActionIconButton
-                                  label={`View details for history item ${item.id}`}
-                                  onClick={() => setSelectedHistoryItem(item)}
-                               >
-                                  <Eye size={16} />
-                               </TableActionIconButton>
-                            </TableCell>
-                         </TableRow>
-                                 ))}
-
-                                 {visibleHistory.length === 0 && (
-                                    <TableRow>
-                                       <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
-                                          No activity found for the selected filters.
-                                       </TableCell>
-                                    </TableRow>
-                                 )}
-                   </TableBody>
-                </Table>
-             </div>
-
-             {/* Footer / Pagination */}
-             <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                        <p className="text-sm text-slate-500">
-                           Showing <span className="font-medium text-slate-800">{visibleHistory.length === 0 ? 0 : 1}-{visibleHistory.length}</span> of <span className="font-medium text-slate-800">{visibleHistory.length}</span> activities
-                        </p>
-                <DataTablePagination currentPage={1} totalPages={visibleHistory.length === 0 ? 0 : 1} />
-             </div>
-          </div>
-
-               <PopupModal
-                  open={selectedHistoryItem !== null}
-                  onOpenChange={(open) => {
-                     if (!open) {
-                        setSelectedHistoryItem(null);
-                     }
-                  }}
-                  title={selectedHistoryItem ? `${selectedHistoryItem.customer.name} — Activity Details` : "Activity Details"}
-                  description="Expanded history information for this customer action."
-                  footer={<Button variant="outline" onClick={() => setSelectedHistoryItem(null)}>Close</Button>}
-               >
-                  {selectedHistoryItem && (
-                     <div className="space-y-4">
-                        <div className="grid gap-3 sm:grid-cols-2">
-                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                              <p className="text-xs text-slate-500">Timestamp</p>
-                              <p className="font-semibold text-slate-800">{selectedHistoryItem.date} · {selectedHistoryItem.time}</p>
-                           </div>
-                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                              <p className="text-xs text-slate-500">Status</p>
-                              <p className="font-semibold uppercase text-slate-800">{selectedHistoryItem.status}</p>
-                           </div>
-                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                              <p className="text-xs text-slate-500">Customer</p>
-                              <p className="font-semibold text-slate-800">{selectedHistoryItem.customer.name} ({selectedHistoryItem.customer.id})</p>
-                           </div>
-                           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                              <p className="text-xs text-slate-500">Performed By</p>
-                              <p className="font-semibold text-slate-800">{selectedHistoryItem.performedBy}</p>
-                           </div>
-                        </div>
-
-                        <div className="rounded-lg border border-slate-200 bg-white p-4">
-                           <p className="mb-2 text-xs text-slate-500">Action Type</p>
-                           <p className="mb-3 font-semibold text-slate-800">{selectedHistoryItem.actionType}</p>
-
-                           <p className="mb-2 text-xs text-slate-500">What was done</p>
-                           <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-                              {getActivityDetails(selectedHistoryItem.actionType).changes.map((detail) => (
-                                 <li key={detail}>{detail}</li>
-                              ))}
-                           </ul>
-
-                           <p className="mt-3 text-xs text-slate-500">Triggered By</p>
-                           <p className="font-medium text-slate-800">{getActivityDetails(selectedHistoryItem.actionType).trigger}</p>
-                        </div>
-                     </div>
-                  )}
-               </PopupModal>
-          </div>
-        </main>
+  return <AuthGuard requiredRole="BANK_OFFICER"><div className="flex h-screen overflow-hidden bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)]">
+    <Sidebar role="BANK_OFFICER" className="h-full max-lg:hidden" />
+    <main className="flex h-full flex-1 flex-col overflow-hidden bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:rounded-l-[28px] lg:p-7">
+      <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse name="Kamal Edirisinghe" role="Bank Officer" title="History" className="mb-6 shrink-0" />
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <section className="mb-6 rounded-xl border border-slate-100 bg-white p-4 shadow-sm"><div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row"><Select value={range} onValueChange={(value) => setRange(value as RangeFilter)}><SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All time</SelectItem><SelectItem value="30">Last 30 days</SelectItem><SelectItem value="90">Last 90 days</SelectItem><SelectItem value="365">Last year</SelectItem></SelectContent></Select><Select value={risk} onValueChange={(value) => setRisk(value as RiskFilter)}><SelectTrigger className="w-full sm:w-40"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All risk levels</SelectItem><SelectItem value="LOW">Low risk</SelectItem><SelectItem value="MEDIUM">Medium risk</SelectItem><SelectItem value="HIGH">High risk</SelectItem></SelectContent></Select></div>
+          <div className="flex w-full gap-2 lg:w-auto"><div className="relative min-w-0 flex-1 lg:w-80"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search customer or activity" className="bg-slate-50 pl-9" /></div><Button variant="outline" onClick={exportCsv} disabled={!visibleItems.length}><Download size={15} className="mr-2" />Export</Button></div>
+        </div></section>
+        <section className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm"><div className="border-b border-slate-100 px-5 py-4"><h2 className="font-semibold text-slate-800">Credit evaluation activity</h2><p className="mt-1 text-sm text-slate-500">A live record of evaluations for customers assigned to you.</p></div>
+          {isLoading ? <State message="Loading activity history…" /> : error ? <State message={error} action="Try again" onAction={() => void loadHistory()} /> : <div className="overflow-x-auto"><Table><TableHeader className="bg-sky-50/70"><TableRow><TableHead>Timestamp</TableHead><TableHead>Customer</TableHead><TableHead>Activity</TableHead><TableHead>Risk score</TableHead><TableHead>Risk level</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>{visibleItems.map((item) => <TableRow key={item.bankEvaluationId}><TableCell className="whitespace-nowrap text-slate-600">{formatDateTime(item.createdAt)}</TableCell><TableCell><p className="font-semibold text-slate-800">{item.customerName}</p><p className="text-xs text-slate-400">{item.customerCode}</p></TableCell><TableCell className="font-medium text-slate-700">{sourceLabel(item.evaluationSource)}</TableCell><TableCell className="font-semibold text-slate-800">{item.totalRiskPoints}/100</TableCell><TableCell><Badge className={riskBadge(item.riskLevel)}>{item.riskLabel} risk</Badge></TableCell><TableCell className="text-right"><TableActionIconButton label={`View ${item.customerName}'s evaluation`} tone="blue" onClick={() => router.push(`/bank-officer/credit-analysis/evaluation/${item.bankCustomerId}?evaluationId=${item.bankEvaluationId}&name=${encodeURIComponent(item.customerName)}`)}><Eye size={16} /></TableActionIconButton></TableCell></TableRow>)}{visibleItems.length === 0 && <TableRow><TableCell colSpan={6} className="py-12 text-center text-slate-500">No evaluation activity matches these filters.</TableCell></TableRow>}</TableBody></Table></div>}
+          {!isLoading && !error && <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-3 text-sm text-slate-500">Showing <span className="font-semibold text-slate-800">{visibleItems.length}</span> of {items.length} activities</div>}
+        </section>
       </div>
-    </AuthGuard>
-  );
+    </main>
+  </div></AuthGuard>;
 }
+
+function State({ message, action, onAction }: { message: string; action?: string; onAction?: () => void }) { return <div className="p-10 text-center text-slate-500"><p>{message}</p>{action && onAction && <Button className="mt-4" onClick={onAction}>{action}</Button>}</div>; }
+function formatDateTime(value: string) { const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }); }
+function sourceLabel(source: string) { return source.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) + " evaluation"; }
+function riskBadge(risk: string) { const value = risk.toUpperCase(); return value === "LOW" ? "border-0 bg-emerald-100 text-emerald-700" : value === "HIGH" ? "border-0 bg-red-100 text-red-700" : "border-0 bg-amber-100 text-amber-700"; }

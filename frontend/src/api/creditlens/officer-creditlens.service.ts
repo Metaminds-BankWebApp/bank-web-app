@@ -9,6 +9,7 @@ import type {
   CreditInsightsResponse,
   CreditReportResponse,
   CreditTrendResponse,
+  OfficerCreditHistoryItemResponse,
 } from "@/src/types/dto/officer-creditlens.dto";
 
 /**
@@ -28,6 +29,18 @@ export async function getOfficerCreditDashboard(): Promise<BankCreditAnalysisDas
   try {
     const { data } = await apiClient.get<BankCreditAnalysisDashboardResponse>(
       "/creditlens/officer/dashboard",
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+// Loads the CreditLens evaluation activity for customers assigned to the officer.
+export async function getOfficerCreditHistory(): Promise<OfficerCreditHistoryItemResponse[]> {
+  try {
+    const { data } = await apiClient.get<OfficerCreditHistoryItemResponse[]>(
+      "/creditlens/officer/history",
     );
     return data;
   } catch (error) {

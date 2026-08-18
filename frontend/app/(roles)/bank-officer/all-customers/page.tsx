@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { getBankCustomersForOfficer } from "@/src/api/customers/bank-customer.service";
@@ -18,11 +17,10 @@ import type {
 } from "@/src/types/dto/bank-customer-financial.dto";
 import { 
   Search, 
-  Filter, 
-  Download, 
+   Filter, 
+   Download, 
    Plus,
    Eye,
-   Pencil,
    Trash2,
 } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
@@ -46,7 +44,6 @@ import {
    SelectTrigger,
    SelectValue,
 } from "@/src/components/ui/select";
-import { SegmentedFilterTabs } from "@/src/components/ui/segmented-filter-tabs";
 import { TableActionIconButton } from "@/src/components/ui/table-action-icon-button";
 
 type Customer = {
@@ -172,7 +169,6 @@ const customerDetailTabs: Array<{ id: CustomerDetailTab; label: string }> = [
 const customersPerPage = 10;
 
 export default function AllCustomersPage() {
-  const router = useRouter();
    const { showToast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -180,7 +176,6 @@ export default function AllCustomersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-   const [activeRisk, setActiveRisk] = useState<"all" | Customer["riskLevel"]>("all");
    const [statusFilter, setStatusFilter] = useState<"all" | Customer["status"]>("all");
    const [sortBy, setSortBy] = useState<
       "updated-desc" | "updated-asc" | "score-desc" | "score-asc" | "name-asc" | "name-desc"
@@ -215,7 +210,6 @@ export default function AllCustomersPage() {
            const filters = {
              search: debouncedSearchTerm || undefined,
              status: statusFilter === "all" ? undefined : statusFilter,
-             riskLevel: activeRisk === "all" ? undefined : activeRisk,
              sortBy: sortBy,
            } as const;
 
@@ -240,23 +234,7 @@ export default function AllCustomersPage() {
        return () => {
          mounted = false;
        };
-    }, [activeRisk, debouncedSearchTerm, sortBy, statusFilter]);
-
-   const riskCounts = useMemo(() => {
-      return {
-         all: customers.length,
-         LOW: customers.filter((item) => item.riskLevel === "LOW").length,
-         MEDIUM: customers.filter((item) => item.riskLevel === "MEDIUM").length,
-         HIGH: customers.filter((item) => item.riskLevel === "HIGH").length,
-      };
-   }, [customers]);
-
-   const riskTabOptions: Array<{ key: "all" | Customer["riskLevel"]; label: string }> = [
-      { key: "all", label: `All (${riskCounts.all})` },
-      { key: "LOW", label: `Low Risk (${riskCounts.LOW})` },
-      { key: "MEDIUM", label: `Medium Risk (${riskCounts.MEDIUM})` },
-      { key: "HIGH", label: `High Risk (${riskCounts.HIGH})` },
-   ];
+    }, [debouncedSearchTerm, sortBy, statusFilter]);
 
    // Show only customers that match the officer's search, filters, and sort choice.
    const visibleCustomers = useMemo(() => {
@@ -269,10 +247,9 @@ export default function AllCustomersPage() {
                : `${customer.id} ${customer.name} ${customer.nic} ${customer.email} ${customer.phone}`
                      .toLowerCase()
                      .includes(normalizedSearch);
-         const matchesRisk = activeRisk === "all" ? true : customer.riskLevel === activeRisk;
          const matchesStatus = statusFilter === "all" ? true : customer.status === statusFilter;
 
-         return matchesSearch && matchesRisk && matchesStatus;
+         return matchesSearch && matchesStatus;
       });
 
       return [...filtered].sort((left, right) => {
@@ -293,7 +270,7 @@ export default function AllCustomersPage() {
                return 0;
          }
       });
-   }, [activeRisk, customers, searchTerm, sortBy, statusFilter]);
+   }, [customers, searchTerm, sortBy, statusFilter]);
 
    const totalPages = Math.ceil(visibleCustomers.length / customersPerPage);
    const paginatedCustomers = useMemo(() => {
@@ -305,7 +282,7 @@ export default function AllCustomersPage() {
 
    useEffect(() => {
       setCurrentPage(1);
-   }, [activeRisk, searchTerm, sortBy, statusFilter]);
+   }, [searchTerm, sortBy, statusFilter]);
 
    useEffect(() => {
       if (currentPage > totalPages) {
@@ -459,7 +436,7 @@ export default function AllCustomersPage() {
          <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
             <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
             <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
-                      <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="All Customers" className="mb-6 shrink-0" />
+                      <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Customer Lookup" className="mb-6 shrink-0" />
 
           <div className="flex-1 min-h-0 space-y-6 overflow-y-auto">
              {/* Toolbar */}
@@ -486,9 +463,9 @@ export default function AllCustomersPage() {
                    <Button variant="outline" className="gap-2 text-slate-600 border-slate-200" onClick={handleExport}>
                       <Download size={16} /> Export
                    </Button>
-                    <Link href="/bank-officer/add-customer">
-                      <Button className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white">
-                          <Plus size={16} /> New Customer
+                   <Link href="/bank-officer/add-customer">
+                      <Button className="gap-2 bg-[#0d3b66] text-white hover:bg-[#0a2e50]">
+                         <Plus size={16} /> Add Customer
                       </Button>
                    </Link>
                 </div>
@@ -535,7 +512,6 @@ export default function AllCustomersPage() {
                             onClick={() => {
                                setSearchTerm("");
                                setStatusFilter("all");
-                               setActiveRisk("all");
                                setSortBy("updated-desc");
                             }}
                          >
@@ -546,9 +522,6 @@ export default function AllCustomersPage() {
              </div>
 
              <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-
-             {/* Status Tabs */}
-             <SegmentedFilterTabs items={riskTabOptions} activeKey={activeRisk} onChange={setActiveRisk} />
 
              {/* Table Container */}
              <div className="overflow-x-auto">
@@ -602,13 +575,6 @@ export default function AllCustomersPage() {
                                   <Eye size={16} />
                                </TableActionIconButton>
                                <TableActionIconButton
-                                  label={`Edit ${customer.name}`}
-                                  tone="blue"
-                                  onClick={() => router.push(`/bank-officer/add-customer?nic=${encodeURIComponent(customer.nic)}`)}
-                               >
-                                  <Pencil size={16} />
-                               </TableActionIconButton>
-                               <TableActionIconButton
                                   label={`Delete ${customer.name}`}
                                   tone="red"
                                   onClick={() => setDeleteRequestTarget(customer)}
@@ -657,7 +623,7 @@ export default function AllCustomersPage() {
                         setSelectedCustomer(null);
                      }
                   }}
-                  title={selectedCustomer ? `${selectedCustomer.name} — Customer Profile` : "Customer Profile"}
+                  title={selectedCustomer ? `${selectedCustomer.name} — Customer 360°` : "Customer 360°"}
                   description="Detailed personal and financial data grouped into tabs for quick review."
                    size="lg"
                >
@@ -677,7 +643,7 @@ export default function AllCustomersPage() {
                                           .toUpperCase()}
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                       <p className="text-xs uppercase tracking-[0.22em] text-sky-100/85">Customer Profile</p>
+                                       <p className="text-xs uppercase tracking-[0.22em] text-sky-100/85">Customer 360°</p>
                                        <h4 className="mt-1 truncate text-[1.35rem] font-semibold leading-tight">{selectedCustomer.name}</h4>
                                        <p className="mt-1 text-xs leading-5 text-sky-50/85 sm:text-sm">Quick review of personal identity and financial history in one place.</p>
                                        <div className="mt-3 flex flex-wrap gap-2">
