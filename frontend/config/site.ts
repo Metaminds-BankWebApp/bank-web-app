@@ -134,7 +134,7 @@ export const siteConfig = {
         { title: "Loan Policy", href: "/admin/policy-management", icon: "inbox", section: "general" },
         { title: "Audit Logs", href: "/admin/audit-logs", icon: "inbox", section: "general" },
         { title: "Profile", href: "/admin/profile", icon: "user", section: "general" },
-        { title: "Help & Support", href: "/admin/support", icon: "help-circle", section: "other" },
+        { title: "Help & Support", href: "/admin/support", icon: "help-circle", section: "general" },
         { title: "Setting", href: "/admin/settings", icon: "settings", section: "other" },
         { title: "Log Out", href: "/", icon: "log-out", section: "account" },
       ],
