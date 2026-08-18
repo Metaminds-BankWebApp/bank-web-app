@@ -73,10 +73,6 @@ function toMonthStart(value: string | null): Date | null {
   return new Date(parsed.getFullYear(), parsed.getMonth(), 1);
 }
 
-function monthDiffFromNow(date: Date, now: Date): number {
-  return (now.getFullYear() - date.getFullYear()) * 12 + (now.getMonth() - date.getMonth());
-}
-
 function matchesDateFilter(
   item: LoanSenseHistoryItemResponse,
   dateFilter: DateFilter,
@@ -87,28 +83,29 @@ function matchesDateFilter(
     return false;
   }
 
-  const diff = monthDiffFromNow(itemMonth, now);
-  if (diff < 0) {
-    return false;
-  }
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
   if (dateFilter === "thisMonth") {
-    return diff === 0;
+    return itemMonth.getTime() === monthStart.getTime();
   }
 
   if (dateFilter === "lastMonth") {
-    return diff === 1;
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return itemMonth.getTime() === lastMonthStart.getTime();
   }
 
   if (dateFilter === "3m") {
-    return diff < 3;
+    const start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    return itemMonth >= start && itemMonth <= monthStart;
   }
 
   if (dateFilter === "6m") {
-    return diff < 6;
+    const start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    return itemMonth >= start && itemMonth <= monthStart;
   }
 
-  return diff < 12;
+  const start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  return itemMonth >= start && itemMonth <= monthStart;
 }
 
 export default function LoanSenseHistoryPage() {
@@ -224,7 +221,6 @@ export default function LoanSenseHistoryPage() {
               <SelectItem value="lastMonth">Last Month</SelectItem>
               <SelectItem value="3m">Last 3 Months</SelectItem>
               <SelectItem value="6m">Last 6 Months</SelectItem>
-              <SelectItem value="12m">Last Year</SelectItem>
             </SelectContent>
           </Select>
         </div>
