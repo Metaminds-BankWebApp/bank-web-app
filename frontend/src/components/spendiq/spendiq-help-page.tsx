@@ -5,6 +5,8 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import PopupModal from "@/src/components/ui/popup-modal";
+import { submitSupportRequest } from "@/src/api/support/support.service";
+import { toApiError } from "@/src/api/client";
 
 const quickActions = [
   "Add Expense Records",
@@ -16,11 +18,10 @@ const quickActions = [
 ];
 
 const faqs = [
-  "Why are my expenses not appearing?",
-  "How are categories calculated?",
-  "How to update monthly data?",
-  "Why is my total incorrect?",
-  "How to merge duplicates?",
+  ["Why are my expenses not appearing?", "Check the selected month and category filters, then refresh the page. Newly added expenses appear after the save succeeds."],
+  ["How are categories calculated?", "Each expense is grouped using its saved category. You can edit an expense to correct an incorrect category."],
+  ["Why is my total incorrect?", "Review duplicated or manually added entries first. If it remains incorrect, send a support request with the affected month."],
+  ["How do I report an issue safely?", "Never include your password, OTP, card number, or full account number in a support message."],
 ];
 
 const troubleshooterOptions = [
@@ -71,10 +72,10 @@ export function SpendIqHelpPage() {
           <p className="text-sm text-[#063154]/80 dark:text-slate-300 mt-1">Track and manage your spending effectively.</p>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              {faqs.map((question) => (
+              {faqs.map(([question, answer]) => (
                 <details key={question} className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-[#E8E8E8] dark:border-slate-700 mb-2">
                   <summary className="font-medium text-[#063154] dark:text-slate-100">{question}</summary>
-                  <p className="mt-2 text-sm text-[#063154]/80 dark:text-slate-300">Review your records, filters, and category setup, then create a ticket if the issue remains.</p>
+                  <p className="mt-2 text-sm text-[#063154]/80 dark:text-slate-300">{answer}</p>
                 </details>
               ))}
             </div>
@@ -108,6 +109,13 @@ export function SpendIqHelpPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="rounded-[20px] bg-[#063154] text-white shadow-sm p-6 mb-6">
+          <h2 className="text-xl font-semibold">Contact us</h2>
+          <p className="mt-1 text-sm text-white/80">Send a secure support request to the support team. We use your signed-in account details automatically.</p>
+          <p className="mt-3 text-xs text-white/70">Do not include passwords, OTPs, card details, or full account numbers.</p>
+          <Button className="mt-4 bg-[#2F9D94] hover:bg-[#27857e]" onClick={() => setOpenTicket(true)}>Send support request</Button>
         </section>
 
         <div className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-6 mb-6">
@@ -144,11 +152,26 @@ export function SpendIqHelpPage() {
 }
 
 function TicketForm({ onClose }: { onClose: () => void }) {
+  const [category, setCategory] = useState("SpendIQ");
   const [subject, setSubject] = useState("");
   const [description, setDescription] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    setError("");
+    if (!subject.trim() || !description.trim()) { setError("Add a subject and description."); return; }
+    setSubmitting(true);
+    try { await submitSupportRequest({ category, subject, message: description }); onClose(); }
+    catch (err) { setError(toApiError(err).message); }
+    finally { setSubmitting(false); }
+  }
 
   return (
     <div className="space-y-3">
+      <select value={category} onChange={(event) => setCategory(event.target.value)} className="w-full rounded-md border p-2 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+        <option>SpendIQ</option><option>Account access</option><option>Transaction</option><option>LoanSense</option><option>CreditLens</option><option>Other</option>
+      </select>
       <Input placeholder="Subject" value={subject} onChange={(event: ChangeEvent<HTMLInputElement>) => setSubject(event.target.value)} />
       <div>
         <label className="text-sm">Description</label>
@@ -158,9 +181,10 @@ function TicketForm({ onClose }: { onClose: () => void }) {
         <small className="text-xs text-[#063154]/80 dark:text-slate-300">Your request will be reviewed by support.</small>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button className="bg-[#2F9D94]" onClick={onClose}>Submit Ticket</Button>
+          <Button className="bg-[#2F9D94]" disabled={submitting} onClick={submit}>{submitting ? "Sending..." : "Send request"}</Button>
         </div>
       </div>
+      {error ? <p className="text-sm text-red-600" role="alert">{error}</p> : null}
     </div>
   );
 }

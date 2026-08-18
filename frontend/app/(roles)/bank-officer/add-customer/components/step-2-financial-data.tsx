@@ -139,7 +139,13 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
       (includesBusinessDetails && Boolean(formData.businessIncome.trim()));
 
     if (hasPendingDraft) {
-      validationErrors.step = "Add the current income draft to the summary or clear the amount field before continuing.";
+      // Income rows already added to the summary are retained. A typed-but-unsaved
+      // draft is intentionally cleared so a new customer's flow starts cleanly.
+      updateFormData({
+        monthlySalary: "",
+        businessIncome: "",
+        contractDurationMonths: "",
+      });
     }
 
     setErrors(validationErrors);
