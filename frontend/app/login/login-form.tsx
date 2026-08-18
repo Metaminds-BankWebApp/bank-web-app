@@ -198,13 +198,7 @@ export function LoginForm() {
           {isSubmitting ? "Signing in..." : "Sign in"}
         </Button>
 
-        <div className="space-y-2 pt-1 text-center text-sm text-(--primecore-foreground)/70">
-          <p>
-            Need to complete 2FA?{" "}
-            <Link href="/verify-otp" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
-              Verify OTP
-            </Link>
-          </p>
+        <div className="pt-1 text-center text-sm text-(--primecore-foreground)/70">
           <p>
             Don&apos;t have an account?{" "}
             <Link href="/register" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">

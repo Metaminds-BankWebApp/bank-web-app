@@ -26,16 +26,15 @@ export interface LoginResponse {
 }
 
 export interface ForgotPasswordRequest {
-  email: string;
+  identifier: string;
 }
 
 export interface VerifyOtpRequest {
-  email: string;
+  identifier: string;
   otp: string;
 }
 
 export interface ResetPasswordRequest {
-  email: string;
   resetToken: string;
   password: string;
   confirmPassword: string;

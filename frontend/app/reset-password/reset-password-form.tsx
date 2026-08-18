@@ -1,40 +1,37 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { authService } from "@/src/api/auth/auth.service";
 import { ApiError } from "@/src/types/api-error";
 import { Button, Input, useToast } from "@/src/components/ui";
+import { clearPasswordResetToken, getPasswordResetToken } from "@/src/lib/password-reset-session";
 
 export function ResetPasswordForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { showToast } = useToast();
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetToken, setResetToken] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const email = useMemo(() => searchParams.get("email") ?? "", [searchParams]);
-  const resetToken = useMemo(() => searchParams.get("token") ?? "", [searchParams]);
+  useEffect(() => {
+    setResetToken(getPasswordResetToken());
+  }, []);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,255}$/.test(password)) {
+      setError("Password must be at least 10 characters and include uppercase, lowercase, and numbers.");
       return;
     }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
-      return;
-    }
-
-    if (!email) {
-      setError("Missing email context. Restart from forgot password.");
       return;
     }
 
@@ -48,7 +45,6 @@ export function ResetPasswordForm() {
 
     try {
       await authService.resetPassword({
-        email,
         resetToken,
         password,
         confirmPassword,
@@ -72,6 +68,7 @@ export function ResetPasswordForm() {
       description: "You can now sign in with your new password.",
     });
 
+    clearPasswordResetToken();
     router.push("/login");
     setIsSubmitting(false);
   }
@@ -81,7 +78,7 @@ export function ResetPasswordForm() {
       <header className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Reset password</h1>
         <p className="text-sm text-(--primecore-foreground)/70">Choose a strong new password for your account.</p>
-        {email && <p className="text-xs text-(--primecore-foreground)/60">Account: {email}</p>}
+        <p className="text-xs text-(--primecore-foreground)/60">Use at least 10 characters with uppercase, lowercase, and a number.</p>
       </header>
 
       <form onSubmit={onSubmit} className="space-y-5">
