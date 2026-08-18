@@ -382,7 +382,7 @@ export default function AuditLogsPage() {
                   <Search size={16} className="text-gray-400 mr-2" />
                   <input
                     type="text"
-                    placeholder="Search by user, action, target, or details..."
+                    placeholder="Search by date, status, user, action, target, or details..."
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
                     className="bg-transparent w-full text-sm focus:outline-none"
