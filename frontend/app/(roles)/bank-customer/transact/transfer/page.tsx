@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Check } from "lucide-react"
+import { Check, Download, LayoutDashboard } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -58,6 +58,8 @@ export default function Page() {
   const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [isResendingOtp, setIsResendingOtp] = useState(false)
+  const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false)
+  const [receiptError, setReceiptError] = useState("")
 
   // Runs the OTP countdown timer while the OTP modal is open.
   useEffect(() => {
@@ -328,6 +330,37 @@ export default function Page() {
     }
   }
 
+  // Downloads the receipt PDF generated from the saved successful transaction.
+  const handleDownloadReceipt = async () => {
+    const referenceNo = verifiedTransaction?.referenceNo || transactionReferenceNo
+    if (!referenceNo || isDownloadingReceipt) {
+      return
+    }
+
+    setIsDownloadingReceipt(true)
+    setReceiptError("")
+    try {
+      const receipt = await transactionService.downloadTransactionReceipt(referenceNo)
+      const downloadUrl = URL.createObjectURL(receipt)
+      const link = document.createElement("a")
+      link.href = downloadUrl
+      link.download = `transaction-receipt-${referenceNo}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(downloadUrl)
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Unable to download the transaction receipt."
+      setReceiptError(message || "Unable to download the transaction receipt.")
+    } finally {
+      setIsDownloadingReceipt(false)
+    }
+  }
+
   // Computes whether required fields are valid to enable transfer button.
   const isFormValid = useMemo(() => {
     const parsedAmount = Number.parseFloat(amount || "0")
@@ -557,13 +590,30 @@ export default function Page() {
               Transaction has been done.
             </p>
 
-            <Button
-              type="button"
-              className="w-full sm:w-auto bg-[#061e3d] hover:bg-[#061e3d]/80 text-white rounded-2xl px-10 sm:px-16 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-md"
-              onClick={() => router.push("/bank-customer/transact")}
-            >
-              BACK TO DASHBOARD
-            </Button>
+            {receiptError && (
+              <p className="mb-4 text-sm text-red-600">{receiptError}</p>
+            )}
+
+            <div className="flex flex-col justify-center gap-3 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isDownloadingReceipt}
+                className="w-full sm:w-[250px] rounded-2xl px-8 py-5 sm:py-6 text-base font-semibold"
+                onClick={handleDownloadReceipt}
+              >
+                <Download className="mr-2 h-5 w-5" />
+                {isDownloadingReceipt ? "DOWNLOADING..." : "DOWNLOAD RECEIPT"}
+              </Button>
+              <Button
+                type="button"
+                className="w-full sm:w-[250px] bg-[#061e3d] hover:bg-[#061e3d]/80 text-white rounded-2xl px-8 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-md"
+                onClick={() => router.push("/bank-customer/transact")}
+              >
+                <LayoutDashboard className="mr-2 h-5 w-5" />
+                BACK TO DASHBOARD
+              </Button>
+            </div>
           </Card>
         </div>
       )}
