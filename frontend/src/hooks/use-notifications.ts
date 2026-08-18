@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
+  clearAllNotifications,
   dismissNotification,
   getNotifications,
   markAllNotificationsRead,
@@ -32,6 +33,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
   const token = useAuthStore((state) => state.token);
   const [data, setData] = useState<NotificationPageDto>({ ...EMPTY_PAGE, size: options.size ?? 20 });
   const [loading, setLoading] = useState(Boolean(token));
+  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -133,6 +135,22 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     }
   }, [refresh]);
 
+  const clearAll = useCallback(async () => {
+    if (clearing) return;
+
+    setClearing(true);
+    setData((current) => ({ ...current, ...EMPTY_PAGE, size: current.size }));
+    try {
+      await clearAllNotifications();
+      window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED_EVENT));
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to clear notifications.");
+      await refresh();
+    } finally {
+      setClearing(false);
+    }
+  }, [clearing, refresh]);
+
   return {
     notifications: data.content,
     unreadCount: data.unreadCount,
@@ -140,9 +158,11 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
     actionNeededCount: data.actionNeededCount,
     loading,
     error,
+    clearing,
     refresh,
     markRead,
     markAllRead,
     dismiss,
+    clearAll,
   };
 }
