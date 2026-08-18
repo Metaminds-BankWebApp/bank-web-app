@@ -5,6 +5,7 @@ export type NotificationSource =
   | "SPENDIQ"
   | "CREDITLENS"
   | "LOANSENSE"
+  | "SUPPORT"
   | "SYSTEM";
 
 export type NotificationSeverity = "INFO" | "SUCCESS" | "WARNING" | "ALERT";
