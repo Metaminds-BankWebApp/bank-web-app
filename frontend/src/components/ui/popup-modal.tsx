@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 type PopupModalProps = {
@@ -48,8 +49,8 @@ export default function PopupModal({
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6" style={{ zIndex: 120 }}>
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center p-4 sm:p-6" style={{ zIndex: 1000 }}>
       <div
         aria-hidden="true"
         className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
@@ -99,6 +100,7 @@ export default function PopupModal({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

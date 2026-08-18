@@ -35,15 +35,10 @@ import type {
 } from "@/src/types/dto/bank-loansense.dto";
 
 type LoanFilter = "ALL" | LoanSenseLoanType;
-type DateFilter = "1m" | "3m" | "6m" | "12m";
+type DateFilter = "thisMonth" | "lastMonth" | "3m" | "6m" | "12m";
 type BadgeTone = "success" | "warning" | "danger" | "neutral" | "info";
 
-const dateFilterToMonths: Record<DateFilter, number> = {
-  "1m": 1,
-  "3m": 3,
-  "6m": 6,
-  "12m": 12,
-};
+const fetchWindowMonths = 12;
 
 const rowsPerPage = 8;
 
@@ -67,10 +62,56 @@ function riskTone(level: string): BadgeTone {
   return "neutral";
 }
 
+function toMonthStart(value: string | null): Date | null {
+  if (!value) return null;
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return new Date(parsed.getFullYear(), parsed.getMonth(), 1);
+}
+
+function matchesDateFilter(
+  item: LoanSenseHistoryItemResponse,
+  dateFilter: DateFilter,
+  now: Date,
+): boolean {
+  const itemMonth = toMonthStart(item.evaluationDate);
+  if (!itemMonth) {
+    return false;
+  }
+
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  if (dateFilter === "thisMonth") {
+    return itemMonth.getTime() === monthStart.getTime();
+  }
+
+  if (dateFilter === "lastMonth") {
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return itemMonth.getTime() === lastMonthStart.getTime();
+  }
+
+  if (dateFilter === "3m") {
+    const start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    return itemMonth >= start && itemMonth <= monthStart;
+  }
+
+  if (dateFilter === "6m") {
+    const start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    return itemMonth >= start && itemMonth <= monthStart;
+  }
+
+  const start = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  return itemMonth >= start && itemMonth <= monthStart;
+}
+
 export default function LoanSenseHistoryPage() {
   const { showToast } = useToast();
   const [loanFilter, setLoanFilter] = useState<LoanFilter>("ALL");
-  const [dateFilter, setDateFilter] = useState<DateFilter>("3m");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("thisMonth");
   const [historyItems, setHistoryItems] = useState<LoanSenseHistoryItemResponse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -85,7 +126,7 @@ export default function LoanSenseHistoryPage() {
       try {
         const data = await getLoanSenseHistory({
           loanType: loanFilter === "ALL" ? undefined : loanFilter,
-          months: dateFilterToMonths[dateFilter],
+          months: fetchWindowMonths,
         });
         if (mounted) setHistoryItems(data);
       } catch (unknownError) {
@@ -109,13 +150,16 @@ export default function LoanSenseHistoryPage() {
     return () => {
       mounted = false;
     };
-  }, [dateFilter, loanFilter, showToast]);
+  }, [loanFilter, showToast]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [dateFilter, loanFilter]);
 
-  const grouped = useMemo(() => historyItems, [historyItems]);
+  const grouped = useMemo(() => {
+    const now = new Date();
+    return historyItems.filter((item) => matchesDateFilter(item, dateFilter, now));
+  }, [dateFilter, historyItems]);
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(grouped.length / rowsPerPage)),
     [grouped.length]
@@ -172,11 +216,11 @@ export default function LoanSenseHistoryPage() {
             <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50/70 text-sm">
               <SelectValue placeholder="Date range" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1m">Last Month</SelectItem>
+            <SelectContent className="z-[220]">
+              <SelectItem value="thisMonth">This Month</SelectItem>
+              <SelectItem value="lastMonth">Last Month</SelectItem>
               <SelectItem value="3m">Last 3 Months</SelectItem>
               <SelectItem value="6m">Last 6 Months</SelectItem>
-              <SelectItem value="12m">Last Year</SelectItem>
             </SelectContent>
           </Select>
         </div>

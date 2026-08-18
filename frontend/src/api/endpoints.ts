@@ -10,6 +10,13 @@ export const AUTH_ENDPOINTS = {
 
 export const SUPPORT_ENDPOINTS = {
   requests: "/support/requests",
+  conversations: "/support/conversations",
+  conversation: (conversationId: number) => `/support/conversations/${conversationId}`,
+  messages: (conversationId: number) => `/support/conversations/${conversationId}/messages`,
+  read: (conversationId: number) => `/support/conversations/${conversationId}/read`,
+  adminConversations: "/admin/support/conversations",
+  adminStatus: (conversationId: number) => `/admin/support/conversations/${conversationId}/status`,
+  adminConversation: (conversationId: number) => `/admin/support/conversations/${conversationId}`,
 } as const;
 
 export const REGISTRATION_ENDPOINTS = {
@@ -167,5 +174,6 @@ export const NOTIFICATION_ENDPOINTS = {
   unreadCount: "/notifications/unread-count",
   markRead: (notificationId: number) => `/notifications/${notificationId}/read`,
   markAllRead: "/notifications/read-all",
+  clearAll: "/notifications",
   dismiss: (notificationId: number) => `/notifications/${notificationId}`,
 } as const;
