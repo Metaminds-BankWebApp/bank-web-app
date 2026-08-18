@@ -581,7 +581,7 @@ export function RegisterForm() {
           application form.
         </p>
 
-        <div className="space-y-2 text-center text-sm text-(--primecore-foreground)/70">
+        <div className="text-center text-sm text-(--primecore-foreground)/70">
           <p>
             Already have an account?{" "}
             <Link
@@ -592,15 +592,6 @@ export function RegisterForm() {
             </Link>
           </p>
 
-          <p>
-            Need help accessing your account?{" "}
-            <Link
-              href="/forgot-password"
-              className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline"
-            >
-              Reset password
-            </Link>
-          </p>
         </div>
       </form>
     </section>

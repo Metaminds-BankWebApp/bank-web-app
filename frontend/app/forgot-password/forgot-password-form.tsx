@@ -10,15 +10,15 @@ import { Button, Input, useToast } from "@/src/components/ui";
 export function ForgotPasswordForm() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!email.trim()) {
-      setError("Email is required.");
+    if (!identifier.trim()) {
+      setError("Email address or username is required.");
       return;
     }
 
@@ -26,7 +26,7 @@ export function ForgotPasswordForm() {
     setIsSubmitting(true);
 
     try {
-      await authService.forgotPassword({ email: email.trim() });
+      await authService.forgotPassword({ identifier: identifier.trim() });
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
       const message = apiError?.message ?? "Unable to send verification code. Please try again.";
@@ -43,10 +43,10 @@ export function ForgotPasswordForm() {
     showToast({
       type: "success",
       title: "Verification code sent",
-      description: "Check your inbox for the OTP code.",
+      description: "If an active account matches those details, check its registered email for the OTP code.",
     });
 
-    router.push(`/verify-otp?email=${encodeURIComponent(email.trim())}`);
+    router.push(`/verify-otp?identifier=${encodeURIComponent(identifier.trim())}`);
     setIsSubmitting(false);
   }
 
@@ -54,17 +54,17 @@ export function ForgotPasswordForm() {
     <section className="w-full space-y-6 text-(--primecore-foreground)">
       <header className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Forgot password</h1>
-        <p className="text-sm text-(--primecore-foreground)/70">Enter your account email to receive a one-time verification code.</p>
+        <p className="text-sm text-(--primecore-foreground)/70">Enter your account email or username to receive a one-time verification code.</p>
       </header>
 
       <form onSubmit={onSubmit} className="space-y-5">
         <Input
-          label="Email Address"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="name@example.com"
+          label="Email Address or Username"
+          type="text"
+          autoComplete="username"
+          value={identifier}
+          onChange={(event) => setIdentifier(event.target.value)}
+          placeholder="name@example.com or your.username"
           className="h-14 rounded-2xl"
           labelClassName="text-(--primecore-foreground)/70"
         />
