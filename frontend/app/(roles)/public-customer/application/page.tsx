@@ -1242,24 +1242,6 @@ export default function PublicCustomerApplicationPage() {
      return saveFinancialStepByStep(publicCustomerId, step);
   };
 
-  const isCurrentOptionalStepEmpty = () => {
-    if (step === 2) {
-      return formData.loans.length === 0 && !loanType && !loanEMI.trim() && !loanBalance.trim();
-    }
-    if (step === 3) {
-      return formData.cards.length === 0 && !cardLimit.trim() && !cardOutstanding.trim();
-    }
-    if (step === 4) {
-      return (
-        formData.liabilities.length === 0 &&
-        !liabilityDesc.trim() &&
-        !liabilityAmount.trim() &&
-        formData.missedPayments === 0
-      );
-    }
-    return false;
-  };
-
    const nextStep = async () => {
       if (isSavingStep || step >= 5) {
          return;
@@ -1290,11 +1272,6 @@ export default function PublicCustomerApplicationPage() {
           description: message,
           type: "info",
         });
-        return;
-      }
-
-      if (isCurrentOptionalStepEmpty()) {
-        await skipStep();
         return;
       }
 
