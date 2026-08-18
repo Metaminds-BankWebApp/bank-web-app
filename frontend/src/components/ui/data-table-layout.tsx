@@ -16,7 +16,7 @@ export function DataTableToolbar({ className, ...props }: React.HTMLAttributes<H
   return (
     <div
       className={cn(
-        "creditlens-card creditlens-card-hover mb-6 flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between",
+        "creditlens-card creditlens-card-hover relative z-40 mb-6 flex flex-col gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm focus-within:z-[120] md:flex-row md:items-center md:justify-between",
         className,
       )}
       {...props}

@@ -69,53 +69,133 @@ function mapToneToStatus(tone: AdminAuditTone): LogStatus {
   return "Policy Change";
 }
 
+const TARGET_LABELS: Record<string, string> = {
+	BANK_OFFICER: "Bank officer",
+	BENEFICIARY: "Beneficiary",
+	BRANCH: "Branch",
+	CUSTOMER: "Customer",
+	EVALUATION: "Credit evaluation",
+	FINANCIAL_APPLICATION: "Financial application",
+	FINANCIAL_RECORD: "Financial information",
+	LOAN_POLICY: "Loan policy",
+	PROFILE: "Profile",
+	SUPPORT_REQUEST: "Support request",
+	TRANSACTION: "Transfer",
+	USER: "User",
+};
+
 function toTitleCase(value: string): string {
-  return value
-    .toLowerCase()
-    .split(" ")
-    .filter(Boolean)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
+	return value
+		.toLowerCase()
+		.split(/\s+/)
+		.filter(Boolean)
+		.map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+		.join(" ");
+}
+
+function toTargetLabel(value: string | null | undefined): string {
+	const normalizedValue = value?.trim().toUpperCase() ?? "";
+	if (!normalizedValue) {
+		return "";
+	}
+
+	return TARGET_LABELS[normalizedValue] ?? toTitleCase(normalizedValue.replace(/[_-]+/g, " "));
+}
+
+function withFailureState(successLabel: string, failureLabel: string, actionType: string): string {
+	return actionType.endsWith("_FAILED") ? failureLabel : successLabel;
+}
+
+function toActionLabel(actionType: string | null | undefined, fallbackTitle?: string | null): string {
+	const normalizedActionType = actionType?.trim().toUpperCase() ?? "";
+	if (!normalizedActionType) {
+		return fallbackTitle?.trim() || "Action recorded";
+	}
+
+	const baseActionType = normalizedActionType.replace(/_FAILED$/, "");
+	const directActions: Record<string, [string, string]> = {
+		LOGIN: ["Signed in", "Sign-in failed"],
+		LOGOUT: ["Signed out", "Sign-out failed"],
+		INITIATE_TRANSACTION: ["Initiated transfer", "Transfer initiation failed"],
+		CONFIRM_TRANSACTION: ["Confirmed transfer", "Transfer confirmation failed"],
+		SUBMIT_FINANCIAL_APPLICATION: [
+			"Submitted financial application",
+			"Financial application submission failed",
+		],
+	};
+	const directAction = directActions[baseActionType];
+	if (directAction) {
+		return withFailureState(directAction[0], directAction[1], normalizedActionType);
+	}
+
+	const prefixedAction = baseActionType.match(/^(POST|PUT|PATCH|DELETE)_(.+)$/);
+	const semanticAction = baseActionType.match(/^(CREATE|UPDATE|DELETE)_(.+)$/);
+	const completedAction = baseActionType.match(/^(.+)_(CREATED|UPDATED|DELETED)$/);
+	const draftCreatedAction = baseActionType.match(/^(.+)_DRAFT_CREATED$/);
+	const statusChangedAction = baseActionType.match(/^(.+)_STATUS_CHANGED$/);
+
+	let verb: "create" | "update" | "delete" | null = null;
+	let targetType = "";
+	if (prefixedAction) {
+		verb = prefixedAction[1] === "POST" ? "create" : prefixedAction[1] === "DELETE" ? "delete" : "update";
+		targetType = prefixedAction[2];
+	} else if (semanticAction) {
+		verb = semanticAction[1].toLowerCase() as "create" | "update" | "delete";
+		targetType = semanticAction[2];
+	} else if (completedAction) {
+		verb = completedAction[2].slice(0, -1).toLowerCase() as "create" | "update" | "delete";
+		targetType = completedAction[1];
+	}
+
+	if (verb) {
+		const targetLabel = toTargetLabel(targetType) || "record";
+		if (targetType === "PROFILE" && verb === "create") {
+			return withFailureState("Updated profile", "Failed to update profile", normalizedActionType);
+		}
+		const labels = {
+			create: [`Created ${targetLabel}`, `Failed to create ${targetLabel}`],
+			update: [`Updated ${targetLabel}`, `Failed to update ${targetLabel}`],
+			delete: [`Deleted ${targetLabel}`, `Failed to delete ${targetLabel}`],
+		};
+		return withFailureState(labels[verb][0], labels[verb][1], normalizedActionType);
+	}
+
+	if (draftCreatedAction) {
+		const targetLabel = toTargetLabel(draftCreatedAction[1]) || "record";
+		return withFailureState(`Saved ${targetLabel} draft`, `Failed to save ${targetLabel} draft`, normalizedActionType);
+	}
+
+	if (statusChangedAction) {
+		const targetLabel = toTargetLabel(statusChangedAction[1]) || "record";
+		return withFailureState(`Changed ${targetLabel} status`, `Failed to change ${targetLabel} status`, normalizedActionType);
+	}
+
+	return fallbackTitle?.trim() || toTitleCase(baseActionType.replace(/[_-]+/g, " "));
 }
 
 function toBriefAction(record: AdminAuditLogRecordResponse): string {
-  const rawTitle = record.title?.trim() ?? "";
-  const hasMethodAndPath = /(Executed|Failed)\s+(GET|POST|PUT|PATCH|DELETE)\s+on\s+\/\S+/i.test(rawTitle);
+	return toActionLabel(record.actionType, record.title);
+}
 
-  if (hasMethodAndPath) {
-    const titleMatch = rawTitle.match(/(Executed|Failed)\s+(GET|POST|PUT|PATCH|DELETE)/i);
-    if (titleMatch) {
-      return `${toTitleCase(titleMatch[1])} ${titleMatch[2].toUpperCase()} request`;
-    }
-  }
-
-  if (rawTitle) {
-    return rawTitle;
-  }
-
-  const actionType = record.actionType?.trim() ?? "";
-  if (!actionType) {
-    return "Action recorded";
-  }
-
-  return toTitleCase(actionType.replace(/[_-]+/g, " "));
+function toTarget(record: AdminAuditLogRecordResponse): string {
+	const targetLabel = toTargetLabel(record.targetType);
+	const targetId = record.targetId?.trim() ?? "";
+	if (targetLabel && targetId) {
+		return `${targetLabel} #${targetId}`;
+	}
+	return targetLabel || (targetId ? `Record #${targetId}` : "-");
 }
 
 function toAuditLogRow(record: AdminAuditLogRecordResponse): AuditLogRow {
   const { date, time } = formatDateTimeParts(record.createdAt);
-  const target =
-    record.targetId?.trim() ||
-    record.targetType?.trim() ||
-    "-";
-
-  return {
+	return {
     id: record.actionId,
     date,
     time,
     user: record.actorName?.trim() || "System",
     role: record.actorRole?.trim() || "SYSTEM",
     action: toBriefAction(record),
-    target,
+		target: toTarget(record),
     status: mapToneToStatus(record.tone),
   };
 }
@@ -338,9 +418,9 @@ export default function AuditLogsPage() {
                   className="mt-2 w-full rounded-lg bg-slate-50 px-3 py-2 text-sm"
                 >
                   <option value={ALL_FILTER_OPTION}>{ALL_FILTER_OPTION}</option>
-                  {actionOptions.map((actionType) => (
-                    <option key={actionType} value={actionType}>
-                      {actionType}
+						{actionOptions.map((actionType) => (
+							<option key={actionType} value={actionType}>
+								{toActionLabel(actionType)}
                     </option>
                   ))}
                 </select>
