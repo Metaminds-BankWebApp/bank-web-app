@@ -389,6 +389,7 @@ export function RegisterForm() {
         <Input
           label="Email Address"
           type="email"
+          autoComplete="email"
           value={email}
           error={fieldErrors.email}
           onChange={(event) => {
@@ -455,6 +456,7 @@ export function RegisterForm() {
 
           <Input
             label="Username"
+            autoComplete="username"
             value={username}
             error={fieldErrors.username}
             onChange={(event) => {
@@ -531,6 +533,7 @@ export function RegisterForm() {
             <Input
               label="Password"
               type="password"
+              autoComplete="new-password"
               value={password}
               error={fieldErrors.password}
               onChange={(event) => {
@@ -550,6 +553,7 @@ export function RegisterForm() {
           <Input
             label="Confirm Password"
             type="password"
+            autoComplete="new-password"
             value={confirmPassword}
             error={fieldErrors.confirmPassword}
             onChange={(event) => {
