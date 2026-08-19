@@ -24,19 +24,23 @@ const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
 const contactRegex = /^(?:077|076|078|070|072|074|075|071)\d{7}$/;
 const nicRegex = /^(?:\d{9}[VvXx]|\d{12})$/;
 const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
+const startsWithLetterRegex = /^\p{L}/u;
 
 export function validateOfficerForm(formData: OfficerFormData): OfficerFormErrors {
   const errors: OfficerFormErrors = {};
 
   if (!formData.firstName.trim()) {
     errors.firstName = "First name is required.";
-  }else if (formData.firstName.trim().length < 3) {
+  } else if (!startsWithLetterRegex.test(formData.firstName.trim())) {
+    errors.firstName = "First name must start with a letter.";
+  } else if (formData.firstName.trim().length < 3) {
     errors.firstName = "First name should contain at least more than 3 characters.";
   }
-   
 
   if (!formData.lastName.trim()) {
     errors.lastName = "Last name is required.";
+  } else if (!startsWithLetterRegex.test(formData.lastName.trim())) {
+    errors.lastName = "Last name must start with a letter.";
   }
 
   if (!formData.nic.trim()) {
@@ -49,6 +53,26 @@ export function validateOfficerForm(formData: OfficerFormData): OfficerFormError
     errors.dob = "Date of birth is required.";
   } else if (!dobRegex.test(formData.dob.trim())) {
     errors.dob = "Use yyyy-mm-dd format.";
+  } else {
+    const dob = new Date(`${formData.dob.trim()}T00:00:00`);
+    const today = new Date();
+
+    if (Number.isNaN(dob.getTime())) {
+      errors.dob = "Enter a valid date of birth.";
+    } else {
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDifference = today.getMonth() - dob.getMonth();
+      if (
+        monthDifference < 0 ||
+        (monthDifference === 0 && today.getDate() < dob.getDate())
+      ) {
+        age -= 1;
+      }
+
+      if (age < 18) {
+        errors.dob = "Bank officer must be at least 18 years old.";
+      }
+    }
   }
 
   if (!formData.province.trim()) {
@@ -61,7 +85,7 @@ export function validateOfficerForm(formData: OfficerFormData): OfficerFormError
     errors.contact = "Contact number is required.";
   } else if (!contactRegex.test(formData.contact.trim())) {
     errors.contact =
-      "Contact number must be 10 digits and start with 077, 076, 078, 070, 072, 074, 075, or 071.";
+      "Contact number must be 10 digits and start with 070, 071, 072, 074, 075, 076, 077, or 078.";
   }
 
   if (!formData.email.trim()) {

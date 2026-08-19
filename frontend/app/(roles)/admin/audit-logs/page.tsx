@@ -373,13 +373,13 @@ export default function AuditLogsPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-6">
-            <div className="primecore-table-toolbar flex-col items-stretch lg:flex-row">
-              <div className="col-span-1 lg:col-span-2">
+            <div className="primecore-table-toolbar flex-col items-stretch lg:flex-row lg:justify-start">
+              <div className="mr-auto w-full lg:w-[42rem]">
                 <label className="text-xs font-semibold text-gray-500 uppercase">
                   Search Logs
                 </label>
-                <div className="mt-2 flex items-center rounded-lg bg-slate-50 px-3 py-2">
-                  <Search size={16} className="text-gray-400 mr-2" />
+                <div className="mt-2 flex h-12 items-center rounded-lg bg-slate-50 px-3 py-2">
+                  <Search size={18} className="mr-2 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search by user, role, action, . . ."

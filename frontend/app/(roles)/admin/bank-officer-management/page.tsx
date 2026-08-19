@@ -23,7 +23,7 @@ import {
 import { ApiError } from "@/src/types/api-error";
 import type { BranchResponse } from "@/src/types/dto/branch.dto";
 
-type StatusType = "Active" | "Inactive" | "Locked" | "Pending";
+type StatusType = "Active" | "Suspend" | "Pending";
 
 type OfficerData = {
   userId: number;
@@ -70,7 +70,7 @@ const officerSearchOptions: Array<{ value: OfficerSearchField; label: string }> 
   { value: "ASSIGNED", label: "Assigned Date" },
   { value: "STATUS", label: "Status" },
 ];
-const officerStatusKeywords = new Set(["active", "inactive", "locked", "pending"]);
+const officerStatusKeywords = new Set(["active", "suspend", "pending"]);
 
 function SummaryCard({
   label,
@@ -107,9 +107,7 @@ function StatusBadge({ status }: { status: StatusType }) {
   const classes =
     status === "Active"
       ? "border border-emerald-100 bg-emerald-50 text-emerald-600"
-      : status === "Inactive"
-      ? "border border-slate-200 bg-slate-100 text-slate-600"
-      : status === "Locked"
+      : status === "Suspend"
       ? "border border-red-100 bg-red-50 text-red-600"
       : "border border-amber-100 bg-amber-50 text-amber-600";
 
@@ -145,21 +143,15 @@ function toDisplayStatus(status: string): StatusType {
   if (normalized === "ACTIVE") {
     return "Active";
   }
-  if (normalized === "INACTIVE") {
-    return "Inactive";
-  }
-  if (normalized === "LOCKED") {
-    return "Locked";
+  if (normalized === "SUSPEND" || normalized === "INACTIVE" || normalized === "LOCKED") {
+    return "Suspend";
   }
   return "Pending";
 }
 
 function toStatusCode(status: StatusType): AdminBankOfficerStatus {
-  if (status === "Locked") {
-    return "LOCKED";
-  }
-  if (status === "Inactive") {
-    return "INACTIVE";
+  if (status === "Suspend") {
+    return "SUSPEND";
   }
   return "ACTIVE";
 }
@@ -446,6 +438,36 @@ export default function Page() {
         description: `${updated.fullName} was updated successfully.`,
       });
     } catch (error) {
+      if (error instanceof ApiError) {
+        const fieldErrors = error.details?.fieldErrors;
+        if (fieldErrors && typeof fieldErrors === "object") {
+          const source = fieldErrors as Record<string, unknown>;
+          const nextErrors: OfficerEditErrors = {};
+          if (typeof source.email === "string") nextErrors.email = source.email;
+          if (typeof source.contactNumber === "string") nextErrors.contactNumber = source.contactNumber;
+          if (typeof source.firstName === "string") nextErrors.firstName = source.firstName;
+          if (typeof source.lastName === "string") nextErrors.lastName = source.lastName;
+          if (typeof source.branchId === "string") nextErrors.branchId = source.branchId;
+          if (Object.keys(nextErrors).length > 0) {
+            setEditErrors(nextErrors);
+            return;
+          }
+        }
+
+        const normalizedMessage = error.message.toLowerCase();
+        if (normalizedMessage.includes("email")) {
+          setEditErrors({ email: "Email is already used." });
+          return;
+        }
+        if (normalizedMessage.includes("contact") || normalizedMessage.includes("phone")) {
+          setEditErrors({
+            contactNumber:
+              "Contact number must be 10 digits and start with 070, 071, 072, 074, 075, 076, 077, or 078.",
+          });
+          return;
+        }
+      }
+
       const message =
         error instanceof ApiError
           ? error.message
@@ -518,13 +540,13 @@ export default function Page() {
   // Builds derived UI values from API data to keep rendering simple.
   const summary = useMemo(() => {
     const activeCount = officers.filter((officer) => officer.status === "Active").length;
-    const inactiveCount = officers.filter((officer) => officer.status === "Inactive").length;
+    const suspendedCount = officers.filter((officer) => officer.status === "Suspend").length;
     const recentCount = officers.filter((officer) => isRecentDate(officer.createdAt, 7)).length;
 
     return {
       totalOfficers: officers.length,
       activeCount,
-      inactiveCount,
+      suspendedCount,
       recentCount,
     };
   }, [officers]);
@@ -564,7 +586,7 @@ export default function Page() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <SummaryCard label="TOTAL OFFICERS" value={summary.totalOfficers} variant="dark" />
               <SummaryCard label="ACTIVE OFFICERS" value={summary.activeCount} variant="medium" />
-              <SummaryCard label="INACTIVE OFFICERS" value={summary.inactiveCount} />
+              <SummaryCard label="SUSPENDED OFFICERS" value={summary.suspendedCount} />
               <SummaryCard label="NEWLY ADDED OFFICERS" value={summary.recentCount} />
             </div>
 
@@ -854,8 +876,7 @@ export default function Page() {
                     className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   >
                     <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                    <option value="LOCKED">Locked</option>
+                    <option value="SUSPEND">Suspend</option>
                   </select>
                 </div>
               </div>

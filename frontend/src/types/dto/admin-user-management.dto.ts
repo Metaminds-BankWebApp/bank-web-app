@@ -1,6 +1,6 @@
 export type AdminCustomerType = "ALL" | "BANK" | "PUBLIC";
 
-export type AdminUserStatus = "ACTIVE" | "INACTIVE" | "LOCKED";
+export type AdminUserStatus = "ACTIVE" | "SUSPEND";
 
 export interface AdminUserManagementUserResponse {
   userId: number;
