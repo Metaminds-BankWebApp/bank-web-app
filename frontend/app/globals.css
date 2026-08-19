@@ -141,6 +141,15 @@
     transition: background-color 300ms ease-out, background-image 300ms ease-out, color 300ms ease-out;
   }
 
+  /* Keep browser-native date pickers in the same light calendar theme everywhere. */
+  input[type="date"] {
+    color-scheme: light;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+  }
+
   .dark body {
     background-image:
       radial-gradient(1200px 560px at 12% -8%, rgba(56, 189, 248, 0.24), transparent 60%),

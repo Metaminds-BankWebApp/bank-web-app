@@ -36,6 +36,19 @@ export interface BankCreditAnalysisDashboardResponse {
   customers: BankCreditAnalysisCustomerRowResponse[];
 }
 
+/** One CreditLens evaluation action in the authenticated officer's portfolio history. */
+export interface OfficerCreditHistoryItemResponse {
+  bankEvaluationId: number;
+  bankCustomerId: number;
+  customerCode: string;
+  customerName: string;
+  evaluationSource: string;
+  totalRiskPoints: number;
+  riskLevel: string;
+  riskLabel: string;
+  createdAt: string;
+}
+
 export interface BankCreditAnalysisCustomerProfileResponse {
   bankCustomerId: number;
   userId: number;

@@ -1,350 +1,470 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader } from "@/src/components/ui";
-import { Sidebar } from "@/src/components/layout";
-import { AuthGuard } from "@/src/components/auth";
-import ModuleHeader from "@/src/components/ui/module-header";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { getOfficerCreditDashboard } from "@/src/api/creditlens/officer-creditlens.service";
-import type { BankCreditAnalysisDashboardResponse } from "@/src/types/dto/officer-creditlens.dto";
+import {
+  AlertTriangle,
+  ClipboardCheck,
+  RefreshCw,
+  Users,
+  Wallet,
+} from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { AuthGuard } from "@/src/components/auth";
+import { Sidebar } from "@/src/components/layout";
+import ModuleHeader from "@/src/components/ui/module-header";
+import { Button } from "@/src/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/select";
+import { getBankCustomersForOfficer } from "@/src/api/customers/bank-customer.service";
+import { transactionService } from "@/src/api/transact/transaction.service";
+import type { BankCustomerSummaryResponse } from "@/src/types/dto/bank-customer.dto";
+import type { TransactionResponse } from "@/src/types/dto/transact.dto";
 
-export default function BankOfficerRolePage() {
-   const [dashboardCounts, setDashboardCounts] = useState<BankCreditAnalysisDashboardResponse | null>(null);
+const riskColors = ["#0d3b66", "#0d3b66", "#0d3b66"];
+const transactionColors = ["#0d3b66", "#2563a0", "#5b91bd"];
+type DateRange = "30" | "90" | "365" | "all" | "custom";
 
-   // Pull the officer-level portfolio counts from the backend so the four
-   // summary cards reflect the current customer distribution.
-   useEffect(() => {
-      let mounted = true;
+export default function BankOfficerDashboardPage() {
+  const [customers, setCustomers] = useState<BankCustomerSummaryResponse[]>([]);
+  const [transactions, setTransactions] = useState<TransactionResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [range, setRange] = useState<DateRange>("30");
+  const [fromDate, setFromDate] = useState(() => dateInputValue(daysAgo(30)));
+  const [toDate, setToDate] = useState(() => dateInputValue(new Date()));
 
-      const loadDashboardCounts = async () => {
-         try {
-            const response = await getOfficerCreditDashboard();
-            if (mounted) {
-               setDashboardCounts(response);
-            }
-         } catch {
-            if (mounted) {
-               setDashboardCounts(null);
-            }
-         }
-      };
+  const loadDashboard = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const [customerRows, transactionRows] = await Promise.all([
+        getBankCustomersForOfficer(),
+        transactionService.getBankOfficerTransactionHistory(),
+      ]);
+      setCustomers(customerRows);
+      setTransactions(transactionRows);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Unable to load the officer dashboard.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      void loadDashboardCounts();
+  useEffect(() => {
+    void loadDashboard();
+  }, []);
 
-      return () => {
-         mounted = false;
-      };
-   }, []);
+  const selectRange = (value: DateRange) => {
+    setRange(value);
+    if (value === "all" || value === "custom") return;
+    setFromDate(dateInputValue(daysAgo(Number(value))));
+    setToDate(dateInputValue(new Date()));
+  };
 
-   const totalCustomers = dashboardCounts?.totalCustomers ?? 0;
-   const lowRiskCount = dashboardCounts?.lowRiskCount ?? 0;
-   const mediumRiskCount = dashboardCounts?.mediumRiskCount ?? 0;
-   const highRiskCount = dashboardCounts?.highRiskCount ?? 0;
+  const overview = useMemo(() => {
+    const start =
+      range === "all" || !fromDate
+        ? null
+        : new Date(`${fromDate}T00:00:00`).getTime();
+    const end =
+      range === "all" || !toDate
+        ? null
+        : new Date(`${toDate}T23:59:59.999`).getTime();
+    const isInRange = (value: string | null) => {
+      const timestamp = value === null ? Number.NaN : new Date(value).getTime();
+      return (
+        (start === null || timestamp >= start) &&
+        (end === null || timestamp <= end)
+      );
+    };
+    const filteredCustomers = customers.filter((customer) =>
+      isInRange(customer.lastUpdated),
+    );
+    const filteredTransactions = transactions.filter((transaction) =>
+      isInRange(transaction.transactionDate),
+    );
+    const riskData = ["LOW", "MEDIUM", "HIGH"].map((level) => ({
+      name: `${level[0]}${level.slice(1).toLowerCase()} risk`,
+      value: filteredCustomers.filter(
+        (customer) => customer.riskLevel === level,
+      ).length,
+    }));
+    const transactionData = [
+      {
+        name: "Completed",
+        value: filteredTransactions.filter((transaction) =>
+          /SUCCESS|COMPLETED/.test((transaction.status || "").toUpperCase()),
+        ).length,
+      },
+      {
+        name: "Pending",
+        value: filteredTransactions.filter((transaction) =>
+          /PENDING/.test((transaction.status || "").toUpperCase()),
+        ).length,
+      },
+      {
+        name: "Review",
+        value: filteredTransactions.filter((transaction) =>
+          /FAILED|CANCELLED/.test((transaction.status || "").toUpperCase()),
+        ).length,
+      },
+    ];
+    return {
+      riskData,
+      transactionData,
+      chartRangeKey: `${range}-${fromDate}-${toDate}`,
+      dateRangeLabel:
+        range === "all"
+          ? "All time"
+          : fromDate && toDate
+            ? `${formatDashboardDate(fromDate)} – ${formatDashboardDate(toDate)}`
+            : "Selected date range",
+      customerCount: filteredCustomers.length,
+      transactionCount: filteredTransactions.length,
+      highRisk: riskData[2].value,
+      pendingProfiles: filteredCustomers.filter((customer) =>
+        /DRAFT|PENDING/.test((customer.status || "").toUpperCase()),
+      ).length,
+      transactionReviews: transactionData[1].value + transactionData[2].value,
+    };
+  }, [customers, fromDate, range, toDate, transactions]);
 
-  // Main dashboard for officers: quick portfolio snapshot plus shortcuts to daily tasks.
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
-      <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
-        <Sidebar role="BANK_OFFICER" className="max-lg:hidden h-full" />
-      <main className="flex-1 flex flex-col bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:p-7 h-full overflow-hidden lg:rounded-l-[28px]">
-          <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Dashboard" className="mb-5 shrink-0" />
-
-          <div className="flex-1 min-h-0 overflow-y-auto">
-          <div className="grid gap-6 xl:grid-cols-[2fr_1fr] h-full">
-            
-            {/* Left Column */}
-            <div className="flex flex-col gap-6 h-full">
-              {/* Bank Target */}
-              <Card className="creditlens-card creditlens-card-hover creditlens-delay-1 border-none shadow-sm flex flex-col justify-center shrink-0">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <h2 className="text-lg font-semibold">Bank Target</h2>
-                  <span className="rounded-full border border-gray-200 px-2.5 py-0.5 text-xs font-semibold text-gray-500 cursor-pointer hover:bg-gray-50">Show All</span>
-                </CardHeader>
-                <CardContent className="flex flex-col justify-center">
-                  <div className="mb-4 flex items-end justify-between">
-                    <div>
-                      <p className="text-sm text-gray-500">In Progress</p>
-                      <p className="text-2xl font-bold text-[#0d3b66]">LKR 231,032,444</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">Target</p>
-                      <p className="text-xl font-bold text-gray-400">LKR 500,000,000</p>
-                    </div>
-                  </div>
-                  <div className="relative h-4 w-full rounded-full bg-gray-100">
-                    <div className="absolute left-0 top-0 h-full w-[46%] rounded-full bg-[#3b82f6]"></div>
-                    {/* Knob */}
-                    <div className="absolute top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border-4 border-white bg-gray-300 shadow-md" style={{ left: '46%' }}></div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Chart Section */}
-              <Card className="creditlens-card creditlens-card-hover creditlens-delay-2 border-none shadow-sm flex-1 flex flex-col min-h-75">
-                <CardHeader className="flex flex-row items-center justify-between shrink-0">
-                  <h2 className="text-lg font-semibold">Customer Risk Segmentation</h2>
-                  <div className="flex items-center gap-4">
-                     <div className="flex items-center gap-2 text-xs">
-                        <span className="block h-2 w-2 rounded-full bg-sky-400"></span>
-                        <span className="text-gray-500">Low Risk</span>
-                     </div>
-                     <div className="flex items-center gap-2 text-xs">
-                        <span className="block h-2 w-2 rounded-full bg-blue-600"></span>
-                        <span className="text-gray-500">Medium Risk</span>
-                     </div>
-                     <div className="flex items-center gap-2 text-xs">
-                        <span className="block h-2 w-2 rounded-full bg-[#0d3b66]"></span>
-                        <span className="text-gray-500">High Risk</span>
-                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col">
-                   {/* Chart Container incl Y-Axis */}
-                   <div className="relative flex-1 flex w-full h-full pb-6 px-1 lg:px-2">
-                       {/* Y-Axis */}
-                       <div className="flex flex-col justify-between items-end pr-3 pb-6 text-[10px] text-gray-400 shrink-0 h-full border-r border-gray-100">
-                          <span>3000</span>
-                          <span>2250</span>
-                          <span>1500</span>
-                          <span>750</span>
-                          <span>0</span>
-                       </div>
-
-                       {/* Stacked Bar Chart & X-Axis Area */}
-                       <div className="relative flex-1 flex flex-col h-full border-b border-gray-100 bg-cover bg-no-repeat w-full ml-1">
-                           <div className="flex items-end justify-between h-full pt-4 w-full gap-1 lg:gap-2 px-1">
-                            {[
-                               { month: 'Jan', low: 2100, medium: 240, high: 520 },
-                               { month: 'Feb', low: 1850, medium: 630, high: 310 },
-                               { month: 'Mar', low: 2350, medium: 190, high: 140 },
-                               { month: 'Apr', low: 1600, medium: 510, high: 420 },
-                               { month: 'May', low: 1420, medium: 800, high: 650 },
-                               { month: 'Jun', low: 1950, medium: 430, high: 530 },
-                               { month: 'Jul', low: 1680, medium: 780, high: 360 },
-                               { month: 'Aug', low: 2400, medium: 150, high: 190 },
-                               { month: 'Sep', low: 1560, medium: 860, high: 240 },
-                               { month: 'Oct', low: 1790, medium: 520, high: 580 },
-                               { month: 'Nov', low: 2020, medium: 280, high: 180 },
-                               { month: 'Dec', low: 1820, medium: 420, high: 210 }, // Matches static values perfectly
-                            ].map((data, i) => {
-                               const total = data.low + data.medium + data.high;
-                               const maxPossible = 3000;
-                               
-                               const lowPercent = (data.low / maxPossible) * 100;
-                               const medPercent = (data.medium / maxPossible) * 100;
-                               const highPercent = (data.high / maxPossible) * 100;
-
-                               return (
-                                 <div key={i} className="group relative flex flex-col items-center flex-1 h-full justify-end">
-                                    {/* Tooltip */}
-                                    <div className="absolute -top-16 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-slate-200 text-slate-800 text-xs py-2 px-3 rounded shadow-xl pointer-events-none whitespace-nowrap z-20 flex flex-col gap-1 min-w-30">
-                                       <div className="font-bold text-slate-600 mb-1 border-b pb-1 text-center">{data.month} Portfolio</div>
-                                       <div className="flex justify-between w-full"><span>Low:</span> <span className="font-semibold text-sky-500">{data.low}</span></div>
-                                       <div className="flex justify-between w-full"><span>Medium:</span> <span className="font-semibold text-blue-600">{data.medium}</span></div>
-                                       <div className="flex justify-between w-full"><span>High:</span> <span className="font-semibold text-[#0d3b66]">{data.high}</span></div>
-                                       <div className="flex justify-between w-full mt-1 border-t pt-1 font-bold"><span>Total:</span> <span>{total}</span></div>
-                                    </div>
-                                    
-                                    {/* Stacked Bars Container */}
-                                    <div className="flex flex-col-reverse w-full max-w-8 cursor-pointer" 
-                                      style={{ 
-                                        height: '100%', 
-                                        transformOrigin: "bottom",
-                                        animation: `trend-bar-rise 720ms cubic-bezier(0.22,1,0.36,1) ${i * 55}ms both`,
-                                      }}
-                                    >
-                                         {/* Low Risk Segment (Bottom) */}
-                                         {lowPercent > 0 && (
-                                           <div 
-                                             className="w-full bg-sky-400/80 hover:bg-sky-400 transition-colors border-x border-sky-500 rounded-b" 
-                                             style={{ height: `${lowPercent}%` }}
-                                           />
-                                         )}
-                                         {/* Medium Risk Segment (Middle) */}
-                                         {medPercent > 0 && (
-                                           <div 
-                                             className="w-full bg-blue-600/80 hover:bg-blue-600 transition-colors border-x border-blue-700" 
-                                             style={{ height: `${medPercent}%` }}
-                                           />
-                                         )}
-                                         {/* High Risk Segment (Top) */}
-                                         {highPercent > 0 && (
-                                           <div 
-                                             className="w-full bg-[#0d3b66]/80 hover:bg-[#0d3b66] transition-colors border-t border-x border-[#0a2f52] rounded-t" 
-                                             style={{ height: `${highPercent}%` }}
-                                           />
-                                         )}
-                                    </div>
-
-                                    {/* X-Axis Month Label */}
-                                    <span 
-                                      className="absolute -bottom-6 text-[10px] text-gray-400 whitespace-nowrap"
-                                      style={{
-                                        animation: `trend-label-fade 360ms ease ${i * 55 + 260}ms both`,
-                                      }}
-                                    >
-                                      {data.month}
-                                    </span>
-                                 </div>
-                               );
-                            })}
+      <div className="flex h-screen overflow-hidden bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)]">
+        <Sidebar role="BANK_OFFICER" className="h-full max-lg:hidden" />
+        <main className="flex h-full flex-1 flex-col overflow-hidden bg-[#f3f4f6] p-3 shadow-2xl sm:p-5 lg:rounded-l-[28px] lg:p-7">
+          <ModuleHeader
+            theme="staff"
+            menuMode="sidebar-overlay"
+            sidebarRole="BANK_OFFICER"
+            sidebarHideCollapse
+            name="Kamal Edirisinghe"
+            role="Bank Officer"
+            title="Dashboard"
+            className="mb-5 shrink-0"
+          />
+          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+            {isLoading ? (
+              <State
+                title="Loading dashboard"
+                description="Fetching customer and transaction data."
+              />
+            ) : error ? (
+              <State
+                title="Dashboard unavailable"
+                description={error}
+                action="Try again"
+                onAction={() => void loadDashboard()}
+              />
+            ) : (
+              <>
+                <div className="mb-5 flex justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => void loadDashboard()}
+                    className="h-10 rounded-xl border-slate-200/90 bg-white/80 px-4 text-[#0d3b66] shadow-[0_10px_24px_-18px_rgba(13,59,102,0.7)] transition-all hover:-translate-y-px hover:border-[#0d3b66] hover:bg-white"
+                  >
+                    <RefreshCw size={15} className="mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+                <section className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <NumberCard
+                    icon={<Users size={19} />}
+                    label="Total customers"
+                    value={overview.customerCount}
+                    href="/bank-officer/all-customers"
+                  />
+                  <NumberCard
+                    icon={<AlertTriangle size={19} />}
+                    label="High-risk customers"
+                    value={overview.highRisk}
+                    href="/bank-officer/credit-analysis"
+                  />
+                  <NumberCard
+                    icon={<ClipboardCheck size={19} />}
+                    label="Pending profiles"
+                    value={overview.pendingProfiles}
+                    href="/bank-officer/work-queue"
+                  />
+                  <NumberCard
+                    icon={<Wallet size={19} />}
+                    label="Transaction reviews"
+                    value={overview.transactionReviews}
+                    href="/bank-officer/transactions"
+                  />
+                </section>
+                <section className="relative z-[100] mb-5 flex flex-col gap-3 rounded-2xl border border-white/90 bg-white/80 p-3 shadow-[0_18px_38px_-28px_rgba(13,59,102,0.45)] backdrop-blur-md sm:flex-row sm:items-end sm:p-4">
+                  <Select
+                    value={range}
+                    onValueChange={(value) => selectRange(value as DateRange)}
+                    className="sm:w-44"
+                  >
+                    <SelectTrigger className="h-10 w-full rounded-xl border-sky-100 bg-sky-50/60 font-medium text-[#0d3b66] shadow-inner">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">Last 30 days</SelectItem>
+                      <SelectItem value="90">Last 90 days</SelectItem>
+                      <SelectItem value="365">Last year</SelectItem>
+                      <SelectItem value="all">All time</SelectItem>
+                      <SelectItem value="custom">Custom range</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <label className="flex flex-1 flex-col gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                    From
+                    <input
+                      type="date"
+                      value={fromDate}
+                      onChange={(event) => {
+                        setFromDate(event.target.value);
+                        setRange("custom");
+                      }}
+                      className="h-10 rounded-xl border border-slate-200/90 bg-white px-3 text-sm font-semibold normal-case tracking-normal text-slate-700 outline-none transition focus:border-[#0d3b66] focus:ring-2 focus:ring-sky-100"
+                    />
+                  </label>
+                  <label className="flex flex-1 flex-col gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                    To
+                    <input
+                      type="date"
+                      value={toDate}
+                      onChange={(event) => {
+                        setToDate(event.target.value);
+                        setRange("custom");
+                      }}
+                      className="h-10 rounded-xl border border-slate-200/90 bg-white px-3 text-sm font-semibold normal-case tracking-normal text-slate-700 outline-none transition focus:border-[#0d3b66] focus:ring-2 focus:ring-sky-100"
+                    />
+                  </label>
+                </section>
+                <section className="relative z-0 grid gap-5 xl:grid-cols-[1.35fr_1fr]">
+                  <ChartCard
+                    title="Customer risk distribution"
+                    description={`${overview.customerCount} updated customer profiles · ${overview.dateRangeLabel}`}
+                    actionHref="/bank-officer/credit-analysis"
+                    actionLabel="Credit Review"
+                  >
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart
+                        key={`customer-risk-${overview.chartRangeKey}`}
+                        data={overview.riskData}
+                        margin={{ top: 12, right: 12, left: -20, bottom: 0 }}
+                      >
+                        <XAxis
+                          dataKey="name"
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fill: "#64748b", fontSize: 12 }}
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fill: "#94a3b8", fontSize: 12 }}
+                        />
+                        <Tooltip cursor={{ fill: "#edf6ff" }} />
+                        <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                          {overview.riskData.map((entry, index) => (
+                            <Cell key={entry.name} fill={riskColors[index]} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartCard>
+                  <ChartCard
+                    title="Transaction status"
+                    description={`${overview.transactionCount} transactions · ${overview.dateRangeLabel}`}
+                    actionHref="/bank-officer/transactions"
+                    actionLabel="Transactions"
+                  >
+                    <div className="flex h-[260px] items-center">
+                      <ResponsiveContainer width="58%" height="100%">
+                        <PieChart key={`transaction-status-${overview.chartRangeKey}`}>
+                          <Pie
+                            data={overview.transactionData}
+                            dataKey="value"
+                            innerRadius={52}
+                            outerRadius={82}
+                            paddingAngle={3}
+                          >
+                            {overview.transactionData.map((entry, index) => (
+                              <Cell
+                                key={entry.name}
+                                fill={transactionColors[index]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="space-y-3">
+                        {overview.transactionData.map((item, index) => (
+                          <div
+                            key={item.name}
+                            className="flex items-center gap-2 text-sm text-slate-600"
+                          >
+                            <span
+                              className="h-2.5 w-2.5 rounded-full"
+                              style={{
+                                backgroundColor: transactionColors[index],
+                              }}
+                            />
+                            <span>{item.name}</span>
+                            <span className="font-semibold text-slate-800">
+                              {item.value}
+                            </span>
                           </div>
-                       </div>
-                   </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Column - Stats Grid */}
-            <div className="flex flex-col gap-6 h-full min-h-0">
-               <div className="grid grid-cols-2 gap-4 shrink-0 creditlens-stagger-4">
-                  {/* Card 1 */}
-                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-[#3b82f6] text-[#0d3b66] shadow-sm flex flex-col justify-center min-h-35">
-                     <CardContent className="p-4 flex flex-col justify-between h-full">
-                        <div className="flex justify-between items-start mb-1">
-                           <p className="text-xs font-medium opacity-90">Total Customers</p>
-                           <span className="text-xs"></span>
-                        </div>
-                        <div>
-                           <p className="text-2xl font-bold mb-1">{totalCustomers.toLocaleString()}</p>
-                           <p className="text-[10px] text-[#0d3b66]/80">— 10.6% <span className="opacity-60">From last week</span></p>
-                        </div>
-                     </CardContent>
-                  </Card>
-
-                  {/* Card 2 */}
-                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-35">
-                     <CardContent className="p-4 flex flex-col justify-between h-full">
-                        <div className="flex justify-between items-start mb-1">
-                           <p className="text-xs font-medium text-gray-500">Low Risk</p>
-                           <span className="text-xs text-gray-400"></span>
-                        </div>
-                        <div>
-                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">{lowRiskCount.toLocaleString()}</p>
-                           <p className="text-[10px] text-green-500">— 1.5% <span className="text-gray-400">From last week</span></p>
-                        </div>
-                     </CardContent>
-                  </Card>
-
-                   {/* Card 3 */}
-                   <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-35">
-                     <CardContent className="p-4 flex flex-col justify-between h-full">
-                        <div className="flex justify-between items-start mb-1">
-                           <p className="text-xs font-medium text-gray-500">Medium Risk</p>
-                           <span className="text-xs text-gray-400"></span>
-                        </div>
-                        <div>
-                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">{mediumRiskCount.toLocaleString()}</p>
-                           <p className="text-[10px] text-green-500">— 3.6% <span className="text-gray-400">From last week</span></p>
-                        </div>
-                     </CardContent>
-                  </Card>
-
-                  {/* Card 4 */}
-                  <Card className="creditlens-card creditlens-card-hover col-span-1 border-none bg-white shadow-sm flex flex-col justify-center min-h-35">
-                     <CardContent className="p-4 flex flex-col justify-between h-full">
-                        <div className="flex justify-between items-start mb-1">
-                           <p className="text-xs font-medium text-gray-500">High Risk</p>
-                           <span className="text-xs text-gray-400"></span>
-                        </div>
-                        <div>
-                           <p className="text-2xl font-bold text-[#0d3b66] mb-1">{highRiskCount.toLocaleString()}</p>
-                           <p className="text-[10px] text-red-500">— 1.5% <span className="text-gray-400">From last week</span></p>
-                        </div>
-                     </CardContent>
-                  </Card>
-               </div>
-
-               <div className="flex flex-col gap-5 flex-1 min-h-100 creditlens-stagger-2">
-                  <div className="creditlens-card creditlens-card-hover relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center flex-1">
-                     <div className="relative z-10 flex flex-col justify-center h-full">
-                        <h3 className="mb-3 text-2xl font-bold">New Registrations</h3>
-                        <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">
-                           18 customer profiles are registered for the day
-                        </p>
-                        <div>
-                           <button className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">View More</button>
-                        </div>
-                     </div>
-                     <div className="absolute -bottom-4 -right-4 h-40 w-40 rounded-full border-20 border-white/10"></div>
-                     <div className="absolute top-6 right-6 h-20 w-20 rounded-full bg-white/5 blur-xl"></div>
-                  </div>
-
-                  <div className="creditlens-card creditlens-card-hover relative overflow-hidden rounded-2xl bg-linear-to-br from-[#3b82f6] to-[#0d3b66] p-6 text-white shadow-lg flex flex-col justify-center flex-1">
-                     <div className="relative z-10 flex flex-col justify-center h-full">
-                        <h3 className="mb-3 text-2xl font-bold">Help Requests</h3>
-                        <p className="mb-6 text-sm text-white/80 leading-relaxed max-w-[85%]">
-                           27 Help Requests are in progress, with 6 requiring officer decision today.
-                        </p>
-                                        <div>
-                                           <Link href="/bank-officer/support" className="rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#0d3b66] hover:bg-gray-100 transition-colors">View Requests</Link>
-                                        </div>
-                     </div>
-                     <div className="absolute -bottom-4 -right-4 h-40 w-40 rounded-full border-20 border-white/10"></div>
-                     <div className="absolute top-6 right-6 h-20 w-20 rounded-full bg-white/5 blur-xl"></div>
-                  </div>
-               </div>
-            </div>
+                        ))}
+                      </div>
+                    </div>
+                  </ChartCard>
+                </section>
+              </>
+            )}
           </div>
-          </div>
-
-          {/* Recent Customers Table
-          <div className="mt-6">
-             <Card className="border-none shadow-sm">
-               <CardHeader className="pb-2"><h2 className="text-lg font-semibold text-[#0d3b66]">Recent customers</h2></CardHeader>
-               <CardContent className="overflow-x-auto p-0">
-                 <table className="primecore-data-table w-full min-w-[800px] text-left text-sm">
-                   <thead className="bg-gray-50/50">
-                     <tr>
-                       <th className="px-6 py-3 font-medium text-gray-500">Name Customer</th>
-                       <th className="px-6 py-3 font-medium text-gray-500">Contact</th>
-                       <th className="px-6 py-3 font-medium text-gray-500">Transactions</th>
-                       <th className="px-6 py-3 font-medium text-gray-500"></th>
-                       <th className="px-6 py-3 font-medium text-gray-500">Address</th>
-                       <th className="px-6 py-3 font-medium text-gray-500 text-right">Action</th>
-                     </tr>
-                   </thead>
-                   <tbody className="divide-y divide-gray-100">
-                     {[
-                        { name: "Leslie Alexander", id: "ID 12451", email: "georgia@examp...", phone: "+62 819 1314 1435", price: "$21.78", orders: "30 Order", address: "2972 Westheimer Rd. Santa Ana, Illinois 85486" },
-                        { name: "Guy Hawkins", id: "ID 12452", email: "guys@examp.com", phone: "+62 819 1314 1435", price: "$21.78", orders: "30 Order", address: "4517 Washington Ave. Manchester, Kentucky 39495" },
-                        { name: "Kristin Watson", id: "ID 12453", email: "kristin@examp...", phone: "+62 819 1314 1435", price: "$21.78", orders: "30 Order", address: "2118 Thornridge Cir. Syracuse, Connecticut 35624" },
-                     ].map((item) => (
-                       <tr key={item.id} className="hover:bg-gray-50/50">
-                         <td className="px-6 py-4">
-                           <div className="flex items-center gap-3">
-                              <input type="checkbox" className="rounded border-gray-300" />
-                              <div>
-                                 <p className="font-xs text-blue-500 font-medium mb-0.5">{item.id}</p>
-                                 <p className="font-semibold text-gray-900">{item.name}</p>
-                              </div>
-                           </div>
-                         </td>
-                         <td className="px-6 py-4">
-                           <p className="text-gray-600">{item.email}</p>
-                           <p className="text-gray-400 text-xs">{item.phone}</p>
-                         </td>
-                         <td className="px-6 py-4 font-semibold text-gray-900">{item.price}</td>
-                         <td className="px-6 py-4 text-gray-500">{item.orders}</td>
-                         <td className="px-6 py-4 text-gray-500 max-w-[200px] truncate">{item.address}</td>
-                         <td className="px-6 py-4 text-right">
-                           <div className="flex justify-end gap-2 text-gray-400">
-                              <button className="hover:text-[#0d3b66]"><Eye size={18} /></button>
-                              <button className="hover:text-[#0d3b66]"><Pencil size={18} /></button>
-                              <button className="hover:text-red-500"><Trash2 size={18} /></button>
-                           </div>
-                         </td>
-                       </tr>
-                     ))}
-                   </tbody>
-                 </table>
-               </CardContent>
-             </Card>
-          </div> */}
         </main>
       </div>
     </AuthGuard>
   );
 }
 
+function NumberCard({
+  icon,
+  label,
+  value,
+  href,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: number;
+  href: string;
+}) {
+  const featured = label === "Total customers";
+  return (
+    <Link
+      href={href}
+      className={`group relative min-h-[160px] overflow-hidden rounded-2xl border p-5 shadow-[0_18px_38px_-28px_rgba(13,59,102,0.55)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_26px_48px_-28px_rgba(13,59,102,0.7)] ${featured ? "border-[#0d3b66] bg-[linear-gradient(135deg,#0d3b66_0%,#124f82_100%)] text-white" : "border-white/90 bg-white/90 text-slate-800"}`}
+    >
+      <span
+        className={`flex h-10 w-10 items-center justify-center rounded-xl ring-1 ${featured ? "bg-white/12 text-white ring-white/15" : "bg-sky-50 text-[#0d3b66] ring-sky-100"}`}
+      >
+        {icon}
+      </span>
+      <div className="mt-5">
+        <p
+          className={`text-3xl font-bold tracking-[-0.04em] ${featured ? "text-white" : "text-[#0d3b66]"}`}
+        >
+          {value}
+        </p>
+        <p
+          className={`mt-1 text-sm font-medium ${featured ? "text-sky-100" : "text-slate-500"}`}
+        >
+          {label}
+        </p>
+      </div>
+      <span
+        className={`absolute bottom-0 left-5 right-5 h-px origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100 ${featured ? "bg-white/50" : "bg-[#0d3b66]/35"}`}
+      />
+      <span
+        className={`absolute -right-8 -top-8 h-28 w-28 rounded-full ${featured ? "bg-white/8" : "bg-sky-100/55"}`}
+      />
+    </Link>
+  );
+}
+function ChartCard({
+  title,
+  description,
+  actionHref,
+  actionLabel,
+  children,
+}: {
+  title: string;
+  description: string;
+  actionHref: string;
+  actionLabel: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="relative overflow-hidden rounded-2xl border border-white/90 bg-white/90 p-5 shadow-[0_20px_44px_-32px_rgba(13,59,102,0.5)] backdrop-blur-md sm:p-6">
+      <span className="absolute left-0 top-0 h-1 w-16 rounded-r-full bg-[#0d3b66]" />
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="font-semibold tracking-tight text-[#0d3b66]">
+            {title}
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">{description}</p>
+        </div>
+        <Link
+          href={actionHref}
+          className="shrink-0 rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-xs font-bold tracking-wide text-[#0d3b66] transition hover:border-sky-200 hover:bg-sky-100"
+        >
+          {actionLabel}
+        </Link>
+      </div>
+      <div className="border-t border-slate-100/90 pt-2">{children}</div>
+    </section>
+  );
+}
+function State({
+  title,
+  description,
+  action,
+  onAction,
+}: {
+  title: string;
+  description: string;
+  action?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-white p-10 text-center shadow-sm">
+      <ClipboardCheck className="mx-auto text-slate-400" size={24} />
+      <h2 className="mt-3 font-semibold text-slate-800">{title}</h2>
+      <p className="mt-2 text-sm text-slate-500">{description}</p>
+      {action && onAction && (
+        <Button className="mt-4" onClick={onAction}>
+          {action}
+        </Button>
+      )}
+    </div>
+  );
+}
+function daysAgo(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date;
+}
+function dateInputValue(value: Date) {
+  return value.toISOString().slice(0, 10);
+}
+
+function formatDashboardDate(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime())
+    ? value
+    : new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).format(date);
+}

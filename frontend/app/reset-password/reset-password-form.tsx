@@ -3,9 +3,10 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { authService } from "@/src/api/auth/auth.service";
 import { ApiError } from "@/src/types/api-error";
-import { Button, Input, useToast } from "@/src/components/ui";
+import { Button, useToast } from "@/src/components/ui";
 import { clearPasswordResetToken, getPasswordResetToken } from "@/src/lib/password-reset-session";
 
 export function ResetPasswordForm() {
@@ -17,6 +18,8 @@ export function ResetPasswordForm() {
   const [resetToken, setResetToken] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     setResetToken(getPasswordResetToken());
@@ -82,27 +85,51 @@ export function ResetPasswordForm() {
       </header>
 
       <form onSubmit={onSubmit} className="space-y-5">
-        <Input
-          label="New Password"
-          type="password"
-          autoComplete="new-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Enter new password"
-          className="h-14 rounded-2xl"
-          labelClassName="text-(--primecore-foreground)/70"
-        />
+        <div className="space-y-1.5">
+          <label htmlFor="reset-password" className="text-sm font-medium text-(--primecore-foreground)/70">New Password</label>
+          <div className="relative">
+            <input
+              id="reset-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Enter new password"
+              className="h-14 w-full rounded-2xl border border-(--primecore-border) bg-(--primecore-surface) px-3.5 py-2.5 pr-12 text-sm text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ring-offset-background"
+            />
+            <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-(--primecore-foreground)/70 hover:text-(--primecore-foreground)"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
 
-        <Input
-          label="Confirm Password"
-          type="password"
-          autoComplete="new-password"
-          value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)}
-          placeholder="Confirm new password"
-          className="h-14 rounded-2xl"
-          labelClassName="text-(--primecore-foreground)/70"
-        />
+        <div className="space-y-1.5">
+          <label htmlFor="reset-confirm-password" className="text-sm font-medium text-(--primecore-foreground)/70">Confirm Password</label>
+          <div className="relative">
+            <input
+              id="reset-confirm-password"
+              type={showConfirmPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="Confirm new password"
+              className="h-14 w-full rounded-2xl border border-(--primecore-border) bg-(--primecore-surface) px-3.5 py-2.5 pr-12 text-sm text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ring-offset-background"
+            />
+            <button
+              type="button"
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-(--primecore-foreground)/70 hover:text-(--primecore-foreground)"
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
 
         {error && <p className="text-xs text-red-500 dark:text-red-400">{error}</p>}
 

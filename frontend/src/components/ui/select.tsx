@@ -16,10 +16,11 @@ type SelectContextType = {
 
 const SelectContext = React.createContext<SelectContextType | undefined>(undefined)
 
-const Select = ({ children, value, onValueChange, defaultValue }: { children: React.ReactNode, value?: string, onValueChange?: (val: string) => void, defaultValue?: string }) => {
+const Select = ({ children, value, onValueChange, defaultValue, className }: { children: React.ReactNode, value?: string, onValueChange?: (val: string) => void, defaultValue?: string, className?: string }) => {
   const [internalValue, setInternalValue] = React.useState(defaultValue || "")
   const [open, setOpen] = React.useState(false)
   const [selectedLabel, setSelectedLabel] = React.useState<React.ReactNode>(null)
+  const selectRef = React.useRef<HTMLDivElement>(null)
 
   const isControlled = value !== undefined
   const currentValue = isControlled ? value : internalValue
@@ -32,9 +33,20 @@ const Select = ({ children, value, onValueChange, defaultValue }: { children: Re
     setOpen(false)
   }
 
+  React.useEffect(() => {
+    const closeOnOutsidePointerDown = (event: PointerEvent) => {
+      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnOutsidePointerDown)
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointerDown)
+  }, [])
+
   return (
     <SelectContext.Provider value={{ value: currentValue, onValueChange: handleValueChange, open, setOpen, selectedLabel, setSelectedLabel }}>
-      <div className={cn("relative w-full", open && "z-[240]")}>{children}</div>
+      <div ref={selectRef} className={cn("relative w-full", className, open && "z-[240]")}>{children}</div>
     </SelectContext.Provider>
   )
 }

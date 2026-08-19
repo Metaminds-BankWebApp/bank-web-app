@@ -32,6 +32,7 @@ export function PersonalDetails({
   isLookingUpCustomerByNic,
   isGeneratingCredentials,
   hasExistingCustomerMatch,
+  customerLookupError,
   serverStepOneErrors,
   onClearServerStepOneError,
 }: StepProps) {
@@ -155,6 +156,11 @@ export function PersonalDetails({
           {hasExistingCustomerMatch && (
             <p className="mt-2 text-xs font-semibold text-emerald-700">
               Existing customer found and loaded. You can now edit and continue.
+            </p>
+          )}
+          {customerLookupError && (
+            <p role="alert" className="mt-2 text-xs font-semibold text-red-600">
+              {customerLookupError}
             </p>
           )}
         </div>
