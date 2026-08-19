@@ -599,7 +599,7 @@ export default function Page() {
                 type="button"
                 variant="outline"
                 disabled={isDownloadingReceipt}
-                className="w-full sm:w-[250px] rounded-2xl px-8 py-5 sm:py-6 text-base font-semibold"
+                className="w-full whitespace-nowrap rounded-full px-7 py-6 text-base font-semibold sm:w-[280px]"
                 onClick={handleDownloadReceipt}
               >
                 <Download className="mr-2 h-5 w-5" />
@@ -607,7 +607,7 @@ export default function Page() {
               </Button>
               <Button
                 type="button"
-                className="w-full sm:w-[250px] bg-[#061e3d] hover:bg-[#061e3d]/80 text-white rounded-2xl px-8 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-md"
+                className="w-full whitespace-nowrap rounded-full bg-[#061e3d] px-7 py-6 text-base font-semibold text-white shadow-md hover:bg-[#061e3d]/80 sm:w-[280px] sm:text-lg"
                 onClick={() => router.push("/bank-customer/transact")}
               >
                 <LayoutDashboard className="mr-2 h-5 w-5" />
