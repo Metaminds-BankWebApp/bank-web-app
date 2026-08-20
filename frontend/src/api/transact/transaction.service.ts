@@ -92,6 +92,15 @@ export async function resendTransactionOtp(payload: ResendTransactionOtpRequest)
   }
 }
 
+export async function cancelTransaction(referenceNo: string): Promise<TransactionResponse> {
+  try {
+    const { data } = await apiClient.post<TransactionResponse>(TRANSACT_ENDPOINTS.transactionCancel(referenceNo));
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export async function getTransactionHistory(): Promise<TransactionResponse[]> {
   // Customer-side transaction timeline.
   try {
@@ -187,6 +196,7 @@ export const transactionService = {
   initiateTransaction,
   verifyTransactionOtp,
   resendTransactionOtp,
+  cancelTransaction,
   getTransactionHistory,
   getBankOfficerTransactionHistory,
   downloadTransactionHistoryReport,

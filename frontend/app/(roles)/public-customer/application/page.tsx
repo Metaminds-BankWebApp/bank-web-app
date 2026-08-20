@@ -2096,26 +2096,19 @@ export default function PublicCustomerApplicationPage() {
              {/* Right: Summary List */}
              <div className="h-fit space-y-6">
                 
-                {/* Reliability Score */}
+                {/* Missed-payment summary */}
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 flex items-center justify-between">
                    <div className="flex items-center gap-4">
                       <div className="p-3 bg-white rounded-lg shadow-sm text-blue-500">
                          <AlertTriangle size={20} />
                       </div>
                       <div>
-                         <h4 className="font-bold text-slate-800 text-sm">Payment Reliability</h4>
-                         <p className="text-xs text-slate-500">Status based on reported missed payments</p>
+                         <h4 className="font-bold text-slate-800 text-sm">Missed Payment Count</h4>
+                         <p className="text-xs text-slate-500">Reported missed payments in the last 12 months</p>
                       </div>
                    </div>
-                   <span className={cn(
-                     "px-3 py-1 rounded-full text-xs font-bold uppercase",
-                     formData.missedPayments === 0 
-                       ? "bg-emerald-100 text-emerald-600" 
-                       : formData.missedPayments < 3 
-                         ? "bg-amber-100 text-amber-600" 
-                         : "bg-red-100 text-red-600"
-                   )}>
-                     {formData.missedPayments === 0 ? "Excellent" : formData.missedPayments < 3 ? "Review" : "High Risk"}
+                   <span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700">
+                     {formData.missedPayments}
                    </span>
                 </div>
 
@@ -2184,7 +2177,14 @@ export default function PublicCustomerApplicationPage() {
                  <div className="space-y-3">
                     {formData.incomes.map(item => (
                        <div key={item.id} className="flex justify-between text-sm py-2">
-                          <span className="font-medium text-slate-600">{item.type} ({item.salaryType})</span>
+                          <span className="font-medium text-slate-600">
+                            {item.type}
+                            {item.type === "Business Person"
+                              ? ` (${item.incomeStability ?? "-"})`
+                              : item.type === "Salary Worker + Business Person"
+                                ? ` (${item.salaryType ?? "-"}; ${item.incomeStability ?? "-"})`
+                                : ` (${item.salaryType ?? "-"})`}
+                          </span>
                           <span className="font-bold text-slate-900">{formatCurrency(item.amount)}</span>
                        </div>
                     ))}
@@ -2206,7 +2206,10 @@ export default function PublicCustomerApplicationPage() {
                     {formData.loans.map(item => (
                        <div key={item.id} className="flex justify-between text-sm py-2">
                           <span className="font-medium text-slate-600">{item.type}</span>
-                          <span className="font-bold text-slate-900">{formatCurrency(item.monthlyEMI)}</span>
+                          <div className="flex flex-col items-end gap-1 text-right">
+                             <span className="font-bold text-slate-900">EMI: {formatCurrency(item.monthlyEMI)}</span>
+                             <span className="font-medium text-slate-600">Balance: {formatCurrency(item.balance)}</span>
+                          </div>
                        </div>
                     ))}
                  </div>
@@ -2223,7 +2226,10 @@ export default function PublicCustomerApplicationPage() {
                     {formData.cards.map(item => (
                        <div key={item.id} className="flex justify-between text-sm py-2">
                           <span className="font-medium text-slate-600">{item.provider}</span>
-                          <span className="font-bold text-slate-900">{formatCurrency(item.limit)}</span>
+                          <div className="flex flex-col items-end gap-1 text-right">
+                             <span className="font-bold text-slate-900">Limit: {formatCurrency(item.limit)}</span>
+                             <span className="font-medium text-slate-600">Balance: {formatCurrency(item.outstanding)}</span>
+                          </div>
                        </div>
                     ))}
                  </div>
