@@ -348,6 +348,10 @@ export default function Page() {
           setEditErrors({ branchEmail: "Email is already used." });
           return;
         }
+        if (error.message.toLowerCase().includes("contact") || error.message.toLowerCase().includes("phone")) {
+          setEditErrors({ branchPhone: "Contact number is already in use." });
+          return;
+        }
       }
 
       const message =
