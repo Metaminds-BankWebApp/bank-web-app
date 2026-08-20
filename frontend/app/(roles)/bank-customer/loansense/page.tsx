@@ -199,11 +199,7 @@ export default function LoanSenseDashboardPage() {
   return (
     <main className="flex min-h-screen flex-col gap-6 bg-transparent p-4 font-sans text-slate-800 md:p-8">
       <ModuleHeader theme="loansense" menuMode="feature-layout" title="LoanSense Dashboard" />
-      <div>
-        <p className="text-sm opacity-80 mt-2">
-          Your personalized loan insights and recommendations
-        </p>
-      </div>
+      
 
       {error && !evaluation ? (
         <div className="loansense-card loansense-creditlens-shade rounded-xl p-6 text-red-700 border border-red-200 bg-red-50">
