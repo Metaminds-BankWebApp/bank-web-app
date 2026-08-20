@@ -329,6 +329,31 @@ export default function Page() {
         description: `${updated.branchName} was updated successfully.`,
       });
     } catch (error) {
+      if (error instanceof ApiError) {
+        const fieldErrors = error.details?.fieldErrors;
+        if (fieldErrors && typeof fieldErrors === "object") {
+          const source = fieldErrors as Record<string, unknown>;
+          const nextErrors: BranchFormErrors = {};
+          if (typeof source.branchName === "string") nextErrors.branchName = source.branchName;
+          if (typeof source.branchEmail === "string") nextErrors.branchEmail = source.branchEmail;
+          if (typeof source.branchPhone === "string") nextErrors.branchPhone = source.branchPhone;
+          if (typeof source.address === "string") nextErrors.address = source.address;
+          if (Object.keys(nextErrors).length > 0) {
+            setEditErrors(nextErrors);
+            return;
+          }
+        }
+
+        if (error.message.toLowerCase().includes("email")) {
+          setEditErrors({ branchEmail: "Email is already used." });
+          return;
+        }
+        if (error.message.toLowerCase().includes("contact") || error.message.toLowerCase().includes("phone")) {
+          setEditErrors({ branchPhone: "Contact number is already in use." });
+          return;
+        }
+      }
+
       const message =
         error instanceof ApiError ? error.message : "Failed to update branch details.";
       showToast({

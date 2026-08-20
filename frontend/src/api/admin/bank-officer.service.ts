@@ -1,7 +1,7 @@
 import apiClient, { toApiError } from "@/src/api/client";
 import { ADMIN_ENDPOINTS } from "@/src/api/endpoints";
 
-export type AdminBankOfficerStatus = "ACTIVE" | "INACTIVE" | "LOCKED";
+export type AdminBankOfficerStatus = "ACTIVE" | "SUSPEND";
 
 export interface AdminBankOfficerSummaryResponse {
   userId: number;

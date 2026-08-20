@@ -45,10 +45,7 @@ function getStatusLabel(status: AdminUserStatus): string {
   if (status === "ACTIVE") {
     return "Active";
   }
-  if (status === "INACTIVE") {
-    return "Inactive";
-  }
-  return "Locked";
+  return "Suspend";
 }
 
 function getCustomerTypeLabel(
@@ -57,15 +54,12 @@ function getCustomerTypeLabel(
   return customerType === "BANK" ? "Bank" : "Public";
 }
 
-function resolveAvatar(user: AdminUserManagementUserResponse): string {
-  if (user.avatarUrl?.trim()) {
-    return user.avatarUrl;
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return "U";
   }
-
-  const fallbackName = user.fullName?.trim() || "User";
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    fallbackName
-  )}&background=0B3B66&color=ffffff`;
+  return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join("");
 }
 
 function resolveCustomerId(user: AdminUserManagementUserResponse): string {
@@ -117,8 +111,9 @@ type UserSearchField =
   | "CUSTOMER_TYPE"
   | "STATUS";
 
-const userEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-const userContactRegex = /^\+?[0-9()\-.\s]{7,20}$/;
+const userEmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
+const userContactRegex = /^(?:070|071|072|074|075|076|077|078)\d{7}$/;
+const startsWithLetterRegex = /^\p{L}/u;
 const userSearchOptions: Array<{ value: UserSearchField; label: string }> = [
   { value: "ALL", label: "All Fields" },
   { value: "ID", label: "ID" },
@@ -129,7 +124,7 @@ const userSearchOptions: Array<{ value: UserSearchField; label: string }> = [
   { value: "CUSTOMER_TYPE", label: "Customer Type" },
   { value: "STATUS", label: "Status" },
 ];
-const userStatusKeywords = new Set(["active", "inactive", "locked"]);
+const userStatusKeywords = new Set(["active", "suspend"]);
 
 function matchesUserStatus(statusLabel: string, normalizedQuery: string): boolean {
   const normalizedStatus = statusLabel.toLowerCase();
@@ -377,19 +372,24 @@ export default function UserManagementPage() {
 
     if (!formData.firstName.trim()) {
       errors.firstName = "First name is required.";
+    } else if (!startsWithLetterRegex.test(formData.firstName.trim())) {
+      errors.firstName = "First name must start with a letter.";
     }
     if (!formData.lastName.trim()) {
       errors.lastName = "Last name is required.";
+    } else if (!startsWithLetterRegex.test(formData.lastName.trim())) {
+      errors.lastName = "Last name must start with a letter.";
     }
     if (!formData.email.trim()) {
       errors.email = "Email address is required.";
     } else if (!userEmailRegex.test(formData.email.trim())) {
-      errors.email = "Enter a valid email address.";
+      errors.email = "Email must be in the format name@gmail.com.";
     }
     if (!formData.contactNumber.trim()) {
       errors.contactNumber = "Contact number is required.";
     } else if (!userContactRegex.test(formData.contactNumber.trim())) {
-      errors.contactNumber = "Contact number format is invalid.";
+      errors.contactNumber =
+        "Contact number must be 10 digits and start with 070, 071, 072, 074, 075, 076, 077, or 078.";
     }
 
     return errors;
@@ -433,6 +433,32 @@ export default function UserManagementPage() {
         description: `${updated.fullName} was updated successfully.`,
       });
     } catch (unknownError) {
+      if (unknownError instanceof ApiError) {
+        const fieldErrors = unknownError.details?.fieldErrors;
+        if (fieldErrors && typeof fieldErrors === "object") {
+          const source = fieldErrors as Record<string, unknown>;
+          const nextErrors: UserEditErrors = {};
+          if (typeof source.email === "string") nextErrors.email = source.email;
+          if (typeof source.contactNumber === "string") nextErrors.contactNumber = source.contactNumber;
+          if (typeof source.firstName === "string") nextErrors.firstName = source.firstName;
+          if (typeof source.lastName === "string") nextErrors.lastName = source.lastName;
+          if (Object.keys(nextErrors).length > 0) {
+            setEditErrors(nextErrors);
+            return;
+          }
+        }
+
+        const normalizedMessage = unknownError.message.toLowerCase();
+        if (normalizedMessage.includes("email")) {
+          setEditErrors({ email: "Email is already used." });
+          return;
+        }
+        if (normalizedMessage.includes("contact") || normalizedMessage.includes("phone")) {
+          setEditErrors({ contactNumber: "Contact number is already in use." });
+          return;
+        }
+      }
+
       const message =
         unknownError instanceof ApiError
           ? unknownError.message
@@ -655,11 +681,12 @@ export default function UserManagementPage() {
                               {resolveCustomerId(user)}
                             </td>
                             <td className="px-6 py-4 flex items-center gap-2">
-                              <img
-                                src={resolveAvatar(user)}
-                                alt={user.fullName}
-                                className="w-8 h-8 rounded-full object-cover border border-gray-300"
-                              />
+                              <span
+                                aria-hidden="true"
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-[#0B3B66] text-xs font-bold text-white"
+                              >
+                                {getInitials(user.fullName || "User")}
+                              </span>
                               <span className="font-semibold text-gray-900">
                                 {user.fullName || "-"}
                               </span>
@@ -687,8 +714,6 @@ export default function UserManagementPage() {
                                 className={`inline-flex min-w-[7.5rem] justify-center px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider ${
                                   user.status === "ACTIVE"
                                     ? "border-emerald-100 bg-emerald-50 text-emerald-600"
-                                    : user.status === "INACTIVE"
-                                    ? "border-slate-200 bg-slate-100 text-slate-600"
                                     : "border-red-100 bg-red-50 text-red-600"
                                 }`}
                               >
@@ -851,8 +876,7 @@ export default function UserManagementPage() {
                     className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                   >
                     <option value="ACTIVE">Active</option>
-                    <option value="INACTIVE">Inactive</option>
-                    <option value="LOCKED">Locked</option>
+                    <option value="SUSPEND">Suspend</option>
                   </select>
                 </div>
               </div>

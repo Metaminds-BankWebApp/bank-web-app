@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 /**
  * Admin dashboard page with summary cards, growth chart, quick actions, recent actions, and current loan-rate widgets.
  */
@@ -96,7 +96,7 @@ type LoanRate = {
 const metricCardConfig: MetricCard[] = [
   {
     key: "totalUsers",
-    title: "TOTAL USERS",
+    title: "TOTAL CUSTOMERS",
     icon: Users,
     cardClassName: "bg-[#0d3b66]",
     titleClassName: "text-white/70",
@@ -111,7 +111,7 @@ const metricCardConfig: MetricCard[] = [
     cardClassName: "bg-[#446892]",
     titleClassName: "text-white/75",
     valueClassName: "text-[#0f2f52]",
-    deltaClassName: "text-[#16b186]",
+    deltaClassName: "bg-white/20 text-white",
     iconClassName: "bg-[#4c89a5] text-[#5be0ca]",
   },
   {
@@ -121,7 +121,7 @@ const metricCardConfig: MetricCard[] = [
     cardClassName: "bg-[#6f8fb6]",
     titleClassName: "text-white/80",
     valueClassName: "text-[#13365f]",
-    deltaClassName: "text-[#16b186]",
+    deltaClassName: "bg-white/20 text-white",
     iconClassName: "bg-[#6a9bb4] text-[#44d3be]",
   },
   {
@@ -131,7 +131,7 @@ const metricCardConfig: MetricCard[] = [
     cardClassName: "bg-[#9fb1c9]",
     titleClassName: "text-white/85",
     valueClassName: "text-[#15375f]",
-    deltaClassName: "text-[#16b186]",
+    deltaClassName: "bg-white/20 text-white",
     iconClassName: "bg-[#d4dde9] text-[#f59e0b]",
   },
 ];
@@ -689,7 +689,7 @@ export default function DashboardPage() {
                       >
                         <Icon size={16} />
                       </span>
-                      <ArrowUpRight size={16} className="text-white/45" />
+                     
                     </div>
                     <p className={cn("mt-8 text-xs font-semibold tracking-wide", card.titleClassName)}>
                       {card.title}
@@ -712,8 +712,8 @@ export default function DashboardPage() {
                   <div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div>
-                        <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#102f52]">Monthly User Growth</h3>
-                        <p className="text-xs sm:text-sm text-[#a3afbf]">User onboarding and retention across 6 months</p>
+                        <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#102f52]">Monthly Customers Growth</h3>
+                        <p className="text-xs sm:text-sm text-[#a3afbf]">Customer onboarding and retention across 6 months</p>
                       </div>
                       <button className="rounded-xl bg-[#f3f4f6] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#223f5f]">
                         {isMonthlyUserGrowthLoading

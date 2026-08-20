@@ -130,7 +130,12 @@ export default function AddOfficerPage() {
           return;
         }
 
-        setBranches(data);
+        setBranches(
+          data.filter((branch) => {
+            const status = branch.status?.trim().toUpperCase();
+            return status === "ACTIVE" || status === "MAINTENANCE";
+          })
+        );
       } catch (error) {
         if (!mounted) {
           return;
@@ -559,12 +564,12 @@ export default function AddOfficerPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold uppercase text-gray-600">Full Address</label>
+                    <label className="text-xs font-semibold uppercase text-gray-600">Full Address (Optional)</label>
                     <textarea
                       rows={3}
                       value={formData.address}
                       onChange={(event) => setFormData((prev) => ({ ...prev, address: event.target.value }))}
-                      placeholder="Enter the complete street address and landmarks..."
+                      placeholder="Enter the street address and landmarks (optional)..."
                       className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-4 py-3"
                     />
                   </div>

@@ -7,12 +7,15 @@ import type { BranchFormData, BranchFormErrors } from "./types";
 const emailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;
 const contactRegex =
   /^(?:070|071|072|074|075|076|077|078|011|021|023|024|025|026|027|031|032|033|034|035|036|037|038|041|045|047|051|052|054|055|057|063|065|066|067|081|091)\d{7}$/;
+const startsWithLetterRegex = /^\p{L}/u;
 
 export function validateBranchForm(formData: BranchFormData): BranchFormErrors {
   const errors: BranchFormErrors = {};
 
   if (!formData.branchName.trim()) {
     errors.branchName = "Branch name is required.";
+  } else if (!startsWithLetterRegex.test(formData.branchName.trim())) {
+    errors.branchName = "Branch name must start with a letter.";
   }
 
   if (!formData.contact.trim()) {
