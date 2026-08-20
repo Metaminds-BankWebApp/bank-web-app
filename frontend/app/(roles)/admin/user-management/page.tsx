@@ -54,15 +54,12 @@ function getCustomerTypeLabel(
   return customerType === "BANK" ? "Bank" : "Public";
 }
 
-function resolveAvatar(user: AdminUserManagementUserResponse): string {
-  if (user.avatarUrl?.trim()) {
-    return user.avatarUrl;
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return "U";
   }
-
-  const fallbackName = user.fullName?.trim() || "User";
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    fallbackName
-  )}&background=0B3B66&color=ffffff`;
+  return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join("");
 }
 
 function resolveCustomerId(user: AdminUserManagementUserResponse): string {
@@ -457,10 +454,7 @@ export default function UserManagementPage() {
           return;
         }
         if (normalizedMessage.includes("contact") || normalizedMessage.includes("phone")) {
-          setEditErrors({
-            contactNumber:
-              "Contact number must be 10 digits and start with 070, 071, 072, 074, 075, 076, 077, or 078.",
-          });
+          setEditErrors({ contactNumber: "Contact number is already in use." });
           return;
         }
       }
@@ -687,11 +681,12 @@ export default function UserManagementPage() {
                               {resolveCustomerId(user)}
                             </td>
                             <td className="px-6 py-4 flex items-center gap-2">
-                              <img
-                                src={resolveAvatar(user)}
-                                alt={user.fullName}
-                                className="w-8 h-8 rounded-full object-cover border border-gray-300"
-                              />
+                              <span
+                                aria-hidden="true"
+                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-[#0B3B66] text-xs font-bold text-white"
+                              >
+                                {getInitials(user.fullName || "User")}
+                              </span>
                               <span className="font-semibold text-gray-900">
                                 {user.fullName || "-"}
                               </span>

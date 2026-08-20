@@ -460,10 +460,7 @@ export default function Page() {
           return;
         }
         if (normalizedMessage.includes("contact") || normalizedMessage.includes("phone")) {
-          setEditErrors({
-            contactNumber:
-              "Contact number must be 10 digits and start with 070, 071, 072, 074, 075, 076, 077, or 078.",
-          });
+          setEditErrors({ contactNumber: "Contact number is already in use." });
           return;
         }
       }
