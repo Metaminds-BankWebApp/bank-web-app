@@ -23,6 +23,19 @@ type TransferFormErrors = {
 }
 
 const OTP_LENGTH = 6
+const MAX_OTP_ATTEMPTS = 3
+
+function secondsUntilOtpExpiry(expiresAt: string): number {
+  const expiryTime = new Date(expiresAt).getTime()
+  if (Number.isNaN(expiryTime)) return 0
+  return Math.max(0, Math.ceil((expiryTime - Date.now()) / 1000))
+}
+
+function formatOtpCountdown(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+}
 
 export default function Page() {
   // Router handles post-transaction navigation.
@@ -49,7 +62,8 @@ export default function Page() {
   // OTP verification states.
   const [otpValues, setOtpValues] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [otpError, setOtpError] = useState("")
-  const [seconds, setSeconds] = useState(59)
+  const [seconds, setSeconds] = useState(0)
+  const [otpAttemptsRemaining, setOtpAttemptsRemaining] = useState(MAX_OTP_ATTEMPTS)
   const [transactionReferenceNo, setTransactionReferenceNo] = useState("")
   const [otpSentToEmail, setOtpSentToEmail] = useState("")
   const [verifiedTransaction, setVerifiedTransaction] = useState<TransactionResponse | null>(null)
@@ -58,6 +72,7 @@ export default function Page() {
   const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [isResendingOtp, setIsResendingOtp] = useState(false)
+  const [isCancellingTransaction, setIsCancellingTransaction] = useState(false)
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false)
   const [receiptError, setReceiptError] = useState("")
 
@@ -74,6 +89,9 @@ export default function Page() {
 
   // Accepts only single numeric OTP characters and advances focus to next input.
   const handleOtpChange = (index: number, value: string) => {
+    if (seconds <= 0 || otpAttemptsRemaining <= 0) {
+      return
+    }
     if (!/^[0-9]*$/.test(value)) {
       return
     }
@@ -214,7 +232,8 @@ export default function Page() {
       setOtpSentToEmail(response.sentToEmail)
       setOtpValues(Array(OTP_LENGTH).fill(""))
       setOtpError("")
-      setSeconds(59)
+      setOtpAttemptsRemaining(response.otpAttemptsRemaining ?? MAX_OTP_ATTEMPTS)
+      setSeconds(secondsUntilOtpExpiry(response.otpExpiresAt))
       setShowOtp(true)
     } catch (error) {
       const nextErrors: Partial<TransferFormErrors> = {}
@@ -263,6 +282,14 @@ export default function Page() {
     }
 
     const otpCode = otpValues.join("").trim()
+    if (seconds <= 0) {
+      setOtpError("OTP time has expired. You cannot enter this code; request a new OTP or cancel the transfer.")
+      return
+    }
+    if (otpAttemptsRemaining <= 0) {
+      setOtpError("Maximum of 3 OTP attempts reached. This transaction has failed.")
+      return
+    }
     if (otpCode.length !== OTP_LENGTH) {
       setOtpError("Please enter the 6-digit OTP.")
       return
@@ -286,7 +313,17 @@ export default function Page() {
       setShowSuccess(true)
     } catch (error) {
       if (error instanceof ApiError) {
-        setOtpError(error.message || "OTP verification failed.")
+        const message = error.message || "OTP verification failed."
+        if (/maximum of 3 otp attempts/i.test(message)) {
+          setOtpAttemptsRemaining(0)
+          setOtpValues(Array(OTP_LENGTH).fill(""))
+        } else {
+          const remainingMatch = message.match(/(\d+) attempt\(s\) remaining/i)
+          if (remainingMatch) {
+            setOtpAttemptsRemaining(Number(remainingMatch[1]))
+          }
+        }
+        setOtpError(message)
       } else if (error instanceof Error && error.message) {
         setOtpError(error.message)
       } else {
@@ -314,7 +351,8 @@ export default function Page() {
         referenceNo: transactionReferenceNo,
       })
       setOtpSentToEmail(response.sentToEmail)
-      setSeconds(59)
+      setOtpAttemptsRemaining(response.otpAttemptsRemaining ?? otpAttemptsRemaining)
+      setSeconds(secondsUntilOtpExpiry(response.otpExpiresAt))
       setOtpValues(Array(OTP_LENGTH).fill(""))
       inputsRef.current[0]?.focus()
     } catch (error) {
@@ -327,6 +365,35 @@ export default function Page() {
       }
     } finally {
       setIsResendingOtp(false)
+    }
+  }
+
+  // Cancels an unverified transfer so its persisted status is CANCELLED.
+  const handleCancelTransaction = async () => {
+    if (isCancellingTransaction || !transactionReferenceNo) {
+      return
+    }
+
+    setIsCancellingTransaction(true)
+    setOtpError("")
+    try {
+      await transactionService.cancelTransaction(transactionReferenceNo)
+      setShowOtp(false)
+      setOtpValues(Array(OTP_LENGTH).fill(""))
+      router.push("/bank-customer/transact")
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Unable to cancel this transfer."
+      const cancellationError = message || "Unable to cancel this transfer."
+      setOtpError(cancellationError)
+      if (/only transactions awaiting otp verification can be cancelled/i.test(cancellationError)) {
+        window.setTimeout(() => router.push("/bank-customer/transact"), 1500)
+      }
+    } finally {
+      setIsCancellingTransaction(false)
     }
   }
 
@@ -500,6 +567,7 @@ export default function Page() {
                         inputsRef.current[idx] = element
                       }}
                       maxLength={1}
+                      disabled={seconds <= 0 || otpAttemptsRemaining <= 0 || isVerifyingOtp || isCancellingTransaction}
                       className="w-10 h-12 sm:w-14 sm:h-14 text-center text-base sm:text-lg rounded-xl"
                     />
                   ))}
@@ -507,8 +575,16 @@ export default function Page() {
               </div>
 
               <p className="text-center text-sm text-muted-foreground mb-2">
-                00:{seconds.toString().padStart(2, "0")}
+                {formatOtpCountdown(seconds)}
               </p>
+              <p className="text-center text-sm text-muted-foreground mb-4">
+                {otpAttemptsRemaining} of {MAX_OTP_ATTEMPTS} OTP attempt(s) remaining
+              </p>
+              {seconds <= 0 && otpAttemptsRemaining > 0 && (
+                <p className="text-center text-sm text-amber-700 mb-4">
+                  OTP time has expired. This transfer remains pending; request a new OTP or cancel it.
+                </p>
+              )}
               {otpError && (
                 <p className="text-center text-sm text-red-600 mb-4">{otpError}</p>
               )}
@@ -518,12 +594,10 @@ export default function Page() {
                   type="button"
                   variant="outline"
                   className="w-full sm:w-auto"
-                  onClick={() => {
-                    setShowOtp(false)
-                    setOtpError("")
-                  }}
+                  onClick={handleCancelTransaction}
+                  disabled={isCancellingTransaction || isVerifyingOtp}
                 >
-                  Cancel
+                  {isCancellingTransaction ? "Cancelling..." : "Cancel Transfer"}
                 </Button>
 
                 <Button
@@ -531,7 +605,7 @@ export default function Page() {
                   variant="outline"
                   className="w-full sm:w-auto"
                   onClick={handleResendOtp}
-                  disabled={isResendingOtp || seconds > 0}
+                  disabled={isResendingOtp || seconds > 0 || otpAttemptsRemaining <= 0 || isCancellingTransaction}
                 >
                   {isResendingOtp ? "Resending..." : "Resend OTP"}
                 </Button>
@@ -539,7 +613,7 @@ export default function Page() {
                 <Button
                   type="button"
                   onClick={handleVerify}
-                  disabled={isVerifyingOtp}
+                  disabled={isVerifyingOtp || isCancellingTransaction || seconds <= 0 || otpAttemptsRemaining <= 0}
                   className="w-full sm:w-auto bg-[#061e3d] hover:bg-[#061e3d]/80 text-white rounded-xl px-9 py-5"
                 >
                   {isVerifyingOtp ? "Verifying..." : "Verify"}

@@ -12,6 +12,7 @@ export type TransactionInitiateResponse = {
   status: string;
   sentToEmail: string;
   otpExpiresAt: string;
+	otpAttemptsRemaining: number;
   message: string;
 };
 
