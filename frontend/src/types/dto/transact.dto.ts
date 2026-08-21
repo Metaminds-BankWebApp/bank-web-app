@@ -85,7 +85,6 @@ export type TransactDashboardSummaryResponse = {
 export type CreateBeneficiaryRequest = {
   beneficiaryAccountNo: string;
   nickName: string;
-	accountHolderName: string;
   remark: string;
 };
 
@@ -94,6 +93,7 @@ export type BeneficiaryResponse = {
   bankCustomerId: number;
   beneficiaryAccountNo: string;
   nickName: string;
+  accountHolderName: string;
   remark: string;
   createdAt: string;
 };
