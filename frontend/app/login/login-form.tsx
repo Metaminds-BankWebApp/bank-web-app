@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Info } from "lucide-react";
 import { authService } from "@/src/api/auth/auth.service";
 import { ApiError } from "@/src/types/api-error";
 import { getRoleRedirectPath, useAuthStore } from "@/src/store";
@@ -201,10 +201,17 @@ export function LoginForm() {
         <div className="pt-1 text-center text-sm text-(--primecore-foreground)/70">
           <p>
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-medium text-(--primecore-foreground) underline-offset-4 hover:underline">
+            <Link href="/register" className="font-semibold text-[#1265d6] underline underline-offset-4 hover:text-[#0d52ae] dark:text-[#7cc8ff]">
               Create one
             </Link>
           </p>
+
+          <div className="mt-5 flex items-start gap-4 rounded-2xl border border-[#cfe1ff] bg-[#f8fbff] px-5 py-4 text-left text-base leading-6 text-[#174b8c] shadow-sm dark:border-sky-400/30 dark:bg-sky-950/30 dark:text-sky-100">
+            <Info className="mt-0.5 h-6 w-6 shrink-0 text-[#1265d6] dark:text-[#7cc8ff]" aria-hidden="true" />
+            <p>
+              If you are not a Bank Customer, you can create a new account.
+            </p>
+          </div>
         </div>
 
       </form>

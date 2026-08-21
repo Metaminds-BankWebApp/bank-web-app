@@ -12,6 +12,7 @@ export type TransactionInitiateResponse = {
   status: string;
   sentToEmail: string;
   otpExpiresAt: string;
+	otpAttemptsRemaining: number;
   message: string;
 };
 
@@ -84,6 +85,7 @@ export type TransactDashboardSummaryResponse = {
 export type CreateBeneficiaryRequest = {
   beneficiaryAccountNo: string;
   nickName: string;
+	accountHolderName: string;
   remark: string;
 };
 

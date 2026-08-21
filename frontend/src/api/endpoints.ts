@@ -150,6 +150,7 @@ export const TRANSACT_ENDPOINTS = {
   transactionsInitiate: "/bank-customers/transact/transactions/initiate",
   transactionsVerifyOtp: "/bank-customers/transact/transactions/verify-otp",
   transactionsResendOtp: "/bank-customers/transact/transactions/resend-otp",
+	transactionCancel: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}/cancel`,
   transactionsHistory: "/bank-customers/transact/transactions/history",
   transactionsHistoryReport: "/bank-customers/transact/transactions/history/report",
   transactionReceipt: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}/receipt`,

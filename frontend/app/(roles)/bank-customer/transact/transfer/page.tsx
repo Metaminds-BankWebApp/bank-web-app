@@ -11,9 +11,10 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import ModuleHeader from "@/src/components/ui/module-header"
 import { authService } from "@/src/api/auth/auth.service"
+import { beneficiaryService } from "@/src/api/transact/beneficiary.service"
 import { transactionService } from "@/src/api/transact/transaction.service"
 import { ApiError } from "@/src/types/api-error"
-import type { TransactionResponse } from "@/src/types/dto/transact.dto"
+import type { BeneficiaryResponse, TransactionResponse } from "@/src/types/dto/transact.dto"
 
 type TransferFormErrors = {
   accountNumber: string
@@ -23,6 +24,19 @@ type TransferFormErrors = {
 }
 
 const OTP_LENGTH = 6
+const MAX_OTP_ATTEMPTS = 3
+
+function secondsUntilOtpExpiry(expiresAt: string): number {
+  const expiryTime = new Date(expiresAt).getTime()
+  if (Number.isNaN(expiryTime)) return 0
+  return Math.max(0, Math.ceil((expiryTime - Date.now()) / 1000))
+}
+
+function formatOtpCountdown(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+}
 
 export default function Page() {
   // Router handles post-transaction navigation.
@@ -33,6 +47,7 @@ export default function Page() {
   // Core transfer form states.
   const [showOtp, setShowOtp] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showBeneficiaryPicker, setShowBeneficiaryPicker] = useState(false)
   const [accountNumber, setAccountNumber] = useState("")
   const [amount, setAmount] = useState("")
   const [beneficiary, setBeneficiary] = useState("")
@@ -49,15 +64,20 @@ export default function Page() {
   // OTP verification states.
   const [otpValues, setOtpValues] = useState<string[]>(Array(OTP_LENGTH).fill(""))
   const [otpError, setOtpError] = useState("")
-  const [seconds, setSeconds] = useState(59)
+  const [seconds, setSeconds] = useState(0)
+  const [otpAttemptsRemaining, setOtpAttemptsRemaining] = useState(MAX_OTP_ATTEMPTS)
   const [transactionReferenceNo, setTransactionReferenceNo] = useState("")
   const [otpSentToEmail, setOtpSentToEmail] = useState("")
   const [verifiedTransaction, setVerifiedTransaction] = useState<TransactionResponse | null>(null)
+  const [savedBeneficiaries, setSavedBeneficiaries] = useState<BeneficiaryResponse[]>([])
+  const [beneficiaryLoadError, setBeneficiaryLoadError] = useState("")
 
   // Loading states for transfer and OTP actions.
   const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
   const [isResendingOtp, setIsResendingOtp] = useState(false)
+  const [isCancellingTransaction, setIsCancellingTransaction] = useState(false)
+  const [isLoadingBeneficiaries, setIsLoadingBeneficiaries] = useState(false)
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false)
   const [receiptError, setReceiptError] = useState("")
 
@@ -74,6 +94,9 @@ export default function Page() {
 
   // Accepts only single numeric OTP characters and advances focus to next input.
   const handleOtpChange = (index: number, value: string) => {
+    if (seconds <= 0 || otpAttemptsRemaining <= 0) {
+      return
+    }
     if (!/^[0-9]*$/.test(value)) {
       return
     }
@@ -134,6 +157,39 @@ export default function Page() {
     if (submitError) {
       setSubmitError("")
     }
+  }
+
+  // Loads saved recipients into the selection dialog.
+  const handleOpenBeneficiaryPicker = async () => {
+    setShowBeneficiaryPicker(true)
+    setIsLoadingBeneficiaries(true)
+    setBeneficiaryLoadError("")
+
+    try {
+      const beneficiaries = await beneficiaryService.getBeneficiaries()
+      setSavedBeneficiaries(beneficiaries)
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Unable to load saved beneficiaries."
+      setBeneficiaryLoadError(message || "Unable to load saved beneficiaries.")
+    } finally {
+      setIsLoadingBeneficiaries(false)
+    }
+  }
+
+  // Fills recipient fields from one saved beneficiary and returns to the transfer form.
+  const handleSelectBeneficiary = (savedBeneficiary: BeneficiaryResponse) => {
+    const selectedAccountNumber = savedBeneficiary.beneficiaryAccountNo.replace(/\D/g, "").slice(0, 10)
+    const selectedName = savedBeneficiary.accountHolderName.trim() || savedBeneficiary.nickName.trim()
+
+    setAccountNumber(selectedAccountNumber)
+    setBeneficiary(selectedName)
+    setFormErrors((prev) => ({ ...prev, accountNumber: "", beneficiary: "" }))
+    setSubmitError("")
+    setShowBeneficiaryPicker(false)
   }
 
   // Validates transfer form inputs and sets first relevant error for quick feedback.
@@ -214,7 +270,8 @@ export default function Page() {
       setOtpSentToEmail(response.sentToEmail)
       setOtpValues(Array(OTP_LENGTH).fill(""))
       setOtpError("")
-      setSeconds(59)
+      setOtpAttemptsRemaining(response.otpAttemptsRemaining ?? MAX_OTP_ATTEMPTS)
+      setSeconds(secondsUntilOtpExpiry(response.otpExpiresAt))
       setShowOtp(true)
     } catch (error) {
       const nextErrors: Partial<TransferFormErrors> = {}
@@ -263,6 +320,14 @@ export default function Page() {
     }
 
     const otpCode = otpValues.join("").trim()
+    if (seconds <= 0) {
+      setOtpError("OTP time has expired. You cannot enter this code; request a new OTP or cancel the transfer.")
+      return
+    }
+    if (otpAttemptsRemaining <= 0) {
+      setOtpError("Maximum of 3 OTP attempts reached. This transaction has failed.")
+      return
+    }
     if (otpCode.length !== OTP_LENGTH) {
       setOtpError("Please enter the 6-digit OTP.")
       return
@@ -286,7 +351,17 @@ export default function Page() {
       setShowSuccess(true)
     } catch (error) {
       if (error instanceof ApiError) {
-        setOtpError(error.message || "OTP verification failed.")
+        const message = error.message || "OTP verification failed."
+        if (/maximum of 3 otp attempts/i.test(message)) {
+          setOtpAttemptsRemaining(0)
+          setOtpValues(Array(OTP_LENGTH).fill(""))
+        } else {
+          const remainingMatch = message.match(/(\d+) attempt\(s\) remaining/i)
+          if (remainingMatch) {
+            setOtpAttemptsRemaining(Number(remainingMatch[1]))
+          }
+        }
+        setOtpError(message)
       } else if (error instanceof Error && error.message) {
         setOtpError(error.message)
       } else {
@@ -314,7 +389,8 @@ export default function Page() {
         referenceNo: transactionReferenceNo,
       })
       setOtpSentToEmail(response.sentToEmail)
-      setSeconds(59)
+      setOtpAttemptsRemaining(response.otpAttemptsRemaining ?? otpAttemptsRemaining)
+      setSeconds(secondsUntilOtpExpiry(response.otpExpiresAt))
       setOtpValues(Array(OTP_LENGTH).fill(""))
       inputsRef.current[0]?.focus()
     } catch (error) {
@@ -327,6 +403,35 @@ export default function Page() {
       }
     } finally {
       setIsResendingOtp(false)
+    }
+  }
+
+  // Cancels an unverified transfer so its persisted status is CANCELLED.
+  const handleCancelTransaction = async () => {
+    if (isCancellingTransaction || !transactionReferenceNo) {
+      return
+    }
+
+    setIsCancellingTransaction(true)
+    setOtpError("")
+    try {
+      await transactionService.cancelTransaction(transactionReferenceNo)
+      setShowOtp(false)
+      setOtpValues(Array(OTP_LENGTH).fill(""))
+      router.push("/bank-customer/transact")
+    } catch (error) {
+      const message = error instanceof ApiError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : "Unable to cancel this transfer."
+      const cancellationError = message || "Unable to cancel this transfer."
+      setOtpError(cancellationError)
+      if (/only transactions awaiting otp verification can be cancelled/i.test(cancellationError)) {
+        window.setTimeout(() => router.push("/bank-customer/transact"), 1500)
+      }
+    } finally {
+      setIsCancellingTransaction(false)
     }
   }
 
@@ -376,11 +481,18 @@ export default function Page() {
   return (
     <div className="relative min-h-full">
       {/* Main page content gets blurred when OTP/success modal is displayed. */}
-      <div className={showOtp || showSuccess ? "blur-sm pointer-events-none" : ""}>
+      <div className={showOtp || showSuccess || showBeneficiaryPicker ? "blur-sm pointer-events-none" : ""}>
         <div className="px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
           <ModuleHeader theme="transact" menuMode="feature-layout" role="Bank Customer" title="Transfer" name="John Deo" />
 
-          <div className="flex justify-end mt-4 pr-[7rem]">
+          <div className="flex flex-wrap justify-end gap-3 mt-4 pr-[7rem]">
+            <Button
+              type="button"
+              onClick={handleOpenBeneficiaryPicker}
+              className="inline-flex h-[52px] items-center justify-center rounded-full border border-cyan-200 bg-cyan-50 px-9 text-[#0e4f62] transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-100"
+            >
+              Select Beneficiary
+            </Button>
             <Link
               href="/bank-customer/transact/beneficiary"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#061e3d] text-[#ffffff] rounded-full font-medium hover:bg-[#0a3046] transition-all duration-200"
@@ -476,6 +588,56 @@ export default function Page() {
         </div>
       </div>
 
+      {/* Saved beneficiaries can be selected to pre-fill the transfer recipient fields. */}
+      {showBeneficiaryPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <Card className="transact-card w-full max-w-2xl rounded-3xl bg-white p-5 shadow-[0_30px_70px_-36px_rgba(11,62,90,0.55)] sm:p-8">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold text-[#155E63]">Select Beneficiary</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Choose a saved beneficiary to fill the account number and account-holder name.</p>
+              </div>
+              <Button type="button" variant="outline" onClick={() => setShowBeneficiaryPicker(false)}>
+                Close
+              </Button>
+            </div>
+
+            {isLoadingBeneficiaries ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Loading saved beneficiaries...</p>
+            ) : beneficiaryLoadError ? (
+              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{beneficiaryLoadError}</p>
+            ) : savedBeneficiaries.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+                <p className="text-sm text-muted-foreground">No saved beneficiaries yet.</p>
+                <Link href="/bank-customer/transact/beneficiary" className="mt-3 inline-block text-sm font-semibold text-[#1265d6] underline underline-offset-4">
+                  Add a beneficiary
+                </Link>
+              </div>
+            ) : (
+              <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
+                {savedBeneficiaries.map((savedBeneficiary) => {
+                  const accountHolderName = savedBeneficiary.accountHolderName || savedBeneficiary.nickName
+                  return (
+                    <button
+                      key={savedBeneficiary.beneficiaryId}
+                      type="button"
+                      onClick={() => handleSelectBeneficiary(savedBeneficiary)}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-left transition hover:border-[#399FD8] hover:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#399FD8]"
+                    >
+                      <span className="block font-semibold text-slate-800">{accountHolderName}</span>
+                      <span className="mt-1 block text-sm text-slate-600">A/C {savedBeneficiary.beneficiaryAccountNo}</span>
+                      {savedBeneficiary.nickName && savedBeneficiary.nickName !== accountHolderName ? (
+                        <span className="mt-1 block text-xs text-slate-500">Saved as: {savedBeneficiary.nickName}</span>
+                      ) : null}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
       {/* OTP verification modal shown after successful transfer initiation. */}
       {showOtp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
@@ -500,6 +662,7 @@ export default function Page() {
                         inputsRef.current[idx] = element
                       }}
                       maxLength={1}
+                      disabled={seconds <= 0 || otpAttemptsRemaining <= 0 || isVerifyingOtp || isCancellingTransaction}
                       className="w-10 h-12 sm:w-14 sm:h-14 text-center text-base sm:text-lg rounded-xl"
                     />
                   ))}
@@ -507,8 +670,16 @@ export default function Page() {
               </div>
 
               <p className="text-center text-sm text-muted-foreground mb-2">
-                00:{seconds.toString().padStart(2, "0")}
+                {formatOtpCountdown(seconds)}
               </p>
+              <p className="text-center text-sm text-muted-foreground mb-4">
+                {otpAttemptsRemaining} of {MAX_OTP_ATTEMPTS} OTP attempt(s) remaining
+              </p>
+              {seconds <= 0 && otpAttemptsRemaining > 0 && (
+                <p className="text-center text-sm text-amber-700 mb-4">
+                  OTP time has expired. This transfer remains pending; request a new OTP or cancel it.
+                </p>
+              )}
               {otpError && (
                 <p className="text-center text-sm text-red-600 mb-4">{otpError}</p>
               )}
@@ -518,12 +689,10 @@ export default function Page() {
                   type="button"
                   variant="outline"
                   className="w-full sm:w-auto"
-                  onClick={() => {
-                    setShowOtp(false)
-                    setOtpError("")
-                  }}
+                  onClick={handleCancelTransaction}
+                  disabled={isCancellingTransaction || isVerifyingOtp}
                 >
-                  Cancel
+                  {isCancellingTransaction ? "Cancelling..." : "Cancel Transfer"}
                 </Button>
 
                 <Button
@@ -531,7 +700,7 @@ export default function Page() {
                   variant="outline"
                   className="w-full sm:w-auto"
                   onClick={handleResendOtp}
-                  disabled={isResendingOtp || seconds > 0}
+                  disabled={isResendingOtp || seconds > 0 || otpAttemptsRemaining <= 0 || isCancellingTransaction}
                 >
                   {isResendingOtp ? "Resending..." : "Resend OTP"}
                 </Button>
@@ -539,7 +708,7 @@ export default function Page() {
                 <Button
                   type="button"
                   onClick={handleVerify}
-                  disabled={isVerifyingOtp}
+                  disabled={isVerifyingOtp || isCancellingTransaction || seconds <= 0 || otpAttemptsRemaining <= 0}
                   className="w-full sm:w-auto bg-[#061e3d] hover:bg-[#061e3d]/80 text-white rounded-xl px-9 py-5"
                 >
                   {isVerifyingOtp ? "Verifying..." : "Verify"}
@@ -599,7 +768,7 @@ export default function Page() {
                 type="button"
                 variant="outline"
                 disabled={isDownloadingReceipt}
-                className="w-full sm:w-[250px] rounded-2xl px-8 py-5 sm:py-6 text-base font-semibold"
+                className="w-full whitespace-nowrap rounded-full px-7 py-6 text-base font-semibold sm:w-[280px]"
                 onClick={handleDownloadReceipt}
               >
                 <Download className="mr-2 h-5 w-5" />
@@ -607,7 +776,7 @@ export default function Page() {
               </Button>
               <Button
                 type="button"
-                className="w-full sm:w-[250px] bg-[#061e3d] hover:bg-[#061e3d]/80 text-white rounded-2xl px-8 py-5 sm:py-6 text-base sm:text-lg font-semibold shadow-md"
+                className="w-full whitespace-nowrap rounded-full bg-[#061e3d] px-7 py-6 text-base font-semibold text-white shadow-md hover:bg-[#061e3d]/80 sm:w-[280px] sm:text-lg"
                 onClick={() => router.push("/bank-customer/transact")}
               >
                 <LayoutDashboard className="mr-2 h-5 w-5" />

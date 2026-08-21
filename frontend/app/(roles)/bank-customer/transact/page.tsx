@@ -17,7 +17,6 @@ import {
 } from "chart.js";
 import type { ScriptableContext } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
-import { ArrowUpRight } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Card } from "@/components/ui/card";
 import { authService } from "@/src/api/auth/auth.service";
@@ -339,7 +338,7 @@ export default function TransactDashboard() {
       amount: isBalanceLoading ? "--" : formattedTotalSent,
       variant: "light",
       note: "",
-      live: false,
+      live: true,
       showCurrencyPrefix: true,
     },
     {
@@ -347,7 +346,7 @@ export default function TransactDashboard() {
       amount: isBalanceLoading ? "--" : formattedTotalReceived,
       variant: "light",
       note: "",
-      live: false,
+      live: true,
       showCurrencyPrefix: true,
     },
     {
@@ -355,7 +354,7 @@ export default function TransactDashboard() {
       amount: isBalanceLoading ? "--" : formattedTotalTransactions,
       variant: "light",
       note: "",
-      live: false,
+      live: true,
       showCurrencyPrefix: false,
     },
   ];
@@ -389,12 +388,17 @@ export default function TransactDashboard() {
                         {item.title}
                       </span>
                       {item.live ? (
-                        <span className="rounded-full border border-emerald-300/60 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-100">
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                            item.variant === "dark"
+                              ? "border-emerald-300/60 bg-emerald-400/15 text-emerald-100"
+                              : "border-emerald-300 bg-emerald-100 text-emerald-700"
+                          }`}
+                        >
                           Live
                         </span>
                       ) : null}
                     </div>
-                    <ArrowUpRight size={18} className="opacity-50" />
                   </div>
 
                   <div className="mt-3 sm:mt-0 text-left sm:text-right">

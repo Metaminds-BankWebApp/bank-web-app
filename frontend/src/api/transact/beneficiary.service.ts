@@ -11,6 +11,16 @@ export async function createBeneficiary(payload: CreateBeneficiaryRequest): Prom
   }
 }
 
+export async function getBeneficiaries(): Promise<BeneficiaryResponse[]> {
+  try {
+    const { data } = await apiClient.get<BeneficiaryResponse[]>(TRANSACT_ENDPOINTS.beneficiaries);
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export const beneficiaryService = {
   createBeneficiary,
+  getBeneficiaries,
 };
