@@ -4,6 +4,7 @@ export type CreateTransactionRequest = {
   amount: number;
   remark: string;
   expenseTrackingEnabled?: boolean;
+  expenseCategoryName?: string;
 };
 
 export type TransactionInitiateResponse = {
