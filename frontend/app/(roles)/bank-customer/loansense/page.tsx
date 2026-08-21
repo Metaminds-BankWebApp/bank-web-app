@@ -275,9 +275,9 @@ export default function LoanSenseDashboardPage() {
                       <p className="text-sm text-slate-500 mb-3">{option.decisionReason}</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                         <span>Current DBR: {formatPercentage(evaluation.dbr)}</span>
-                        <span>Product DBR limit: {formatPercentage(option.policyMaxDbrRatio)}</span>
+                        <span>Loan DBR limit: {formatPercentage(option.policyMaxDbrRatio)}</span>
                         <span>
-                          Available EMI for this product: {formatCurrency(option.availableEmiCapacity)}
+                          Available EMI for this loan: {formatCurrency(option.availableEmiCapacity)}
                         </span>
                       </div>
                       <span
@@ -332,7 +332,7 @@ export default function LoanSenseDashboardPage() {
                 <div className="rounded-xl border border-sky-100 bg-sky-50 p-4 text-sm text-sky-900">
                   <p className="font-semibold">Current DBR: {formatPercentage(evaluation.dbr)}</p>
                   <p className="mt-1 text-xs leading-5">
-                    Monthly income and debt obligations are shared. Each loan product applies its own
+                    Monthly income and debt obligations are shared. Each loan applies its own
                     DBR limit, tenure, income, age, funding, and interest-rate policy to these inputs.
                   </p>
                 </div>
@@ -406,39 +406,39 @@ export default function LoanSenseDashboardPage() {
               </div>
 
               <div className="bg-slate-50 rounded-lg p-4 border">
-                <h3 className="font-semibold text-slate-800 mb-2">3. Apply the Policy for Each Loan Product</h3>
+                <h3 className="font-semibold text-slate-800 mb-2">3. Apply the Policy for Each Loan</h3>
                 <p>
-                  Every loan product uses its own DBR limit. Personal, Vehicle, Education,
+                  Every loan  uses its own DBR limit. Personal, Vehicle, Education,
                   and Housing loans can therefore have different allowed EMI amounts.
                 </p>
                 <p className="mt-2 font-medium text-slate-800">
-                  Product Max Allowed EMI = Monthly Income x That Product&apos;s DBR Policy Limit
+                  Loan Max Allowed EMI = Monthly Income x That Loan&apos;s DBR Policy Limit
                 </p>
               </div>
 
               <div className="bg-slate-50 rounded-lg p-4 border">
                 <h3 className="font-semibold text-slate-800 mb-2">
-                  4. Calculate Product-specific Available EMI Capacity
+                  4. Calculate Loan-specific Available EMI Capacity
                 </h3>
                 <p>
-                  The same debt obligations are compared with each product&apos;s allowed EMI
+                  The same debt obligations are compared with each loan&apos;s allowed EMI
                   amount. This capacity can be different for every loan type.
                 </p>
                 <p className="mt-2 font-medium text-slate-800">
-                  Product Available EMI = Product Max Allowed EMI - TMDO
+                  Loan Available EMI = Loan Max Allowed EMI - TMDO
                 </p>
               </div>
 
               <div className="bg-slate-50 rounded-lg p-4 border">
                 <h3 className="font-semibold text-slate-800 mb-2">
-                  5. Calculate the Product Recommendation and Status
+                  5. Calculate the Loan Recommendation and Status
                 </h3>
                 <p>
-                  Each product then applies its tenure, interest rate, risk multiplier, age,
+                  Each loan then applies its tenure, interest rate, risk multiplier, age,
                   minimum-income, asset-finance, and repayment-history rules.
                 </p>
                 <p className="mt-2 font-medium text-slate-800">
-                  Final Loan Amount = Product Available EMI x Product Tenure x Risk Multiplier
+                  Final Loan Amount = Loan Available EMI x Loan Tenure x Risk Multiplier
                 </p>
               </div>
 
