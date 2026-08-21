@@ -15,6 +15,9 @@ export interface LoanSenseLoanOptionResponse {
   recommendedMaxAmount: number;
   estimatedEmi: number;
   interestRate: number | null;
+  policyMaxDbrRatio: number | null;
+  maxAllowedEmi: number | null;
+  availableEmiCapacity: number | null;
   tenureMonths: number | null;
   tenureLabel: string;
   customerAge: number;
@@ -76,15 +79,18 @@ export interface LoanTypeDetailResponse {
   recommendedMaxAmount: number;
   estimatedEmi: number;
   interestRate: number | null;
+  tenureMonths: number | null;
   policyMinTenureMonths: number | null;
   policyMaxTenureMonths: number | null;
   tenureLabel: string;
   customerAge: number;
+  assetValue: number | null;
   monthlyIncome: number;
   totalExistingLoanEmi: number;
   creditCardMinPayment: number;
   leasingHirePurchasePayment: number;
   tmdo: number;
+  missedPaymentsCount: number;
   dbr: number;
   policyMaxDbrRatio: number | null;
   maxAllowedEmi: number;
@@ -96,6 +102,8 @@ export interface LoanTypeDetailResponse {
   policyMinIncomeRequired: number | null;
   policyMinAge: number | null;
   policyMaxAge: number | null;
+  policyMaxFinancePercentage: number | null;
+  policyStatus: "ACTIVE" | "INACTIVE" | null;
   decisionReason: string;
   createdAt: string | null;
 }
