@@ -180,30 +180,10 @@ export default function LoanSenseDashboardPage() {
       .filter((option): option is LoanSenseLoanOptionResponse => Boolean(option));
   }, [evaluation]);
 
-  // Builds derived UI values from API data to keep rendering simple.
-  const policyLimitPercent = useMemo(() => {
-    if (!evaluation || evaluation.monthlyIncome <= 0) {
-      return 0;
-    }
-    return (evaluation.maxAllowedEmi / evaluation.monthlyIncome) * 100;
-  }, [evaluation]);
-
-  // Builds derived UI values from API data to keep rendering simple.
-  const dbrProgress = useMemo(() => {
-    if (!evaluation || policyLimitPercent <= 0) {
-      return 0;
-    }
-    return Math.min(100, (evaluation.dbr * 100 * 100) / policyLimitPercent);
-  }, [evaluation, policyLimitPercent]);
-
   return (
     <main className="flex min-h-screen flex-col gap-6 bg-transparent p-4 font-sans text-slate-800 md:p-8">
       <ModuleHeader theme="loansense" menuMode="feature-layout" title="LoanSense Dashboard" />
-      <div>
-        <p className="text-sm opacity-80 mt-2">
-          Your personalized loan insights and recommendations
-        </p>
-      </div>
+      
 
       {error && !evaluation ? (
         <div className="loansense-card loansense-creditlens-shade rounded-xl p-6 text-red-700 border border-red-200 bg-red-50">
@@ -258,12 +238,12 @@ export default function LoanSenseDashboardPage() {
 
             <div className="loansense-card loansense-card-hover loansense-creditlens-shade bg-[#e0f7fa] text-[#0d3b66] p-6 rounded-2xl h-32 flex flex-col justify-between">
               <div className="flex justify-between items-start">
-                <span className="text-sm font-medium opacity-80">Max Affordable EMI</span>
+                <span className="text-sm font-medium opacity-80">Current Debt Burden Ratio</span>
                 <TrendingUp size={18} className="text-[#0d3b66]/40" />
               </div>
               <div>
                 <span className="text-sm font-bold opacity-60">
-                  {formatCurrency(evaluation.availableEmiCapacity)}
+                  {formatPercentage(evaluation.dbr)}
                 </span>
               </div>
             </div>
@@ -293,6 +273,13 @@ export default function LoanSenseDashboardPage() {
                         {option.loanTypeLabel}
                       </h4>
                       <p className="text-sm text-slate-500 mb-3">{option.decisionReason}</p>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                        <span>Current DBR: {formatPercentage(evaluation.dbr)}</span>
+                        <span>Product DBR limit: {formatPercentage(option.policyMaxDbrRatio)}</span>
+                        <span>
+                          Available EMI for this product: {formatCurrency(option.availableEmiCapacity)}
+                        </span>
+                      </div>
                       <span
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${getStatusBadgeClass(
                           option.eligibilityStatus
@@ -325,7 +312,7 @@ export default function LoanSenseDashboardPage() {
             </div>
 
             <div className="loansense-card loansense-card-hover loansense-creditlens-shade rounded-2xl p-6 h-fit">
-              <h3 className="text-lg font-bold text-slate-800 mb-8">Affordability Indicators</h3>
+              <h3 className="text-lg font-bold text-slate-800 mb-8">Shared Financial Inputs</h3>
 
               <div className="space-y-8">
                 <div>
@@ -342,29 +329,12 @@ export default function LoanSenseDashboardPage() {
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2">
-                    <span>DBR Percentage</span>
-                    <span className="text-slate-900 font-bold">{formatPercentage(evaluation.dbr)}</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-1">
-                    <div
-                      className="h-full bg-emerald-500 rounded-full"
-                      style={{ width: `${dbrProgress}%` }}
-                    />
-                  </div>
-                  <p className="text-[10px] text-slate-400">
-                    Policy limit {policyLimitPercent.toFixed(1)}%
+                <div className="rounded-xl border border-sky-100 bg-sky-50 p-4 text-sm text-sky-900">
+                  <p className="font-semibold">Current DBR: {formatPercentage(evaluation.dbr)}</p>
+                  <p className="mt-1 text-xs leading-5">
+                    Monthly income and debt obligations are shared. Each loan product applies its own
+                    DBR limit, tenure, income, age, funding, and interest-rate policy to these inputs.
                   </p>
-                </div>
-
-                <div className="pt-4 border-t border-slate-100">
-                  <div className="flex justify-between items-center mt-2">
-                    <span className="text-sm font-medium text-slate-600">Available EMI Capacity</span>
-                    <span className="text-lg font-bold text-emerald-600">
-                      {formatCurrency(evaluation.availableEmiCapacity)}
-                    </span>
-                  </div>
                 </div>
 
                 <button
@@ -436,43 +406,67 @@ export default function LoanSenseDashboardPage() {
               </div>
 
               <div className="bg-slate-50 rounded-lg p-4 border">
-                <h3 className="font-semibold text-slate-800 mb-2">3. Apply Bank Policy Limit</h3>
+                <h3 className="font-semibold text-slate-800 mb-2">3. Apply the Policy for Each Loan Product</h3>
                 <p>
-                  The bank allows only a fixed portion of your income to be used for total
-                  debt repayments.
+                  Every loan product uses its own DBR limit. Personal, Vehicle, Education,
+                  and Housing loans can therefore have different allowed EMI amounts.
                 </p>
                 <p className="mt-2 font-medium text-slate-800">
-                  Max Allowed EMI = Monthly Income x DBR Policy Limit
-                </p>
-                <p className="mt-2">
-                  Current Max Allowed EMI: {formatCurrency(evaluation.maxAllowedEmi)}
+                  Product Max Allowed EMI = Monthly Income x That Product&apos;s DBR Policy Limit
                 </p>
               </div>
 
               <div className="bg-slate-50 rounded-lg p-4 border">
                 <h3 className="font-semibold text-slate-800 mb-2">
-                  4. Calculate Available EMI Capacity
+                  4. Calculate Product-specific Available EMI Capacity
                 </h3>
-                <p>This is the additional monthly repayment amount you can safely afford.</p>
-                <p className="mt-2 font-medium text-slate-800">
-                  Available EMI = Max Allowed EMI - TMDO
+                <p>
+                  The same debt obligations are compared with each product&apos;s allowed EMI
+                  amount. This capacity can be different for every loan type.
                 </p>
-                <p className="mt-2">
-                  Current Available EMI: {formatCurrency(evaluation.availableEmiCapacity)}
+                <p className="mt-2 font-medium text-slate-800">
+                  Product Available EMI = Product Max Allowed EMI - TMDO
                 </p>
               </div>
 
               <div className="bg-slate-50 rounded-lg p-4 border">
                 <h3 className="font-semibold text-slate-800 mb-2">
-                  5. Apply Credit Risk Adjustment
+                  5. Calculate the Product Recommendation and Status
                 </h3>
                 <p>
-                  Your credit risk level determines how much of the calculated amount the
-                  bank is willing to approve.
+                  Each product then applies its tenure, interest rate, risk multiplier, age,
+                  minimum-income, asset-finance, and repayment-history rules.
                 </p>
                 <p className="mt-2 font-medium text-slate-800">
-                  Final Loan Amount = Available EMI x Tenure x Risk Multiplier
+                  Final Loan Amount = Product Available EMI x Product Tenure x Risk Multiplier
                 </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {orderedLoanOptions.map((option) => (
+                  <div key={option.loanResultId} className="rounded-lg border border-slate-200 bg-white p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="font-semibold text-slate-800">{option.loanTypeLabel}</h3>
+                      <span className={`rounded-full px-2 py-1 text-xs font-semibold ${getStatusBadgeClass(option.eligibilityStatus)}`}>
+                        {option.eligibilityLabel}
+                      </span>
+                    </div>
+                    <dl className="mt-3 space-y-1 text-xs text-slate-600">
+                      <div className="flex justify-between gap-3">
+                        <dt>DBR limit</dt>
+                        <dd className="font-semibold text-slate-800">{formatPercentage(option.policyMaxDbrRatio)}</dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt>Max allowed EMI</dt>
+                        <dd className="font-semibold text-slate-800">{formatCurrency(option.maxAllowedEmi)}</dd>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <dt>Available EMI</dt>
+                        <dd className="font-semibold text-slate-800">{formatCurrency(option.availableEmiCapacity)}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                ))}
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
