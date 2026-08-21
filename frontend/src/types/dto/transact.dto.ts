@@ -85,6 +85,7 @@ export type TransactDashboardSummaryResponse = {
 export type CreateBeneficiaryRequest = {
   beneficiaryAccountNo: string;
   nickName: string;
+	accountHolderName: string;
   remark: string;
 };
 
