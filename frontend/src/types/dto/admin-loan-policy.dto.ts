@@ -26,3 +26,15 @@ export interface AdminLoanPolicyInterestRateUpdateItem {
 export interface AdminBulkLoanPolicyInterestRateUpdateRequest {
   policies: AdminLoanPolicyInterestRateUpdateItem[];
 }
+
+export interface AdminLoanPolicyUpdateRequest {
+  loanType: AdminLoanPolicyType;
+  maxDbrRatio: number;
+  baseInterestRate: number;
+  maxTenureMonths: number;
+  minAge: number;
+  maxAge: number;
+  maxFinancePercentage: number | null;
+  minIncomeRequired: number | null;
+  status: AdminLoanPolicyStatus;
+}

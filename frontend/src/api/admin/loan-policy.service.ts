@@ -3,6 +3,7 @@ import { ADMIN_ENDPOINTS } from "@/src/api/endpoints";
 import type {
   AdminBulkLoanPolicyInterestRateUpdateRequest,
   AdminLoanPolicyResponse,
+  AdminLoanPolicyUpdateRequest,
 } from "@/src/types/dto/admin-loan-policy.dto";
 
 // Fetches AdminLoanPolicies data from the backend API.
@@ -24,6 +25,22 @@ export async function updateAdminLoanPolicyInterestRates(
   try {
     const { data } = await apiClient.put<AdminLoanPolicyResponse[]>(
       `${ADMIN_ENDPOINTS.loanPolicies}/interest-rates`,
+      payload
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+// Updates every configurable rule for one LoanSense loan policy.
+export async function updateAdminLoanPolicy(
+  policyId: number,
+  payload: AdminLoanPolicyUpdateRequest
+): Promise<AdminLoanPolicyResponse> {
+  try {
+    const { data } = await apiClient.put<AdminLoanPolicyResponse>(
+      `${ADMIN_ENDPOINTS.loanPolicies}/${policyId}`,
       payload
     );
     return data;
