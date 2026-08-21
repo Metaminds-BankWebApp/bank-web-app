@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
@@ -170,6 +170,14 @@ const customerDetailTabs: Array<{ id: CustomerDetailTab; label: string }> = [
 const customersPerPage = 10;
 
 export default function AllCustomersPage() {
+   return (
+      <Suspense fallback={<CustomerLookupLoadingState />}>
+         <AllCustomersPageContent />
+      </Suspense>
+   );
+}
+
+function AllCustomersPageContent() {
    const { showToast } = useToast();
    const searchParams = useSearchParams();
    const requestedNic = searchParams.get("nic")?.trim() ?? "";
@@ -1017,4 +1025,8 @@ export default function AllCustomersPage() {
       </div>
     </AuthGuard>
   );
+}
+
+function CustomerLookupLoadingState() {
+   return <div className="min-h-screen bg-[#f3f4f6]" aria-label="Loading customer lookup" />;
 }
