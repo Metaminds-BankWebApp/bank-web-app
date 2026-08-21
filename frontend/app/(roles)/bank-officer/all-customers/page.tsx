@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
 import { getBankCustomersForOfficer } from "@/src/api/customers/bank-customer.service";
@@ -170,7 +171,9 @@ const customersPerPage = 10;
 
 export default function AllCustomersPage() {
    const { showToast } = useToast();
-  const [searchTerm, setSearchTerm] = useState("");
+   const searchParams = useSearchParams();
+   const requestedNic = searchParams.get("nic")?.trim() ?? "";
+  const [searchTerm, setSearchTerm] = useState(requestedNic);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -191,6 +194,10 @@ export default function AllCustomersPage() {
    const [deleteRequestNote, setDeleteRequestNote] = useState("");
    const [isSubmittingDeleteRequest, setIsSubmittingDeleteRequest] = useState(false);
    const [currentPage, setCurrentPage] = useState(1);
+
+   useEffect(() => {
+      setSearchTerm(requestedNic);
+   }, [requestedNic]);
 
    useEffect(() => {
       const t = setTimeout(() => setDebouncedSearchTerm(searchTerm), 450);
@@ -215,7 +222,17 @@ export default function AllCustomersPage() {
 
            const data = await getBankCustomersForOfficer(filters);
            if (!mounted) return;
-           setCustomers(data.map(mapApiCustomer));
+           const mappedCustomers = data.map(mapApiCustomer);
+           setCustomers(mappedCustomers);
+
+           if (requestedNic) {
+              const requestedCustomer = mappedCustomers.find(
+                 (customer) => customer.nic.toUpperCase() === requestedNic.toUpperCase(),
+              );
+              if (requestedCustomer) {
+                 setSelectedCustomer(requestedCustomer);
+              }
+           }
          } catch (error) {
               if (!mounted) return;
               // Log the raw error to the console for debugging (developer-only).
@@ -234,7 +251,7 @@ export default function AllCustomersPage() {
        return () => {
          mounted = false;
        };
-    }, [debouncedSearchTerm, sortBy, statusFilter]);
+    }, [debouncedSearchTerm, requestedNic, sortBy, statusFilter]);
 
    // Show only customers that match the officer's search, filters, and sort choice.
    const visibleCustomers = useMemo(() => {

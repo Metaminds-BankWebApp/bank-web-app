@@ -35,6 +35,7 @@ import {
 import { transactionService } from "@/src/api/transact/transaction.service";
 import { ApiError } from "@/src/types/api-error";
 import { TableActionIconButton } from "@/src/components/ui/table-action-icon-button";
+import { DataTablePagination } from "@/src/components/ui/data-table-layout";
 import type { TransactionResponse } from "@/src/types/dto/transact.dto";
 
 type TransactionStatus = "success" | "failed" | "pending";
@@ -64,6 +65,7 @@ const amountFormatter = new Intl.NumberFormat("en-LK", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
+const transactionsPerPage = 10;
 
 function formatDateParts(value: string): { dateLabel: string; timeLabel: string; dateKey: string; timestamp: number } {
   const parsed = new Date(value);
@@ -159,6 +161,7 @@ export default function TransactionsPage() {
   const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "amount-desc" | "amount-asc">("date-desc");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Load officer transaction history once when this page opens.
   useEffect(() => {
@@ -249,6 +252,19 @@ export default function TransactionsPage() {
       }
     });
   }, [amountFilter, dateRange, searchTerm, sortBy, transactions, typeFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [amountFilter, dateRange, searchTerm, sortBy, typeFilter]);
+
+  const totalPages = Math.ceil(visibleTransactions.length / transactionsPerPage);
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), Math.max(totalPages, 1));
+  const paginatedTransactions = visibleTransactions.slice(
+    (safeCurrentPage - 1) * transactionsPerPage,
+    safeCurrentPage * transactionsPerPage,
+  );
+  const showingFrom = visibleTransactions.length === 0 ? 0 : (safeCurrentPage - 1) * transactionsPerPage + 1;
+  const showingTo = Math.min(safeCurrentPage * transactionsPerPage, visibleTransactions.length);
 
   // Compute summary cards from the full fetched list.
   const summary = useMemo(() => {
@@ -479,7 +495,7 @@ export default function TransactionsPage() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      visibleTransactions.map((txn) => (
+                      paginatedTransactions.map((txn) => (
                         <TableRow key={txn.referenceNo} className={`hover:bg-slate-50/50 ${txn.status === "failed" ? "bg-amber-50/30" : ""}`}>
                           <TableCell className="py-4">
                             <div className="flex flex-col">
@@ -530,6 +546,17 @@ export default function TransactionsPage() {
                     )}
                   </TableBody>
                 </Table>
+              </div>
+              <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/30 p-4 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                <span>
+                  Showing <span className="font-bold text-slate-700">{showingFrom}-{showingTo}</span> of{" "}
+                  <span className="font-bold text-slate-700">{visibleTransactions.length}</span> transactions
+                </span>
+                <DataTablePagination
+                  currentPage={safeCurrentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
               </div>
             </div>
 

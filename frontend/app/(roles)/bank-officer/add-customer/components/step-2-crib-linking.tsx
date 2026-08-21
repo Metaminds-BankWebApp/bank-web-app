@@ -3,9 +3,7 @@
 import { useState } from "react";
 import { ArrowRight, ArrowLeft, Loader2, Server, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
-import { Label } from "@/src/components/ui";
 import { StepProps } from "./types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { Checkbox } from "@/src/components/ui/checkbox";
 
 export function CribLinking({
@@ -17,7 +15,6 @@ export function CribLinking({
 }: StepProps) {
   // This local status only drives the timeline animation on this screen.
   const [requestStatus, setRequestStatus] = useState<"draft" | "processing" | "sent" | "connected" | "retrieved">("draft");
-  const [requestType, setRequestType] = useState(formData.cribRequestType || "FULL_REPORT");
   const [consentGiven, setConsentGiven] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
@@ -37,7 +34,7 @@ export function CribLinking({
     setRequestStatus("processing");
 
     try {
-      await onSaveCribLinkingStep(requestType);
+      await onSaveCribLinkingStep("FULL_REPORT");
       setRequestStatus("sent");
       await wait(350);
       setRequestStatus("connected");
@@ -78,21 +75,7 @@ export function CribLinking({
               <ShieldCheck size={16} className="text-[#3e9fd3]" /> Request Parameters
             </h3>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label className="text-slate-700 font-medium">Request Reason</Label>
-                <Select value={requestType} onValueChange={setRequestType}>
-                  <SelectTrigger className="bg-white border-slate-200 h-10">
-                    <SelectValue placeholder="Select Reason" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="FULL_REPORT">New Loan Application</SelectItem>
-                    <SelectItem value="SUMMARY_ONLY">Periodic Review</SelectItem>
-                    <SelectItem value="REFRESH">Credit Card Issuance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
+            <div>
               <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100/50 flex items-start gap-3">
                 <Checkbox
                   id="consent"
