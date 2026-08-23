@@ -178,22 +178,6 @@ function isRecentDate(isoDateTime: string | null, days: number): boolean {
   return Date.now() - timestamp <= days * dayInMs;
 }
 
-function getInitials(name: string): string {
-  const parts = name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-
-  if (parts.length === 0) {
-    return "NA";
-  }
-
-  return parts
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
-}
-
 function splitName(fullName: string): { firstName: string; lastName: string } {
   const parts = fullName
     .trim()
@@ -677,10 +661,7 @@ export default function Page() {
                         return (
                           <tr key={officer.userId} className="hover:bg-gray-50">
                             <td className="px-6 py-4 font-medium">{officer.id}</td>
-                            <td className="px-6 py-4 flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-base font-semibold text-[#0B3B66] border border-gray-300">
-                                {getInitials(officer.name)}
-                              </div>
+                            <td className="px-6 py-4">
                               <span className="font-semibold text-gray-900">{officer.name}</span>
                             </td>
                             <td className="px-6 py-4 text-gray-600">{officer.branch}</td>
