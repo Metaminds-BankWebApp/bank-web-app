@@ -275,16 +275,16 @@ export function validateLoanDraft(loan: LoanDraft): LoanDraftErrors {
     errors.monthlyEmi = "Monthly EMI is required.";
   } else if (!isCurrencyFormat(loan.monthlyEmi)) {
     errors.monthlyEmi = "Enter a valid EMI amount.";
-  } else if (toAmount(loan.monthlyEmi) <= 0) {
-    errors.monthlyEmi = "EMI amount must be greater than 0.";
+  } else if (toAmount(loan.monthlyEmi) < 0) {
+    errors.monthlyEmi = "EMI amount cannot be negative.";
   }
 
   if (!loan.remainingBalance.trim()) {
     errors.remainingBalance = "Remaining balance is required.";
   } else if (!isCurrencyFormat(loan.remainingBalance)) {
     errors.remainingBalance = "Enter a valid remaining balance amount.";
-  } else if (toAmount(loan.remainingBalance) <= 0) {
-    errors.remainingBalance = "Remaining balance must be greater than 0.";
+  } else if (toAmount(loan.remainingBalance) < 0) {
+    errors.remainingBalance = "Remaining balance cannot be negative.";
   }
 
   return errors;

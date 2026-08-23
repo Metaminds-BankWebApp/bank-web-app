@@ -1,54 +1,90 @@
 "use client";
 
-import { CheckCircle2, Eye, FileText, Plus, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, ChevronRight, Eye, FileText, Plus, ShieldCheck } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 
 interface SuccessViewProps {
   customerName: string;
   generatedId: string;
+  customerNic: string;
+  bankCustomerId: number | null;
   onReset: () => void;
 }
 
-export function SuccessView({ customerName, generatedId, onReset }: SuccessViewProps) {
+export function SuccessView({
+  customerName,
+  generatedId,
+  customerNic,
+  bankCustomerId,
+  onReset,
+}: SuccessViewProps) {
+  const customerProfileHref = customerNic
+    ? `/bank-officer/all-customers?nic=${encodeURIComponent(customerNic)}`
+    : "/bank-officer/all-customers";
+  const creditEvaluationHref = bankCustomerId
+    ? `/bank-officer/credit-analysis/evaluation/${bankCustomerId}?name=${encodeURIComponent(customerName)}`
+    : "/bank-officer/credit-analysis";
+
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center animate-in zoom-in-50 duration-500">
-      <div className="h-24 w-24 bg-blue-50 rounded-full flex items-center justify-center mb-6 relative">
-         <div className="absolute inset-0 bg-[#3e9fd3]/10 rounded-full animate-ping opacity-75"></div>
-         <CheckCircle2 size={48} className="text-[#3e9fd3] relative z-10" />
+    <section className="w-full max-w-2xl animate-in fade-in zoom-in-95 duration-500">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col items-center text-center">
+          <div className="relative mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-sky-50">
+            <span className="absolute inset-0 rounded-full border border-sky-200 animate-ping opacity-40" />
+            <CheckCircle2 size={42} className="relative text-[#3e9fd3]" />
+          </div>
+
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[#3e9fd3]">Onboarding complete</p>
+          <h2 className="mt-2 text-2xl font-bold text-[#0d3b66] sm:text-3xl">Customer created successfully</h2>
+          <p className="mt-3 max-w-lg text-sm leading-6 text-slate-500">
+            The customer profile is active. You can review the verified details or begin a credit evaluation now.
+          </p>
+        </div>
+
+        <dl className="mt-7 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80 sm:grid sm:grid-cols-2">
+          <div className="border-b border-slate-200 px-5 py-4 sm:border-b-0 sm:border-r">
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-400">Customer name</dt>
+            <dd className="mt-1 truncate text-sm font-semibold text-slate-800">{customerName}</dd>
+          </div>
+          <div className="px-5 py-4">
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-400">Generated ID</dt>
+            <dd className="mt-1 text-sm font-semibold text-[#258ac3]">{generatedId}</dd>
+          </div>
+        </dl>
+
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          <Link
+            href={creditEvaluationHref}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#3e9fd3] px-4 text-sm font-semibold text-white shadow-md shadow-sky-200 transition-colors hover:bg-[#328ab8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3e9fd3] focus-visible:ring-offset-2"
+          >
+            <FileText size={18} />
+            Trigger Credit Evaluation
+            <ChevronRight size={16} />
+          </Link>
+          <Link
+            href={customerProfileHref}
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3e9fd3] focus-visible:ring-offset-2"
+          >
+            <Eye size={18} />
+            View Customer Profile
+          </Link>
+        </div>
+
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 border-t border-slate-100 pt-5 text-sm sm:flex-row sm:gap-6">
+          <Link
+            href={customerProfileHref}
+            className="inline-flex items-center gap-2 font-medium text-slate-500 transition-colors hover:text-[#0d3b66]"
+          >
+            <ShieldCheck size={16} />
+            Review verified data
+          </Link>
+          <Button onClick={onReset} variant="ghost" className="h-auto px-0 font-medium text-slate-500 hover:bg-transparent hover:text-[#0d3b66]">
+            <Plus size={16} />
+            Create another customer
+          </Button>
+        </div>
       </div>
-      
-      <h2 className="text-2xl font-bold text-[#0d3b66] mb-8">Customer Created Successfully</h2>
-      
-      <div className="bg-slate-50 rounded-xl p-6 w-full max-w-md border border-slate-100 mb-8">
-         <div className="flex justify-between items-center py-3 border-b border-slate-200/60">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Customer Name</span>
-            <span className="text-sm font-bold text-slate-700">{customerName}</span>
-         </div>
-         <div className="flex justify-between items-center py-3">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Generated ID</span>
-            <span className="text-sm font-bold text-[#3e9fd3]">{generatedId}</span>
-         </div>
-      </div>
-      
-      <p className="text-sm text-slate-500 mb-8 max-w-sm">The customer profile is now active and ready for evaluation.</p>
-      
-      <div className="flex gap-4 w-full max-w-lg mb-8">
-         <Button className="flex-1 bg-[#3e9fd3] hover:bg-[#328ab8] text-white gap-2 h-12 shadow-md shadow-blue-200">
-            <FileText size={18} /> Trigger Credit Evaluation
-         </Button>
-         <Button variant="outline" className="flex-1 border-slate-200 text-slate-600 hover:bg-slate-50 gap-2 h-12">
-            View Customer Profile <Eye size={18} />
-         </Button>
-      </div>
-      
-      <div className="flex gap-8 text-xs font-bold text-slate-400 uppercase tracking-wide">
-         <button className="flex items-center gap-2 hover:text-slate-600 transition-colors">
-            <ShieldCheck size={14} /> Enter Verified Data
-         </button>
-         <button onClick={onReset} className="flex items-center gap-2 hover:text-slate-600 transition-colors">
-            <Plus size={14} /> Create Another Customer
-         </button>
-      </div>
-    </div>
+    </section>
   );
 }

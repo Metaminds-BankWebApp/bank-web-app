@@ -872,7 +872,7 @@ export default function AddCustomerPage() {
             const cribPrefillData = extractCribPrefillData(response);
             const requestStatus = (response.requestStatus || "COMPLETED").toUpperCase();
             const reportStatus = (response.reportStatus || "READY").toUpperCase();
-            const isCribNotFound = requestStatus === "FAILED" && reportStatus === "FAILED";
+            const isCribNotFound = !response.snapshot || (requestStatus === "FAILED" && reportStatus === "FAILED");
 
             updateFormData({
                cribRequestType: requestType,
@@ -895,6 +895,14 @@ export default function AddCustomerPage() {
                loans: isCribNotFound ? formData.loans : cribPrefillData.loans,
                creditCards: isCribNotFound ? formData.creditCards : cribPrefillData.creditCards,
                liabilities: isCribNotFound ? formData.liabilities : cribPrefillData.liabilities,
+            });
+
+            showToast({
+               title: isCribNotFound ? "No CRIB record found" : "CRIB data retrieved",
+               description: isCribNotFound
+                  ? "Continue by entering the customer's financial details manually in the remaining steps."
+                  : "The available CRIB loans, cards, liabilities, and summary values have been added to the relevant steps.",
+               type: isCribNotFound ? "info" : "success",
             });
 
             return response;
@@ -2105,10 +2113,12 @@ export default function AddCustomerPage() {
 
           <div className="flex-1 overflow-y-auto min-h-0 pb-24">
           {isSuccess ? (
-             <div className="bg-white rounded-xl shadow-sm border border-slate-100 min-h-150 flex items-center justify-center">
+             <div className="flex min-h-[calc(100vh-13rem)] items-center justify-center rounded-xl border border-slate-100 bg-white px-4 py-10 shadow-sm sm:px-8">
                 <SuccessView 
                    customerName={customerFullName || "New Customer"}  
                    generatedId={generatedId}
+                   customerNic={formData.nic}
+                   bankCustomerId={createdBankCustomerId}
                    onReset={handleReset}
                 />
              </div>

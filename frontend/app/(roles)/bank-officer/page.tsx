@@ -3,11 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   ClipboardCheck,
-  RefreshCw,
-  Users,
-  Wallet,
 } from "lucide-react";
 import {
   Bar,
@@ -179,43 +175,35 @@ export default function BankOfficerDashboardPage() {
               />
             ) : (
               <>
-                <div className="mb-5 flex justify-end">
-                  <Button
-                    variant="outline"
-                    onClick={() => void loadDashboard()}
-                    className="h-10 rounded-xl border-slate-200/90 bg-white/80 px-4 text-[#0d3b66] shadow-[0_10px_24px_-18px_rgba(13,59,102,0.7)] transition-all hover:-translate-y-px hover:border-[#0d3b66] hover:bg-white"
-                  >
-                    <RefreshCw size={15} className="mr-2" />
-                    Refresh
-                  </Button>
-                </div>
-                <section className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <section className="mb-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
                   <NumberCard
-                    icon={<Users size={19} />}
                     label="Total customers"
                     value={overview.customerCount}
+                    note="Customer directory"
                     href="/bank-officer/all-customers"
+                    highlight
                   />
                   <NumberCard
-                    icon={<AlertTriangle size={19} />}
                     label="High-risk customers"
                     value={overview.highRisk}
+                    note="Credit portfolio"
                     href="/bank-officer/credit-analysis"
+                    valueClassName="text-red-600"
                   />
                   <NumberCard
-                    icon={<ClipboardCheck size={19} />}
                     label="Pending profiles"
                     value={overview.pendingProfiles}
+                    note="Open work queue"
                     href="/bank-officer/work-queue"
                   />
                   <NumberCard
-                    icon={<Wallet size={19} />}
                     label="Transaction reviews"
                     value={overview.transactionReviews}
+                    note="Transfer history"
                     href="/bank-officer/transactions"
                   />
                 </section>
-                <section className="relative z-[100] mb-5 flex flex-col gap-3 rounded-2xl border border-white/90 bg-white/80 p-3 shadow-[0_18px_38px_-28px_rgba(13,59,102,0.45)] backdrop-blur-md sm:flex-row sm:items-end sm:p-4">
+                <section className="relative z-[100] mb-6 flex flex-col gap-3 rounded-2xl border border-white/90 bg-white/80 p-4 shadow-[0_18px_38px_-28px_rgba(13,59,102,0.45)] backdrop-blur-md sm:flex-row sm:items-end">
                   <Select
                     value={range}
                     onValueChange={(value) => selectRange(value as DateRange)}
@@ -257,7 +245,7 @@ export default function BankOfficerDashboardPage() {
                     />
                   </label>
                 </section>
-                <section className="relative z-0 grid gap-5 xl:grid-cols-[1.35fr_1fr]">
+                <section className="relative z-0 grid items-stretch gap-6 xl:grid-cols-[1.35fr_1fr]">
                   <ChartCard
                     title="Customer risk distribution"
                     description={`${overview.customerCount} updated customer profiles · ${overview.dateRangeLabel}`}
@@ -349,45 +337,36 @@ export default function BankOfficerDashboardPage() {
 }
 
 function NumberCard({
-  icon,
   label,
   value,
+  note,
   href,
+  highlight = false,
+  valueClassName,
 }: {
-  icon: ReactNode;
   label: string;
   value: number;
+  note: string;
   href: string;
+  highlight?: boolean;
+  valueClassName?: string;
 }) {
-  const featured = label === "Total customers";
   return (
     <Link
       href={href}
-      className={`group relative min-h-[160px] overflow-hidden rounded-2xl border p-5 shadow-[0_18px_38px_-28px_rgba(13,59,102,0.55)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_26px_48px_-28px_rgba(13,59,102,0.7)] ${featured ? "border-[#0d3b66] bg-[linear-gradient(135deg,#0d3b66_0%,#124f82_100%)] text-white" : "border-white/90 bg-white/90 text-slate-800"}`}
+      className={`flex min-h-[148px] flex-col justify-between rounded-xl p-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3e9fd3] focus-visible:ring-offset-2 ${
+        highlight
+          ? "bg-[#0d3b66] text-white shadow-lg"
+          : "border border-slate-100 bg-white shadow-sm"
+      }`}
     >
-      <span
-        className={`flex h-10 w-10 items-center justify-center rounded-xl ring-1 ${featured ? "bg-white/12 text-white ring-white/15" : "bg-sky-50 text-[#0d3b66] ring-sky-100"}`}
-      >
-        {icon}
-      </span>
-      <div className="mt-5">
-        <p
-          className={`text-3xl font-bold tracking-[-0.04em] ${featured ? "text-white" : "text-[#0d3b66]"}`}
-        >
-          {value}
-        </p>
-        <p
-          className={`mt-1 text-sm font-medium ${featured ? "text-sky-100" : "text-slate-500"}`}
-        >
-          {label}
-        </p>
-      </div>
-      <span
-        className={`absolute bottom-0 left-5 right-5 h-px origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100 ${featured ? "bg-white/50" : "bg-[#0d3b66]/35"}`}
-      />
-      <span
-        className={`absolute -right-8 -top-8 h-28 w-28 rounded-full ${featured ? "bg-white/8" : "bg-sky-100/55"}`}
-      />
+      <p className={`mb-2 text-xs font-bold uppercase tracking-wider ${highlight ? "text-blue-200" : "text-slate-400"}`}>
+        {label}
+      </p>
+      <p className={`mb-2 text-3xl font-bold ${highlight ? "text-white" : valueClassName ?? "text-[#0d3b66]"}`}>
+        {value}
+      </p>
+      <p className={`text-xs font-medium ${highlight ? "text-emerald-300" : "text-slate-500"}`}>{note}</p>
     </Link>
   );
 }
@@ -405,7 +384,7 @@ function ChartCard({
   children: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-white/90 bg-white/90 p-5 shadow-[0_20px_44px_-32px_rgba(13,59,102,0.5)] backdrop-blur-md sm:p-6">
+    <section className="relative flex min-h-[372px] flex-col overflow-hidden rounded-2xl border border-white/90 bg-white/90 p-5 shadow-[0_20px_44px_-32px_rgba(13,59,102,0.5)] backdrop-blur-md sm:p-6">
       <span className="absolute left-0 top-0 h-1 w-16 rounded-r-full bg-[#0d3b66]" />
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
@@ -421,7 +400,7 @@ function ChartCard({
           {actionLabel}
         </Link>
       </div>
-      <div className="border-t border-slate-100/90 pt-2">{children}</div>
+      <div className="flex-1 border-t border-slate-100/90 pt-2">{children}</div>
     </section>
   );
 }

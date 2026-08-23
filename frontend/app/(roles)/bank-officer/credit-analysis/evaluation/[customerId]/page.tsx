@@ -932,13 +932,13 @@ function PanelStateCard({
     : "bg-sky-100 text-sky-700";
 
   return (
-    <div className="creditlens-card flex h-full min-h-60 items-center justify-center rounded-2xl border border-white/15 bg-white/5 p-8 text-center md:rounded-[26px]">
+    <div className="creditlens-card flex h-full min-h-60 items-center justify-center rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm md:rounded-[26px]">
       <div className="max-w-xl space-y-3">
         <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-2xl ${iconClass}`}>
           <TriangleAlert className="h-6 w-6" />
         </div>
-        <h3 className="text-xl font-semibold text-white">{title}</h3>
-        <p className="text-sm text-slate-200">{description}</p>
+        <h3 className="text-xl font-semibold text-slate-800">{title}</h3>
+        <p className="text-sm text-slate-500">{description}</p>
       </div>
     </div>
   );

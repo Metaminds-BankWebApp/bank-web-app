@@ -118,7 +118,6 @@ export const siteConfig = {
         { title: "Transactions", href: "/bank-officer/transactions", icon: "wallet", section: "general" },
         { title: "Help & Support", href: "/bank-officer/support", icon: "help-circle", section: "other" },
         { title: "Profile", href: "/bank-officer/profile", icon: "user", section: "general" },
-        { title: "Settings", href: "/bank-officer/settings", icon: "settings", section: "other" },
         { title: "Log Out", href: "/", icon: "log-out", section: "account" }, 
       ],
     },
