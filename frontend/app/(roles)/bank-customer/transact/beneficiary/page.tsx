@@ -153,7 +153,7 @@ export default function Page() {
             {/* Account and nickname input section. */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="accountNumber">Account number</Label>
+                <Label htmlFor="accountNumber">Account number <span className="text-red-500">*</span></Label>
                 <Input
                   id="accountNumber"
                   type="text"
@@ -167,7 +167,7 @@ export default function Page() {
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="nickName">Nick name</Label>
+                <Label htmlFor="nickName">Nick name <span className="text-red-500">*</span></Label>
                 <Input
                   id="nickName"
                   name="nickName"
@@ -192,7 +192,7 @@ export default function Page() {
 
             {/* Beneficiary remark/description field. */}
             <div className="space-y-2">
-              <Label htmlFor="remark">Remark</Label>
+              <Label htmlFor="remark">Remark <span className="text-red-500">*</span></Label>
               <textarea
                 id="remark"
                 name="remark"

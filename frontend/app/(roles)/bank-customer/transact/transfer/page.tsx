@@ -592,7 +592,7 @@ export default function Page() {
               )}
 
               <div className="space-y-2">
-                <Label>Account Number</Label>
+                <Label>Account Number <span className="text-red-500">*</span></Label>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -606,7 +606,7 @@ export default function Page() {
               </div>
 
               <div className="space-y-2">
-                <Label>Beneficiary Name</Label>
+                <Label>Beneficiary Name <span className="text-red-500">*</span></Label>
                 <Input
                   placeholder="Beneficiary full name"
                   value={beneficiary}
@@ -616,7 +616,7 @@ export default function Page() {
               </div>
 
               <div className="space-y-2">
-                <Label>Amount</Label>
+                <Label>Amount <span className="text-red-500">*</span></Label>
                 <Input
                   type="text"
                   inputMode="decimal"
@@ -629,7 +629,7 @@ export default function Page() {
               </div>
 
               <div className="space-y-2">
-                <Label>Remark</Label>
+                <Label>Remark <span className="text-red-500">*</span></Label>
                 <textarea
                   id="remark"
                   name="remark"
