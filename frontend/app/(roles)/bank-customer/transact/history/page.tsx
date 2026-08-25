@@ -72,7 +72,7 @@ function mapTransaction(tx: TransactionResponse): TransactionRecord {
     receiverAcc: tx.receiverAccountNo || "-",
     senderName: "You",
     senderAcc: tx.senderAccountNo || "-",
-    amount: `LKR ${amountFormatter.format(Number(tx.amount || 0))}`,
+    amount: amountFormatter.format(Number(tx.amount || 0)),
     status: toStatus(tx.status),
     date: toDateOnly(tx.transactionDate),
     reference: tx.referenceNo || "-",
@@ -92,6 +92,8 @@ export default function Page() {
   const [dateQuery, setDateQuery] = React.useState("")
   const [isLoading, setIsLoading] = React.useState(true)
   const [loadError, setLoadError] = React.useState("")
+  const [currentPage, setCurrentPage] = React.useState(1)
+  const itemsPerPage = 8
 
   React.useEffect(() => {
     let mounted = true
@@ -142,7 +144,18 @@ export default function Page() {
     })
   }, [records, searchQuery, dateQuery])
 
-  const visibleRowCount = Math.min(filteredData.length, 8)
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedData = filteredData.slice(startIndex, endIndex)
+
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, dateQuery])
+
+  function handlePreviousPage() {
+    setCurrentPage((prev) => Math.max(1, prev - 1))
+  }
 
   function clearFilters() {
     setSearchQuery("")
@@ -193,7 +206,7 @@ export default function Page() {
             </div>
           ) : null}
 
-          <div className="max-h-[510px] overflow-auto" aria-label="Scrollable transaction history">
+          <div className="w-full" aria-label="Transaction history table">
             <Table className="min-w-[760px]">
               <TableHeader className="sticky top-0 z-10 bg-white shadow-sm">
                 <TableRow>
@@ -201,7 +214,7 @@ export default function Page() {
                   <TableHead>Receiver&apos;s acc no</TableHead>
                   <TableHead>Sender&apos;s name</TableHead>
                   <TableHead>Sender&apos;s acc no</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Amount (LKR)</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Reference no</TableHead>
@@ -221,7 +234,7 @@ export default function Page() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredData.map((row) => (
+                  paginatedData.map((row) => (
                     <TableRow key={row.id}>
                       <TableCell>{row.receiverName}</TableCell>
                       <TableCell>{row.receiverAcc}</TableCell>
@@ -243,10 +256,50 @@ export default function Page() {
           </div>
 
           <DataTableFooter>
-            <span>
-              Showing <span className="font-semibold text-slate-800">{visibleRowCount}</span> at a time of{" "}
-              <span className="font-semibold text-slate-800">{filteredData.length}</span> transactions
-            </span>
+            <div className="flex items-center justify-between w-full">
+              <span>
+                Showing <span className="font-semibold text-slate-800">{paginatedData.length}</span> at a time of{" "}
+                <span className="font-semibold text-slate-800">{filteredData.length}</span> transactions
+              </span>
+
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                    aria-label="Previous page"
+                  >
+                    ←
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`h-8 w-8 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === page
+                          ? "bg-[#3e9fd3] text-white border border-[#3e9fd3]"
+                          : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                      aria-label={`Page ${page}`}
+                      aria-current={currentPage === page ? "page" : undefined}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 rounded-lg border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                    aria-label="Next page"
+                  >
+                    →
+                  </button>
+                </div>
+              )}
+            </div>
           </DataTableFooter>
         </DataTablePanel>
       </div>
