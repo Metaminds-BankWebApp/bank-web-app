@@ -18,6 +18,7 @@ import {
 import type { ScriptableContext } from "chart.js";
 import { Line, Doughnut } from "react-chartjs-2";
 import ModuleHeader from "@/src/components/ui/module-header";
+import { TransactDashboardLoadingPage } from "@/src/components/transact/transact-dashboard-loading-page";
 import { Card } from "@/components/ui/card";
 import { authService } from "@/src/api/auth/auth.service";
 import { transactionService } from "@/src/api/transact/transaction.service";
@@ -358,6 +359,14 @@ export default function TransactDashboard() {
       showCurrencyPrefix: false,
     },
   ];
+
+  if (isBalanceLoading && !balanceError) {
+    return (
+      <AuthGuard requiredRole="BANK_CUSTOMER">
+        <TransactDashboardLoadingPage />
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard requiredRole="BANK_CUSTOMER">

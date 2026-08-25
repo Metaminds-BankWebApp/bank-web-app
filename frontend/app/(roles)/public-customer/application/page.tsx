@@ -1481,15 +1481,22 @@ export default function PublicCustomerApplicationPage() {
 
         {/* Progress Steps */}
         <div className="w-full max-w-3xl mb-12">
-           <div className="flex items-center justify-between relative">
+           <div className="relative isolate flex items-start justify-between">
               {/* Progress Line Background */}
-              <div className="absolute left-0 top-1/2 w-full h-0.5 bg-slate-200 -z-10 transform -translate-y-1/2"></div>
+              <div className="pointer-events-none absolute left-5 right-5 top-5 z-0 h-0.5 bg-slate-200" />
               
               {/* Active Progress Line */}
               <div 
-                className="absolute left-0 top-1/2 h-0.5 bg-[#3e9fd3] -z-10 transform -translate-y-1/2 transition-all duration-500 ease-in-out"
-                style={{ width: `${((step - 1) / 3) * 100}%` }}
-              ></div>
+                className="pointer-events-none absolute left-5 top-5 z-0 h-0.5 bg-[#3e9fd3] transition-all duration-500 ease-in-out"
+                style={{
+                  width:
+                    step === 1
+                      ? "0px"
+                      : step >= 4
+                      ? `calc(${((4 - 1) / 3) * 100}% - ${((4 - 1) / 3) * 40}px)`
+                      : `calc(${((step - 1) / 3) * 100}% - ${((step - 1) / 3) * 40}px)`,
+                }}
+              />
 
               {[
                 { id: 1, label: "INCOME" },
@@ -1503,7 +1510,7 @@ export default function PublicCustomerApplicationPage() {
                 const isCompleted = persistedStatus === "COMPLETED";
 
                 return (
-                  <div key={s.id} className="flex flex-col items-center gap-2 bg-slate-50 px-2">
+                  <div key={s.id} className="relative z-10 flex flex-col items-center gap-2 bg-slate-50 px-2">
                      <div 
                        className={cn(
                          "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-2",
