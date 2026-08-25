@@ -91,6 +91,7 @@ export default function Page() {
         beneficiaryAccountNo: accountNumber.trim(),
         nickName: nickName.trim(),
         remark: remark.trim(),
+        accountHolderName: ""
       })
 
       router.push("/bank-customer/transact/transfer")
