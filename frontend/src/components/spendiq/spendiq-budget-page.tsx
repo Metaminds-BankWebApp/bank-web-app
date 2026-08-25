@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Pencil } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Dialog } from "@/src/components/ui/dialog";
+import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { useToast } from "@/src/components/ui/toast";
@@ -445,6 +446,10 @@ export function SpendIqBudgetPage() {
   }
 
   const currentMonthLabel = monthOptions.find((item) => item.value === selectedMonth)?.label ?? "Selected";
+
+  if (isLoading) {
+    return <SpendIqLoadingPage />;
+  }
 
   return (
     <div className="p-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">

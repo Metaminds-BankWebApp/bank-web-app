@@ -7,6 +7,7 @@ import { toApiError } from "@/src/api/client";
 import type { SpendIqExpenseResponse } from "@/src/types/dto/spendiq.dto";
 import { Button } from "@/src/components/ui/button";
 import { DataTablePanel } from "@/src/components/ui/data-table-layout";
+import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/src/components/ui/table";
 import { useToast } from "@/src/components/ui/toast";
@@ -78,6 +79,10 @@ export function SpendIqCategoryTransactionsPage() {
   );
 
   const totalAmount = categoryExpenses.reduce((acc, item) => acc + Number(item.amount), 0);
+
+  if (isLoading) {
+    return <SpendIqLoadingPage />;
+  }
 
   return (
     <div className="p-8 space-y-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">

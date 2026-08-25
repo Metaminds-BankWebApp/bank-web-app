@@ -7,6 +7,7 @@ import { getSpendIqExpenses } from "@/src/api/spendiq/spendiq.service";
 import { toApiError } from "@/src/api/client";
 import type { SpendIqExpenseResponse, SpendIqPaymentMethod } from "@/src/types/dto/spendiq.dto";
 import { Button } from "@/src/components/ui/button";
+import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import {
   DataTableActionGroup,
   DataTableFilterGroup,
@@ -177,6 +178,10 @@ export function SpendIqHistoryPage() {
       ]),
     ];
     downloadCsv("spendiq-expense-history.csv", rows);
+  }
+
+  if (isLoading) {
+    return <SpendIqLoadingPage />;
   }
 
   return (
