@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { useToast } from "@/src/components/ui/toast";
@@ -155,6 +156,10 @@ export function SpendIqCategoryAnalysisPage() {
       query.set("toDate", toDate);
     }
     router.push(`${transactionsPath}?${query.toString()}`);
+  }
+
+  if (isLoading) {
+    return <SpendIqLoadingPage />;
   }
 
   return (

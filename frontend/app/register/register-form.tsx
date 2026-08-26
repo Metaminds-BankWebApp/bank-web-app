@@ -20,7 +20,6 @@ type RegisterField =
   | "email"
   | "phone"
   | "nic"
-  | "dob"
   | "username"
   | "province"
   | "address"
@@ -35,7 +34,6 @@ type RegisterFormValues = {
   email: string;
   phone: string;
   nic: string;
-  dob: string;
   username: string;
   province: string;
   address: string;
@@ -50,13 +48,22 @@ const REGISTER_FIELDS: RegisterField[] = [
   "email",
   "phone",
   "nic",
-  "dob",
   "username",
   "province",
   "address",
   "password",
   "confirmPassword",
 ];
+
+function requiredLabel(label: string) {
+  return (
+    <>
+      {label}
+      <span aria-hidden="true" className="ml-1 text-red-500">*</span>
+      <span className="sr-only"> required</span>
+    </>
+  );
+}
 
 // Static province options for the registration dropdown.
 const PROVINCES = [
@@ -104,7 +111,6 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [nic, setNic] = useState("");
-  const [dob, setDob] = useState("");
   const [username, setUsername] = useState("");
   const [province, setProvince] = useState("");
   const [address, setAddress] = useState("");
@@ -140,7 +146,6 @@ export function RegisterForm() {
       email: email.trim(),
       phone: phone.trim(),
       nic: nic.trim(),
-      dob: dob.trim(),
       username: username.trim(),
       province: province.trim(),
       address: address.trim(),
@@ -184,31 +189,6 @@ export function RegisterForm() {
       case "nic":
         if (!values.nic) return "NIC is required.";
         return nicRegex.test(values.nic) ? null : "Please enter a valid NIC.";
-
-      case "dob":
-        if (!values.dob) return "Date of birth is required.";
-
-        // Validate the date itself, then check whether the user is at least 18 years old.
-        {
-          const birthDate = new Date(values.dob);
-
-          if (Number.isNaN(birthDate.getTime())) {
-            return "Please enter a valid date of birth.";
-          }
-
-          const today = new Date();
-          let age = today.getFullYear() - birthDate.getFullYear();
-          const monthDifference = today.getMonth() - birthDate.getMonth();
-
-          if (
-            monthDifference < 0 ||
-            (monthDifference === 0 && today.getDate() < birthDate.getDate())
-          ) {
-            age -= 1;
-          }
-
-          return age >= 18 ? null : "Age must be 18 or older.";
-        }
 
       case "username":
         if (!values.username) return "Username is required.";
@@ -302,7 +282,6 @@ export function RegisterForm() {
         firstName: values.firstName,
         lastName: values.lastName,
         nic: values.nic,
-        dob: values.dob,
         email: values.email,
         mobile: values.phone,
         bankAccount: Number(values.phone),
@@ -352,12 +331,16 @@ export function RegisterForm() {
         <p className="text-sm text-(--primecore-foreground)/70">
           Set up your profile to access the PrimeCore dashboard and services.
         </p>
+        <p className="text-xs text-(--primecore-foreground)/60">
+          <span aria-hidden="true" className="text-red-500">*</span> Required fields
+        </p>
       </header>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            label="First Name"
+            label={requiredLabel("First Name")}
+            required
             value={firstName}
             error={fieldErrors.firstName}
             onChange={(event) => {
@@ -371,7 +354,8 @@ export function RegisterForm() {
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
           />
           <Input
-            label="Last Name"
+            label={requiredLabel("Last Name")}
+            required
             value={lastName}
             error={fieldErrors.lastName}
             onChange={(event) => {
@@ -387,8 +371,9 @@ export function RegisterForm() {
         </div>
 
         <Input
-          label="Email Address"
+          label={requiredLabel("Email Address")}
           type="email"
+          required
           autoComplete="email"
           value={email}
           error={fieldErrors.email}
@@ -406,7 +391,8 @@ export function RegisterForm() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <Input
-              label="Phone Number"
+              label={requiredLabel("Phone Number")}
+              required
               value={phone}
               error={fieldErrors.phone}
               onChange={(event) => {
@@ -423,7 +409,8 @@ export function RegisterForm() {
           </div>
 
           <Input
-            label="NIC"
+            label={requiredLabel("NIC")}
+            required
             value={nic}
             error={fieldErrors.nic}
             onChange={(event) => {
@@ -438,43 +425,27 @@ export function RegisterForm() {
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Input
-            label="Date of Birth"
-            type="date"
-            value={dob}
-            error={fieldErrors.dob}
-            onChange={(event) => {
-              setDob(event.target.value);
-              clearFieldError("dob");
-              setError(null);
-            }}
-            onBlur={() => validateSingleField("dob")}
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-
-          <Input
-            label="Username"
-            autoComplete="username"
-            value={username}
-            error={fieldErrors.username}
-            onChange={(event) => {
-              setUsername(event.target.value);
-              clearFieldError("username");
-              setError(null);
-            }}
-            onBlur={() => validateSingleField("username")}
-            placeholder="john.doe.2000"
-            labelClassName="text-(--primecore-foreground)/70"
-            className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
-          />
-        </div>
+        <Input
+          label={requiredLabel("Username")}
+          autoComplete="username"
+          required
+          value={username}
+          error={fieldErrors.username}
+          onChange={(event) => {
+            setUsername(event.target.value);
+            clearFieldError("username");
+            setError(null);
+          }}
+          onBlur={() => validateSingleField("username")}
+          placeholder="john.doe.2000"
+          labelClassName="text-(--primecore-foreground)/70"
+          className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-(--primecore-foreground)/70">
-              Province
+              {requiredLabel("Province")}
             </label>
 
             <Select
@@ -492,6 +463,7 @@ export function RegisterForm() {
                     : "border-(--primecore-border)"
                 }`}
                 onBlur={() => validateSingleField("province")}
+                aria-required="true"
               >
                 <SelectValue placeholder="Province" />
               </SelectTrigger>
@@ -513,7 +485,8 @@ export function RegisterForm() {
           </div>
 
           <Input
-            label="Address"
+            label={requiredLabel("Address")}
+            required
             value={address}
             error={fieldErrors.address}
             onChange={(event) => {
@@ -531,9 +504,10 @@ export function RegisterForm() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <Input
-              label="Password"
+              label={requiredLabel("Password")}
               type="password"
               autoComplete="new-password"
+              required
               value={password}
               error={fieldErrors.password}
               onChange={(event) => {
@@ -551,9 +525,10 @@ export function RegisterForm() {
           </div>
 
           <Input
-            label="Confirm Password"
+            label={requiredLabel("Confirm Password")}
             type="password"
             autoComplete="new-password"
+            required
             value={confirmPassword}
             error={fieldErrors.confirmPassword}
             onChange={(event) => {

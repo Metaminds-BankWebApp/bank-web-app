@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Banknote, CreditCard, Edit2, Landmark, Trash2 } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Dialog } from "@/src/components/ui/dialog";
+import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { useToast } from "@/src/components/ui/toast";
@@ -370,6 +371,10 @@ export function SpendIqAddPage() {
     } finally {
       setIsDeleting(false);
     }
+  }
+
+  if (isLoading) {
+    return <SpendIqLoadingPage />;
   }
 
   return (

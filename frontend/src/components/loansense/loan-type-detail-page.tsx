@@ -125,12 +125,12 @@ function DecisionCheck({
 
 function decisionSummary(status: string): string {
   if (status === "ELIGIBLE") {
-    return "All required policy checks passed and LoanSense generated a recommendation for this product.";
+    return "All required policy checks passed and LoanSense generated a recommendation for this loan .";
   }
   if (status === "PARTIALLY_ELIGIBLE") {
     return "Required policy checks passed, but one or more caution conditions make this recommendation more conservative.";
   }
-  return "At least one required policy check failed, so LoanSense cannot recommend this product at the moment.";
+  return "At least one required policy check failed, so LoanSense cannot recommend this loan at the moment.";
 }
 
 export default function LoanTypeDetailPage({
@@ -262,7 +262,7 @@ export default function LoanTypeDetailPage({
                 variant="dark"
               />
               <SummaryCard
-                label="Available EMI for This Product"
+                label="Available EMI for this loan"
                 value={formatCurrency(detail.estimatedEmi)}
                 variant="light"
               />
@@ -303,7 +303,7 @@ export default function LoanTypeDetailPage({
 
                 <div className={`mt-4 rounded-lg border p-4 ${hasProductEmiCapacity ? "border-green-100 bg-green-50" : "border-red-100 bg-red-50"}`}>
                   <BreakdownRow
-                    label="Available EMI Capacity for This Product"
+                    label="Available EMI Capacity for This Loan"
                     value={formatCurrency(detail.availableEmiCapacity)}
                     tone={hasProductEmiCapacity ? "highlight" : "negative"}
                   />
@@ -336,7 +336,7 @@ export default function LoanTypeDetailPage({
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    The bar shows the actual percentage of monthly income used for debt. The vertical marker shows this product&apos;s policy limit.
+                    The bar shows the actual percentage of monthly income used for debt. The vertical marker shows this loan&apos;s policy limit.
                   </p>
                 </div>
               </div>

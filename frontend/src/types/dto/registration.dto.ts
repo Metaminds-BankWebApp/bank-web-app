@@ -2,7 +2,7 @@ export interface StepOneRegistrationRequest {
   firstName: string;
   lastName: string;
   nic: string;
-  dob: string;
+  dob?: string;
   email: string;
   mobile: string;
   province: string;

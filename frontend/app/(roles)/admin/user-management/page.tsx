@@ -54,14 +54,6 @@ function getCustomerTypeLabel(
   return customerType === "BANK" ? "Bank" : "Public";
 }
 
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) {
-    return "U";
-  }
-  return parts.slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join("");
-}
-
 function resolveCustomerId(user: AdminUserManagementUserResponse): string {
   const value = user.customerId?.trim();
   if (!value) {
@@ -680,13 +672,7 @@ export default function UserManagementPage() {
                             <td className="px-6 py-4 font-medium">
                               {resolveCustomerId(user)}
                             </td>
-                            <td className="px-6 py-4 flex items-center gap-2">
-                              <span
-                                aria-hidden="true"
-                                className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 bg-[#0B3B66] text-xs font-bold text-white"
-                              >
-                                {getInitials(user.fullName || "User")}
-                              </span>
+                            <td className="px-6 py-4">
                               <span className="font-semibold text-gray-900">
                                 {user.fullName || "-"}
                               </span>

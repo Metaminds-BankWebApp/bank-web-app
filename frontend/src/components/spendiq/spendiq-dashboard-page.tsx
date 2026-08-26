@@ -13,6 +13,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { getSpendIqBudgets, getSpendIqExpenses, getSpendIqIncomes } from "@/src/api/spendiq/spendiq.service";
 import { toApiError } from "@/src/api/client";
+import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { useToast } from "@/src/components/ui/toast";
 import type { SpendIqExpenseResponse, SpendIqMonthlySummaryResponse } from "@/src/types/dto/spendiq.dto";
@@ -27,6 +28,7 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
   const { showToast } = useToast();
   const router = useRouter();
   const chartRef = useRef<ChartJS<"doughnut"> | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [categoryExpenses, setCategoryExpenses] = useState<Array<{ name: string; value: number }>>([]);
   const [budgetUsageRows, setBudgetUsageRows] = useState<Array<{ name: string; used: number; total: number }>>([]);
   const [recentExpenses, setRecentExpenses] = useState<SpendIqExpenseResponse[]>([]);
@@ -42,6 +44,7 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
   });
 
   const loadExpenseByCategory = useCallback(async () => {
+    setIsLoading(true);
     try {
       const [expenses, budgets, incomes] = await Promise.all([
         getSpendIqExpenses(),
@@ -96,11 +99,12 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
     } catch (error) {
       const apiError = toApiError(error);
       showToast({ type: "error", title: "Failed to load dashboard data", description: apiError.message });
+    } finally {
+      setIsLoading(false);
     }
   }, [showToast]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadExpenseByCategory();
   }, [loadExpenseByCategory]);
 
@@ -212,6 +216,10 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
       ctx.restore();
     },
   }), [total]);
+
+  if (isLoading) {
+    return <SpendIqLoadingPage />;
+  }
 
   return (
     <div className="p-6 space-y-8 bg-gradient-to-br from-[#f0f4ff] to-[#e6ecf9] dark:from-slate-950 dark:to-slate-900 min-h-screen">

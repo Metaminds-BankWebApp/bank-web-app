@@ -43,7 +43,7 @@ const fetchWindowMonths = 12;
 const rowsPerPage = 8;
 
 function formatCurrency(value: number): string {
-  return `LKR ${value.toLocaleString("en-LK", {
+  return `${value.toLocaleString("en-LK", {
     maximumFractionDigits: 0,
   })}`;
 }
@@ -239,7 +239,7 @@ export default function LoanSenseHistoryPage() {
               <TableHead>Evaluation Month</TableHead>
               <TableHead>Loan Type</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Max Loan Amount</TableHead>
+              <TableHead>Max Loan Amount (LKR)</TableHead>
               <TableHead>Recommended Tenure</TableHead>
               <TableHead>Risk Level</TableHead>
             </TableRow>
@@ -270,7 +270,9 @@ export default function LoanSenseHistoryPage() {
                   <TableCell className="font-semibold">
                     {formatCurrency(row.recommendedMaxAmount)}
                   </TableCell>
-                  <TableCell>{row.tenureLabel || "-"}</TableCell>
+                  <TableCell>
+                    {row.tenureMonths == null ? "-" : `${row.tenureMonths} months`}
+                  </TableCell>
                   <TableCell>
                     <DataTableStatusBadge tone={riskTone(row.riskLevel)}>
                       {row.riskLabel}

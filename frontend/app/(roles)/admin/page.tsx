@@ -9,12 +9,16 @@ import {
   AlertTriangle,
   ArrowUpRight,
   Building2,
+  
   Car,
+ 
   CheckCircle2,
   FileText,
+ 
   GraduationCap,
   Home,
   ShieldCheck,
+
   User,
   UserPlus,
   Users,
@@ -323,7 +327,21 @@ function mapRecentActionsToView(
 
 type CustomerType = "ALL" | "BANK" | "PUBLIC";
 
+const customerTypeOptions: Array<{
+  value: CustomerType;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}> = [
+  { value: "ALL", label: "All", description: "Everyone", icon: Users },
+  { value: "BANK", label: "Bank", description: "Banking users", icon: Building2 },
+  { value: "PUBLIC", label: "Public", description: "Public users", icon: User },
+];
+
+
+
 const CHART_MONTH_WINDOW = 6;
+
 
 function createFallbackMonthlyGrowthPoints(
   months: number
@@ -370,8 +388,6 @@ export default function DashboardPage() {
   const [isLoanRatesLoading, setIsLoanRatesLoading] = useState(true);
   const [recentActions, setRecentActions] = useState<AdminAction[]>([]);
   const [isRecentActionsLoading, setIsRecentActionsLoading] = useState(true);
-  const customerTypes: CustomerType[] = ["ALL", "BANK", "PUBLIC"];
-
   useEffect(() => {
     let mounted = true;
 
@@ -645,6 +661,8 @@ export default function DashboardPage() {
     },
   };
 
+ 
+
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex flex-col lg:flex-row h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
@@ -708,14 +726,15 @@ export default function DashboardPage() {
             {/* Monthly User Growth & Quick Management: responsive grid */}
             <section className="mt-6 grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px]">
               <div className="rounded-3xl border border-[#e3e7ee] bg-white p-4 sm:p-5">
-                <div className="grid gap-6 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_220px]">
+                    <div className="grid gap-5 grid-cols-1 xl:grid-cols-[minmax(0,1fr)_180px]">
                   <div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div>
                         <h3 className="text-lg sm:text-xl font-semibold leading-tight text-[#102f52]">Monthly Customers Growth</h3>
-                        <p className="text-xs sm:text-sm text-[#a3afbf]">Customer onboarding and retention across 6 months</p>
+                      <p className="text-xs sm:text-sm text-[#a3afbf]">Customer onboarding and retention across 6 months</p>
                       </div>
-                      <button className="rounded-xl bg-[#f3f4f6] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#223f5f]">
+
+                       <button className="rounded-xl bg-[#f3f4f6] px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-[#223f5f]">
                         {isMonthlyUserGrowthLoading
                           ? "Syncing..."
                           : `${monthlyUserGrowth?.months ?? CHART_MONTH_WINDOW} ${(
@@ -724,30 +743,51 @@ export default function DashboardPage() {
                               ? "Month"
                               : "Months"}`}
                       </button>
+
                     </div>
                     <div className="relative mt-5 h-[180px] sm:h-[220px] rounded-2xl border border-[#edf1f6] bg-[#f9fbff] p-2 sm:p-4 overflow-x-auto">
                       <Bar data={chartData} options={chartOptions} />
                     </div>
                   </div>
+
                   <div className="xl:border-l xl:border-[#edf1f6] xl:pl-6">
-                    <h4 className="text-lg sm:text-xl font-semibold leading-tight text-[#111111]">Customer Type</h4>
-                    <div className="mt-8 sm:mt-12 space-y-3 sm:space-y-4">
-                      {customerTypes.map((type) => (
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        
+                        <h4 className="mt-1 text-lg font-semibold leading-tight text-[#111111]">Customer type</h4>
+                      </div>
+                      
+                    </div>
+                    <div className="mt-5 grid grid-cols-1 gap-1.5 rounded-2xl border border-[#e3eaf2] bg-[#f7f9fc] p-2" role="tablist" aria-label="Filter customer growth chart">
+                      {customerTypeOptions.map((option) => {
+                        const Icon = option.icon;
+                        const isActive = customerType === option.value;
+                        return (
                         <button
-                          key={type}
-                          onClick={() => setCustomerType(type)}
+                          key={option.value}
+                          type="button"
+                          role="tab"
+                          aria-selected={isActive}
+                          onClick={() => setCustomerType(option.value)}
                           className={cn(
-                            "w-full rounded-full py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition",
-                            customerType === type
-                              ? "bg-[#0d3b66] text-white"
-                              : "border border-[#5f7fa3] bg-white text-[#1a2c40]"
+                            "flex min-w-0 flex-row items-center gap-2 rounded-xl px-3 py-2.5 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0d3b66] focus-visible:ring-offset-1",
+                            isActive
+                              ? "bg-[#0d3b66] text-white shadow-[0_5px_12px_-7px_rgba(13,59,102,0.8)]"
+                              : "text-[#60758d] hover:bg-white hover:text-[#0d3b66]"
                           )}
                         >
-                          {type}
+                          <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-xs font-bold">{option.label}</span>
+                            <span className={cn("block truncate text-[10px] font-medium", isActive ? "text-white/70" : "text-[#91a0b1]")}>{option.description}</span>
+                          </span>
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
+                
+                    
                 </div>
               </div>
               <div className="rounded-3xl bg-[linear-gradient(180deg,#0b3a63_0%,#0a3157_70%,#0a4b67_100%)] p-4 sm:p-6 text-white shadow-lg">

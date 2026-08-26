@@ -9,18 +9,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select"
 import ModuleHeader from "@/src/components/ui/module-header"
 import { authService } from "@/src/api/auth/auth.service"
 import { beneficiaryService } from "@/src/api/transact/beneficiary.service"
 import { transactionService } from "@/src/api/transact/transaction.service"
+import { getSpendIqCategories } from "@/src/api/spendiq/spendiq.service"
 import { ApiError } from "@/src/types/api-error"
 import type { BeneficiaryResponse, TransactionResponse } from "@/src/types/dto/transact.dto"
+import type { SpendIqCategoryResponse } from "@/src/types/dto/spendiq.dto"
 
 type TransferFormErrors = {
   accountNumber: string
   amount: string
   beneficiary: string
   remark: string
+  expenseCategory: string
 }
 
 const OTP_LENGTH = 6
@@ -53,11 +57,16 @@ export default function Page() {
   const [beneficiary, setBeneficiary] = useState("")
   const [remark, setRemark] = useState("")
   const [expenseTrack, setExpenseTrack] = useState(false)
+  const [expenseCategoryName, setExpenseCategoryName] = useState("")
+  const [expenseCategories, setExpenseCategories] = useState<SpendIqCategoryResponse[]>([])
+  const [isLoadingExpenseCategories, setIsLoadingExpenseCategories] = useState(false)
+  const [expenseCategoryLoadError, setExpenseCategoryLoadError] = useState("")
   const [formErrors, setFormErrors] = useState<TransferFormErrors>({
     accountNumber: "",
     amount: "",
     beneficiary: "",
     remark: "",
+    expenseCategory: "",
   })
   const [submitError, setSubmitError] = useState("")
 
@@ -91,6 +100,45 @@ export default function Page() {
     }, 1000)
     return () => clearInterval(timer)
   }, [seconds, showOtp])
+
+  // Loads the customer's SpendIQ categories only when expense tracking is selected.
+  useEffect(() => {
+    if (!expenseTrack) {
+      setExpenseCategoryName("")
+      setExpenseCategoryLoadError("")
+      return
+    }
+
+    let cancelled = false
+    const loadExpenseCategories = async () => {
+      setIsLoadingExpenseCategories(true)
+      setExpenseCategoryLoadError("")
+      try {
+        const categories = await getSpendIqCategories()
+        if (!cancelled) {
+          setExpenseCategories(categories)
+        }
+      } catch (error) {
+        const message = error instanceof ApiError
+          ? error.message
+          : error instanceof Error
+            ? error.message
+            : "Unable to load expense categories."
+        if (!cancelled) {
+          setExpenseCategoryLoadError(message || "Unable to load expense categories.")
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingExpenseCategories(false)
+        }
+      }
+    }
+
+    void loadExpenseCategories()
+    return () => {
+      cancelled = true
+    }
+  }, [expenseTrack])
 
   // Accepts only single numeric OTP characters and advances focus to next input.
   const handleOtpChange = (index: number, value: string) => {
@@ -159,6 +207,29 @@ export default function Page() {
     }
   }
 
+  // Enables expense tracking and resets category validation when it is disabled.
+  const handleExpenseTrackingChange = (checked: boolean) => {
+    setExpenseTrack(checked)
+    if (!checked) {
+      setExpenseCategoryName("")
+    }
+    setFormErrors((prev) => ({ ...prev, expenseCategory: "" }))
+    if (submitError) {
+      setSubmitError("")
+    }
+  }
+
+  // Stores the category name that will be persisted with the transfer request.
+  const handleExpenseCategoryChange = (value: string) => {
+    setExpenseCategoryName(value)
+    if (formErrors.expenseCategory) {
+      setFormErrors((prev) => ({ ...prev, expenseCategory: "" }))
+    }
+    if (submitError) {
+      setSubmitError("")
+    }
+  }
+
   // Loads saved recipients into the selection dialog.
   const handleOpenBeneficiaryPicker = async () => {
     setShowBeneficiaryPicker(true)
@@ -199,6 +270,7 @@ export default function Page() {
       amount: "",
       beneficiary: "",
       remark: "",
+      expenseCategory: "",
     }
 
     if (!accountNumber.trim()) {
@@ -219,6 +291,10 @@ export default function Page() {
       nextErrors.remark = "Remark must not exceed 255 characters."
     }
 
+    if (expenseTrack && !expenseCategoryName.trim()) {
+      nextErrors.expenseCategory = "Select an expense category."
+    }
+
     const parsedAmount = Number.parseFloat(amount)
     if (!amount.trim()) {
       nextErrors.amount = "Amount is required."
@@ -229,9 +305,9 @@ export default function Page() {
     }
 
     setFormErrors(nextErrors)
-    const hasErrors = Boolean(nextErrors.accountNumber || nextErrors.amount || nextErrors.beneficiary || nextErrors.remark)
+    const hasErrors = Boolean(nextErrors.accountNumber || nextErrors.amount || nextErrors.beneficiary || nextErrors.remark || nextErrors.expenseCategory)
     if (hasErrors) {
-      const firstError = nextErrors.accountNumber || nextErrors.beneficiary || nextErrors.amount || nextErrors.remark
+      const firstError = nextErrors.accountNumber || nextErrors.beneficiary || nextErrors.amount || nextErrors.remark || nextErrors.expenseCategory
       setSubmitError(firstError)
     }
 
@@ -264,6 +340,7 @@ export default function Page() {
         amount: Number.parseFloat(amount),
         remark: remark.trim(),
         expenseTrackingEnabled: expenseTrack,
+        expenseCategoryName: expenseTrack ? expenseCategoryName : undefined,
       })
 
       setTransactionReferenceNo(response.referenceNo)
@@ -296,6 +373,9 @@ export default function Page() {
           if (typeof fieldErrors.remark === "string") {
             nextErrors.remark = fieldErrors.remark
           }
+          if (typeof fieldErrors.expenseCategoryName === "string") {
+            nextErrors.expenseCategory = fieldErrors.expenseCategoryName
+          }
         }
 
         if (!nextErrors.accountNumber && message === "Account number is invalid") {
@@ -306,7 +386,7 @@ export default function Page() {
       }
 
       setFormErrors((prev) => ({ ...prev, ...nextErrors }))
-      const firstFieldError = nextErrors.accountNumber || nextErrors.beneficiary || nextErrors.amount || nextErrors.remark
+      const firstFieldError = nextErrors.accountNumber || nextErrors.beneficiary || nextErrors.amount || nextErrors.remark || nextErrors.expenseCategory
       setSubmitError(firstFieldError || message)
     } finally {
       setIsSubmittingTransfer(false)
@@ -474,9 +554,10 @@ export default function Page() {
       beneficiary.trim().length > 0 &&
       remark.trim().length > 0 &&
       !Number.isNaN(parsedAmount) &&
-      parsedAmount > 0
+      parsedAmount > 0 &&
+      (!expenseTrack || expenseCategoryName.trim().length > 0)
     )
-  }, [accountNumber, beneficiary, remark, amount])
+  }, [accountNumber, beneficiary, remark, amount, expenseTrack, expenseCategoryName])
 
   return (
     <div className="relative min-h-full">
@@ -511,7 +592,7 @@ export default function Page() {
               )}
 
               <div className="space-y-2">
-                <Label>Account Number</Label>
+                <Label>Account Number <span className="text-red-500">*</span></Label>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -525,7 +606,7 @@ export default function Page() {
               </div>
 
               <div className="space-y-2">
-                <Label>Beneficiary Name</Label>
+                <Label>Beneficiary Name <span className="text-red-500">*</span></Label>
                 <Input
                   placeholder="Beneficiary full name"
                   value={beneficiary}
@@ -535,7 +616,7 @@ export default function Page() {
               </div>
 
               <div className="space-y-2">
-                <Label>Amount</Label>
+                <Label>Amount <span className="text-red-500">*</span></Label>
                 <Input
                   type="text"
                   inputMode="decimal"
@@ -548,7 +629,7 @@ export default function Page() {
               </div>
 
               <div className="space-y-2">
-                <Label>Remark</Label>
+                <Label>Remark <span className="text-red-500">*</span></Label>
                 <textarea
                   id="remark"
                   name="remark"
@@ -564,7 +645,7 @@ export default function Page() {
                 <label className="inline-flex items-center space-x-2">
                   <Checkbox
                     checked={expenseTrack}
-                    onChange={(event) => setExpenseTrack(Boolean((event.target as HTMLInputElement).checked))}
+                    onChange={(event) => handleExpenseTrackingChange(Boolean((event.target as HTMLInputElement).checked))}
                   />
                   <span>Expense tracking</span>
                 </label>
@@ -572,6 +653,33 @@ export default function Page() {
                   If selected, this transaction will be saved to your expense tracker for reporting.
                 </p>
               </div>
+
+              {expenseTrack && (
+                <div className="space-y-2">
+                  <Label>Expense Category</Label>
+                  <Select value={expenseCategoryName} onValueChange={handleExpenseCategoryChange}>
+                    <SelectTrigger
+                      disabled={isLoadingExpenseCategories}
+                      className={formErrors.expenseCategory ? "border-red-500 focus:ring-red-200" : undefined}
+                      aria-invalid={Boolean(formErrors.expenseCategory)}
+                    >
+                      <SelectValue placeholder={isLoadingExpenseCategories ? "Loading categories..." : "Select an expense category"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {expenseCategories
+                        .filter((category) => category.categoryName.toLowerCase() !== "other")
+                        .map((category) => (
+                          <SelectItem key={category.categoryId} value={category.categoryName}>
+                            {category.categoryName}
+                          </SelectItem>
+                        ))}
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formErrors.expenseCategory && <p className="text-sm text-red-600">{formErrors.expenseCategory}</p>}
+                  {expenseCategoryLoadError && <p className="text-sm text-red-600">{expenseCategoryLoadError}</p>}
+                </div>
+              )}
 
               <div className="flex justify-end">
                 <Button
