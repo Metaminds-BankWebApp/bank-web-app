@@ -383,31 +383,6 @@ export default function AddOfficerPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold uppercase text-gray-600"> Password <span className="text-red-600">*</span></label>
-                    <div className="mt-2 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto]">
-                      <input
-                        type="text"
-                        value={formData.password}
-                        readOnly
-                        placeholder="Click Create to generate"
-                        aria-invalid={Boolean(errors.password)}
-                        className={`w-full min-w-0 rounded-t-lg border px-4 py-3 sm:rounded-l-lg sm:rounded-tr-none sm:border-r-0 ${
-                          errors.password ? "border-red-500" : "border-gray-300"
-                        } bg-white`}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleGeneratePassword}
-                        disabled={isGeneratingPassword}
-                        className="w-full shrink-0 whitespace-nowrap rounded-b-lg border border-gray-300 border-t-0 bg-gray-300 px-5 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto sm:rounded-bl-none sm:rounded-r-lg sm:border-l-0 sm:border-t"
-                      >
-                        {isGeneratingPassword ? "Creating..." : "Create"}
-                      </button>
-                    </div>
-                    {errors.password ? <p className="mt-1 text-xs text-red-600">{errors.password}</p> : null}
-                  </div>
-
-                  <div>
                     <label className="text-xs font-semibold uppercase text-gray-600"> NIC Number <span className="text-red-600">*</span></label>
                     <input
                       type="text"

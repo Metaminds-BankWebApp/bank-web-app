@@ -25,6 +25,7 @@ export async function getAdminAuditLogs(
           targetType: params?.targetType?.trim() || undefined,
           actorName: params?.actorName?.trim() || undefined,
           query: params?.query?.trim() || undefined,
+          sortBy: params?.sortBy,
         },
       }
     );
