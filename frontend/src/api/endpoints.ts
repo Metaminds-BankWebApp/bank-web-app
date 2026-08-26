@@ -26,6 +26,7 @@ export const REGISTRATION_ENDPOINTS = {
     stepOneContinue: "/bank-officers/customers/step-1/continue",
     stepOneUpdateDraft: (bankCustomerId: number) => `/bank-officers/customers/${bankCustomerId}/step-1/draft`,
     stepOneUpdateContinue: (bankCustomerId: number) => `/bank-officers/customers/${bankCustomerId}/step-1/continue`,
+	contactDetails: (bankCustomerId: number) => `/bank-officers/customers/${bankCustomerId}/contact-details`,
   },
   publicCustomer: "/public-customers",
   bankOfficer: {

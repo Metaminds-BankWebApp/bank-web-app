@@ -26,6 +26,7 @@ import {
    saveBankCustomerStepOneDraft,
    updateBankCustomerStepOneContinue,
    updateBankCustomerStepOneDraft,
+   updateCompletedBankCustomerContactDetails,
 } from "@/src/api/registration/bank-customer-registration.service";
 import { verifyBankAccount } from "@/src/api/customers/account-verification.service";
 import {
@@ -999,7 +1000,7 @@ export default function AddCustomerPage() {
 		 setCreatedBankCustomerId(prefill.bankCustomerId);
 		 setHasExistingCustomerMatch(true);
 		 setIsFinancialMaintenanceMode(isCompletedCustomer);
-		 setStep(isCompletedCustomer ? 3 : onboardingStepForStatus(onboardingStatus));
+		 setStep(isCompletedCustomer ? 1 : onboardingStepForStatus(onboardingStatus));
 
          let financialPatch: Partial<CustomerFormData> = {
             incomeType: initialFormData.incomeType,
@@ -1268,6 +1269,17 @@ export default function AddCustomerPage() {
          setIsCompletingCribReviewStep(false);
       }
    };
+
+	const updateCompletedCustomerContactDetails = async () => {
+		if (!createdBankCustomerId) throw new Error("Select a completed customer first.");
+		setIsSubmittingStepOne(true);
+		try {
+			await updateCompletedBankCustomerContactDetails(createdBankCustomerId, {
+				email: formData.email.trim(), mobile: formData.mobile.trim(), province: formData.province.trim(), address: formData.address.trim(),
+			});
+			showToast({ title: "Contact details updated", description: "The completed onboarding and verified identity were not changed.", type: "success" });
+		} finally { setIsSubmittingStepOne(false); }
+	};
 
    const startLoanEdit = (index: number) => {
       const selected = formData.loans[index];
@@ -2076,7 +2088,7 @@ export default function AddCustomerPage() {
       const props = {
       formData,
       updateFormData,
-      onNext: handleNext,
+      onNext: isFinancialMaintenanceMode && step === 1 ? () => setStep(3) : handleNext,
       onBack: handleBack,
       isSavingFinancialStep,
     };
@@ -2098,6 +2110,8 @@ export default function AddCustomerPage() {
                   customerLookupError={customerLookupError}
                   serverStepOneErrors={serverStepOneErrors}
                   onClearServerStepOneError={clearServerStepOneError}
+				  isCompletedCustomer={isFinancialMaintenanceMode}
+				  onUpdateCompletedCustomerContactDetails={updateCompletedCustomerContactDetails}
                />
             );
       case 2: return <CribLinking {...props} onSaveCribLinkingStep={saveCribLinkingStep} isSavingCribLinkingStep={isSavingCribLinkingStep} />;

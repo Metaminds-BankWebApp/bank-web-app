@@ -30,6 +30,8 @@ export function PersonalDetails({
   customerLookupError,
   serverStepOneErrors,
   onClearServerStepOneError,
+  isCompletedCustomer,
+  onUpdateCompletedCustomerContactDetails,
 }: StepProps) {
   const [errors, setErrors] = useState<PersonalDetailsErrors>({});
   const mergedErrors: PersonalDetailsErrors = {
@@ -51,7 +53,9 @@ export function PersonalDetails({
     }
 
     try {
-      if (onContinueStepOne) {
+      if (isCompletedCustomer && onUpdateCompletedCustomerContactDetails) {
+        await onUpdateCompletedCustomerContactDetails();
+      } else if (onContinueStepOne) {
         await onContinueStepOne();
       }
       onNext();
@@ -113,7 +117,7 @@ export function PersonalDetails({
               <Input
                 id="nic"
                 value={formData.nic}
-                onChange={handleChange}
+                onChange={handleChange} disabled={isCompletedCustomer}
                 placeholder="Enter NIC number"
                 className={`bg-white border-slate-200 h-11 ${mergedErrors.nic ? "border-red-500" : ""}`}
               />
@@ -150,7 +154,7 @@ export function PersonalDetails({
             <Input 
               id="firstName" 
               value={formData.firstName} 
-              onChange={handleChange}
+              onChange={handleChange} disabled={isCompletedCustomer}
               placeholder="Enter first name" 
               className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${mergedErrors.firstName ? "border-red-500" : ""}`}
             />
@@ -161,7 +165,7 @@ export function PersonalDetails({
             <Input 
               id="lastName" 
               value={formData.lastName} 
-              onChange={handleChange}
+              onChange={handleChange} disabled={isCompletedCustomer}
               placeholder="Enter last name" 
               className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${mergedErrors.lastName ? "border-red-500" : ""}`}
             />
@@ -176,7 +180,7 @@ export function PersonalDetails({
               id="dob" 
               type="date" 
               value={formData.dob} 
-              onChange={handleChange}
+              onChange={handleChange} disabled={isCompletedCustomer}
               className={`bg-slate-50 border-slate-200 h-11 ${errors.dob ? "border-red-500" : ""}`} 
             />
             {mergedErrors.dob && <p className="text-red-500 text-xs">{mergedErrors.dob}</p>}
@@ -194,6 +198,8 @@ export function PersonalDetails({
             {mergedErrors.email && <p className="text-red-500 text-xs">{mergedErrors.email}</p>}
           </div>
         </div>
+
+        {isCompletedCustomer && <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Legal name, NIC, date of birth, username and account ownership are protected after KYC completion. Submit a KYC correction request with supporting documents for changes to those fields.</div>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-3">
@@ -321,7 +327,7 @@ export function PersonalDetails({
               disabled={Boolean(isSavingDraftStepOne || isSubmittingStepOne)}
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
             >
-                {isSubmittingStepOne ? "Saving..." : "Continue"} <ArrowRight size={16} />
+              {isSubmittingStepOne ? "Saving..." : isCompletedCustomer ? "Save Contact Details & Continue" : "Continue"} <ArrowRight size={16} />
             </Button>
         </div>
       </div>

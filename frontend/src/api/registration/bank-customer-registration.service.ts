@@ -1,5 +1,6 @@
 import { REGISTRATION_ENDPOINTS } from "@/src/api/endpoints";
 import { postStepOneRegistration, putStepOneRegistration } from "@/src/api/registration/shared";
+import apiClient, { toApiError } from "@/src/api/client";
 import type {
   StepOneRegistrationRequest,
   StepOneRegistrationResponse,
@@ -11,6 +12,20 @@ export async function saveBankCustomerStepOneDraft(
 ): Promise<StepOneRegistrationResponse> {
   // Save identity details as draft so officers can safely continue later.
   return postStepOneRegistration(REGISTRATION_ENDPOINTS.bankCustomer.stepOneDraft, payload);
+}
+
+export async function updateCompletedBankCustomerContactDetails(
+  bankCustomerId: number,
+  payload: { email: string; mobile: string; province: string; address: string },
+): Promise<StepOneRegistrationResponse> {
+  try {
+    const { data } = await apiClient.put<StepOneRegistrationResponse>(
+      REGISTRATION_ENDPOINTS.bankCustomer.contactDetails(bankCustomerId), payload,
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
 }
 
 export async function continueBankCustomerStepOne(

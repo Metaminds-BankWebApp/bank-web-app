@@ -127,4 +127,6 @@ export interface StepProps {
   isCompletingCribReviewStep?: boolean;
   isSavingFinancialStep?: boolean;
   isFinancialMaintenance?: boolean;
+  isCompletedCustomer?: boolean;
+  onUpdateCompletedCustomerContactDetails?: () => Promise<void>;
 }
