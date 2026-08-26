@@ -46,8 +46,7 @@ type OfficerData = {
   branch: string;
   email: string;
   contact: string;
-  assigned: string;
-  assignedAt: string | null;
+  added: string;
   status: StatusType;
   createdAt: string | null;
 };
@@ -59,12 +58,12 @@ type OfficerSearchField =
   | "BRANCH"
   | "EMAIL"
   | "CONTACT"
-  | "ASSIGNED"
+  | "ADDED"
   | "STATUS";
 
 type OfficerSort =
-  | "assigned-desc"
-  | "assigned-asc"
+  | "created-desc"
+  | "created-asc"
   | "name-asc"
   | "name-desc"
   | "branch-asc"
@@ -87,12 +86,12 @@ const officerSearchOptions: Array<{ value: OfficerSearchField; label: string }> 
   { value: "BRANCH", label: "Branch" },
   { value: "EMAIL", label: "Email" },
   { value: "CONTACT", label: "Contact" },
-  { value: "ASSIGNED", label: "Assigned Date" },
+  { value: "ADDED", label: "Added Date" },
   { value: "STATUS", label: "Status" },
 ];
 const officerSortOptions: Array<{ value: OfficerSort; label: string }> = [
-  { value: "assigned-desc", label: "Assigned date: newest" },
-  { value: "assigned-asc", label: "Assigned date: oldest" },
+  { value: "created-desc", label: "Added date: newest" },
+  { value: "created-asc", label: "Added date: oldest" },
   { value: "name-asc", label: "Name: A to Z" },
   { value: "name-desc", label: "Name: Z to A" },
   { value: "branch-asc", label: "Branch: A to Z" },
@@ -236,8 +235,7 @@ function mapApiOfficer(officer: AdminBankOfficerSummaryResponse): OfficerData {
     branch: officer.branchName?.trim() || "-",
     email: officer.email || "-",
     contact: officer.phone?.trim() || "-",
-    assigned: toDisplayDate(officer.lastUpdated),
-    assignedAt: officer.lastUpdated,
+    added: toDisplayDate(officer.createdAt),
     status: toDisplayStatus(officer.status || ""),
     createdAt: officer.createdAt,
   };
@@ -249,7 +247,7 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchField, setSearchField] = useState<OfficerSearchField>("ALL");
-  const [sortBy, setSortBy] = useState<OfficerSort>("assigned-desc");
+  const [sortBy, setSortBy] = useState<OfficerSort>("created-desc");
   const [officers, setOfficers] = useState<OfficerData[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -512,7 +510,7 @@ export default function Page() {
           matches(officer.branch) ||
           matches(officer.email) ||
           matches(officer.contact) ||
-          matches(officer.assigned) ||
+          matches(officer.added) ||
           matchesOfficerStatus(officer.status, normalized)
         );
       }
@@ -531,8 +529,8 @@ export default function Page() {
       if (searchField === "CONTACT") {
         return matches(officer.contact);
       }
-      if (searchField === "ASSIGNED") {
-        return matches(officer.assigned);
+      if (searchField === "ADDED") {
+        return matches(officer.added);
       }
       return matchesOfficerStatus(officer.status, normalized);
     });
@@ -543,12 +541,14 @@ export default function Page() {
       if (sortBy === "branch-asc") return left.branch.localeCompare(right.branch);
       if (sortBy === "branch-desc") return right.branch.localeCompare(left.branch);
 
-      const leftDate = left.assignedAt ? new Date(left.assignedAt).getTime() : Number.NaN;
-      const rightDate = right.assignedAt ? new Date(right.assignedAt).getTime() : Number.NaN;
-      if (Number.isNaN(leftDate) && Number.isNaN(rightDate)) return 0;
-      if (Number.isNaN(leftDate)) return 1;
-      if (Number.isNaN(rightDate)) return -1;
-      return sortBy === "assigned-asc" ? leftDate - rightDate : rightDate - leftDate;
+      const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : Number.NaN;
+      const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : Number.NaN;
+      if (Number.isNaN(leftDate) || Number.isNaN(rightDate)) {
+        return sortBy === "created-asc"
+          ? left.userId - right.userId
+          : right.userId - left.userId;
+      }
+      return sortBy === "created-asc" ? leftDate - rightDate : rightDate - leftDate;
     });
   }, [officers, searchField, searchQuery, sortBy]);
 
@@ -587,7 +587,7 @@ export default function Page() {
   }, [currentPage, totalPages]);
 
   const hasActiveFilters =
-    Boolean(searchQuery.trim()) || searchField !== "ALL" || sortBy !== "assigned-desc";
+    Boolean(searchQuery.trim()) || searchField !== "ALL" || sortBy !== "created-desc";
 
   return (
     <AuthGuard requiredRole="ADMIN">
@@ -630,7 +630,7 @@ export default function Page() {
                       <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       <Input
                         id="admin-officer-search"
-                        placeholder="ID, name, branch, email, contact, assigned, status"
+                        placeholder="ID, name, branch, email, contact, added date or status"
                         className="h-10 border-slate-200 bg-slate-50 pl-10"
                         value={searchQuery}
                         onChange={(event) => setSearchQuery(event.target.value)}
@@ -653,7 +653,7 @@ export default function Page() {
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
                     <Select value={sortBy} onValueChange={(value) => setSortBy(value as OfficerSort)}>
-                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Assigned date: newest" /></SelectTrigger>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Added date: newest" /></SelectTrigger>
                       <SelectContent>
                         {officerSortOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
@@ -671,7 +671,7 @@ export default function Page() {
                       onClick={() => {
                         setSearchQuery("");
                         setSearchField("ALL");
-                        setSortBy("assigned-desc");
+                        setSortBy("created-desc");
                       }}
                     >
                       Clear
@@ -698,7 +698,7 @@ export default function Page() {
                         "Branch",
                         "Email Address",
                         "Contact",
-                        "Assigned",
+                        "Added",
                         "Status",
                         "Actions",
                       ].map((header) => (
@@ -744,7 +744,7 @@ export default function Page() {
                             <td className="px-6 py-4 text-gray-600">{officer.branch}</td>
                             <td className="px-6 py-4">{officer.email}</td>
                             <td className="px-6 py-4">{officer.contact}</td>
-                            <td className="px-6 py-4">{officer.assigned}</td>
+                            <td className="px-6 py-4">{officer.added}</td>
                             <td className="px-6 py-4">
                               <StatusBadge status={officer.status} />
                             </td>
