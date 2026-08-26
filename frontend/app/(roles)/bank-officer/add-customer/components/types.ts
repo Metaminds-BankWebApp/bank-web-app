@@ -100,7 +100,7 @@ export const initialFormData: CustomerFormData = {
 export interface StepProps {
   formData: CustomerFormData;
   updateFormData: (data: Partial<CustomerFormData>) => void;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   onBack: () => void;
   onSaveDraftStepOne?: () => Promise<void>;
   onContinueStepOne?: () => Promise<void>;
@@ -125,4 +125,6 @@ export interface StepProps {
   isSavingCribRequestStep?: boolean;
   isSavingCribRetrievalStep?: boolean;
   isCompletingCribReviewStep?: boolean;
+  isSavingFinancialStep?: boolean;
+  isFinancialMaintenance?: boolean;
 }

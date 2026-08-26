@@ -30,10 +30,10 @@ import {
 import { verifyBankAccount } from "@/src/api/customers/account-verification.service";
 import {
    completeBankCustomerCribReviewStep,
+   completeBankCustomerFinancialMaintenance,
    findOwnedBankCustomerStepOneByNic,
    getCurrentBankCustomerFinancialRecord,
    getOwnedBankCustomerIdentityByUserId,
-   generateBankCustomerCredentials,
    saveBankCustomerCardStep,
    saveBankCustomerCribLinkingStep,
    saveBankCustomerIncomeStep,
@@ -489,10 +489,16 @@ function formatAmount(value: string | number | null | undefined): string {
    return lkrFormatter.format(parseAmount(value));
 }
 
+function onboardingStepForStatus(status: string | null | undefined): number {
+   const match = (status ?? "").trim().toUpperCase().match(/^PENDING_STEP_(\d)$/);
+   return match ? Math.min(Math.max(Number(match[1]), 1), 7) : 1;
+}
+
 export default function AddCustomerPage() {
    const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [generatedId, setGeneratedId] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -505,8 +511,8 @@ export default function AddCustomerPage() {
    const [customerLookupError, setCustomerLookupError] = useState("");
    const [isVerifyingAccount, setIsVerifyingAccount] = useState(false);
    const [isSavingCribLinkingStep, setIsSavingCribLinkingStep] = useState(false);
+   const [isSavingFinancialStep, setIsSavingFinancialStep] = useState(false);
    const [isCompletingCribReviewStep, setIsCompletingCribReviewStep] = useState(false);
-   const [isGeneratingCredentials, setIsGeneratingCredentials] = useState(false);
    const [editingIncomeIndex, setEditingIncomeIndex] = useState<number | null>(null);
    const [editingIncomeDraft, setEditingIncomeDraft] = useState<CustomerFormData["incomes"][number] | null>(null);
    const [editingLoanIndex, setEditingLoanIndex] = useState<number | null>(null);
@@ -517,6 +523,7 @@ export default function AddCustomerPage() {
    const [editingLiabilityDraft, setEditingLiabilityDraft] = useState<LiabilityDraftState>(emptyLiabilityDraft);
    const [liveSummaryError, setLiveSummaryError] = useState("");
    const [hasAutoLoadedNicEdit, setHasAutoLoadedNicEdit] = useState(false);
+   const [isFinancialMaintenanceMode, setIsFinancialMaintenanceMode] = useState(false);
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
 
    // Step-by-step onboarding screen for creating or continuing a bank-customer profile.
@@ -554,18 +561,24 @@ export default function AddCustomerPage() {
          }
       } catch {
          // Ignore broken localStorage payloads and start with default values.
+      } finally {
+         setHasRestoredDraft(true);
       }
    }, []);
 
    // Save current progress locally on every important change.
    useEffect(() => {
+      if (!hasRestoredDraft || isFinancialMaintenanceMode) {
+         return;
+      }
+
       const draft: StoredAddCustomerDraft = {
          step,
          formData,
          createdBankCustomerId,
       };
       window.localStorage.setItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-   }, [step, formData, createdBankCustomerId]);
+   }, [step, formData, createdBankCustomerId, hasRestoredDraft, isFinancialMaintenanceMode]);
 
    useEffect(() => {
       if (editingLoanIndex !== null && editingLoanIndex >= formData.loans.length) {
@@ -678,25 +691,29 @@ export default function AddCustomerPage() {
    };
 
    // Move to next step and save step data before leaving financial steps.
-  const handleNext = () => {
+  const handleNext = async () => {
       if (step < steps.length) {
-         void (async () => {
-            try {
-               if (step >= 3 && step <= 6) {
-                  await persistFinancialStep(step - 1);
-               }
-               setStep((prev) => prev + 1);
-               if (submitError) {
-                  setSubmitError("");
-               }
-            } catch (error) {
-               if (error instanceof ApiError) {
-                  setSubmitError(error.message || "Failed to save financial step.");
-                  return;
-               }
-               setSubmitError("Failed to save financial step. Please try again.");
+         const isFinancialStep = step >= 3 && step <= 6;
+         try {
+            if (isFinancialStep) {
+               setIsSavingFinancialStep(true);
+               await persistFinancialStep(step - 1);
             }
-         })();
+            setStep((prev) => prev + 1);
+            if (submitError) {
+               setSubmitError("");
+            }
+         } catch (error) {
+            if (error instanceof ApiError) {
+               setSubmitError(error.message || "Failed to save financial step.");
+               return;
+            }
+            setSubmitError("Failed to save financial step. Please try again.");
+         } finally {
+            if (isFinancialStep) {
+               setIsSavingFinancialStep(false);
+            }
+         }
       } else {
       const validation = validateCustomerSubmission(formData, {
         allowPasswordUnchanged: createdBankCustomerId !== null,
@@ -712,11 +729,13 @@ export default function AddCustomerPage() {
       setGeneratedId(generateCustomerId());
       setIsSuccess(true);
       setSubmitError("");
+      window.localStorage.removeItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
     }
   };
 
   const handleBack = () => {
-    if (step > 1) {
+    const firstEditableStep = isFinancialMaintenanceMode ? 3 : 1;
+    if (step > firstEditableStep) {
       setStep(step - 1);
       if (submitError) {
         setSubmitError("");
@@ -975,8 +994,12 @@ export default function AddCustomerPage() {
       setServerStepOneErrors({});
       try {
          const prefill = await findOwnedBankCustomerStepOneByNic(nic);
-         setCreatedBankCustomerId(prefill.bankCustomerId);
-         setHasExistingCustomerMatch(true);
+		 const onboardingStatus = (prefill.accessStatus || "").trim().toUpperCase();
+		 const isCompletedCustomer = onboardingStatus === "COMPLETED";
+		 setCreatedBankCustomerId(prefill.bankCustomerId);
+		 setHasExistingCustomerMatch(true);
+		 setIsFinancialMaintenanceMode(isCompletedCustomer);
+		 setStep(isCompletedCustomer ? 3 : onboardingStepForStatus(onboardingStatus));
 
          let financialPatch: Partial<CustomerFormData> = {
             incomeType: initialFormData.incomeType,
@@ -1002,7 +1025,7 @@ export default function AddCustomerPage() {
             }
          }
 
-         setFormData((prev) => ({
+		 setFormData((prev) => ({
             ...prev,
             firstName: prefill.firstName || prev.firstName,
             lastName: prefill.lastName || prev.lastName,
@@ -1019,8 +1042,16 @@ export default function AddCustomerPage() {
             accountVerificationMessage: prefill.accountNumber
                ? `Existing customer loaded. Linked account status: ${prefill.accountStatus || "UNKNOWN"}.`
                : "",
-            ...financialPatch,
-         }));
+			...financialPatch,
+		 }));
+		 if (isCompletedCustomer) {
+			window.localStorage.removeItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
+			showToast({
+				title: "Financial maintenance started",
+				description: "Onboarding remains closed. Update financial details and finalise the new version for review.",
+				type: "info",
+			});
+		 }
       } catch (error) {
          if (error instanceof ApiError && error.status === 404) {
             setHasExistingCustomerMatch(false);
@@ -1098,35 +1129,6 @@ export default function AddCustomerPage() {
          }
       } finally {
          setIsVerifyingAccount(false);
-      }
-   };
-
-   // Auto-generate login credentials for the customer from first and last name.
-   const generateStepOneCredentials = async () => {
-      if (!formData.firstName.trim() || !formData.lastName.trim()) {
-         setSubmitError("First name and last name are required before generating credentials.");
-         return;
-      }
-
-      setIsGeneratingCredentials(true);
-      setSubmitError("");
-      try {
-         const credentials = await generateBankCustomerCredentials(formData.firstName, formData.lastName);
-         updateFormData({
-            username: credentials.username,
-            password: credentials.password,
-            confirmPassword: credentials.password,
-         });
-         showToast({
-            title: "Credentials generated",
-            description: `Username ${credentials.username} is ready to use.`,
-            type: "success",
-         });
-      } catch (error) {
-         const message = error instanceof ApiError ? error.message : "Failed to generate credentials.";
-         setSubmitError(message);
-      } finally {
-         setIsGeneratingCredentials(false);
       }
    };
 
@@ -1240,19 +1242,25 @@ export default function AddCustomerPage() {
 
       setIsCompletingCribReviewStep(true);
       try {
-         const response = await completeBankCustomerCribReviewStep(createdBankCustomerId);
-         const createdEvaluationScore = response.bankEvaluationTotalRiskPoints;
+         const response = isFinancialMaintenanceMode
+            ? await completeBankCustomerFinancialMaintenance(createdBankCustomerId)
+            : await completeBankCustomerCribReviewStep(createdBankCustomerId);
+         const createdEvaluationScore = "bankEvaluationTotalRiskPoints" in response
+            ? response.bankEvaluationTotalRiskPoints
+            : undefined;
          updateFormData({
-            cribRequestStatus: response.requestStatus ?? "COMPLETED",
-            cribReportStatus: response.reportStatus ?? "READY",
+            cribRequestStatus: "requestStatus" in response ? response.requestStatus ?? "COMPLETED" : formData.cribRequestStatus,
+            cribReportStatus: "reportStatus" in response ? response.reportStatus ?? "READY" : formData.cribReportStatus,
             creditScore: typeof createdEvaluationScore === "number" ? createdEvaluationScore : formData.creditScore,
          });
          showToast({
-            title: "Onboarding completed",
+            title: isFinancialMaintenanceMode ? "Financial maintenance finalised" : "Onboarding completed",
             description:
                typeof createdEvaluationScore === "number"
                   ? `Credit evaluation created (score: ${createdEvaluationScore})`
-                  : "Onboarding completed and credit evaluation was saved.",
+                  : isFinancialMaintenanceMode
+                     ? "A new financial version was saved and sent to Credit Review."
+                     : "Onboarding completed and a password-setup invitation was sent to the customer.",
             type: "success",
          });
          return response;
@@ -2069,7 +2077,8 @@ export default function AddCustomerPage() {
       formData,
       updateFormData,
       onNext: handleNext,
-      onBack: handleBack
+      onBack: handleBack,
+      isSavingFinancialStep,
     };
 
     switch (step) {
@@ -2081,9 +2090,7 @@ export default function AddCustomerPage() {
                   onContinueStepOne={continueStepOne}
                   onLookupCustomerByNic={lookupCustomerByNic}
                   onVerifyAccount={verifyStepOneAccount}
-                  onGenerateCredentials={generateStepOneCredentials}
                   isVerifyingAccount={isVerifyingAccount}
-                  isGeneratingCredentials={isGeneratingCredentials}
                   isSavingDraftStepOne={isSavingDraftStepOne}
                   isSubmittingStepOne={isSubmittingStepOne}
                   isLookingUpCustomerByNic={isLookingUpCustomerByNic}
@@ -2098,8 +2105,7 @@ export default function AddCustomerPage() {
       case 4: return <Loans {...props} />;
       case 5: return <CreditCards {...props} />;
       case 6: return <Liabilities {...props} />;
-      case 7: return <Review {...props} onCompleteCribReviewStep={completeCribReviewStep} isCompletingCribReviewStep={isCompletingCribReviewStep} />;
-         case 7: return <Review {...props} onCompleteCribReviewStep={completeCribReviewStep} onEditStep={setStep} isCompletingCribReviewStep={isCompletingCribReviewStep} />;
+      case 7: return <Review {...props} onCompleteCribReviewStep={completeCribReviewStep} onEditStep={setStep} isCompletingCribReviewStep={isCompletingCribReviewStep} isFinancialMaintenance={isFinancialMaintenanceMode} />;
          default: return <PersonalDetails {...props} serverStepOneErrors={serverStepOneErrors} onClearServerStepOneError={clearServerStepOneError} />;
     }
   };
@@ -2128,6 +2134,12 @@ export default function AddCustomerPage() {
               {submitError && (
                 <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
                   {submitError}
+                </div>
+              )}
+
+              {isFinancialMaintenanceMode && (
+                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                  <span className="font-semibold">Completed customer financial maintenance.</span> Personal identity, account ownership and onboarding status are locked; only the financial snapshot can be updated. Finalising creates a new version for Credit Review.
                 </div>
               )}
 

@@ -44,6 +44,8 @@ export default function BankOfficerDashboardPage() {
   const [range, setRange] = useState<DateRange>("30");
   const [fromDate, setFromDate] = useState(() => dateInputValue(daysAgo(30)));
   const [toDate, setToDate] = useState(() => dateInputValue(new Date()));
+  const isCustomRange = range === "custom";
+  const hasNonDefaultRange = range !== "30";
 
   const loadDashboard = async () => {
     try {
@@ -203,47 +205,44 @@ export default function BankOfficerDashboardPage() {
                     href="/bank-officer/transactions"
                   />
                 </section>
-                <section className="relative z-[100] mb-6 flex flex-col gap-3 rounded-2xl border border-white/90 bg-white/80 p-4 shadow-[0_18px_38px_-28px_rgba(13,59,102,0.45)] backdrop-blur-md sm:flex-row sm:items-end">
-                  <Select
-                    value={range}
-                    onValueChange={(value) => selectRange(value as DateRange)}
-                    className="sm:w-44"
-                  >
-                    <SelectTrigger className="h-10 w-full rounded-xl border-sky-100 bg-sky-50/60 font-medium text-[#0d3b66] shadow-inner">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30">Last 30 days</SelectItem>
-                      <SelectItem value="90">Last 90 days</SelectItem>
-                      <SelectItem value="365">Last year</SelectItem>
-                      <SelectItem value="all">All time</SelectItem>
-                      <SelectItem value="custom">Custom range</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <label className="flex flex-1 flex-col gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                    From
-                    <input
-                      type="date"
-                      value={fromDate}
-                      onChange={(event) => {
-                        setFromDate(event.target.value);
-                        setRange("custom");
-                      }}
-                      className="h-10 rounded-xl border border-slate-200/90 bg-white px-3 text-sm font-semibold normal-case tracking-normal text-slate-700 outline-none transition focus:border-[#0d3b66] focus:ring-2 focus:ring-sky-100"
-                    />
-                  </label>
-                  <label className="flex flex-1 flex-col gap-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                    To
-                    <input
-                      type="date"
-                      value={toDate}
-                      onChange={(event) => {
-                        setToDate(event.target.value);
-                        setRange("custom");
-                      }}
-                      className="h-10 rounded-xl border border-slate-200/90 bg-white px-3 text-sm font-semibold normal-case tracking-normal text-slate-700 outline-none transition focus:border-[#0d3b66] focus:ring-2 focus:ring-sky-100"
-                    />
-                  </label>
+                <section className="relative z-[100] mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-label="Dashboard reporting period">
+                  <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_auto] xl:items-end">
+                    <div>
+                      <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Reporting period</label>
+                      <Select value={range} onValueChange={(value) => selectRange(value as DateRange)}>
+                        <SelectTrigger className="h-10 w-full border-slate-200 bg-slate-50 font-medium text-[#0d3b66]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="30">Last 30 days</SelectItem>
+                          <SelectItem value="90">Last 90 days</SelectItem>
+                          <SelectItem value="365">Last 12 months</SelectItem>
+                          <SelectItem value="all">All time</SelectItem>
+                          <SelectItem value="custom">Custom range</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {isCustomRange ? (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="flex min-w-0 flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          From
+                          <input type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} className="h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal text-slate-700 outline-none transition focus:border-[#0d3b66] focus:ring-2 focus:ring-sky-100" />
+                        </label>
+                        <label className="flex min-w-0 flex-col gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          To
+                          <input type="date" value={toDate} min={fromDate || undefined} max={dateInputValue(new Date())} onChange={(event) => setToDate(event.target.value)} className="h-10 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm font-medium normal-case tracking-normal text-slate-700 outline-none transition focus:border-[#0d3b66] focus:ring-2 focus:ring-sky-100" />
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-2.5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Viewing dashboard data</p>
+                        <p className="mt-0.5 text-sm font-semibold text-[#0d3b66]">{overview.dateRangeLabel}</p>
+                      </div>
+                    )}
+                    <div className="flex justify-start xl:justify-end">
+                      {hasNonDefaultRange && <Button variant="ghost" className="h-10 text-slate-600 hover:bg-slate-100" onClick={() => selectRange("30")}>Reset to 30 days</Button>}
+                    </div>
+                  </div>
                 </section>
                 <section className="relative z-0 grid items-stretch gap-6 xl:grid-cols-[1.35fr_1fr]">
                   <ChartCard

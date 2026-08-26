@@ -9,7 +9,6 @@ export type OfficerFormData = {
   dob: string;
   province: string;
   username: string;
-  password: string;
   contact: string;
   email: string;
   assignedBranch: string;
@@ -19,7 +18,7 @@ export type OfficerFormData = {
 
 export type OfficerFormErrors = Partial<
   Record<
-    "firstName" | "lastName" | "nic" | "dob" | "province" | "contact" | "email" | "assignedBranch" | "username" | "password",
+    "firstName" | "lastName" | "nic" | "dob" | "province" | "contact" | "email" | "assignedBranch" | "username",
     string
   >
 >;

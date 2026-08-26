@@ -58,6 +58,8 @@ export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
     `/bank-officers/customers/${bankCustomerId}/financial-records/steps/crib-linking/continue`,
   completeCribReviewStep: (bankCustomerId: number) =>
     `/bank-officers/customers/${bankCustomerId}/financial-records/steps/review/complete`,
+	completeFinancialMaintenance: (bankCustomerId: number) =>
+		`/bank-officers/customers/${bankCustomerId}/financial-records/maintenance/complete`,
   current: (bankCustomerId: number) =>
     `/bank-officers/customers/${bankCustomerId}/financial-records/current`,
   history: (bankCustomerId: number) =>

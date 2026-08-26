@@ -2,7 +2,7 @@ import { CustomerFormData } from "./types";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
 const contactRegex = /^\+?[0-9][0-9\s-]{7,20}$/;
-const nicRegex = /^(\d{9}[vVxX]|\d{12})$/;
+const nicRegex = /^(\d{9}[vV]|\d{12})$/;
 const usernameRegex = /^[a-zA-Z0-9._-]{4,20}$/;
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 const currencyRegex = /^\d+(\.\d{1,2})?$/;
@@ -149,9 +149,7 @@ export function validatePersonalDetailsStep(
     errors.address = "Address must be at least 5 characters.";
   }
 
-  if (!formData.username.trim()) {
-    errors.username = "Username is required.";
-  } else if (!usernameRegex.test(formData.username.trim())) {
+  if (formData.username.trim() && !usernameRegex.test(formData.username.trim())) {
     errors.username = "Use 4-20 characters: letters, numbers, dots, underscores, or hyphens.";
   }
 

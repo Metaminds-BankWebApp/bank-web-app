@@ -4,9 +4,6 @@ import { useState } from "react";
 import { 
   CheckCircle2, 
   Search,
-  ClipboardCopy,
-  Eye,
-  EyeOff,
   ArrowRight, 
   ArrowLeft 
 } from "lucide-react";
@@ -26,20 +23,15 @@ export function PersonalDetails({
   onSaveDraftStepOne,
   onContinueStepOne,
   onLookupCustomerByNic,
-  onGenerateCredentials,
   isSavingDraftStepOne,
   isSubmittingStepOne,
   isLookingUpCustomerByNic,
-  isGeneratingCredentials,
   hasExistingCustomerMatch,
   customerLookupError,
   serverStepOneErrors,
   onClearServerStepOneError,
 }: StepProps) {
   const [errors, setErrors] = useState<PersonalDetailsErrors>({});
-  const [isCopyingPassword, setIsCopyingPassword] = useState(false);
-  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const mergedErrors: PersonalDetailsErrors = {
     ...errors,
     ...serverStepOneErrors,
@@ -47,7 +39,7 @@ export function PersonalDetails({
 
   const validate = () => {
     const newErrors = validatePersonalDetailsStep(formData, {
-      allowPasswordUnchanged: Boolean(hasExistingCustomerMatch),
+      allowPasswordUnchanged: true,
     });
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -106,19 +98,6 @@ export function PersonalDetails({
     onClearServerStepOneError?.("bankAccount");
   };
 
-  const handleCopyPassword = async () => {
-    if (!formData.password.trim()) {
-      return;
-    }
-
-    setIsCopyingPassword(true);
-    try {
-      await navigator.clipboard.writeText(formData.password);
-    } finally {
-      setTimeout(() => setIsCopyingPassword(false), 400);
-    }
-  };
-
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="px-8 py-6 border-b border-slate-100">
@@ -135,7 +114,7 @@ export function PersonalDetails({
                 id="nic"
                 value={formData.nic}
                 onChange={handleChange}
-                placeholder="951234567V"
+                placeholder="Enter NIC number"
                 className={`bg-white border-slate-200 h-11 ${mergedErrors.nic ? "border-red-500" : ""}`}
               />
               {mergedErrors.nic && <p className="text-red-500 text-xs">{mergedErrors.nic}</p>}
@@ -172,7 +151,7 @@ export function PersonalDetails({
               id="firstName" 
               value={formData.firstName} 
               onChange={handleChange}
-              placeholder="Johnathan" 
+              placeholder="Enter first name" 
               className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${mergedErrors.firstName ? "border-red-500" : ""}`}
             />
             {mergedErrors.firstName && <p className="text-red-500 text-xs">{mergedErrors.firstName}</p>}
@@ -183,7 +162,7 @@ export function PersonalDetails({
               id="lastName" 
               value={formData.lastName} 
               onChange={handleChange}
-              placeholder="Doe" 
+              placeholder="Enter last name" 
               className={`bg-slate-50 border-slate-200 h-11 focus:ring-[#3e9fd3] ${mergedErrors.lastName ? "border-red-500" : ""}`}
             />
             {mergedErrors.lastName && <p className="text-red-500 text-xs">{mergedErrors.lastName}</p>}
@@ -209,7 +188,7 @@ export function PersonalDetails({
               type="email" 
               value={formData.email} 
               onChange={handleChange}
-              placeholder="john.doe@email.com" 
+              placeholder="Enter email address" 
               className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.email ? "border-red-500" : ""}`} 
             />
             {mergedErrors.email && <p className="text-red-500 text-xs">{mergedErrors.email}</p>}
@@ -223,7 +202,7 @@ export function PersonalDetails({
               id="mobile" 
               value={formData.mobile} 
               onChange={handleChange}
-              placeholder="+94 77 123 4567" 
+              placeholder="Enter mobile number" 
               className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.mobile ? "border-red-500" : ""}`} 
             />
             {mergedErrors.mobile && <p className="text-red-500 text-xs">{mergedErrors.mobile}</p>}
@@ -234,7 +213,7 @@ export function PersonalDetails({
               id="province" 
               value={formData.province} 
               onChange={handleChange}
-              placeholder="Western" 
+              placeholder="Enter province" 
               className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.province ? "border-red-500" : ""}`} 
             />
             {mergedErrors.province && <p className="text-red-500 text-xs">{mergedErrors.province}</p>}
@@ -248,7 +227,7 @@ export function PersonalDetails({
               id="address" 
               value={formData.address} 
               onChange={handleChange}
-              placeholder="123, Galle Road, Colombo" 
+              placeholder="Enter residential address" 
               className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.address ? "border-red-500" : ""}`} 
             />
             {mergedErrors.address && <p className="text-red-500 text-xs">{mergedErrors.address}</p>}
@@ -257,90 +236,13 @@ export function PersonalDetails({
         </div>
 
         <div className="pt-4">
-          <h3 className="text-lg font-bold text-[#0d3b66] mb-4">Account Credentials</h3>
-          <p className="text-sm text-slate-500 mb-6">Set up the digital banking access credentials.</p>
-          <div className="mb-4 flex flex-wrap justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void onGenerateCredentials?.()}
-              disabled={Boolean(isGeneratingCredentials || !formData.firstName.trim() || !formData.lastName.trim())}
-              className="border-slate-200 text-slate-700 hover:bg-slate-100"
-            >
-              {isGeneratingCredentials ? "Generating..." : "Generate Credentials"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void handleCopyPassword()}
-              disabled={Boolean(!formData.password.trim())}
-              className="border-slate-200 text-slate-700 hover:bg-slate-100"
-            >
-              <ClipboardCopy size={16} className="mr-2" />
-              {isCopyingPassword ? "Copied" : "Copy Password"}
-            </Button>
-          </div>
+          <h3 className="text-lg font-bold text-[#0d3b66] mb-2">Digital Banking Access</h3>
+          <p className="text-sm text-slate-500 mb-6">A unique username is generated securely from the customer’s name when this profile is saved. After final review, the customer receives a one-time link to set a password and may change the username later in Profile.</p>
             
-            <div className="space-y-3 mb-6">
-              <Label htmlFor="username" className="text-slate-700 font-medium">Username</Label>
-              <Input 
-                id="username" 
-                value={formData.username} 
-                onChange={handleChange}
-                placeholder="johndoe_95" 
-                className={`bg-slate-50 border-slate-200 h-11 ${mergedErrors.username ? "border-red-500" : ""}`} 
-              />
-              {mergedErrors.username && <p className="text-red-500 text-xs">{mergedErrors.username}</p>}
+            <div className="rounded-lg border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-slate-700">
+              Username will be generated automatically after the customer name is saved.
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-3">
-                  <Label htmlFor="password" className="text-slate-700 font-medium">Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={isPasswordVisible ? "text" : "password"}
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`bg-slate-50 border-slate-200 h-11 pr-11 ${mergedErrors.password ? "border-red-500" : ""}`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsPasswordVisible((visible) => !visible)}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                      aria-label={isPasswordVisible ? "Hide password" : "Show password"}
-                    >
-                      {isPasswordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </Button>
-                  </div>
-                  {mergedErrors.password && <p className="text-red-500 text-xs">{mergedErrors.password}</p>}
-              </div>
-              <div className="space-y-3">
-                  <Label htmlFor="confirmPassword" className="text-slate-700 font-medium">Confirm Password</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={isConfirmPasswordVisible ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className={`bg-slate-50 border-slate-200 h-11 pr-11 ${mergedErrors.confirmPassword ? "border-red-500" : ""}`}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setIsConfirmPasswordVisible((visible) => !visible)}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-                      aria-label={isConfirmPasswordVisible ? "Hide confirm password" : "Show confirm password"}
-                    >
-                      {isConfirmPasswordVisible ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </Button>
-                  </div>
-                  {mergedErrors.confirmPassword && <p className="text-red-500 text-xs">{mergedErrors.confirmPassword}</p>}
-              </div>
-            </div>
         </div>
 
         <div className="pt-4 border-t border-slate-100">
@@ -354,7 +256,7 @@ export function PersonalDetails({
                    id="bankAccount" 
                    value={formData.bankAccount} 
                    onChange={handleChange}
-                   placeholder="1000 2345 6789" 
+                   placeholder="Enter bank account number" 
                    className={`bg-slate-50 border-slate-200 h-11 flex-1 ${mergedErrors.bankAccount ? "border-red-500" : ""}`} 
                    disabled={formData.isAccountVerified}
                  />

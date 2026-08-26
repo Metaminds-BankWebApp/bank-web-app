@@ -10,8 +10,9 @@ export function Review({
   onNext,
   onBack,
   onCompleteCribReviewStep,
-   onEditStep,
+  onEditStep,
   isCompletingCribReviewStep,
+  isFinancialMaintenance,
 }: StepProps) {
    const [errorMessage, setErrorMessage] = useState("");
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
@@ -186,7 +187,7 @@ export function Review({
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
               disabled={Boolean(isCompletingCribReviewStep)}
             >
-                Submit & Create <ArrowRight size={16} />
+                {isFinancialMaintenance ? "Finalise Financial Update" : "Complete & Send Activation"} <ArrowRight size={16} />
             </Button>
         </div>
       </div>

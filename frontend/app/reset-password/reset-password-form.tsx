@@ -2,15 +2,16 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { authService } from "@/src/api/auth/auth.service";
 import { ApiError } from "@/src/types/api-error";
 import { Button, useToast } from "@/src/components/ui";
-import { clearPasswordResetToken, getPasswordResetToken } from "@/src/lib/password-reset-session";
+import { clearPasswordResetToken, getPasswordResetToken, savePasswordResetToken } from "@/src/lib/password-reset-session";
 
 export function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
 
   const [password, setPassword] = useState("");
@@ -22,8 +23,15 @@ export function ResetPasswordForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
+    const activationToken = searchParams.get("activationToken")?.trim();
+    if (activationToken) {
+      savePasswordResetToken(activationToken);
+      router.replace("/reset-password");
+      setResetToken(activationToken);
+      return;
+    }
     setResetToken(getPasswordResetToken());
-  }, []);
+  }, [router, searchParams]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -39,7 +47,7 @@ export function ResetPasswordForm() {
     }
 
     if (!resetToken) {
-      setError("Missing reset session. Restart from forgot password.");
+      setError("This activation or reset session is missing or has expired. Request a new link.");
       return;
     }
 

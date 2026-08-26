@@ -392,7 +392,7 @@ export default function TransactionsPage() {
                   />
                 </div>
 
-                <div className="md:col-span-8 flex flex-wrap gap-4 items-center">
+                <div className="md:col-span-8 flex flex-wrap items-center gap-4 md:justify-end">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-slate-400 uppercase">Date:</span>
                     <Select value={dateRange} onValueChange={(value) => setDateRange(value as "30days" | "60days" | "90days" | "all") }>

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
-import { Search, Filter, Download, Eye } from "lucide-react";
+import { Search, Download, Eye } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
 import { Input } from "@/src/components/ui/input";
@@ -40,6 +40,7 @@ type SortKey =
   | "score-asc"
   | "name-asc"
   | "name-desc";
+type EvaluationWindow = "all" | "7" | "30" | "90";
 
 const tabOptions: Array<{ key: "all" | RiskType; label: string }> = [
   { key: "all", label: "All Customers" },
@@ -73,9 +74,10 @@ export default function CreditAnalysisPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | RiskType>("all");
   const [query, setQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
   const [scoreFilter, setScoreFilter] = useState<"all" | "low" | "medium" | "high">("all");
+  const [evaluationWindow, setEvaluationWindow] = useState<EvaluationWindow>("all");
   const [sortBy, setSortBy] = useState<SortKey>("date-desc");
+  const hasActiveFilters = Boolean(query.trim()) || activeTab !== "all" || scoreFilter !== "all" || evaluationWindow !== "all" || sortBy !== "date-desc";
 
   // Load the officer's credit dashboard once when the page opens.
   useEffect(() => {
@@ -129,7 +131,10 @@ export default function CreditAnalysisPage() {
             : scoreFilter === "medium"
               ? item.totalRiskPoints > 33 && item.totalRiskPoints <= 66
               : item.totalRiskPoints > 66;
-      return byTab && byQuery && byScore;
+      const byEvaluationWindow = evaluationWindow === "all"
+        ? true
+        : new Date(item.evaluationDate).getTime() >= Date.now() - Number(evaluationWindow) * 24 * 60 * 60 * 1000;
+      return byTab && byQuery && byScore && byEvaluationWindow;
     });
 
     return [...filtered].sort((left, right) => {
@@ -150,7 +155,7 @@ export default function CreditAnalysisPage() {
           return 0;
       }
     });
-  }, [activeTab, dashboard?.customers, query, scoreFilter, sortBy]);
+  }, [activeTab, dashboard?.customers, evaluationWindow, query, scoreFilter, sortBy]);
 
   // Export exactly what the officer currently sees in the table.
   const handleExport = () => {
@@ -227,74 +232,69 @@ export default function CreditAnalysisPage() {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="primecore-table-toolbar flex-col items-stretch">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div className="relative w-full md:max-w-lg">
+                  <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-label="Credit review filters">
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+                      <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_190px_190px_230px]">
+                      <div className="sm:col-span-2 xl:col-span-1">
+                        <label htmlFor="credit-review-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search customers</label>
+                        <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                       <Input
+                        id="credit-review-search"
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder="Search by customer code, name, email, or phone"
-                        className="pl-9 h-10 bg-sky-50/60 border-sky-100"
+                        className="h-10 bg-slate-50 border-slate-200 pl-9"
                       />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Risk score</label>
+                        <Select value={scoreFilter} onValueChange={(value) => setScoreFilter(value as "all" | "low" | "medium" | "high")}>
+                          <SelectTrigger className="h-10 bg-slate-50 border-slate-200"><SelectValue placeholder="All scores" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All scores</SelectItem>
+                            <SelectItem value="low">Low (0–33)</SelectItem>
+                            <SelectItem value="medium">Medium (34–66)</SelectItem>
+                            <SelectItem value="high">High (67–100)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Evaluation date</label>
+                        <Select value={evaluationWindow} onValueChange={(value) => setEvaluationWindow(value as EvaluationWindow)}>
+                          <SelectTrigger className="h-10 bg-slate-50 border-slate-200"><SelectValue placeholder="Any time" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Any time</SelectItem>
+                            <SelectItem value="7">Last 7 days</SelectItem>
+                            <SelectItem value="30">Last 30 days</SelectItem>
+                            <SelectItem value="90">Last 90 days</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
+                        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortKey)}>
+                          <SelectTrigger className="h-10 bg-slate-50 border-slate-200"><SelectValue placeholder="Evaluation date" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="date-desc">Evaluation date: newest</SelectItem>
+                            <SelectItem value="date-asc">Evaluation date: oldest</SelectItem>
+                            <SelectItem value="score-desc">Risk score: high to low</SelectItem>
+                            <SelectItem value="score-asc">Risk score: low to high</SelectItem>
+                            <SelectItem value="name-asc">Name: A to Z</SelectItem>
+                            <SelectItem value="name-desc">Name: Z to A</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        className="h-10 gap-2 bg-white text-slate-600 border-slate-200"
-                        onClick={() => setShowFilters((previous) => !previous)}
-                      >
-                        <Filter size={14} /> Filter
-                      </Button>
+                    <div className="flex shrink-0 flex-wrap gap-2 xl:justify-end">
+                      {hasActiveFilters && <Button variant="ghost" className="h-10 text-slate-600 hover:bg-slate-100" onClick={() => { setQuery(""); setActiveTab("all"); setScoreFilter("all"); setEvaluationWindow("all"); setSortBy("date-desc"); }}>Clear</Button>}
                       <Button variant="outline" className="h-10 gap-2 bg-white text-slate-600 border-slate-200" onClick={handleExport}>
                         <Download size={14} /> Export
                       </Button>
                     </div>
                   </div>
-
-                  {showFilters && (
-                    <div className="grid w-full gap-3 md:grid-cols-3">
-                      <Select value={scoreFilter} onValueChange={(value) => setScoreFilter(value as "all" | "low" | "medium" | "high")}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Risk score range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Risk Scores</SelectItem>
-                          <SelectItem value="low">Low Risk (0-33)</SelectItem>
-                          <SelectItem value="medium">Medium Risk (34-66)</SelectItem>
-                          <SelectItem value="high">High Risk (67+)</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortKey)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="date-desc">Newest Date</SelectItem>
-                          <SelectItem value="date-asc">Oldest Date</SelectItem>
-                          <SelectItem value="score-desc">Risk Score: High to Low</SelectItem>
-                          <SelectItem value="score-asc">Risk Score: Low to High</SelectItem>
-                          <SelectItem value="name-asc">Name: A to Z</SelectItem>
-                          <SelectItem value="name-desc">Name: Z to A</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setQuery("");
-                          setActiveTab("all");
-                          setScoreFilter("all");
-                          setSortBy("date-desc");
-                        }}
-                      >
-                        Reset Filters
-                      </Button>
-                    </div>
-                  )}
-                  </div>
+                  </section>
 
                   <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
 
