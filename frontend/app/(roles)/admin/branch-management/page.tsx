@@ -54,6 +54,7 @@ type BranchData = {
   customers: number;
   status: StatusType;
   statusCode: BranchStatus;
+  createdAt: string | null;
 };
 
 type BranchSearchField =
@@ -68,6 +69,8 @@ type BranchSearchField =
   | "STATUS";
 
 type BranchSort =
+  | "created-desc"
+  | "created-asc"
   | "name-asc"
   | "name-desc"
   | "id-asc"
@@ -98,6 +101,8 @@ const branchSearchOptions: Array<{ value: BranchSearchField; label: string }> = 
   { value: "STATUS", label: "Status" },
 ];
 const branchSortOptions: Array<{ value: BranchSort; label: string }> = [
+  { value: "created-desc", label: "Added date: newest" },
+  { value: "created-asc", label: "Added date: oldest" },
   { value: "name-asc", label: "Branch name: A to Z" },
   { value: "name-desc", label: "Branch name: Z to A" },
   { value: "id-asc", label: "Branch ID: ascending" },
@@ -210,6 +215,7 @@ function mapApiBranch(branch: BranchResponse): BranchData {
     customers: customerCount,
     status: toDisplayStatus(statusCode),
     statusCode,
+    createdAt: branch.createdAt,
   };
 }
 
@@ -219,7 +225,7 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchField, setSearchField] = useState<BranchSearchField>("ALL");
-  const [sortBy, setSortBy] = useState<BranchSort>("name-asc");
+  const [sortBy, setSortBy] = useState<BranchSort>("created-desc");
   const [branches, setBranches] = useState<BranchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -487,6 +493,16 @@ export default function Page() {
     });
 
     return matchingBranches.sort((left, right) => {
+      if (sortBy === "created-desc" || sortBy === "created-asc") {
+        const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : Number.NaN;
+        const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : Number.NaN;
+        if (Number.isNaN(leftDate) || Number.isNaN(rightDate)) {
+          return sortBy === "created-asc"
+            ? left.internalId - right.internalId
+            : right.internalId - left.internalId;
+        }
+        return sortBy === "created-asc" ? leftDate - rightDate : rightDate - leftDate;
+      }
       if (sortBy === "name-asc") return left.name.localeCompare(right.name);
       if (sortBy === "name-desc") return right.name.localeCompare(left.name);
       if (sortBy === "id-asc") return left.id.localeCompare(right.id, undefined, { numeric: true });
@@ -535,7 +551,7 @@ export default function Page() {
   }, [currentPage, totalPages]);
 
   const hasActiveFilters =
-    Boolean(searchQuery.trim()) || searchField !== "ALL" || sortBy !== "name-asc";
+    Boolean(searchQuery.trim()) || searchField !== "ALL" || sortBy !== "created-desc";
 
   return (
     <AuthGuard requiredRole="ADMIN">
@@ -601,7 +617,7 @@ export default function Page() {
                   <div>
                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
                     <Select value={sortBy} onValueChange={(value) => setSortBy(value as BranchSort)}>
-                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Branch name: A to Z" /></SelectTrigger>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Added date: newest" /></SelectTrigger>
                       <SelectContent>
                         {branchSortOptions.map((option) => (
                           <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
@@ -619,7 +635,7 @@ export default function Page() {
                       onClick={() => {
                         setSearchQuery("");
                         setSearchField("ALL");
-                        setSortBy("name-asc");
+                        setSortBy("created-desc");
                       }}
                     >
                       Clear
