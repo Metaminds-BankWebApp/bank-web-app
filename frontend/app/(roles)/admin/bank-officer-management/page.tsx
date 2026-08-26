@@ -9,7 +9,18 @@ import { Pencil, Trash2, Search, X } from "lucide-react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import { ConfirmationModal, DataTablePagination, useToast } from "@/src/components/ui";
+import {
+  Button,
+  ConfirmationModal,
+  DataTablePagination,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  useToast,
+} from "@/src/components/ui";
 import { getAdminBranches } from "@/src/api/admin/branch.service";
 import {
   getAdminBankOfficers,
@@ -36,6 +47,7 @@ type OfficerData = {
   email: string;
   contact: string;
   assigned: string;
+  assignedAt: string | null;
   status: StatusType;
   createdAt: string | null;
 };
@@ -49,6 +61,14 @@ type OfficerSearchField =
   | "CONTACT"
   | "ASSIGNED"
   | "STATUS";
+
+type OfficerSort =
+  | "assigned-desc"
+  | "assigned-asc"
+  | "name-asc"
+  | "name-desc"
+  | "branch-asc"
+  | "branch-desc";
 
 type OfficerEditErrors = Partial<
   Record<"firstName" | "lastName" | "email" | "contactNumber" | "branchId", string>
@@ -69,6 +89,14 @@ const officerSearchOptions: Array<{ value: OfficerSearchField; label: string }> 
   { value: "CONTACT", label: "Contact" },
   { value: "ASSIGNED", label: "Assigned Date" },
   { value: "STATUS", label: "Status" },
+];
+const officerSortOptions: Array<{ value: OfficerSort; label: string }> = [
+  { value: "assigned-desc", label: "Assigned date: newest" },
+  { value: "assigned-asc", label: "Assigned date: oldest" },
+  { value: "name-asc", label: "Name: A to Z" },
+  { value: "name-desc", label: "Name: Z to A" },
+  { value: "branch-asc", label: "Branch: A to Z" },
+  { value: "branch-desc", label: "Branch: Z to A" },
 ];
 const officerStatusKeywords = new Set(["active", "suspend", "pending"]);
 
@@ -209,6 +237,7 @@ function mapApiOfficer(officer: AdminBankOfficerSummaryResponse): OfficerData {
     email: officer.email || "-",
     contact: officer.phone?.trim() || "-",
     assigned: toDisplayDate(officer.lastUpdated),
+    assignedAt: officer.lastUpdated,
     status: toDisplayStatus(officer.status || ""),
     createdAt: officer.createdAt,
   };
@@ -220,6 +249,7 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchField, setSearchField] = useState<OfficerSearchField>("ALL");
+  const [sortBy, setSortBy] = useState<OfficerSort>("assigned-desc");
   const [officers, setOfficers] = useState<OfficerData[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -467,11 +497,11 @@ export default function Page() {
   const filteredOfficers = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
 
-    if (!normalized) {
-      return officers;
-    }
+    const matchingOfficers = officers.filter((officer) => {
+      if (!normalized) {
+        return true;
+      }
 
-    return officers.filter((officer) => {
       const matches = (value: string | number) =>
         String(value).toLowerCase().includes(normalized);
 
@@ -506,7 +536,21 @@ export default function Page() {
       }
       return matchesOfficerStatus(officer.status, normalized);
     });
-  }, [officers, searchField, searchQuery]);
+
+    return matchingOfficers.sort((left, right) => {
+      if (sortBy === "name-asc") return left.name.localeCompare(right.name);
+      if (sortBy === "name-desc") return right.name.localeCompare(left.name);
+      if (sortBy === "branch-asc") return left.branch.localeCompare(right.branch);
+      if (sortBy === "branch-desc") return right.branch.localeCompare(left.branch);
+
+      const leftDate = left.assignedAt ? new Date(left.assignedAt).getTime() : Number.NaN;
+      const rightDate = right.assignedAt ? new Date(right.assignedAt).getTime() : Number.NaN;
+      if (Number.isNaN(leftDate) && Number.isNaN(rightDate)) return 0;
+      if (Number.isNaN(leftDate)) return 1;
+      if (Number.isNaN(rightDate)) return -1;
+      return sortBy === "assigned-asc" ? leftDate - rightDate : rightDate - leftDate;
+    });
+  }, [officers, searchField, searchQuery, sortBy]);
 
   const totalPages = Math.ceil(filteredOfficers.length / officersPerPage);
   const paginatedOfficers = filteredOfficers.slice(
@@ -534,13 +578,16 @@ export default function Page() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, searchField]);
+  }, [searchQuery, searchField, sortBy]);
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
+
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) || searchField !== "ALL" || sortBy !== "assigned-desc";
 
   return (
     <AuthGuard requiredRole="ADMIN">
@@ -571,44 +618,74 @@ export default function Page() {
               <SummaryCard label="NEWLY ADDED OFFICERS" value={summary.recentCount} />
             </div>
 
-            <div className="primecore-table-toolbar flex-col items-stretch sm:flex-row">
-              <div className="flex flex-1 flex-col sm:flex-row gap-3">
-                <select
-                  value={searchField}
-                  onChange={(event) =>
-                    setSearchField(event.target.value as OfficerSearchField)
-                  }
-                  className="h-12 rounded-full border border-gray-300 bg-white px-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
-                >
-                  {officerSearchOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      Search by {option.label}
-                    </option>
-                  ))}
-                </select>
+            <section
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+              aria-label="Bank officer filters"
+            >
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+                <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_190px_230px]">
+                  <div className="sm:col-span-2 xl:col-span-1">
+                    <label htmlFor="admin-officer-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search officers</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        id="admin-officer-search"
+                        placeholder="ID, name, branch, email, contact, assigned, status"
+                        className="h-10 border-slate-200 bg-slate-50 pl-10"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                      />
+                    </div>
+                  </div>
 
-                <div className="relative flex-1">
-                  <Search
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search officers..."
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    className="h-12 w-full pl-12 pr-4 rounded-full border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
-                  />
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search by</label>
+                    <Select value={searchField} onValueChange={(value) => setSearchField(value as OfficerSearchField)}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="All fields" /></SelectTrigger>
+                      <SelectContent>
+                        {officerSearchOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as OfficerSort)}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Assigned date: newest" /></SelectTrigger>
+                      <SelectContent>
+                        {officerSortOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-wrap items-center gap-2 xl:justify-end">
+                  {hasActiveFilters ? (
+                    <Button
+                      variant="ghost"
+                      className="h-10 text-slate-600 hover:bg-slate-100"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSearchField("ALL");
+                        setSortBy("assigned-desc");
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  ) : null}
+                  <Button
+                    className="h-10 bg-[#0B3B66] text-white hover:bg-[#082d4a]"
+                    onClick={() => router.push("/admin/bank-officer-management/add")}
+                  >
+                    + New Officer
+                  </Button>
                 </div>
               </div>
-
-              <button
-                onClick={() => router.push("/admin/bank-officer-management/add")}
-                className="px-6 py-3 bg-[#0B3B66] text-white rounded-lg hover:bg-[#082d4a] transition"
-              >
-                + New Officer
-              </button>
-            </div>
+            </section>
 
             <div className="primecore-table-shell">
               <div className="overflow-x-auto">

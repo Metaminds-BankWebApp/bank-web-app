@@ -6,13 +6,12 @@
 import { useEffect, useMemo, useState } from "react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import {
-  DataTableFilterGroup,
+  Button,
   DataTableFooter,
   DataTablePanel,
   DataTablePagination,
   DataTableStatusBadge,
-  DataTableTabButton,
-  DataTableToolbar,
+  Input,
   Select,
   SelectContent,
   SelectItem,
@@ -26,6 +25,7 @@ import {
   TableRow,
   useToast,
 } from "@/src/components/ui";
+import { Search } from "lucide-react";
 import { ApiError } from "@/src/types/api-error";
 import { getLoanSenseHistory } from "@/src/api/loansense/bank-loansense.service";
 import type {
@@ -36,11 +36,35 @@ import type {
 
 type LoanFilter = "ALL" | LoanSenseLoanType;
 type DateFilter = "thisMonth" | "lastMonth" | "3m" | "6m" | "12m";
+type EligibilitySort =
+  | "date-desc"
+  | "date-asc"
+  | "amount-desc"
+  | "amount-asc"
+  | "loan-asc"
+  | "loan-desc";
 type BadgeTone = "success" | "warning" | "danger" | "neutral" | "info";
 
 const fetchWindowMonths = 12;
 
 const rowsPerPage = 8;
+
+const loanFilters: Array<{ label: string; value: LoanFilter }> = [
+  { label: "All loans", value: "ALL" },
+  { label: "Personal loan", value: "PERSONAL" },
+  { label: "Vehicle loan", value: "VEHICLE" },
+  { label: "Education loan", value: "EDUCATION" },
+  { label: "Housing loan", value: "HOUSING" },
+];
+
+const eligibilitySortOptions: Array<{ label: string; value: EligibilitySort }> = [
+  { label: "Evaluation date: newest", value: "date-desc" },
+  { label: "Evaluation date: oldest", value: "date-asc" },
+  { label: "Loan amount: high to low", value: "amount-desc" },
+  { label: "Loan amount: low to high", value: "amount-asc" },
+  { label: "Loan type: A to Z", value: "loan-asc" },
+  { label: "Loan type: Z to A", value: "loan-desc" },
+];
 
 function formatCurrency(value: number): string {
   return `${value.toLocaleString("en-LK", {
@@ -110,8 +134,10 @@ function matchesDateFilter(
 
 export default function LoanSenseHistoryPage() {
   const { showToast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
   const [loanFilter, setLoanFilter] = useState<LoanFilter>("ALL");
   const [dateFilter, setDateFilter] = useState<DateFilter>("thisMonth");
+  const [sortBy, setSortBy] = useState<EligibilitySort>("date-desc");
   const [historyItems, setHistoryItems] = useState<LoanSenseHistoryItemResponse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -154,12 +180,52 @@ export default function LoanSenseHistoryPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter, loanFilter]);
+  }, [dateFilter, loanFilter, searchQuery, sortBy]);
 
   const grouped = useMemo(() => {
     const now = new Date();
-    return historyItems.filter((item) => matchesDateFilter(item, dateFilter, now));
-  }, [dateFilter, historyItems]);
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const matchingItems = historyItems.filter((item) => {
+      if (!matchesDateFilter(item, dateFilter, now)) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      return [
+        item.evaluationMonthLabel,
+        item.loanTypeLabel,
+        item.eligibilityLabel,
+        item.riskLabel,
+        item.tenureLabel,
+        String(item.recommendedMaxAmount),
+      ].some((value) => value.toLowerCase().includes(normalizedSearch));
+    });
+
+    return matchingItems.sort((left, right) => {
+      if (sortBy === "amount-desc") {
+        return right.recommendedMaxAmount - left.recommendedMaxAmount;
+      }
+      if (sortBy === "amount-asc") {
+        return left.recommendedMaxAmount - right.recommendedMaxAmount;
+      }
+      if (sortBy === "loan-asc") {
+        return left.loanTypeLabel.localeCompare(right.loanTypeLabel);
+      }
+      if (sortBy === "loan-desc") {
+        return right.loanTypeLabel.localeCompare(left.loanTypeLabel);
+      }
+
+      const leftDate = left.evaluationDate ? new Date(left.evaluationDate).getTime() : Number.NaN;
+      const rightDate = right.evaluationDate ? new Date(right.evaluationDate).getTime() : Number.NaN;
+      if (Number.isNaN(leftDate) && Number.isNaN(rightDate)) return 0;
+      if (Number.isNaN(leftDate)) return 1;
+      if (Number.isNaN(rightDate)) return -1;
+      return sortBy === "date-asc" ? leftDate - rightDate : rightDate - leftDate;
+    });
+  }, [dateFilter, historyItems, searchQuery, sortBy]);
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(grouped.length / rowsPerPage)),
     [grouped.length]
@@ -181,13 +247,11 @@ export default function LoanSenseHistoryPage() {
   const showingTo =
     grouped.length === 0 ? 0 : Math.min(currentPage * rowsPerPage, grouped.length);
 
-  const loanFilters: Array<{ label: string; value: LoanFilter }> = [
-    { label: "All Loans", value: "ALL" },
-    { label: "Personal Loan", value: "PERSONAL" },
-    { label: "Vehicle Loan", value: "VEHICLE" },
-    { label: "Education Loan", value: "EDUCATION" },
-    { label: "Housing Loan", value: "HOUSING" },
-  ];
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) ||
+    loanFilter !== "ALL" ||
+    dateFilter !== "thisMonth" ||
+    sortBy !== "date-desc";
 
   return (
     <main className="flex min-h-screen flex-col gap-6 bg-transparent p-4 font-sans text-slate-800 md:p-8">
@@ -198,33 +262,85 @@ export default function LoanSenseHistoryPage() {
         </p>
       </div>
 
-      <DataTableToolbar>
-        <DataTableFilterGroup className="flex-1">
-          {loanFilters.map((filter) => (
-            <DataTableTabButton
-              key={filter.value}
-              active={loanFilter === filter.value}
-              onClick={() => setLoanFilter(filter.value)}
-            >
-              {filter.label}
-            </DataTableTabButton>
-          ))}
-        </DataTableFilterGroup>
+      <section
+        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+        aria-label="Loan eligibility filters"
+      >
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+          <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(280px,1fr)_190px_190px_240px]">
+            <div className="sm:col-span-2 xl:col-span-1">
+              <label htmlFor="loan-eligibility-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Search eligibility history
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  id="loan-eligibility-search"
+                  placeholder="Loan type, status, risk level or month"
+                  className="h-10 border-slate-200 bg-slate-50 pl-10"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                />
+              </div>
+            </div>
 
-        <div className="w-full sm:w-48">
-          <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as DateFilter)}>
-            <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-slate-50/70 text-sm">
-              <SelectValue placeholder="Date range" />
-            </SelectTrigger>
-            <SelectContent className="z-[220]">
-              <SelectItem value="thisMonth">This Month</SelectItem>
-              <SelectItem value="lastMonth">Last Month</SelectItem>
-              <SelectItem value="3m">Last 3 Months</SelectItem>
-              <SelectItem value="6m">Last 6 Months</SelectItem>
-            </SelectContent>
-          </Select>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Loan type</label>
+              <Select value={loanFilter} onValueChange={(value) => setLoanFilter(value as LoanFilter)}>
+                <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="All loans" /></SelectTrigger>
+                <SelectContent className="z-[220]">
+                  {loanFilters.map((filter) => (
+                    <SelectItem key={filter.value} value={filter.value}>{filter.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Date range</label>
+              <Select value={dateFilter} onValueChange={(value) => setDateFilter(value as DateFilter)}>
+                <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="This month" /></SelectTrigger>
+                <SelectContent className="z-[220]">
+                  <SelectItem value="thisMonth">This month</SelectItem>
+                  <SelectItem value="lastMonth">Last month</SelectItem>
+                  <SelectItem value="3m">Last 3 months</SelectItem>
+                  <SelectItem value="6m">Last 6 months</SelectItem>
+                  <SelectItem value="12m">Last 12 months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as EligibilitySort)}>
+                <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Evaluation date: newest" /></SelectTrigger>
+                <SelectContent className="z-[220]">
+                  {eligibilitySortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-center gap-2 xl:justify-end">
+            {hasActiveFilters ? (
+              <Button
+                variant="ghost"
+                className="h-10 text-slate-600 hover:bg-slate-100"
+                onClick={() => {
+                  setSearchQuery("");
+                  setLoanFilter("ALL");
+                  setDateFilter("thisMonth");
+                  setSortBy("date-desc");
+                }}
+              >
+                Clear
+              </Button>
+            ) : null}
+          </div>
         </div>
-      </DataTableToolbar>
+      </section>
 
       {error && !grouped.length ? (
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">

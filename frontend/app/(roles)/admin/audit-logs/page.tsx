@@ -8,7 +8,17 @@ import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
 import { Search } from "lucide-react";
-import { DataTablePagination, useToast } from "@/src/components/ui";
+import {
+  Button,
+  DataTablePagination,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  useToast,
+} from "@/src/components/ui";
 import { ApiError } from "@/src/types/api-error";
 import {
   getAdminAuditLogFilters,
@@ -16,6 +26,7 @@ import {
 } from "@/src/api/admin/audit-log.service";
 import type {
   AdminAuditLogRecordResponse,
+  AdminAuditLogSort,
   AdminAuditTone,
 } from "@/src/types/dto/admin-audit-log.dto";
 
@@ -33,6 +44,10 @@ type AuditLogRow = {
 };
 
 const ALL_FILTER_OPTION = "All";
+const auditSortOptions: Array<{ value: AdminAuditLogSort; label: string }> = [
+  { value: "created-desc", label: "Date: newest" },
+  { value: "created-asc", label: "Date: oldest" },
+];
 
 function formatDateTimeParts(value: string | null): { date: string; time: string } {
   if (!value) {
@@ -207,6 +222,7 @@ export default function AuditLogsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState(ALL_FILTER_OPTION);
   const [actionFilter, setActionFilter] = useState(ALL_FILTER_OPTION);
+  const [sortBy, setSortBy] = useState<AdminAuditLogSort>("created-desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
@@ -264,7 +280,7 @@ export default function AuditLogsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, roleFilter, actionFilter]);
+  }, [debouncedSearch, roleFilter, actionFilter, sortBy]);
 
   useEffect(() => {
     let mounted = true;
@@ -279,6 +295,7 @@ export default function AuditLogsPage() {
           query: debouncedSearch || undefined,
           actorRole: roleFilter === ALL_FILTER_OPTION ? undefined : roleFilter,
           actionType: actionFilter === ALL_FILTER_OPTION ? undefined : actionFilter,
+          sortBy,
         });
 
         if (!mounted) {
@@ -317,7 +334,7 @@ export default function AuditLogsPage() {
     return () => {
       mounted = false;
     };
-  }, [actionFilter, currentPage, debouncedSearch, roleFilter, showToast]);
+  }, [actionFilter, currentPage, debouncedSearch, roleFilter, showToast, sortBy]);
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
@@ -351,6 +368,12 @@ export default function AuditLogsPage() {
     return "border border-blue-100 bg-blue-50 text-blue-600";
   };
 
+  const hasActiveFilters =
+    Boolean(search.trim()) ||
+    roleFilter !== ALL_FILTER_OPTION ||
+    actionFilter !== ALL_FILTER_OPTION ||
+    sortBy !== "created-desc";
+
   return (
     <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen bg-[linear-gradient(180deg,#0b1a3a_0%,#0a234c_58%,#08142d_100%)] overflow-hidden">
@@ -373,59 +396,84 @@ export default function AuditLogsPage() {
           </div>
 
           <div className="flex-1 overflow-y-auto px-6 pb-10 space-y-6">
-            <div className="primecore-table-toolbar flex-col items-stretch lg:flex-row lg:justify-start">
-              <div className="mr-auto w-full lg:w-[42rem]">
-                <label className="text-xs font-semibold text-gray-500 uppercase">
-                  Search Logs
-                </label>
-                <div className="mt-2 flex h-12 items-center rounded-lg bg-slate-50 px-3 py-2">
-                  <Search size={18} className="mr-2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search by user, role, action, date, status or target"
-                    value={search}
-                    onChange={(event) => setSearch(event.target.value)}
-                    className="bg-transparent w-full text-sm focus:outline-none"
-                  />
+            <section
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+              aria-label="Audit log filters"
+            >
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+                <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(300px,1fr)_170px_230px_190px]">
+                  <div className="sm:col-span-2 xl:col-span-1">
+                    <label htmlFor="admin-audit-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search logs</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        id="admin-audit-search"
+                        placeholder="User, role, action, date, status or target"
+                        className="h-10 border-slate-200 bg-slate-50 pl-10"
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Role</label>
+                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="All roles" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL_FILTER_OPTION}>All roles</SelectItem>
+                        {roleOptions.map((role) => (
+                          <SelectItem key={role} value={role}>{role}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Action type</label>
+                    <Select value={actionFilter} onValueChange={setActionFilter}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="All actions" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ALL_FILTER_OPTION}>All actions</SelectItem>
+                        {actionOptions.map((actionType) => (
+                          <SelectItem key={actionType} value={actionType}>{toActionLabel(actionType)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as AdminAuditLogSort)}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Date: newest" /></SelectTrigger>
+                      <SelectContent>
+                        {auditSortOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-wrap items-center gap-2 xl:justify-end">
+                  {hasActiveFilters ? (
+                    <Button
+                      variant="ghost"
+                      className="h-10 text-slate-600 hover:bg-slate-100"
+                      onClick={() => {
+                        setSearch("");
+                        setDebouncedSearch("");
+                        setRoleFilter(ALL_FILTER_OPTION);
+                        setActionFilter(ALL_FILTER_OPTION);
+                        setSortBy("created-desc");
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  ) : null}
                 </div>
               </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase">
-                  Role
-                </label>
-                <select
-                  value={roleFilter}
-                  onChange={(event) => setRoleFilter(event.target.value)}
-                  className="mt-2 w-full rounded-lg bg-slate-50 px-3 py-2 text-sm"
-                >
-                  <option value={ALL_FILTER_OPTION}>{ALL_FILTER_OPTION}</option>
-                  {roleOptions.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase">
-                  Action Type
-                </label>
-                <select
-                  value={actionFilter}
-                  onChange={(event) => setActionFilter(event.target.value)}
-                  className="mt-2 w-full rounded-lg bg-slate-50 px-3 py-2 text-sm"
-                >
-                  <option value={ALL_FILTER_OPTION}>{ALL_FILTER_OPTION}</option>
-						{actionOptions.map((actionType) => (
-							<option key={actionType} value={actionType}>
-								{toActionLabel(actionType)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            </section>
 
             <div className="primecore-table-shell">
               <div className="overflow-x-auto">
