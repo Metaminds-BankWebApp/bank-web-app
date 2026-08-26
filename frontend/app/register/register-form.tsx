@@ -164,7 +164,7 @@ export function RegisterForm() {
   ): string | null {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^\d{10}$/;
-    const nicRegex = /^(\d{9}[vVxX]|\d{12})$/;
+    const nicRegex = /^(\d{9}[vV]|\d{12})$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/;
 
     switch (field) {

@@ -1,6 +1,6 @@
 "use client";
 /**
- * Admin add-officer page for generating credentials and creating new officer accounts.
+ * Admin add-officer page for sending a secure officer activation invitation.
  */
 
 import React, { useEffect, useState } from "react";
@@ -12,7 +12,6 @@ import ModuleHeader from "@/src/components/ui/module-header";
 import { useToast } from "@/src/components/ui";
 import { getAdminBranches } from "@/src/api/admin/branch.service";
 import {
-  generateAdminBankOfficerPassword,
   generateAdminBankOfficerUsername,
 } from "@/src/api/admin/bank-officer.service";
 import { registerBankOfficer } from "@/src/api/registration/bank-officer-registration.service";
@@ -33,7 +32,6 @@ const getInitialFormData = (): OfficerFormData => ({
   dob: "",
   province: "",
   username: "",
-  password: "",
   contact: "",
   email: "",
   assignedBranch: "",
@@ -53,7 +51,6 @@ const BACKEND_FIELD_TO_FORM_FIELD: Record<string, keyof OfficerFormErrors> = {
   branchId: "assignedBranch",
   assignedBranch: "assignedBranch",
   username: "username",
-  password: "password",
 };
 
 function extractOfficerFieldErrors(apiError: ApiError): OfficerFormErrors {
@@ -96,8 +93,6 @@ function mapApiMessageToOfficerField(message: string): OfficerFormErrors {
   if (normalized.includes("province")) return { province: message };
   if (normalized.includes("branch")) return { assignedBranch: message };
   if (normalized.includes("username")) return { username: message };
-  if (normalized.includes("password")) return { password: message };
-
   return {};
 }
 
@@ -113,7 +108,6 @@ export default function AddOfficerPage() {
   const [isLoadingBranches, setIsLoadingBranches] = useState(true);
   const [branchLoadError, setBranchLoadError] = useState<string | null>(null);
   const [isGeneratingUsername, setIsGeneratingUsername] = useState(false);
-  const [isGeneratingPassword, setIsGeneratingPassword] = useState(false);
   const canSubmit = isOfficerFormComplete(formData) && !isSaving;
 
   useEffect(() => {
@@ -208,21 +202,6 @@ export default function AddOfficerPage() {
     }
   };
 
-  const handleGeneratePassword = async () => {
-    setIsGeneratingPassword(true);
-    try {
-      const response = await generateAdminBankOfficerPassword();
-      setFormData((prev) => ({ ...prev, password: response.password }));
-      setErrors((prev) => ({ ...prev, password: undefined }));
-    } catch (error) {
-      const message =
-        error instanceof ApiError ? error.message : "Failed to generate password.";
-      setErrors((prev) => ({ ...prev, password: message }));
-    } finally {
-      setIsGeneratingPassword(false);
-    }
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -253,8 +232,6 @@ export default function AddOfficerPage() {
         province: formData.province.trim(),
         address: formData.address.trim(),
         username: formData.username.trim(),
-        password: formData.password,
-        confirmPassword: formData.password,
         branchId: parsedBranchId,
         createdByAdminUserId: Number.isNaN(parsedAdminUserId) ? undefined : parsedAdminUserId,
       });
@@ -262,7 +239,7 @@ export default function AddOfficerPage() {
       showToast({
         type: "success",
         title: "Officer created",
-        description: "Bank officer created successfully.",
+        description: "An activation invitation was sent. The officer will set their own password.",
       });
       router.push("/admin/bank-officer-management");
     } catch (error) {
@@ -585,7 +562,7 @@ export default function AddOfficerPage() {
                           : "cursor-not-allowed bg-[#0B3B66]/50 text-white"
                       }`}
                     >
-                      {isSaving ? "Saving..." : "Save Officer"}
+                      {isSaving ? "Sending invitation..." : "Create & send activation"}
                     </button>
                   </div>
                 </div>
@@ -597,6 +574,5 @@ export default function AddOfficerPage() {
     </AuthGuard>
   );
 }
-
 
 

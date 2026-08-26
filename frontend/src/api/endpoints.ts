@@ -26,6 +26,7 @@ export const REGISTRATION_ENDPOINTS = {
     stepOneContinue: "/bank-officers/customers/step-1/continue",
     stepOneUpdateDraft: (bankCustomerId: number) => `/bank-officers/customers/${bankCustomerId}/step-1/draft`,
     stepOneUpdateContinue: (bankCustomerId: number) => `/bank-officers/customers/${bankCustomerId}/step-1/continue`,
+	contactDetails: (bankCustomerId: number) => `/bank-officers/customers/${bankCustomerId}/contact-details`,
   },
   publicCustomer: "/public-customers",
   bankOfficer: {
@@ -58,6 +59,8 @@ export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
     `/bank-officers/customers/${bankCustomerId}/financial-records/steps/crib-linking/continue`,
   completeCribReviewStep: (bankCustomerId: number) =>
     `/bank-officers/customers/${bankCustomerId}/financial-records/steps/review/complete`,
+	completeFinancialMaintenance: (bankCustomerId: number) =>
+		`/bank-officers/customers/${bankCustomerId}/financial-records/maintenance/complete`,
   current: (bankCustomerId: number) =>
     `/bank-officers/customers/${bankCustomerId}/financial-records/current`,
   history: (bankCustomerId: number) =>

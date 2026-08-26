@@ -28,9 +28,6 @@ export interface AdminBankOfficerGeneratedUsernameResponse {
   username: string;
 }
 
-export interface AdminBankOfficerGeneratedPasswordResponse {
-  password: string;
-}
 
 // Fetches AdminBankOfficers data from the backend API.
 export async function getAdminBankOfficers(): Promise<AdminBankOfficerSummaryResponse[]> {
@@ -63,14 +60,9 @@ export async function generateAdminBankOfficerUsername(
   }
 }
 
-// Calls the backend API for generateAdminBankOfficerPassword.
-export async function generateAdminBankOfficerPassword(): Promise<AdminBankOfficerGeneratedPasswordResponse> {
-  // Generate a temporary password for onboarding.
+export async function resendAdminBankOfficerActivation(userId: number): Promise<void> {
   try {
-    const { data } = await apiClient.get<AdminBankOfficerGeneratedPasswordResponse>(
-      `${ADMIN_ENDPOINTS.bankOfficers}/credentials/password`
-    );
-    return data;
+    await apiClient.post(`${ADMIN_ENDPOINTS.bankOfficers}/${userId}/activation/resend`);
   } catch (error) {
     throw toApiError(error);
   }

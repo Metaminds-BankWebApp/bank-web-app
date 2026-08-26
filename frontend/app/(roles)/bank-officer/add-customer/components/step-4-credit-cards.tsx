@@ -15,7 +15,7 @@ type CreditCardStepErrors = CreditCardDraftErrors & {
 
 const DEFAULT_PROVIDER = "Standard Card";
 
-export function CreditCards({ formData, updateFormData, onNext, onBack }: StepProps) {
+export function CreditCards({ formData, updateFormData, onNext, onBack, isSavingFinancialStep }: StepProps) {
   const [creditLimit, setCreditLimit] = useState("");
   const [outstandingBalance, setOutstandingBalance] = useState("");
   const [errors, setErrors] = useState<CreditCardStepErrors>({});
@@ -125,12 +125,9 @@ export function CreditCards({ formData, updateFormData, onNext, onBack }: StepPr
         <Button variant="ghost" onClick={onBack} className="gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100">
           <ArrowLeft size={16} /> Back
         </Button>
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold text-slate-400 cursor-pointer hover:text-slate-600">Save Draft</span>
-          <Button onClick={handleNext} className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
-            Continue <ArrowRight size={16} />
-          </Button>
-        </div>
+        <Button onClick={handleNext} loading={isSavingFinancialStep} disabled={isSavingFinancialStep} className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
+          Save & Continue <ArrowRight size={16} />
+        </Button>
       </div>
     </div>
   );

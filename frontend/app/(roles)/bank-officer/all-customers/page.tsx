@@ -18,7 +18,6 @@ import type {
 } from "@/src/types/dto/bank-customer-financial.dto";
 import { 
   Search, 
-   Filter, 
    Download, 
    Plus,
    Eye,
@@ -191,7 +190,6 @@ function AllCustomersPageContent() {
    const [sortBy, setSortBy] = useState<
       "updated-desc" | "updated-asc" | "score-desc" | "score-asc" | "name-asc" | "name-desc"
    >("updated-desc");
-   const [showFilters, setShowFilters] = useState(false);
    const [activeDetailTab, setActiveDetailTab] = useState<CustomerDetailTab>("personal");
    const [selectedCustomerPersonal, setSelectedCustomerPersonal] = useState<BankOfficerCustomerStepOnePrefillResponse | null>(null);
    const [selectedCustomerFinancial, setSelectedCustomerFinancial] = useState<BankCustomerFinancialRecordResponse | null>(null);
@@ -202,6 +200,7 @@ function AllCustomersPageContent() {
    const [deleteRequestNote, setDeleteRequestNote] = useState("");
    const [isSubmittingDeleteRequest, setIsSubmittingDeleteRequest] = useState(false);
    const [currentPage, setCurrentPage] = useState(1);
+   const hasActiveFilters = Boolean(searchTerm.trim()) || statusFilter !== "all" || sortBy !== "updated-desc";
 
    useEffect(() => {
       setSearchTerm(requestedNic);
@@ -464,27 +463,58 @@ function AllCustomersPageContent() {
                       <ModuleHeader theme="staff" menuMode="sidebar-overlay" sidebarRole="BANK_OFFICER" sidebarHideCollapse mailBadge={2} notificationBadge={8} avatarSrc="https://ui-avatars.com/api/?name=Kamal+E&background=random" avatarStatusDot name="Kamal Edirisinghe" role="Bank Officer" title="Customer Lookup" className="mb-6 shrink-0" />
 
           <div className="flex-1 min-h-0 space-y-6 overflow-y-auto">
-             {/* Toolbar */}
-             <div className="primecore-table-toolbar flex-col items-stretch">
-             <div className="flex flex-col lg:flex-row justify-between gap-4">
-                <div className="relative max-w-sm flex-1">
+             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-label="Customer filters">
+               <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+                 <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_190px_230px]">
+                   <div className="sm:col-span-2 xl:col-span-1">
+                     <label htmlFor="customer-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search customers</label>
+                     <div className="relative">
                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                    <Input 
-                      placeholder="Search by name, NIC..." 
-                      className="pl-10 bg-slate-50 border-slate-200"
+                      id="customer-search"
+                      placeholder="Name, NIC, customer ID, email or phone"
+                      className="h-10 pl-10 bg-slate-50 border-slate-200"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                    />
+                     </div>
+                   </div>
+                   <div>
+                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Account status</label>
+                     <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | Customer["status"])}>
+                       <SelectTrigger className="h-10 bg-slate-50 border-slate-200"><SelectValue placeholder="All statuses" /></SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="all">All statuses</SelectItem>
+                         <SelectItem value="ACTIVE">Active</SelectItem>
+                         <SelectItem value="INACTIVE">Inactive</SelectItem>
+                         <SelectItem value="DRAFT">Draft</SelectItem>
+                         <SelectItem value="PENDING_STEP_2">Pending step 2</SelectItem>
+                         <SelectItem value="PENDING_STEP_3">Pending step 3</SelectItem>
+                         <SelectItem value="PENDING_STEP_4">Pending step 4</SelectItem>
+                         <SelectItem value="PENDING_STEP_5">Pending step 5</SelectItem>
+                         <SelectItem value="PENDING_STEP_6">Pending step 6</SelectItem>
+                         <SelectItem value="PENDING_STEP_7">Pending step 7</SelectItem>
+                         <SelectItem value="COMPLETED">Completed</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
+                   <div>
+                     <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
+                     <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
+                       <SelectTrigger className="h-10 bg-slate-50 border-slate-200"><SelectValue placeholder="Last updated" /></SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="updated-desc">Last updated: newest</SelectItem>
+                         <SelectItem value="updated-asc">Last updated: oldest</SelectItem>
+                         <SelectItem value="score-desc">Credit score: high to low</SelectItem>
+                         <SelectItem value="score-asc">Credit score: low to high</SelectItem>
+                         <SelectItem value="name-asc">Name: A to Z</SelectItem>
+                         <SelectItem value="name-desc">Name: Z to A</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
                 </div>
-                
-                <div className="flex items-center gap-3">
-                   <Button
-                      variant="outline"
-                      className="gap-2 text-slate-600 border-slate-200"
-                      onClick={() => setShowFilters((previous) => !previous)}
-                   >
-                      <Filter size={16} /> {showFilters ? "Hide Filters" : "Filter"}
-                   </Button>
+                <div className="flex shrink-0 flex-wrap items-center gap-2 xl:justify-end">
+                   {hasActiveFilters && <Button variant="ghost" className="h-10 text-slate-600 hover:bg-slate-100" onClick={() => { setSearchTerm(""); setStatusFilter("all"); setSortBy("updated-desc"); }}>Clear</Button>}
                    <Button variant="outline" className="gap-2 text-slate-600 border-slate-200" onClick={handleExport}>
                       <Download size={16} /> Export
                    </Button>
@@ -495,56 +525,7 @@ function AllCustomersPageContent() {
                    </Link>
                 </div>
              </div>
-
-                   {showFilters && (
-                      <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
-                         <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | Customer["status"])}>
-                            <SelectTrigger className="bg-slate-50 border-slate-200">
-                               <SelectValue placeholder="Filter by status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                               <SelectItem value="all">All Statuses</SelectItem>
-                               <SelectItem value="ACTIVE">Active</SelectItem>
-                                             <SelectItem value="INACTIVE">Inactive</SelectItem>
-                                             <SelectItem value="DRAFT">Draft</SelectItem>
-                                             <SelectItem value="PENDING_STEP_2">Pending Step 2</SelectItem>
-                                             <SelectItem value="PENDING_STEP_3">Pending Step 3</SelectItem>
-                                             <SelectItem value="PENDING_STEP_4">Pending Step 4</SelectItem>
-                                             <SelectItem value="PENDING_STEP_5">Pending Step 5</SelectItem>
-                                             <SelectItem value="PENDING_STEP_6">Pending Step 6</SelectItem>
-                                             <SelectItem value="PENDING_STEP_7">Pending Step 7</SelectItem>
-                                             <SelectItem value="COMPLETED">Completed</SelectItem>
-                            </SelectContent>
-                         </Select>
-
-                         <Select value={sortBy} onValueChange={(value) => setSortBy(value as typeof sortBy)}>
-                            <SelectTrigger className="bg-slate-50 border-slate-200">
-                               <SelectValue placeholder="Sort by" />
-                            </SelectTrigger>
-                            <SelectContent>
-                               <SelectItem value="updated-desc">Newest Updated</SelectItem>
-                               <SelectItem value="updated-asc">Oldest Updated</SelectItem>
-                               <SelectItem value="score-desc">Credit Score: High to Low</SelectItem>
-                               <SelectItem value="score-asc">Credit Score: Low to High</SelectItem>
-                               <SelectItem value="name-asc">Name: A to Z</SelectItem>
-                               <SelectItem value="name-desc">Name: Z to A</SelectItem>
-                            </SelectContent>
-                         </Select>
-
-                         <Button
-                            variant="outline"
-                            className="border-slate-200 text-slate-600"
-                            onClick={() => {
-                               setSearchTerm("");
-                               setStatusFilter("all");
-                               setSortBy("updated-desc");
-                            }}
-                         >
-                            Reset Filters
-                         </Button>
-                      </div>
-                   )}
-             </div>
+             </section>
 
              <div className="creditlens-card creditlens-card-hover creditlens-delay-1 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
 
@@ -748,13 +729,15 @@ function AllCustomersPageContent() {
                                  <p className="text-xs text-slate-500">Date of Birth</p>
                                  <p className="font-semibold text-slate-800">{toDisplayDate(selectedCustomerPersonal?.dob ?? null)}</p>
                               </div>
-                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+                              <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Email</p>
-                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.email ?? selectedCustomer.email}</p>
+                                 <p className="mt-1 break-words font-semibold text-slate-800" title={selectedCustomerPersonal?.email ?? selectedCustomer.email}>
+                                    {selectedCustomerPersonal?.email ?? selectedCustomer.email}
+                                 </p>
                               </div>
-                              <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
+                              <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Mobile</p>
-                                 <p className="font-semibold text-slate-800">{selectedCustomerPersonal?.mobile ?? selectedCustomer.phone}</p>
+                                 <p className="mt-1 break-words font-semibold text-slate-800">{selectedCustomerPersonal?.mobile ?? selectedCustomer.phone}</p>
                               </div>
                               <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm">
                                  <p className="text-xs text-slate-500">Username</p>

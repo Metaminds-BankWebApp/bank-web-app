@@ -21,6 +21,7 @@ import {
   getSpendIqMonthlySummary,
 } from "@/src/api/spendiq/spendiq.service";
 import { toApiError } from "@/src/api/client";
+import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import { Button } from "@/src/components/ui/button";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { useToast } from "@/src/components/ui/toast";
@@ -800,6 +801,10 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
     downloadBlob(`spendiq-report-${reportStamp}.csv`, csv, "text/csv;charset=utf-8;");
     showToast({ type: "success", title: "Report downloaded", description: `spendiq-report-${reportStamp}.csv` });
   }, [budgets, categoryRows, expenses, incomes, reportStamp, scoreLabel, scoreReasons, selectedMonthLabel, showToast, spendIqScore, summary]);
+
+  if (isLoading) {
+    return <SpendIqLoadingPage />;
+  }
 
   return (
     <div className="min-h-screen bg-[#f4f6fb] p-6 text-slate-900 dark:bg-slate-950 dark:text-slate-100 md:p-8">

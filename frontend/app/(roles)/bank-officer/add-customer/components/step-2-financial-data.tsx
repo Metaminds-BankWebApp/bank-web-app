@@ -9,7 +9,7 @@ import { StepProps } from "./types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/select";
 import { FinancialDataErrors, validateFinancialDataStep } from "./validation";
 
-export function FinancialData({ formData, updateFormData, onNext, onBack }: StepProps) {
+export function FinancialData({ formData, updateFormData, onNext, onBack, isSavingFinancialStep }: StepProps) {
   const [errors, setErrors] = useState<FinancialDataErrors>({});
   const incomeType = formData.incomeType || "Salary Worker";
   const salaryType = formData.salaryType || "Fixed";
@@ -19,16 +19,6 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
 
   const includesSalaryDetails = incomeType === "Salary Worker" || incomeType === "Salary Worker + Business Person";
   const includesBusinessDetails = incomeType === "Business Person" || incomeType === "Salary Worker + Business Person";
-
-  const totalIncome = formData.incomes.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("en-LK", {
-      style: "currency",
-      currency: "LKR",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(value || 0);
 
   const clearError = (field: keyof FinancialDataErrors) => {
     if (errors[field]) {
@@ -364,8 +354,8 @@ export function FinancialData({ formData, updateFormData, onNext, onBack }: Step
         <Button variant="ghost" onClick={onBack} className="gap-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100">
           <ArrowLeft size={16} /> Back
         </Button>
-        <Button onClick={handleNext} className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
-          Continue <ArrowRight size={16} />
+        <Button onClick={handleNext} loading={isSavingFinancialStep} disabled={isSavingFinancialStep} className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200">
+          Save & Continue <ArrowRight size={16} />
         </Button>
       </div>
     </div>

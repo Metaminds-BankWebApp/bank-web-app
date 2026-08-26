@@ -205,3 +205,16 @@ export async function completeBankCustomerCribReviewStep(
     throw toApiError(error);
   }
 }
+
+export async function completeBankCustomerFinancialMaintenance(
+  bankCustomerId: number,
+): Promise<BankCustomerFinancialStepResponse> {
+  try {
+    const { data } = await apiClient.post<BankCustomerFinancialStepResponse>(
+      BANK_CUSTOMER_FINANCIAL_ENDPOINTS.completeFinancialMaintenance(bankCustomerId),
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}

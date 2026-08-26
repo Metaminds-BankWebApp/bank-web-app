@@ -33,7 +33,7 @@ export default function WorkQueuePage() {
     const pending = /DRAFT|PENDING/.test((customer.status || "").toUpperCase());
     return [
       ...(risk === "HIGH" ? [{ id: `risk-${customer.userId}`, title: `Review high-risk customer: ${name}`, detail: `Latest CreditLens score: ${customer.creditScore ?? "not available"}/100`, priority: "High" as const, href: "/bank-officer/credit-analysis", kind: "risk" as const }] : []),
-      ...(pending ? [{ id: `profile-${customer.userId}`, title: `Complete financial profile: ${name}`, detail: `Customer profile status: ${customer.status.replaceAll("_", " ")}`, priority: "Medium" as const, href: "/bank-officer/all-customers", kind: "profile" as const }] : []),
+      ...(pending ? [{ id: `profile-${customer.userId}`, title: `Resume financial profile: ${name}`, detail: `Customer profile status: ${customer.status.replaceAll("_", " ")}`, priority: "Medium" as const, href: `/bank-officer/add-customer?nic=${encodeURIComponent(customer.nic)}`, kind: "profile" as const }] : []),
     ];
   }), [customers]);
 

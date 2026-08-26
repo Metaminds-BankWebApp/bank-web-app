@@ -22,7 +22,7 @@ const provinceSet = new Set(
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
 const contactRegex = /^(?:077|076|078|070|072|074|075|071)\d{7}$/;
-const nicRegex = /^(?:\d{9}[VvXx]|\d{12})$/;
+const nicRegex = /^(?:\d{9}[Vv]|\d{12})$/;
 const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
 const startsWithLetterRegex = /^\p{L}/u;
 
@@ -102,17 +102,13 @@ export function validateOfficerForm(formData: OfficerFormData): OfficerFormError
     errors.username = "Generate username before saving.";
   }
 
-  if (!formData.password.trim()) {
-    errors.password = "Generate password before saving.";
-  }
-
   return errors;
 }
 
 export function isOfficerFormComplete(
   formData: Pick<
     OfficerFormData,
-    "firstName" | "lastName" | "nic" | "dob" | "province" | "contact" | "email" | "assignedBranch" | "username" | "password"
+    "firstName" | "lastName" | "nic" | "dob" | "province" | "contact" | "email" | "assignedBranch" | "username"
   >
 ): boolean {
   return Boolean(
@@ -124,7 +120,6 @@ export function isOfficerFormComplete(
       formData.contact.trim() &&
       formData.email.trim() &&
       formData.assignedBranch.trim() &&
-      formData.username.trim() &&
-      formData.password.trim()
+      formData.username.trim()
   );
 }
