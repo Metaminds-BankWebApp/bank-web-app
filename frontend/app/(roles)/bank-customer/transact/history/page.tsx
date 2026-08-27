@@ -18,6 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/src/components/ui"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/ui/select"
 import ModuleHeader from "@/src/components/ui/module-header"
 import { TransactionHistoryExport } from "@/src/components/ui/transaction-history-export"
 import { transactionService } from "@/src/api/transact/transaction.service"
@@ -25,6 +32,7 @@ import { ApiError } from "@/src/types/api-error"
 import type { TransactionResponse } from "@/src/types/dto/transact.dto"
 
 type TransactionStatus = "success" | "failed" | "pending" | "cancelled"
+type TransactionSort = "date-desc" | "date-asc" | "amount-desc" | "amount-asc" | "receiver-asc"
 
 type TransactionRecord = {
   id: string
@@ -89,7 +97,8 @@ const statusMeta: Record<TransactionStatus, { label: string; tone: "success" | "
 export default function Page() {
   const [records, setRecords] = React.useState<TransactionRecord[]>([])
   const [searchQuery, setSearchQuery] = React.useState("")
-  const [dateQuery, setDateQuery] = React.useState("")
+  const [statusFilter, setStatusFilter] = React.useState<"all" | TransactionStatus>("all")
+  const [sortBy, setSortBy] = React.useState<TransactionSort>("date-desc")
   const [isLoading, setIsLoading] = React.useState(true)
   const [loadError, setLoadError] = React.useState("")
   const [currentPage, setCurrentPage] = React.useState(1)
@@ -129,20 +138,37 @@ export default function Page() {
   }, [])
 
   const filteredData = React.useMemo(() => {
-    return records.filter((record) => {
+    const filteredRecords = records.filter((record) => {
       const normalizedSearchQuery = searchQuery.trim().toLowerCase()
       const searchMatch = normalizedSearchQuery
         ? record.receiverAcc.toLowerCase().includes(normalizedSearchQuery) ||
           record.senderAcc.toLowerCase().includes(normalizedSearchQuery) ||
           record.receiverName.toLowerCase().includes(normalizedSearchQuery) ||
-          record.senderName.toLowerCase().includes(normalizedSearchQuery)
+          record.senderName.toLowerCase().includes(normalizedSearchQuery) ||
+          record.reference.toLowerCase().includes(normalizedSearchQuery)
         : true
 
-      const dateMatch = dateQuery ? record.date === dateQuery : true
+      const statusMatch = statusFilter === "all" || record.status === statusFilter
 
-      return searchMatch && dateMatch
+      return searchMatch && statusMatch
     })
-  }, [records, searchQuery, dateQuery])
+
+    return [...filteredRecords].sort((left, right) => {
+      switch (sortBy) {
+        case "date-asc":
+          return left.date.localeCompare(right.date)
+        case "amount-desc":
+          return Number(right.amount.replace(/,/g, "")) - Number(left.amount.replace(/,/g, ""))
+        case "amount-asc":
+          return Number(left.amount.replace(/,/g, "")) - Number(right.amount.replace(/,/g, ""))
+        case "receiver-asc":
+          return left.receiverName.localeCompare(right.receiverName)
+        case "date-desc":
+        default:
+          return right.date.localeCompare(left.date)
+      }
+    })
+  }, [records, searchQuery, sortBy, statusFilter])
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
   const startIndex = (currentPage - 1) * itemsPerPage
@@ -151,7 +177,7 @@ export default function Page() {
 
   React.useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, dateQuery])
+  }, [searchQuery, sortBy, statusFilter])
 
   function handlePreviousPage() {
     setCurrentPage((prev) => Math.max(1, prev - 1))
@@ -159,8 +185,11 @@ export default function Page() {
 
   function clearFilters() {
     setSearchQuery("")
-    setDateQuery("")
+    setStatusFilter("all")
+    setSortBy("date-desc")
   }
+
+  const hasActiveFilters = Boolean(searchQuery.trim()) || statusFilter !== "all" || sortBy !== "date-desc"
 
   return (
     <div className="bg-transparent px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -168,33 +197,64 @@ export default function Page() {
 
       <div className="mx-auto mt-15 w-full max-w-6xl">
         <DataTableToolbar>
-          <DataTableFilterGroup className="flex-1">
-            <div className="relative w-full sm:max-w-xs">
-              <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
-                <Search className="h-4 w-4" />
-              </span>
-              <Input
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search account no or name"
-                className="h-10 w-full rounded-lg border-slate-200 bg-slate-50/70 pl-10"
-                aria-label="Search by account number or name"
-              />
+          <DataTableFilterGroup className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_190px_230px]">
+            <div className="sm:col-span-2 xl:col-span-1">
+              <label htmlFor="transaction-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Search transactions
+              </label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Input
+                  id="transaction-search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Receiver name, account no , or reference"
+                  className="h-10 w-full border-slate-200 bg-slate-50 pl-10"
+                />
+              </div>
             </div>
-
-            <input
-              type="date"
-              value={dateQuery}
-              onChange={(event) => setDateQuery(event.target.value)}
-              className="h-10 rounded-lg border border-slate-200 bg-slate-50/70 px-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-200"
-              aria-label="Filter by date"
-            />
+            <div>
+              <label htmlFor="transaction-status" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Transaction status
+              </label>
+              <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as "all" | TransactionStatus)}>
+                <SelectTrigger id="transaction-status" className="h-10 border-slate-200 bg-slate-50">
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="success">Success</SelectItem>
+                  <SelectItem value="pending">Pending OTP</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label htmlFor="transaction-sort" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Sort by
+              </label>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as TransactionSort)}>
+                <SelectTrigger id="transaction-sort" className="h-10 border-slate-200 bg-slate-50">
+                  <SelectValue placeholder="Transaction date" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date-desc">Transaction date: newest</SelectItem>
+                  <SelectItem value="date-asc">Transaction date: oldest</SelectItem>
+                  <SelectItem value="amount-desc">Amount: high to low</SelectItem>
+                  <SelectItem value="amount-asc">Amount: low to high</SelectItem>
+                  <SelectItem value="receiver-asc">Receiver name: A to Z</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </DataTableFilterGroup>
 
           <DataTableActionGroup>
-            <Button variant="outline" size="md" className="h-10 rounded-lg border-slate-200 bg-white px-4 text-slate-600" onClick={clearFilters}>
-              Clear
-            </Button>
+            {hasActiveFilters ? (
+              <Button variant="ghost" size="md" className="h-10 px-4 text-slate-600 hover:bg-slate-100" onClick={clearFilters}>
+                Clear
+              </Button>
+            ) : null}
             <TransactionHistoryExport records={filteredData} />
           </DataTableActionGroup>
         </DataTableToolbar>
@@ -207,14 +267,24 @@ export default function Page() {
           ) : null}
 
           <div className="w-full" aria-label="Transaction history table">
-            <Table className="min-w-[760px]">
+            <Table className="min-w-[760px] table-fixed">
+              <colgroup>
+                <col className="w-[12%]" />
+                <col className="w-[13%]" />
+                <col className="w-[11%]" />
+                <col className="w-[13.5%]" />
+                <col className="w-[10%]" />
+                <col className="w-[13%]" />
+                <col className="w-[8.5%]" />
+                <col className="w-[19%]" />
+              </colgroup>
               <TableHeader className="sticky top-0 z-10 bg-white shadow-sm">
                 <TableRow>
-                  <TableHead>Receiver&apos;s name</TableHead>
-                  <TableHead>Receiver&apos;s acc no</TableHead>
-                  <TableHead>Sender&apos;s name</TableHead>
-                  <TableHead>Sender&apos;s acc no</TableHead>
-                  <TableHead>Amount (LKR)</TableHead>
+                  <TableHead>Receiver&apos;s<br />name</TableHead>
+                  <TableHead>Receiver&apos;s acc<br />no</TableHead>
+                  <TableHead>Sender&apos;s<br />name</TableHead>
+                  <TableHead>Sender&apos;s acc<br />no</TableHead>
+                  <TableHead>Amount<br />(LKR)</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Reference no</TableHead>

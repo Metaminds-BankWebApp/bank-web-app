@@ -91,7 +91,6 @@ export default function Page() {
         beneficiaryAccountNo: accountNumber.trim(),
         nickName: nickName.trim(),
         remark: remark.trim(),
-        accountHolderName: ""
       })
 
       router.push("/bank-customer/transact/transfer")
@@ -153,18 +152,22 @@ export default function Page() {
             {/* Account and nickname input section. */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="accountNumber">Account number <span className="text-red-500">*</span></Label>
+                <Label htmlFor="accountNumber">Receiver account number <span className="text-red-500">*</span></Label>
                 <Input
                   id="accountNumber"
                   type="text"
                   inputMode="numeric"
                   pattern="[0-9]*"
-                  placeholder="Enter account number"
+                  placeholder="Enter receiver account number"
                   maxLength={20}
                   value={accountNumber}
                   onChange={(e) => handleAccountNumberChange((e as React.ChangeEvent<HTMLInputElement>).target.value)}
                   aria-invalid={!!errors.accountNumber}
+                  aria-describedby="receiver-name-note"
                 />
+                <p id="receiver-name-note" className="text-sm text-muted-foreground">
+                  The receiver&apos;s account-holder name will be verified when you save.
+                </p>
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="nickName">Nick name <span className="text-red-500">*</span></Label>
