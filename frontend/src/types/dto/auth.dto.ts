@@ -45,6 +45,28 @@ export interface AuthActionResponse {
   resetToken?: string;
 }
 
+export type OfficerActivationStatus =
+  | "VALID"
+  | "EXPIRED"
+  | "RESENT"
+  | "PASSWORD_SET"
+  | "ACTIVATED"
+  | "RESEND_LIMIT_REACHED"
+  | "INVALID"
+  | "NOT_ACTIVATION";
+
+export interface OfficerActivationTokenRequest {
+  activationToken: string;
+}
+
+export interface OfficerActivationResponse {
+  status: OfficerActivationStatus;
+  message: string;
+  resendAttemptsUsed: number;
+  remainingResends: number;
+  canResend: boolean;
+}
+
 export interface AuthMeResponse {
   userId: number;
   email: string;

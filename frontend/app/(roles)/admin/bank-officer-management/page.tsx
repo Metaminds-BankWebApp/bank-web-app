@@ -28,6 +28,7 @@ import {
   type AdminBankOfficerUpdateRequest,
   type AdminBankOfficerSummaryResponse,
   type AdminBankOfficerStatus,
+  type AdminBankOfficerMutableStatus,
   deleteAdminBankOfficer,
   updateAdminBankOfficerStatus,
 } from "@/src/api/admin/bank-officer.service";
@@ -177,6 +178,9 @@ function toDisplayStatus(status: string): StatusType {
 }
 
 function toStatusCode(status: StatusType): AdminBankOfficerStatus {
+	if (status === "Pending") {
+		return "PENDING_ACTIVATION";
+	}
   if (status === "Suspend") {
     return "SUSPEND";
   }
@@ -189,20 +193,6 @@ function matchesOfficerStatus(status: StatusType, normalizedQuery: string): bool
     return normalizedStatus === normalizedQuery;
   }
   return normalizedStatus.includes(normalizedQuery);
-}
-
-function isRecentDate(isoDateTime: string | null, days: number): boolean {
-  if (!isoDateTime) {
-    return false;
-  }
-
-  const timestamp = new Date(isoDateTime).getTime();
-  if (Number.isNaN(timestamp)) {
-    return false;
-  }
-
-  const dayInMs = 24 * 60 * 60 * 1000;
-  return Date.now() - timestamp <= days * dayInMs;
 }
 
 function splitName(fullName: string): { firstName: string; lastName: string } {
@@ -439,8 +429,14 @@ export default function Page() {
         editingOfficer.userId,
         normalizedPayload
       );
-      if ((updated.status || "").toUpperCase() !== nextStatus) {
-        updated = await updateAdminBankOfficerStatus(editingOfficer.userId, nextStatus);
+		if (
+		  nextStatus !== "PENDING_ACTIVATION" &&
+		  (updated.status || "").toUpperCase() !== nextStatus
+		) {
+		  updated = await updateAdminBankOfficerStatus(
+			editingOfficer.userId,
+			nextStatus as AdminBankOfficerMutableStatus
+		  );
       }
       applyOfficerUpdate(updated);
       setEditingOfficer(null);
@@ -566,13 +562,13 @@ export default function Page() {
   const summary = useMemo(() => {
     const activeCount = officers.filter((officer) => officer.status === "Active").length;
     const suspendedCount = officers.filter((officer) => officer.status === "Suspend").length;
-    const recentCount = officers.filter((officer) => isRecentDate(officer.createdAt, 7)).length;
+	const pendingCount = officers.filter((officer) => officer.status === "Pending").length;
 
     return {
       totalOfficers: officers.length,
       activeCount,
       suspendedCount,
-      recentCount,
+	  pendingCount,
     };
   }, [officers]);
 
@@ -615,7 +611,7 @@ export default function Page() {
               <SummaryCard label="TOTAL OFFICERS" value={summary.totalOfficers} variant="dark" />
               <SummaryCard label="ACTIVE OFFICERS" value={summary.activeCount} variant="medium" />
               <SummaryCard label="SUSPENDED OFFICERS" value={summary.suspendedCount} />
-              <SummaryCard label="NEWLY ADDED OFFICERS" value={summary.recentCount} />
+			  <SummaryCard label="PENDING ACTIVATION" value={summary.pendingCount} />
             </div>
 
             <section
@@ -922,17 +918,26 @@ export default function Page() {
                   <label className="text-xs font-semibold uppercase text-gray-600">Status</label>
                   <select
                     value={editForm.status}
+					disabled={editingOfficer.status === "Pending"}
                     onChange={(event) => {
                       setEditForm((prev) => ({
                         ...prev,
                         status: event.target.value as AdminBankOfficerStatus,
                       }));
                     }}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+					className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                   >
+					{editingOfficer.status === "Pending" ? (
+					  <option value="PENDING_ACTIVATION">Pending activation</option>
+					) : null}
                     <option value="ACTIVE">Active</option>
                     <option value="SUSPEND">Suspend</option>
                   </select>
+				  {editingOfficer.status === "Pending" ? (
+					<p className="mt-1 text-xs text-amber-700">
+					  Status is locked until the officer creates a password and signs in for the first time.
+					</p>
+				  ) : null}
                 </div>
               </div>
 
