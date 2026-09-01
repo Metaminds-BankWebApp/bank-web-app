@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { registerPublicCustomer } from "@/src/api/registration/public-customer-registration.service";
 import { ApiError } from "@/src/types/api-error";
 import { Button, Input, useToast } from "@/src/components/ui";
@@ -116,6 +117,8 @@ export function RegisterForm() {
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>({});
@@ -505,7 +508,7 @@ export function RegisterForm() {
           <div>
             <Input
               label={requiredLabel("Password")}
-              type="password"
+              type={showPassword ? "text" : "password"}
               autoComplete="new-password"
               required
               value={password}
@@ -521,12 +524,22 @@ export function RegisterForm() {
               placeholder="At least 10 chars, upper, lower, number"
               labelClassName="text-(--primecore-foreground)/70"
               className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+              endAdornment={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center text-(--primecore-foreground)/70 hover:text-(--primecore-foreground)"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              }
             />
           </div>
 
           <Input
             label={requiredLabel("Confirm Password")}
-            type="password"
+            type={showConfirmPassword ? "text" : "password"}
             autoComplete="new-password"
             required
             value={confirmPassword}
@@ -540,6 +553,16 @@ export function RegisterForm() {
             placeholder="Confirm password"
             labelClassName="text-(--primecore-foreground)/70"
             className="h-14 rounded-2xl border-(--primecore-border) bg-(--primecore-surface) text-(--primecore-foreground) placeholder:text-(--primecore-foreground)/45 ring-offset-background"
+            endAdornment={
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((visible) => !visible)}
+                className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center text-(--primecore-foreground)/70 hover:text-(--primecore-foreground)"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            }
           />
         </div>
 

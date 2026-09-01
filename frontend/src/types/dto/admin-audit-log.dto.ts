@@ -1,5 +1,7 @@
 export type AdminAuditTone = "SUCCESS" | "WARNING" | "INFO" | "ERROR";
 
+export type AdminAuditLogSort = "created-desc" | "created-asc";
+
 export type AdminAuditLogRecordResponse = {
   actionId: number;
   title: string;
@@ -40,4 +42,5 @@ export type AdminAuditLogSearchParams = {
   targetType?: string;
   actorName?: string;
   query?: string;
+  sortBy?: AdminAuditLogSort;
 };

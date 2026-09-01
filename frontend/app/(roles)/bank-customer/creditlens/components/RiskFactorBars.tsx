@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { Info } from "lucide-react";
+import CreditLensScoreCalculation from "@/src/components/creditlens-score-calculation";
 
 type Factor = {
   name: string;
@@ -117,6 +118,7 @@ export default function RiskFactorBars({ factors }: { factors: Factor[] }) {
           </div>
         );
       })}
+      <CreditLensScoreCalculation factors={factors} />
     </div>
   );
 }

@@ -9,7 +9,18 @@ import { Pencil, Trash2, Search, X } from "lucide-react";
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import { ConfirmationModal, DataTablePagination, useToast } from "@/src/components/ui";
+import {
+  Button,
+  ConfirmationModal,
+  DataTablePagination,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  useToast,
+} from "@/src/components/ui";
 import { getAdminBranches } from "@/src/api/admin/branch.service";
 import {
   getAdminBankOfficers,
@@ -17,6 +28,7 @@ import {
   type AdminBankOfficerUpdateRequest,
   type AdminBankOfficerSummaryResponse,
   type AdminBankOfficerStatus,
+  type AdminBankOfficerMutableStatus,
   deleteAdminBankOfficer,
   updateAdminBankOfficerStatus,
 } from "@/src/api/admin/bank-officer.service";
@@ -35,7 +47,7 @@ type OfficerData = {
   branch: string;
   email: string;
   contact: string;
-  assigned: string;
+  added: string;
   status: StatusType;
   createdAt: string | null;
 };
@@ -47,8 +59,16 @@ type OfficerSearchField =
   | "BRANCH"
   | "EMAIL"
   | "CONTACT"
-  | "ASSIGNED"
+  | "ADDED"
   | "STATUS";
+
+type OfficerSort =
+  | "created-desc"
+  | "created-asc"
+  | "name-asc"
+  | "name-desc"
+  | "branch-asc"
+  | "branch-desc";
 
 type OfficerEditErrors = Partial<
   Record<"firstName" | "lastName" | "email" | "contactNumber" | "branchId", string>
@@ -67,8 +87,16 @@ const officerSearchOptions: Array<{ value: OfficerSearchField; label: string }> 
   { value: "BRANCH", label: "Branch" },
   { value: "EMAIL", label: "Email" },
   { value: "CONTACT", label: "Contact" },
-  { value: "ASSIGNED", label: "Assigned Date" },
+  { value: "ADDED", label: "Added Date" },
   { value: "STATUS", label: "Status" },
+];
+const officerSortOptions: Array<{ value: OfficerSort; label: string }> = [
+  { value: "created-desc", label: "Added date: newest" },
+  { value: "created-asc", label: "Added date: oldest" },
+  { value: "name-asc", label: "Name: A to Z" },
+  { value: "name-desc", label: "Name: Z to A" },
+  { value: "branch-asc", label: "Branch: A to Z" },
+  { value: "branch-desc", label: "Branch: Z to A" },
 ];
 const officerStatusKeywords = new Set(["active", "suspend", "pending"]);
 
@@ -150,6 +178,9 @@ function toDisplayStatus(status: string): StatusType {
 }
 
 function toStatusCode(status: StatusType): AdminBankOfficerStatus {
+	if (status === "Pending") {
+		return "PENDING_ACTIVATION";
+	}
   if (status === "Suspend") {
     return "SUSPEND";
   }
@@ -162,20 +193,6 @@ function matchesOfficerStatus(status: StatusType, normalizedQuery: string): bool
     return normalizedStatus === normalizedQuery;
   }
   return normalizedStatus.includes(normalizedQuery);
-}
-
-function isRecentDate(isoDateTime: string | null, days: number): boolean {
-  if (!isoDateTime) {
-    return false;
-  }
-
-  const timestamp = new Date(isoDateTime).getTime();
-  if (Number.isNaN(timestamp)) {
-    return false;
-  }
-
-  const dayInMs = 24 * 60 * 60 * 1000;
-  return Date.now() - timestamp <= days * dayInMs;
 }
 
 function splitName(fullName: string): { firstName: string; lastName: string } {
@@ -208,7 +225,7 @@ function mapApiOfficer(officer: AdminBankOfficerSummaryResponse): OfficerData {
     branch: officer.branchName?.trim() || "-",
     email: officer.email || "-",
     contact: officer.phone?.trim() || "-",
-    assigned: toDisplayDate(officer.lastUpdated),
+    added: toDisplayDate(officer.createdAt),
     status: toDisplayStatus(officer.status || ""),
     createdAt: officer.createdAt,
   };
@@ -220,6 +237,7 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchField, setSearchField] = useState<OfficerSearchField>("ALL");
+  const [sortBy, setSortBy] = useState<OfficerSort>("created-desc");
   const [officers, setOfficers] = useState<OfficerData[]>([]);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -411,8 +429,14 @@ export default function Page() {
         editingOfficer.userId,
         normalizedPayload
       );
-      if ((updated.status || "").toUpperCase() !== nextStatus) {
-        updated = await updateAdminBankOfficerStatus(editingOfficer.userId, nextStatus);
+		if (
+		  nextStatus !== "PENDING_ACTIVATION" &&
+		  (updated.status || "").toUpperCase() !== nextStatus
+		) {
+		  updated = await updateAdminBankOfficerStatus(
+			editingOfficer.userId,
+			nextStatus as AdminBankOfficerMutableStatus
+		  );
       }
       applyOfficerUpdate(updated);
       setEditingOfficer(null);
@@ -467,11 +491,11 @@ export default function Page() {
   const filteredOfficers = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
 
-    if (!normalized) {
-      return officers;
-    }
+    const matchingOfficers = officers.filter((officer) => {
+      if (!normalized) {
+        return true;
+      }
 
-    return officers.filter((officer) => {
       const matches = (value: string | number) =>
         String(value).toLowerCase().includes(normalized);
 
@@ -482,7 +506,7 @@ export default function Page() {
           matches(officer.branch) ||
           matches(officer.email) ||
           matches(officer.contact) ||
-          matches(officer.assigned) ||
+          matches(officer.added) ||
           matchesOfficerStatus(officer.status, normalized)
         );
       }
@@ -501,12 +525,28 @@ export default function Page() {
       if (searchField === "CONTACT") {
         return matches(officer.contact);
       }
-      if (searchField === "ASSIGNED") {
-        return matches(officer.assigned);
+      if (searchField === "ADDED") {
+        return matches(officer.added);
       }
       return matchesOfficerStatus(officer.status, normalized);
     });
-  }, [officers, searchField, searchQuery]);
+
+    return matchingOfficers.sort((left, right) => {
+      if (sortBy === "name-asc") return left.name.localeCompare(right.name);
+      if (sortBy === "name-desc") return right.name.localeCompare(left.name);
+      if (sortBy === "branch-asc") return left.branch.localeCompare(right.branch);
+      if (sortBy === "branch-desc") return right.branch.localeCompare(left.branch);
+
+      const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : Number.NaN;
+      const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : Number.NaN;
+      if (Number.isNaN(leftDate) || Number.isNaN(rightDate)) {
+        return sortBy === "created-asc"
+          ? left.userId - right.userId
+          : right.userId - left.userId;
+      }
+      return sortBy === "created-asc" ? leftDate - rightDate : rightDate - leftDate;
+    });
+  }, [officers, searchField, searchQuery, sortBy]);
 
   const totalPages = Math.ceil(filteredOfficers.length / officersPerPage);
   const paginatedOfficers = filteredOfficers.slice(
@@ -522,25 +562,28 @@ export default function Page() {
   const summary = useMemo(() => {
     const activeCount = officers.filter((officer) => officer.status === "Active").length;
     const suspendedCount = officers.filter((officer) => officer.status === "Suspend").length;
-    const recentCount = officers.filter((officer) => isRecentDate(officer.createdAt, 7)).length;
+	const pendingCount = officers.filter((officer) => officer.status === "Pending").length;
 
     return {
       totalOfficers: officers.length,
       activeCount,
       suspendedCount,
-      recentCount,
+	  pendingCount,
     };
   }, [officers]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, searchField]);
+  }, [searchQuery, searchField, sortBy]);
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
+
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) || searchField !== "ALL" || sortBy !== "created-desc";
 
   return (
     <AuthGuard requiredRole="ADMIN">
@@ -568,47 +611,77 @@ export default function Page() {
               <SummaryCard label="TOTAL OFFICERS" value={summary.totalOfficers} variant="dark" />
               <SummaryCard label="ACTIVE OFFICERS" value={summary.activeCount} variant="medium" />
               <SummaryCard label="SUSPENDED OFFICERS" value={summary.suspendedCount} />
-              <SummaryCard label="NEWLY ADDED OFFICERS" value={summary.recentCount} />
+			  <SummaryCard label="PENDING ACTIVATION" value={summary.pendingCount} />
             </div>
 
-            <div className="primecore-table-toolbar flex-col items-stretch sm:flex-row">
-              <div className="flex flex-1 flex-col sm:flex-row gap-3">
-                <select
-                  value={searchField}
-                  onChange={(event) =>
-                    setSearchField(event.target.value as OfficerSearchField)
-                  }
-                  className="h-12 rounded-full border border-gray-300 bg-white px-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
-                >
-                  {officerSearchOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      Search by {option.label}
-                    </option>
-                  ))}
-                </select>
+            <section
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+              aria-label="Bank officer filters"
+            >
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+                <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_190px_230px]">
+                  <div className="sm:col-span-2 xl:col-span-1">
+                    <label htmlFor="admin-officer-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search officers</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        id="admin-officer-search"
+                        placeholder="ID, name, branch, email, contact, added date or status"
+                        className="h-10 border-slate-200 bg-slate-50 pl-10"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                      />
+                    </div>
+                  </div>
 
-                <div className="relative flex-1">
-                  <Search
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search officers..."
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    className="h-12 w-full pl-12 pr-4 rounded-full border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
-                  />
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search by</label>
+                    <Select value={searchField} onValueChange={(value) => setSearchField(value as OfficerSearchField)}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="All fields" /></SelectTrigger>
+                      <SelectContent>
+                        {officerSearchOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as OfficerSort)}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Added date: newest" /></SelectTrigger>
+                      <SelectContent>
+                        {officerSortOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-wrap items-center gap-2 xl:justify-end">
+                  {hasActiveFilters ? (
+                    <Button
+                      variant="ghost"
+                      className="h-10 text-slate-600 hover:bg-slate-100"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSearchField("ALL");
+                        setSortBy("created-desc");
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  ) : null}
+                  <Button
+                    className="h-10 bg-[#0B3B66] text-white hover:bg-[#082d4a]"
+                    onClick={() => router.push("/admin/bank-officer-management/add")}
+                  >
+                    + New Officer
+                  </Button>
                 </div>
               </div>
-
-              <button
-                onClick={() => router.push("/admin/bank-officer-management/add")}
-                className="px-6 py-3 bg-[#0B3B66] text-white rounded-lg hover:bg-[#082d4a] transition"
-              >
-                + New Officer
-              </button>
-            </div>
+            </section>
 
             <div className="primecore-table-shell">
               <div className="overflow-x-auto">
@@ -621,7 +694,7 @@ export default function Page() {
                         "Branch",
                         "Email Address",
                         "Contact",
-                        "Assigned",
+                        "Added",
                         "Status",
                         "Actions",
                       ].map((header) => (
@@ -667,7 +740,7 @@ export default function Page() {
                             <td className="px-6 py-4 text-gray-600">{officer.branch}</td>
                             <td className="px-6 py-4">{officer.email}</td>
                             <td className="px-6 py-4">{officer.contact}</td>
-                            <td className="px-6 py-4">{officer.assigned}</td>
+                            <td className="px-6 py-4">{officer.added}</td>
                             <td className="px-6 py-4">
                               <StatusBadge status={officer.status} />
                             </td>
@@ -845,17 +918,26 @@ export default function Page() {
                   <label className="text-xs font-semibold uppercase text-gray-600">Status</label>
                   <select
                     value={editForm.status}
+					disabled={editingOfficer.status === "Pending"}
                     onChange={(event) => {
                       setEditForm((prev) => ({
                         ...prev,
                         status: event.target.value as AdminBankOfficerStatus,
                       }));
                     }}
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+					className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                   >
+					{editingOfficer.status === "Pending" ? (
+					  <option value="PENDING_ACTIVATION">Pending activation</option>
+					) : null}
                     <option value="ACTIVE">Active</option>
                     <option value="SUSPEND">Suspend</option>
                   </select>
+				  {editingOfficer.status === "Pending" ? (
+					<p className="mt-1 text-xs text-amber-700">
+					  Status is locked until the officer creates a password and signs in for the first time.
+					</p>
+				  ) : null}
                 </div>
               </div>
 

@@ -6,6 +6,8 @@ import type {
   ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
+  OfficerActivationResponse,
+  OfficerActivationTokenRequest,
   RegisterRequest,
   ResetPasswordRequest,
   VerifyOtpRequest,
@@ -73,6 +75,34 @@ export async function resetPassword(payload: ResetPasswordRequest): Promise<Auth
   }
 }
 
+export async function inspectOfficerActivation(
+  payload: OfficerActivationTokenRequest
+): Promise<OfficerActivationResponse> {
+  try {
+    const { data } = await apiClient.post<OfficerActivationResponse>(
+      AUTH_ENDPOINTS.officerActivationStatus,
+      payload
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function resendOfficerActivation(
+  payload: OfficerActivationTokenRequest
+): Promise<OfficerActivationResponse> {
+  try {
+    const { data } = await apiClient.post<OfficerActivationResponse>(
+      AUTH_ENDPOINTS.officerActivationResend,
+      payload
+    );
+    return data;
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export const authService = {
   login,
   me,
@@ -81,4 +111,6 @@ export const authService = {
   forgotPassword,
   verifyOtp,
   resetPassword,
+  inspectOfficerActivation,
+  resendOfficerActivation,
 };

@@ -6,6 +6,8 @@ export const AUTH_ENDPOINTS = {
   forgotPassword: "/auth/forgot-password",
   verifyOtp: "/auth/verify-otp",
   resetPassword: "/auth/reset-password",
+  officerActivationStatus: "/auth/officer-activation/status",
+  officerActivationResend: "/auth/officer-activation/resend",
 } as const;
 
 export const SUPPORT_ENDPOINTS = {

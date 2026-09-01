@@ -6,7 +6,18 @@
 import { Sidebar } from "@/src/components/layout";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { AuthGuard } from "@/src/components/auth";
-import { ConfirmationModal, DataTablePagination, useToast } from "@/src/components/ui";
+import {
+  Button,
+  ConfirmationModal,
+  DataTablePagination,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  useToast,
+} from "@/src/components/ui";
 import React, { useEffect, useMemo, useState } from "react";
 import { Pencil, Trash2, Search, X } from "lucide-react";
 import Link from "next/link";
@@ -43,6 +54,7 @@ type BranchData = {
   customers: number;
   status: StatusType;
   statusCode: BranchStatus;
+  createdAt: string | null;
 };
 
 type BranchSearchField =
@@ -55,6 +67,18 @@ type BranchSearchField =
   | "OFFICERS"
   | "CUSTOMERS"
   | "STATUS";
+
+type BranchSort =
+  | "created-desc"
+  | "created-asc"
+  | "name-asc"
+  | "name-desc"
+  | "id-asc"
+  | "id-desc"
+  | "customers-desc"
+  | "customers-asc"
+  | "officers-desc"
+  | "officers-asc";
 
 const branchEmailRegex = /^[a-zA-Z0-9._%+-]+@primecore\.com$/i;
 const branchContactRegex =
@@ -75,6 +99,18 @@ const branchSearchOptions: Array<{ value: BranchSearchField; label: string }> = 
   { value: "OFFICERS", label: "Officers" },
   { value: "CUSTOMERS", label: "Customers" },
   { value: "STATUS", label: "Status" },
+];
+const branchSortOptions: Array<{ value: BranchSort; label: string }> = [
+  { value: "created-desc", label: "Added date: newest" },
+  { value: "created-asc", label: "Added date: oldest" },
+  { value: "name-asc", label: "Branch name: A to Z" },
+  { value: "name-desc", label: "Branch name: Z to A" },
+  { value: "id-asc", label: "Branch ID: ascending" },
+  { value: "id-desc", label: "Branch ID: descending" },
+  { value: "customers-desc", label: "Customers: high to low" },
+  { value: "customers-asc", label: "Customers: low to high" },
+  { value: "officers-desc", label: "Officers: high to low" },
+  { value: "officers-asc", label: "Officers: low to high" },
 ];
 const branchStatusKeywords = new Set(["active", "inactive", "maintenance"]);
 
@@ -179,6 +215,7 @@ function mapApiBranch(branch: BranchResponse): BranchData {
     customers: customerCount,
     status: toDisplayStatus(statusCode),
     statusCode,
+    createdAt: branch.createdAt,
   };
 }
 
@@ -188,6 +225,7 @@ export default function Page() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchField, setSearchField] = useState<BranchSearchField>("ALL");
+  const [sortBy, setSortBy] = useState<BranchSort>("created-desc");
   const [branches, setBranches] = useState<BranchData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -410,11 +448,11 @@ export default function Page() {
   const filteredBranches = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
 
-    if (!normalized) {
-      return branches;
-    }
+    const matchingBranches = branches.filter((branch) => {
+      if (!normalized) {
+        return true;
+      }
 
-    return branches.filter((branch) => {
       const matches = (value: string | number) =>
         String(value).toLowerCase().includes(normalized);
 
@@ -453,7 +491,28 @@ export default function Page() {
       }
       return matchesBranchStatus(branch.status, normalized);
     });
-  }, [branches, searchField, searchQuery]);
+
+    return matchingBranches.sort((left, right) => {
+      if (sortBy === "created-desc" || sortBy === "created-asc") {
+        const leftDate = left.createdAt ? new Date(left.createdAt).getTime() : Number.NaN;
+        const rightDate = right.createdAt ? new Date(right.createdAt).getTime() : Number.NaN;
+        if (Number.isNaN(leftDate) || Number.isNaN(rightDate)) {
+          return sortBy === "created-asc"
+            ? left.internalId - right.internalId
+            : right.internalId - left.internalId;
+        }
+        return sortBy === "created-asc" ? leftDate - rightDate : rightDate - leftDate;
+      }
+      if (sortBy === "name-asc") return left.name.localeCompare(right.name);
+      if (sortBy === "name-desc") return right.name.localeCompare(left.name);
+      if (sortBy === "id-asc") return left.id.localeCompare(right.id, undefined, { numeric: true });
+      if (sortBy === "id-desc") return right.id.localeCompare(left.id, undefined, { numeric: true });
+      if (sortBy === "customers-desc") return right.customers - left.customers;
+      if (sortBy === "customers-asc") return left.customers - right.customers;
+      if (sortBy === "officers-desc") return right.officers - left.officers;
+      return left.officers - right.officers;
+    });
+  }, [branches, searchField, searchQuery, sortBy]);
 
   const totalPages = Math.ceil(filteredBranches.length / branchesPerPage);
   const paginatedBranches = filteredBranches.slice(
@@ -483,13 +542,16 @@ export default function Page() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, searchField]);
+  }, [searchQuery, searchField, sortBy]);
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
   }, [currentPage, totalPages]);
+
+  const hasActiveFilters =
+    Boolean(searchQuery.trim()) || searchField !== "ALL" || sortBy !== "created-desc";
 
   return (
     <AuthGuard requiredRole="ADMIN">
@@ -520,43 +582,71 @@ export default function Page() {
               <SummaryCard label="TOTAL CUSTOMERS" value={summary.totalCustomers.toLocaleString()} />
             </div>
 
-            <div className="primecore-table-toolbar flex-col items-stretch sm:flex-row">
-              <div className="flex flex-1 flex-col sm:flex-row gap-3">
-                <select
-                  value={searchField}
-                  onChange={(event) =>
-                    setSearchField(event.target.value as BranchSearchField)
-                  }
-                  className="h-12 rounded-full border border-gray-300 bg-white px-4 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
-                >
-                  {branchSearchOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      Search by {option.label}
-                    </option>
-                  ))}
-                </select>
+            <section
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+              aria-label="Branch filters"
+            >
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
+                <div className="grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_190px_230px]">
+                  <div className="sm:col-span-2 xl:col-span-1">
+                    <label htmlFor="admin-branch-search" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search branches</label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        id="admin-branch-search"
+                        placeholder="ID, name, address, email, contact, status, no of officers or customers"
+                        className="h-10 border-slate-200 bg-slate-50 pl-10"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                      />
+                    </div>
+                  </div>
 
-                <div className="relative flex-1">
-                  <Search
-                    size={18}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search branches..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-12 w-full pl-12 pr-4 rounded-full border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#0B3B66]"
-                  />
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Search by</label>
+                    <Select value={searchField} onValueChange={(value) => setSearchField(value as BranchSearchField)}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="All fields" /></SelectTrigger>
+                      <SelectContent>
+                        {branchSearchOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Sort by</label>
+                    <Select value={sortBy} onValueChange={(value) => setSortBy(value as BranchSort)}>
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50"><SelectValue placeholder="Added date: newest" /></SelectTrigger>
+                      <SelectContent>
+                        {branchSortOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-wrap items-center gap-2 xl:justify-end">
+                  {hasActiveFilters ? (
+                    <Button
+                      variant="ghost"
+                      className="h-10 text-slate-600 hover:bg-slate-100"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSearchField("ALL");
+                        setSortBy("created-desc");
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  ) : null}
+                  <Link href="/admin/branch-management/add">
+                    <Button className="h-10 bg-[#0B3B66] text-white hover:bg-[#082d4a]">+ New Branch</Button>
+                  </Link>
                 </div>
               </div>
-
-              <Link href="/admin/branch-management/add">
-                <button className="px-6 py-3 bg-[#0B3B66] text-white rounded-lg hover:bg-[#082d4a] transition">
-                  + New Branch
-                </button>
-              </Link>
-            </div>
+            </section>
 
             <div className="primecore-table-shell">
               <div className="overflow-x-auto">

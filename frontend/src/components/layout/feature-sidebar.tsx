@@ -14,7 +14,6 @@ import {
   Home,
   Lightbulb,
   LogOut,
-  Settings,
   TrendingUp,
   User,
   UserPlus,
@@ -321,21 +320,6 @@ export function FeatureSidebar({ role, feature, className, onNavigate }: Feature
               >
                   <HelpCircle size={18} className={cn(pathname.startsWith(`${currentMeta.hrefByRole[role]}/help`) ? "text-white" : "text-white/70")} />
                   {!isCollapsed && <span>Help & Support</span>}
-              </Link>
-              <Link
-                href={`${currentMeta.hrefByRole[role]}/settings`}
-                onClick={onNavigate}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200",
-                  pathname.startsWith(`${currentMeta.hrefByRole[role]}/settings`)
-                    ? "bg-white/10 text-white shadow-sm backdrop-blur-sm"
-                    : "text-white/70 hover:bg-white/5 hover:text-white",
-                  isCollapsed && "justify-center px-2"
-                )}
-                title={isCollapsed ? "Settings" : undefined}
-              >
-                  <Settings size={18} className={cn(pathname.startsWith(`${currentMeta.hrefByRole[role]}/settings`) ? "text-white" : "text-white/70")} />
-                  {!isCollapsed && <span>Settings</span>}
               </Link>
            </div>
         </div>

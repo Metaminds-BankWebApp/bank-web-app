@@ -29,6 +29,8 @@ const PUBLIC_AUTH_ENDPOINTS = [
   AUTH_ENDPOINTS.forgotPassword,
   AUTH_ENDPOINTS.verifyOtp,
   AUTH_ENDPOINTS.resetPassword,
+  AUTH_ENDPOINTS.officerActivationStatus,
+  AUTH_ENDPOINTS.officerActivationResend,
 ];
 
 function isPublicAuthRequest(url?: string): boolean {
