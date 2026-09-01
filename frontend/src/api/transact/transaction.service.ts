@@ -121,6 +121,14 @@ export async function getBankOfficerTransactionHistory(): Promise<TransactionRes
   }
 }
 
+export async function escalateOtpLimitFailureToAdmin(referenceNo: string): Promise<void> {
+  try {
+    await apiClient.post(TRANSACT_ENDPOINTS.bankOfficerEscalateOtpLimit(referenceNo));
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
 export async function downloadTransactionHistoryReport(
   params: DownloadTransactionHistoryReportParams,
 ): Promise<DownloadTransactionHistoryReportResult> {
@@ -199,6 +207,7 @@ export const transactionService = {
   cancelTransaction,
   getTransactionHistory,
   getBankOfficerTransactionHistory,
+	escalateOtpLimitFailureToAdmin,
   downloadTransactionHistoryReport,
   downloadTransactionReceipt,
 };

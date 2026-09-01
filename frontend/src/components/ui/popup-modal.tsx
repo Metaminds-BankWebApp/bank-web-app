@@ -12,6 +12,8 @@ type PopupModalProps = {
   children?: React.ReactNode;
   footer?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
+	/** Optional fixed/minimum dialog sizing for tabbed or data-dense modal content. */
+	className?: string;
 };
 
 const sizeClass: Record<NonNullable<PopupModalProps['size']>, string> = {
@@ -29,6 +31,7 @@ export default function PopupModal({
   children,
   footer,
   size = "md",
+	className = "",
 }: PopupModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -60,7 +63,7 @@ export default function PopupModal({
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative z-10 w-full ${sizeClass[size]} flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl bg-white text-left align-middle shadow-2xl transition-all sm:max-h-[calc(100vh-4rem)]`}
+		className={`relative z-10 w-full ${sizeClass[size]} flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-2xl bg-white text-left align-middle shadow-2xl transition-all sm:max-h-[calc(100vh-4rem)] ${className}`}
       >
         {(title || description) && (
           <div className="flex shrink-0 items-start justify-between border-b border-slate-100 px-6 py-5">

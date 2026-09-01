@@ -31,6 +31,7 @@ export function PersonalDetails({
   serverStepOneErrors,
   onClearServerStepOneError,
   isCompletedCustomer,
+	isNewCustomer,
   onUpdateCompletedCustomerContactDetails,
 }: StepProps) {
   const [errors, setErrors] = useState<PersonalDetailsErrors>({});
@@ -88,7 +89,7 @@ export function PersonalDetails({
       setErrors((prev) => ({ ...prev, [id]: undefined }));
     }
 
-    if (id === "nic" || id === "email" || id === "username" || id === "bankAccount") {
+	if (id === "nic" || id === "email" || id === "mobile" || id === "username" || id === "bankAccount") {
       onClearServerStepOneError?.(id);
     }
   };
@@ -134,7 +135,7 @@ export function PersonalDetails({
             </Button>
           </div>
           <p className="mt-3 text-xs text-slate-600">
-            Enter NIC first. If customer already exists, we will load saved details so you can update without duplicate inserts.
+            Enter NIC first. Existing customers load their saved details; a new customer can continue without an account until the final account-creation step.
           </p>
           {hasExistingCustomerMatch && (
             <p className="mt-2 text-xs font-semibold text-emerald-700">
@@ -142,7 +143,7 @@ export function PersonalDetails({
             </p>
           )}
           {customerLookupError && (
-            <p role="alert" className="mt-2 text-xs font-semibold text-red-600">
+			<p role={isNewCustomer ? "status" : "alert"} className={`mt-2 text-xs font-semibold ${isNewCustomer ? "text-blue-700" : "text-red-600"}`}>
               {customerLookupError}
             </p>
           )}
@@ -300,7 +301,7 @@ export function PersonalDetails({
                  </p>
                 )}
            </div>
-        </div>
+		</div>
       </div>
 
       {/* Actions */}

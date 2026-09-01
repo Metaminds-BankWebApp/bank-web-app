@@ -42,6 +42,7 @@ export const CUSTOMER_ENDPOINTS = {
   bankOfficerCustomerByUser: (userId: number) => `/bank-officers/customers/user/${userId}`,
   bankOfficerCustomerStepOneByNic: "/bank-officers/customers/step-1/by-nic",
   bankOfficerCustomerGeneratedCredentials: "/bank-officers/customers/credentials/generate",
+  workQueueCases: "/bank-officers/work-queue/cases",
 } as const;
 
 export const BANK_CUSTOMER_FINANCIAL_ENDPOINTS = {
@@ -157,7 +158,8 @@ export const TRANSACT_ENDPOINTS = {
   transactionsHistory: "/bank-customers/transact/transactions/history",
   transactionsHistoryReport: "/bank-customers/transact/transactions/history/report",
   transactionReceipt: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}/receipt`,
-  bankOfficerTransactionsHistory: "/bank-officers/transact/transactions",
+	bankOfficerTransactionsHistory: "/bank-officers/transact/transactions",
+	bankOfficerEscalateOtpLimit: (referenceNo: string) => `/bank-officers/transact/transactions/${encodeURIComponent(referenceNo)}/escalate-otp-limit`,
   transactionByReference: (referenceNo: string) => `/bank-customers/transact/transactions/${encodeURIComponent(referenceNo)}`,
   beneficiaries: "/bank-customers/transact/beneficiaries",
   beneficiaryById: (beneficiaryId: number) => `/bank-customers/transact/beneficiaries/${beneficiaryId}`,

@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Button } from "@/src/components/ui/button";
+import { useToast } from "@/src/components/ui";
 import { Input } from "@/src/components/ui/input";
 import { Badge } from "@/src/components/ui/badge";
 import PopupModal from "@/src/components/ui/popup-modal";
@@ -59,6 +60,7 @@ type TransactionRow = {
   senderAccountNo: string;
   receiverAccountNo: string;
   rawStatus: string;
+	 failureReason: string;
 };
 
 const amountFormatter = new Intl.NumberFormat("en-LK", {
@@ -127,15 +129,17 @@ function mapTransaction(tx: TransactionResponse): TransactionRow {
     senderAccountNo: tx.senderAccountNo || "-",
     receiverAccountNo: tx.receiverAccountNo || "-",
     rawStatus: tx.status || "-",
+		failureReason: tx.failureReason || "",
   };
 }
 
 function getTransactionDetails(transaction: TransactionRow) {
   const referenceNote =
     transaction.status === "failed"
-      ? transaction.remark && transaction.remark !== "-"
-        ? transaction.remark
-        : "Transaction was not completed successfully."
+		? transaction.failureReason || (transaction.remark && transaction.remark !== "-"
+			? transaction.remark
+			: "Transaction was not completed successfully."
+		)
       : transaction.status === "pending"
         ? "Awaiting OTP verification or settlement confirmation."
         : transaction.remark && transaction.remark !== "-"
@@ -151,6 +155,7 @@ function getTransactionDetails(transaction: TransactionRow) {
 }
 
 export default function TransactionsPage() {
+	const { showToast } = useToast();
   // Load transaction history, then let officers narrow it and review/export what they need.
   const [transactions, setTransactions] = useState<TransactionRow[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<TransactionRow | null>(null);
@@ -162,6 +167,7 @@ export default function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+	const [isEscalatingOtpLimit, setIsEscalatingOtpLimit] = useState(false);
 
   // Load officer transaction history once when this page opens.
   useEffect(() => {
@@ -312,6 +318,20 @@ export default function TransactionsPage() {
 
   const totalVolumeLabel = amountFormatter.format(summary.totalVolume);
   const monthlyAvgLabel = amountFormatter.format(summary.monthlyAvg);
+	const isOtpLimitFailure = selectedTransaction?.failureReason.includes("OTP verification failed after 3 incorrect attempts.") ?? false;
+
+	const handleEscalateOtpLimitFailure = async () => {
+		if (!selectedTransaction || !isOtpLimitFailure) return;
+		setIsEscalatingOtpLimit(true);
+		try {
+			await transactionService.escalateOtpLimitFailureToAdmin(selectedTransaction.referenceNo);
+			showToast({ type: "success", title: "Admins notified", description: `The reviewed OTP-limit failure ${selectedTransaction.referenceNo} was sent to admins.` });
+		} catch (error) {
+			showToast({ type: "error", title: "Escalation not sent", description: error instanceof Error ? error.message : "Unable to notify admins." });
+		} finally {
+			setIsEscalatingOtpLimit(false);
+		}
+	};
 
   return (
     <AuthGuard requiredRole="BANK_OFFICER">
@@ -358,7 +378,7 @@ export default function TransactionsPage() {
               </div>
 
               <div className="creditlens-card creditlens-card-hover bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Suspicious Alerts</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Failed Transfers</p>
                 <h2 className="text-3xl font-bold text-red-600 mb-2">{String(summary.suspiciousAlerts).padStart(2, "0")}</h2>
                 <div className="flex items-center gap-1 text-red-600 text-xs font-medium bg-red-50 w-fit px-2 py-0.5 rounded">
                   <AlertTriangle size={12} /> Review Required
@@ -620,6 +640,7 @@ export default function TransactionsPage() {
                     <p className="text-xs text-slate-500">Risk & Processing Notes</p>
                     <p className="mt-1 text-sm text-slate-700">{getTransactionDetails(selectedTransaction).referenceNote}</p>
                   </div>
+						{isOtpLimitFailure && <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-amber-900">OTP attempt limit reached</p><p className="mt-1 text-sm text-amber-800">Review the transaction details before notifying an administrator. This does not alter the failed transfer.</p></div><Button onClick={() => void handleEscalateOtpLimitFailure()} disabled={isEscalatingOtpLimit}>{isEscalatingOtpLimit ? "Notifying…" : "Notify Admin"}</Button></div>}
                 </div>
               )}
             </PopupModal>

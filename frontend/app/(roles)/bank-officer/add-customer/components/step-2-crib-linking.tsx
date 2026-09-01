@@ -21,6 +21,9 @@ export function CribLinking({
   // If CRIB already returned data, show that in the side snapshot.
   const hasPrefilledCribData =
     formData.loans.length > 0 || formData.creditCards.length > 0 || formData.liabilities.length > 0;
+	const cribNotFound =
+		(formData.cribRequestStatus || "").trim().toUpperCase() === "FAILED" &&
+		(formData.cribReportStatus || "").trim().toUpperCase() === "FAILED";
 
   const wait = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration));
 
@@ -180,9 +183,11 @@ export function CribLinking({
               <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
                 <Server size={20} />
               </div>
-              <p className="text-xs text-slate-400 text-center">{formData.creditScore ? `Score ${formData.creditScore}` : "Data not yet retrieved"}</p>
+			  <p className="text-xs text-slate-400 text-center">{cribNotFound ? "Customer financial data not found in CRIB" : formData.creditScore ? `Score ${formData.creditScore}` : "Data not yet retrieved"}</p>
               <p className="text-[10px] text-slate-300 text-center leading-tight px-4">
-                {hasPrefilledCribData
+				{cribNotFound
+				  ? "Any financial details entered in later steps are manual and are not CRIB data."
+				  : hasPrefilledCribData
                   ? `${formData.loans.length} loans, ${formData.creditCards.length} credit cards, and ${formData.liabilities.length} liabilities loaded for the next steps.`
                   : "The customer can now continue to financial capture after CRIB linking is complete."}
               </p>

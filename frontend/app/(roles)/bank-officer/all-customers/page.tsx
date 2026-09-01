@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Sidebar } from "@/src/components/layout";
 import { AuthGuard } from "@/src/components/auth";
-import { getBankCustomersForOfficer } from "@/src/api/customers/bank-customer.service";
+import { getBankCustomersForOfficerPage } from "@/src/api/customers/bank-customer.service";
 import {
    findOwnedBankCustomerStepOneByNic,
    getCurrentBankCustomerFinancialRecord,
@@ -182,7 +182,9 @@ function AllCustomersPageContent() {
    const requestedNic = searchParams.get("nic")?.trim() ?? "";
   const [searchTerm, setSearchTerm] = useState(requestedNic);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-    const [customers, setCustomers] = useState<Customer[]>([]);
+   const [customers, setCustomers] = useState<Customer[]>([]);
+   const [totalCustomers, setTotalCustomers] = useState(0);
+   const [serverTotalPages, setServerTotalPages] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -227,10 +229,16 @@ function AllCustomersPageContent() {
              sortBy: sortBy,
            } as const;
 
-           const data = await getBankCustomersForOfficer(filters);
+           const data = await getBankCustomersForOfficerPage({
+             ...filters,
+             page: currentPage - 1,
+             size: customersPerPage,
+           });
            if (!mounted) return;
-           const mappedCustomers = data.map(mapApiCustomer);
+           const mappedCustomers = data.content.map(mapApiCustomer);
            setCustomers(mappedCustomers);
+           setTotalCustomers(data.totalElements);
+           setServerTotalPages(data.totalPages);
 
            if (requestedNic) {
               const requestedCustomer = mappedCustomers.find(
@@ -258,58 +266,19 @@ function AllCustomersPageContent() {
        return () => {
          mounted = false;
        };
-    }, [debouncedSearchTerm, requestedNic, sortBy, statusFilter]);
+    }, [currentPage, debouncedSearchTerm, requestedNic, sortBy, statusFilter]);
 
-   // Show only customers that match the officer's search, filters, and sort choice.
-   const visibleCustomers = useMemo(() => {
-      const normalizedSearch = searchTerm.trim().toLowerCase();
-
-      const filtered = customers.filter((customer) => {
-         const matchesSearch =
-            normalizedSearch.length === 0
-               ? true
-               : `${customer.id} ${customer.name} ${customer.nic} ${customer.email} ${customer.phone}`
-                     .toLowerCase()
-                     .includes(normalizedSearch);
-         const matchesStatus = statusFilter === "all" ? true : customer.status === statusFilter;
-
-         return matchesSearch && matchesStatus;
-      });
-
-      return [...filtered].sort((left, right) => {
-         switch (sortBy) {
-            case "updated-asc":
-               return new Date(left.lastUpdated).getTime() - new Date(right.lastUpdated).getTime();
-            case "updated-desc":
-               return new Date(right.lastUpdated).getTime() - new Date(left.lastUpdated).getTime();
-            case "score-asc":
-               return left.creditScore - right.creditScore;
-            case "score-desc":
-               return right.creditScore - left.creditScore;
-            case "name-asc":
-               return left.name.localeCompare(right.name);
-            case "name-desc":
-               return right.name.localeCompare(left.name);
-            default:
-               return 0;
-         }
-      });
-   }, [customers, searchTerm, sortBy, statusFilter]);
-
-   const totalPages = Math.ceil(visibleCustomers.length / customersPerPage);
-   const paginatedCustomers = useMemo(() => {
-      const start = (currentPage - 1) * customersPerPage;
-      return visibleCustomers.slice(start, start + customersPerPage);
-   }, [currentPage, visibleCustomers]);
-   const showingFrom = visibleCustomers.length === 0 ? 0 : (currentPage - 1) * customersPerPage + 1;
-   const showingTo = visibleCustomers.length === 0 ? 0 : Math.min(currentPage * customersPerPage, visibleCustomers.length);
+   const totalPages = serverTotalPages;
+   const paginatedCustomers = customers;
+   const showingFrom = totalCustomers === 0 ? 0 : (currentPage - 1) * customersPerPage + 1;
+   const showingTo = totalCustomers === 0 ? 0 : Math.min(currentPage * customersPerPage, totalCustomers);
 
    useEffect(() => {
       setCurrentPage(1);
    }, [searchTerm, sortBy, statusFilter]);
 
    useEffect(() => {
-      if (currentPage > totalPages) {
+      if (totalPages > 0 && currentPage > totalPages) {
          setCurrentPage(Math.max(totalPages, 1));
       }
    }, [currentPage, totalPages]);
@@ -317,7 +286,7 @@ function AllCustomersPageContent() {
    const handleExport = () => {
       const header = ["Name", "NIC", "Email", "Phone", "Status", "Last Updated"];
 
-      const rows = visibleCustomers.map((customer) => [
+      const rows = customers.map((customer) => [
          customer.name,
          customer.nic,
          customer.email,
@@ -592,7 +561,7 @@ function AllCustomersPageContent() {
                       </TableRow>
                             ))}
 
-                            {!isLoading && visibleCustomers.length === 0 && (
+                            {!isLoading && totalCustomers === 0 && (
                                <TableRow>
                                   <TableCell colSpan={6} className="py-10 text-center text-sm text-slate-500">
                                      No customers found for the selected filters.
@@ -614,7 +583,7 @@ function AllCustomersPageContent() {
              {/* Footer / Pagination */}
              <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 bg-slate-50/30 rounded-b-xl shrink-0">
                          <span>
-                            Showing <span className="font-bold text-slate-700">{showingFrom}-{showingTo}</span> of <span className="font-bold text-slate-700">{visibleCustomers.length}</span>
+                            Showing <span className="font-bold text-slate-700">{showingFrom}-{showingTo}</span> of <span className="font-bold text-slate-700">{totalCustomers}</span>
                          </span>
                  
                  <DataTablePagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
@@ -630,8 +599,9 @@ function AllCustomersPageContent() {
                      }
                   }}
                   title={selectedCustomer ? `${selectedCustomer.name} — Customer 360°` : "Customer 360°"}
-                  description="Detailed personal and financial data grouped into tabs for quick review."
-                   size="lg"
+                   description="Detailed personal and financial data grouped into tabs for quick review."
+				   size="lg"
+				   className="h-[min(48rem,calc(100vh-2rem))] sm:h-[min(48rem,calc(100vh-4rem))]"
                >
                   {selectedCustomer && (
                      <div className="space-y-4">

@@ -26,7 +26,16 @@ export function ForgotPasswordForm() {
     setIsSubmitting(true);
 
     try {
-      await authService.forgotPassword({ identifier: identifier.trim() });
+      const response = await authService.forgotPassword({ identifier: identifier.trim() });
+      if ((response.message ?? "").toLowerCase().includes("activation link")) {
+        showToast({
+          type: "success",
+          title: "Activation link requested",
+          description: response.message,
+        });
+        setIsSubmitting(false);
+        return;
+      }
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
       const message = apiError?.message ?? "Unable to send verification code. Please try again.";
@@ -55,6 +64,7 @@ export function ForgotPasswordForm() {
       <header className="space-y-2 text-center">
         <h1 className="text-3xl font-bold">Forgot password</h1>
         <p className="text-sm text-(--primecore-foreground)/70">Enter your account email or username to receive a one-time verification code.</p>
+        <p className="text-xs text-(--primecore-foreground)/60">New customers whose activation link expired can request a replacement here. A maximum of three replacement links is allowed.</p>
       </header>
 
       <form onSubmit={onSubmit} className="space-y-5">
