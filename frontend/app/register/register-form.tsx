@@ -79,6 +79,38 @@ const PROVINCES = [
   "Sabaragamuwa",
 ];
 
+function deriveDateOfBirthFromNic(nic: string): string | null {
+  const normalizedNic = nic.trim();
+  const oldNicMatch = normalizedNic.match(/^(\d{2})(\d{3})\d{4}[vV]$/);
+  const newNicMatch = normalizedNic.match(/^(\d{4})(\d{3})\d{5}$/);
+
+  let year: number;
+  let encodedDayOfYear: number;
+  if (oldNicMatch) {
+    year = 1900 + Number(oldNicMatch[1]);
+    encodedDayOfYear = Number(oldNicMatch[2]);
+  } else if (newNicMatch) {
+    year = Number(newNicMatch[1]);
+    encodedDayOfYear = Number(newNicMatch[2]);
+  } else {
+    return null;
+  }
+
+  const dayOfYear = encodedDayOfYear > 500 ? encodedDayOfYear - 500 : encodedDayOfYear;
+  const date = new Date(Date.UTC(year, 0, dayOfYear));
+  const dateIsValid =
+    date.getUTCFullYear() === year &&
+    dayOfYear >= 1 &&
+    date.getUTCDate() >= 1 &&
+    date <= new Date();
+
+  if (!dateIsValid) {
+    return null;
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
 /**
  * Extract only field-specific backend errors that belong to this form.
  * This prevents unrelated backend keys from being stored in form error state.
@@ -191,7 +223,10 @@ export function RegisterForm() {
 
       case "nic":
         if (!values.nic) return "NIC is required.";
-        return nicRegex.test(values.nic) ? null : "Please enter a valid NIC.";
+        if (!nicRegex.test(values.nic)) return "Please enter a valid NIC.";
+        return deriveDateOfBirthFromNic(values.nic)
+          ? null
+          : "NIC must contain a valid date of birth.";
 
       case "username":
         if (!values.username) return "Username is required.";
