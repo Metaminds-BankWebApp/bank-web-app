@@ -3,6 +3,10 @@
  */
 
 import type { OfficerFormData, OfficerFormErrors } from "./types";
+import {
+  deriveDateOfBirthFromNic,
+  hasSriLankanNicFormat,
+} from "./nic-date-of-birth";
 
 export const SRI_LANKA_PROVINCES = [
   "Western",
@@ -22,7 +26,6 @@ const provinceSet = new Set(
 
 const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/i;
 const contactRegex = /^(?:077|076|078|070|072|074|075|071)\d{7}$/;
-const nicRegex = /^(?:\d{9}[Vv]|\d{12})$/;
 const dobRegex = /^\d{4}-\d{2}-\d{2}$/;
 const startsWithLetterRegex = /^\p{L}/u;
 
@@ -43,34 +46,41 @@ export function validateOfficerForm(formData: OfficerFormData): OfficerFormError
     errors.lastName = "Last name must start with a letter.";
   }
 
+  const derivedDob = deriveDateOfBirthFromNic(formData.nic);
   if (!formData.nic.trim()) {
     errors.nic = "NIC is required.";
-  } else if (!nicRegex.test(formData.nic.trim())) {
+  } else if (!hasSriLankanNicFormat(formData.nic)) {
     errors.nic = "Enter a valid NIC number.";
+  } else if (!derivedDob) {
+    errors.nic = "NIC contains an invalid date of birth.";
   }
 
-  if (!formData.dob.trim()) {
-    errors.dob = "Date of birth is required.";
-  } else if (!dobRegex.test(formData.dob.trim())) {
-    errors.dob = "Use yyyy-mm-dd format.";
-  } else {
-    const dob = new Date(`${formData.dob.trim()}T00:00:00`);
-    const today = new Date();
-
-    if (Number.isNaN(dob.getTime())) {
-      errors.dob = "Enter a valid date of birth.";
+  if (derivedDob) {
+    if (!formData.dob.trim()) {
+      errors.dob = "Date of birth could not be derived from NIC.";
+    } else if (formData.dob.trim() !== derivedDob) {
+      errors.dob = "Date of birth must match the NIC.";
+    } else if (!dobRegex.test(formData.dob.trim())) {
+      errors.dob = "Use yyyy-mm-dd format.";
     } else {
-      let age = today.getFullYear() - dob.getFullYear();
-      const monthDifference = today.getMonth() - dob.getMonth();
-      if (
-        monthDifference < 0 ||
-        (monthDifference === 0 && today.getDate() < dob.getDate())
-      ) {
-        age -= 1;
-      }
+      const dob = new Date(`${formData.dob.trim()}T00:00:00`);
+      const today = new Date();
 
-      if (age < 18) {
-        errors.dob = "Bank officer must be at least 18 years old.";
+      if (Number.isNaN(dob.getTime())) {
+        errors.dob = "Enter a valid date of birth.";
+      } else {
+        let age = today.getFullYear() - dob.getFullYear();
+        const monthDifference = today.getMonth() - dob.getMonth();
+        if (
+          monthDifference < 0 ||
+          (monthDifference === 0 && today.getDate() < dob.getDate())
+        ) {
+          age -= 1;
+        }
+
+        if (age < 18) {
+          errors.dob = "Bank officer must be at least 18 years old.";
+        }
       }
     }
   }

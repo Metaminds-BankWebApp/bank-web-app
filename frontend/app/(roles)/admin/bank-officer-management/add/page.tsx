@@ -24,36 +24,7 @@ import {
   SRI_LANKA_PROVINCES,
   validateOfficerForm,
 } from "./validation";
-
-type DobPart = "year" | "month" | "day";
-
-const currentYear = new Date().getFullYear();
-const latestOfficerBirthYear = currentYear - 18;
-const officerBirthYears = Array.from(
-  { length: latestOfficerBirthYear - (currentYear - 100) + 1 },
-  (_, index) => String(latestOfficerBirthYear - index)
-);
-const months = [
-  { value: "01", label: "January" },
-  { value: "02", label: "February" },
-  { value: "03", label: "March" },
-  { value: "04", label: "April" },
-  { value: "05", label: "May" },
-  { value: "06", label: "June" },
-  { value: "07", label: "July" },
-  { value: "08", label: "August" },
-  { value: "09", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
-
-function getDaysInMonth(year: string, month: string): number {
-  if (!year || !month) {
-    return 31;
-  }
-  return new Date(Number(year), Number(month), 0).getDate();
-}
+import { deriveDateOfBirthFromNic } from "./nic-date-of-birth";
 
 const getInitialFormData = (): OfficerFormData => ({
   firstName: "",
@@ -132,7 +103,6 @@ export default function AddOfficerPage() {
   const router = useRouter();
   const loggedInUser = useAuthStore((state) => state.user);
   const [formData, setFormData] = useState<OfficerFormData>(getInitialFormData);
-  const [dobParts, setDobParts] = useState({ year: "", month: "", day: "" });
   const [errors, setErrors] = useState<OfficerFormErrors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [branches, setBranches] = useState<BranchResponse[]>([]);
@@ -187,7 +157,7 @@ export default function AddOfficerPage() {
   const handleRequiredFieldChange = (
     field: keyof Pick<
       OfficerFormData,
-      "firstName" | "lastName" | "nic" | "dob" | "province" | "contact" | "email" | "assignedBranch"
+      "firstName" | "lastName" | "province" | "contact" | "email" | "assignedBranch"
     >,
     value: string
   ) => {
@@ -197,24 +167,12 @@ export default function AddOfficerPage() {
     }
   };
 
-  const handleDobPartChange = (part: DobPart, value: string) => {
-    const nextParts = { ...dobParts, [part]: value };
-    const maximumDay = getDaysInMonth(nextParts.year, nextParts.month);
-
-    if (nextParts.day && Number(nextParts.day) > maximumDay) {
-      nextParts.day = "";
-    }
-
-    setDobParts(nextParts);
-    handleRequiredFieldChange(
-      "dob",
-      nextParts.year && nextParts.month && nextParts.day
-        ? `${nextParts.year}-${nextParts.month}-${nextParts.day}`
-        : ""
-    );
+  const handleNicChange = (value: string) => {
+    const normalizedNic = value.toUpperCase();
+    const derivedDob = deriveDateOfBirthFromNic(normalizedNic) ?? "";
+    setFormData((prev) => ({ ...prev, nic: normalizedNic, dob: derivedDob }));
+    setErrors((prev) => ({ ...prev, nic: undefined, dob: undefined }));
   };
-
-  const availableDobDays = getDaysInMonth(dobParts.year, dobParts.month);
 
   const handleGenerateUsername = async () => {
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
@@ -437,8 +395,9 @@ export default function AddOfficerPage() {
                     <input
                       type="text"
                       value={formData.nic}
-                      onChange={(event) => handleRequiredFieldChange("nic", event.target.value)}
+                      onChange={(event) => handleNicChange(event.target.value)}
                       placeholder="200012345678"
+                      maxLength={12}
                       aria-invalid={Boolean(errors.nic)}
                       className={`mt-2 w-full rounded-lg border px-4 py-3 text-sm ${
                         errors.nic ? "border-red-500" : "border-gray-300"
@@ -451,61 +410,21 @@ export default function AddOfficerPage() {
                     <label id="officer-dob-label" className="text-xs font-semibold uppercase text-gray-600">
                       Date of Birth <span className="text-red-600">*</span>
                     </label>
-                    <div
-                      className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1.35fr_1fr]"
-                      role="group"
+                    <input
+                      id="officer-dob"
+                      type="text"
+                      value={formData.dob}
+                      readOnly
+                      placeholder="Auto-filled from NIC"
                       aria-labelledby="officer-dob-label"
-                    >
-                      <select
-                        value={dobParts.year}
-                        onChange={(event) => handleDobPartChange("year", event.target.value)}
-                        aria-label="Birth year"
-                        aria-invalid={Boolean(errors.dob)}
-                        autoComplete="bday-year"
-                        className={`w-full rounded-lg border bg-white px-4 py-3 text-sm ${
-                          errors.dob ? "border-red-500" : "border-gray-300"
-                        }`}
-                      >
-                        <option value="">Year</option>
-                        {officerBirthYears.map((year) => (
-                          <option key={year} value={year}>{year}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={dobParts.month}
-                        onChange={(event) => handleDobPartChange("month", event.target.value)}
-                        aria-label="Birth month"
-                        aria-invalid={Boolean(errors.dob)}
-                        autoComplete="bday-month"
-                        className={`w-full rounded-lg border bg-white px-4 py-3 text-sm ${
-                          errors.dob ? "border-red-500" : "border-gray-300"
-                        }`}
-                      >
-                        <option value="">Month</option>
-                        {months.map((month) => (
-                          <option key={month.value} value={month.value}>{month.label}</option>
-                        ))}
-                      </select>
-
-                      <select
-                        value={dobParts.day}
-                        onChange={(event) => handleDobPartChange("day", event.target.value)}
-                        aria-label="Birth day"
-                        aria-invalid={Boolean(errors.dob)}
-                        autoComplete="bday-day"
-                        className={`w-full rounded-lg border bg-white px-4 py-3 text-sm ${
-                          errors.dob ? "border-red-500" : "border-gray-300"
-                        }`}
-                      >
-                        <option value="">Day</option>
-                        {Array.from({ length: availableDobDays }, (_, index) => {
-                          const day = String(index + 1).padStart(2, "0");
-                          return <option key={day} value={day}>{day}</option>;
-                        })}
-                      </select>
-                    </div>
-                    
+                      aria-invalid={Boolean(errors.dob)}
+                      className={`mt-2 w-full cursor-not-allowed rounded-lg border px-4 py-3 text-sm text-gray-700 ${
+                        errors.dob ? "border-red-500" : "border-gray-300"
+                      } bg-gray-100`}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Automatically calculated from the NIC and cannot be edited manually.
+                    </p>
                     {errors.dob ? <p className="mt-1 text-xs text-red-600">{errors.dob}</p> : null}
                   </div>
                  
@@ -633,4 +552,3 @@ export default function AddOfficerPage() {
     </AuthGuard>
   );
 }
-
