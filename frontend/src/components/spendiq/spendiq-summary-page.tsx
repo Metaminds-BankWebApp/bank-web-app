@@ -121,7 +121,7 @@ export function SpendIqSummaryPage() {
   const maxCategoryAmount = categoryRows.reduce((max, row) => Math.max(max, row.amount), 0);
 
   return (
-    <div className="p-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">
+    <div className="p-4 sm:p-6 lg:p-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
         <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Monthly Summary" />
 

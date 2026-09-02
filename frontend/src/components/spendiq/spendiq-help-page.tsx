@@ -72,8 +72,8 @@ export function SpendIqHelpPage() {
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 p-4 md:p-8">
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Help & Support" name="You" role="Customer" className="mb-6" />
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-8 mb-6">
+      <main className="max-w-6xl mx-auto p-3 sm:p-6">
+        <div className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-5 sm:p-8 mb-6">
           <h1 className="text-2xl font-semibold text-[#063154] dark:text-slate-100">Help & Support</h1>
           <p className="mt-1 text-sm text-[#063154]/80 dark:text-slate-300">Get answers fast, track your requests, or contact support.</p>
           <div className="mt-6">

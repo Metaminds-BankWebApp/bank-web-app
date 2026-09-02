@@ -62,12 +62,18 @@ export function OtpVerificationForm() {
     } catch (unknownError) {
       const apiError = unknownError instanceof ApiError ? unknownError : null;
       const message = apiError?.message ?? "Unable to verify OTP. Please try again.";
+      const isLockedOut = message.toLowerCase().includes("too many incorrect attempts");
+
       setError(message);
       setIsSubmitting(false);
+      setOtp("");
+      if (isLockedOut) {
+        setResendSeconds(0);
+      }
       showToast({
         type: "error",
-        title: "Verification failed",
-        description: message,
+        title: isLockedOut ? "Too many attempts" : "Verification failed",
+        description: isLockedOut ? `${message} Use "Resend OTP" below to get a new code.` : message,
       });
       return;
     }

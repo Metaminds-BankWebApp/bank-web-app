@@ -29,8 +29,8 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-10 w-full max-w-lg rounded-2xl border border-(--primecore-border)",
-          "bg-(--primecore-surface) p-6 shadow-[0_24px_48px_-26px_rgba(2,14,28,0.75)] dark:bg-(--primecore-surface)",
+          "relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-y-auto rounded-2xl border border-(--primecore-border)",
+          "bg-(--primecore-surface) p-4 sm:p-6 shadow-[0_24px_48px_-26px_rgba(2,14,28,0.75)] dark:bg-(--primecore-surface)",
         )}
       >
         {(title || description) && (

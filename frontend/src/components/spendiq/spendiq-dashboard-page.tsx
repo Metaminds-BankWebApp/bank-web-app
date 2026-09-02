@@ -231,7 +231,7 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
   }
 
   return (
-    <div className="p-6 space-y-8 bg-gradient-to-br from-[#f0f4ff] to-[#e6ecf9] dark:from-slate-950 dark:to-slate-900 min-h-screen">
+    <div className="p-4 sm:p-6 space-y-8 bg-gradient-to-br from-[#f0f4ff] to-[#e6ecf9] dark:from-slate-950 dark:to-slate-900 min-h-screen">
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="SpendIQ - Expense Overview" />
 
       <div className="grid md:grid-cols-4 gap-6">
@@ -321,17 +321,17 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
         ) : (
           <div className="space-y-4">
             {recentExpenses.map((exp) => (
-              <div key={exp.expenseId} className="flex justify-between items-center bg-white/60 dark:bg-slate-800/80 p-4 rounded-xl transition hover:bg-white/80 dark:hover:bg-slate-800">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-medium text-gray-800 dark:text-slate-100">{exp.categoryName}</span>
-                    <span className="text-xs bg-[#0a234c]/10 dark:bg-sky-400/10 text-[#0a234c] dark:text-sky-200 px-2 py-1 rounded-full">{exp.paymentType}</span>
+              <div key={exp.expenseId} className="flex flex-wrap justify-between items-center gap-3 bg-white/60 dark:bg-slate-800/80 p-4 rounded-xl transition hover:bg-white/80 dark:hover:bg-slate-800">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-gray-800 dark:text-slate-100 truncate">{exp.categoryName}</span>
+                    <span className="shrink-0 text-xs bg-[#0a234c]/10 dark:bg-sky-400/10 text-[#0a234c] dark:text-sky-200 px-2 py-1 rounded-full">{exp.paymentType}</span>
                   </div>
                   <p className="text-sm text-gray-600 dark:text-slate-400">Recorded expense</p>
                   <p className="text-xs text-gray-500 dark:text-slate-400">{formatDate(exp.expenseDate)}</p>
                 </div>
 
-                <div className="font-semibold text-[#0a234c] dark:text-sky-200">{formatCurrency(Number(exp.amount))}</div>
+                <div className="shrink-0 font-semibold text-[#0a234c] dark:text-sky-200">{formatCurrency(Number(exp.amount))}</div>
               </div>
             ))}
           </div>
@@ -371,7 +371,7 @@ function GlassCard({
       <p className="text-sm text-gray-600 dark:text-slate-400">{title}</p>
       <h2 className={`text-xl font-bold mt-2 ${isDanger ? "text-red-600" : "text-[#0a234c] dark:text-sky-200"}`}>{value}</h2>
       {notice ? <p className="mt-2 rounded-md bg-red-50 dark:bg-red-950/50 px-2 py-1 text-xs font-semibold text-red-700 dark:text-red-200">{notice}</p> : null}
-      <div className="mt-1 flex items-center justify-between gap-3">
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="text-xs text-gray-500 dark:text-slate-400">{subtitle}</p>
         <span className={`text-xs font-semibold transition group-hover:translate-x-1 ${isDanger ? "text-red-700" : "text-[#0a234c] dark:text-sky-200"}`}>{actionLabel}</span>
       </div>

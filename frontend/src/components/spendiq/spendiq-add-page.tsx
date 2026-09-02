@@ -382,7 +382,7 @@ export function SpendIqAddPage() {
       <div className="flex flex-col gap-8 p-4 md:p-8 min-h-screen bg-white dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100">
         <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Add Income / Expense" />
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 sm:p-8 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Add record</h2>
 
           <div className="flex items-center gap-8 mb-6">
@@ -479,7 +479,7 @@ export function SpendIqAddPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-8 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 sm:p-8 shadow-sm">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Add new category</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input
