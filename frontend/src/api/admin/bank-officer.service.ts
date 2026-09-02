@@ -1,7 +1,8 @@
 import apiClient, { toApiError } from "@/src/api/client";
 import { ADMIN_ENDPOINTS } from "@/src/api/endpoints";
 
-export type AdminBankOfficerStatus = "ACTIVE" | "SUSPEND";
+export type AdminBankOfficerStatus = "ACTIVE" | "SUSPEND" | "PENDING_ACTIVATION";
+export type AdminBankOfficerMutableStatus = Exclude<AdminBankOfficerStatus, "PENDING_ACTIVATION">;
 
 export interface AdminBankOfficerSummaryResponse {
   userId: number;
@@ -71,7 +72,7 @@ export async function resendAdminBankOfficerActivation(userId: number): Promise<
 // Updates AdminBankOfficerStatus using the backend API.
 export async function updateAdminBankOfficerStatus(
   userId: number,
-  status: AdminBankOfficerStatus
+  status: AdminBankOfficerMutableStatus
 ): Promise<AdminBankOfficerSummaryResponse> {
   // Change account status (active/inactive/locked) without editing full profile.
   try {

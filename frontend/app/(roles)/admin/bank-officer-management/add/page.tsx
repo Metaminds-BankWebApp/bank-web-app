@@ -446,27 +446,7 @@ export default function AddOfficerPage() {
                     />
                     {errors.nic ? <p className="mt-1 text-xs text-red-600">{errors.nic}</p> : null}
                   </div>
-
-                  <div>
-                    <label className="text-xs font-semibold uppercase text-gray-600">Officer Status</label>
-                    <div className="mt-2 flex items-center justify-between rounded-lg border border-gray-300 bg-white px-4 py-3">
-                      <span>{formData.isActive ? "Active" : "Inactive"}</span>
-                      <button
-                        type="button"
-                        onClick={() => setFormData((prev) => ({ ...prev, isActive: !prev.isActive }))}
-                        className={`h-6 w-12 rounded-full p-1 transition ${formData.isActive ? "bg-[#0B3B66]" : "bg-gray-400"}`}
-                      >
-                        <div
-                          className={`h-4 w-4 rounded-full bg-white shadow-md transition ${formData.isActive ? "translate-x-6" : ""}`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="min-w-0 flex-1 space-y-6 rounded-2xl bg-[#e9eef5] p-4 sm:p-6 lg:p-8">
                   
-
                   <div>
                     <label id="officer-dob-label" className="text-xs font-semibold uppercase text-gray-600">
                       Date of Birth <span className="text-red-600">*</span>
@@ -528,6 +508,12 @@ export default function AddOfficerPage() {
                     
                     {errors.dob ? <p className="mt-1 text-xs text-red-600">{errors.dob}</p> : null}
                   </div>
+                 
+                </div>
+
+                <div className="min-w-0 flex-1 space-y-6 rounded-2xl bg-[#e9eef5] p-4 sm:p-6 lg:p-8">
+                  
+
 
                   <div>
                     <label className="text-xs font-semibold uppercase text-gray-600"> Province <span className="text-red-600">*</span></label>
