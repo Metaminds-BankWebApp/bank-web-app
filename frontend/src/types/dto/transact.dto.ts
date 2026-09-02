@@ -60,7 +60,6 @@ export type TransactDashboardSummaryResponse = {
   transactionStatus: {
     successCount: number;
     failedCount: number;
-    pendingOtpCount: number;
     cancelledCount: number;
   };
   otpStatus: {

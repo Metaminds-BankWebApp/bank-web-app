@@ -31,7 +31,7 @@ import { transactionService } from "@/src/api/transact/transaction.service"
 import { ApiError } from "@/src/types/api-error"
 import type { TransactionResponse } from "@/src/types/dto/transact.dto"
 
-type TransactionStatus = "success" | "failed" | "pending" | "cancelled"
+type TransactionStatus = "success" | "failed" | "cancelled"
 type TransactionSort = "date-desc" | "date-asc" | "amount-desc" | "amount-asc" | "receiver-asc"
 
 type TransactionRecord = {
@@ -68,12 +68,15 @@ function toDateOnly(value: string): string {
 function toStatus(value: string): TransactionStatus {
   const normalized = (value ?? "").trim().toUpperCase()
   if (normalized === "SUCCESS") return "success"
-  if (normalized === "PENDING_OTP") return "pending"
   if (normalized === "CANCELLED") return "cancelled"
   return "failed"
 }
 
-function mapTransaction(tx: TransactionResponse): TransactionRecord {
+function mapTransaction(tx: TransactionResponse): TransactionRecord | null {
+  if ((tx.status ?? "").trim().toUpperCase() === "PENDING_OTP") {
+    return null
+  }
+
   return {
     id: String(tx.transactionId),
     receiverName: tx.receiverName || "-",
@@ -90,7 +93,6 @@ function mapTransaction(tx: TransactionResponse): TransactionRecord {
 const statusMeta: Record<TransactionStatus, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
   success: { label: "Success", tone: "success" },
   failed: { label: "Failed", tone: "danger" },
-  pending: { label: "Pending OTP", tone: "warning" },
   cancelled: { label: "Cancelled", tone: "neutral" },
 }
 
@@ -113,7 +115,9 @@ export default function Page() {
 
       try {
         const transactions = await transactionService.getTransactionHistory()
-        if (mounted) setRecords(transactions.map(mapTransaction))
+        if (mounted) {
+          setRecords(transactions.map(mapTransaction).filter((transaction): transaction is TransactionRecord => transaction !== null))
+        }
       } catch (error) {
         if (!mounted) return
 
@@ -224,7 +228,6 @@ export default function Page() {
                 <SelectContent>
                   <SelectItem value="all">All statuses</SelectItem>
                   <SelectItem value="success">Success</SelectItem>
-                  <SelectItem value="pending">Pending OTP</SelectItem>
                   <SelectItem value="failed">Failed</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>

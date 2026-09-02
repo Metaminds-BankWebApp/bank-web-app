@@ -84,7 +84,6 @@ export default function Page() {
   // Loading states for transfer and OTP actions.
   const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false)
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
-  const [isResendingOtp, setIsResendingOtp] = useState(false)
   const [isCancellingTransaction, setIsCancellingTransaction] = useState(false)
   const [isLoadingBeneficiaries, setIsLoadingBeneficiaries] = useState(false)
   const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false)
@@ -349,6 +348,11 @@ export default function Page() {
       setOtpError("")
       setOtpAttemptsRemaining(response.otpAttemptsRemaining ?? MAX_OTP_ATTEMPTS)
       setSeconds(secondsUntilOtpExpiry(response.otpExpiresAt))
+      if ((response.status ?? "").trim().toUpperCase() === "FAILED") {
+        setSubmitError(response.message || "OTP could not be delivered. Transaction failed.")
+        return
+      }
+
       setShowOtp(true)
     } catch (error) {
       const nextErrors: Partial<TransferFormErrors> = {}
@@ -401,7 +405,7 @@ export default function Page() {
 
     const otpCode = otpValues.join("").trim()
     if (seconds <= 0) {
-      setOtpError("OTP time has expired. You cannot enter this code; request a new OTP or cancel the transfer.")
+      setOtpError("OTP time has expired. This transaction has failed.")
       return
     }
     if (otpAttemptsRemaining <= 0) {
@@ -449,40 +453,6 @@ export default function Page() {
       }
     } finally {
       setIsVerifyingOtp(false)
-    }
-  }
-
-  // Requests a fresh OTP once countdown allows resending.
-  const handleResendOtp = async () => {
-    if (isResendingOtp || seconds > 0) {
-      return
-    }
-    if (!transactionReferenceNo) {
-      setOtpError("Transaction reference is missing. Please retry transfer.")
-      return
-    }
-
-    setIsResendingOtp(true)
-    setOtpError("")
-    try {
-      const response = await transactionService.resendTransactionOtp({
-        referenceNo: transactionReferenceNo,
-      })
-      setOtpSentToEmail(response.sentToEmail)
-      setOtpAttemptsRemaining(response.otpAttemptsRemaining ?? otpAttemptsRemaining)
-      setSeconds(secondsUntilOtpExpiry(response.otpExpiresAt))
-      setOtpValues(Array(OTP_LENGTH).fill(""))
-      inputsRef.current[0]?.focus()
-    } catch (error) {
-      if (error instanceof ApiError) {
-        setOtpError(error.message || "Failed to resend OTP.")
-      } else if (error instanceof Error && error.message) {
-        setOtpError(error.message)
-      } else {
-        setOtpError("Failed to resend OTP.")
-      }
-    } finally {
-      setIsResendingOtp(false)
     }
   }
 
@@ -785,7 +755,7 @@ export default function Page() {
               </p>
               {seconds <= 0 && otpAttemptsRemaining > 0 && (
                 <p className="text-center text-sm text-amber-700 mb-4">
-                  OTP time has expired. This transfer remains pending; request a new OTP or cancel it.
+                  OTP time has expired. This transaction has failed.
                 </p>
               )}
               {otpError && (
@@ -801,16 +771,6 @@ export default function Page() {
                   disabled={isCancellingTransaction || isVerifyingOtp}
                 >
                   {isCancellingTransaction ? "Cancelling..." : "Cancel Transfer"}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                  onClick={handleResendOtp}
-                  disabled={isResendingOtp || seconds > 0 || otpAttemptsRemaining <= 0 || isCancellingTransaction}
-                >
-                  {isResendingOtp ? "Resending..." : "Resend OTP"}
                 </Button>
 
                 <Button

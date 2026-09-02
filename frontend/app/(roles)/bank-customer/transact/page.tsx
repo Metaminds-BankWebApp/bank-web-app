@@ -108,7 +108,6 @@ export default function TransactDashboard() {
   const [statusSummary, setStatusSummary] = useState({
     successCount: 0,
     failedCount: 0,
-    pendingOtpCount: 0,
     cancelledCount: 0,
   });
   const [otpSummary, setOtpSummary] = useState({
@@ -201,7 +200,6 @@ export default function TransactDashboard() {
         setStatusSummary({
           successCount: Number(data.transactionStatus?.successCount ?? 0),
           failedCount: Number(data.transactionStatus?.failedCount ?? 0),
-          pendingOtpCount: Number(data.transactionStatus?.pendingOtpCount ?? 0),
           cancelledCount: Number(data.transactionStatus?.cancelledCount ?? 0),
         });
         setOtpSummary({
@@ -302,21 +300,20 @@ export default function TransactDashboard() {
   }), [timelineLabels, timelineValues]);
 
   const doughnutData = useMemo(() => ({
-    labels: ["Success", "Failed", "Pending OTP", "Cancelled"],
+    labels: ["Success", "Failed", "Cancelled"],
     datasets: [
       {
         data: [
           Math.max(0, statusSummary.successCount),
           Math.max(0, statusSummary.failedCount),
-          Math.max(0, statusSummary.pendingOtpCount),
           Math.max(0, statusSummary.cancelledCount),
         ],
-        backgroundColor: ["#399FD8", "#0B3E5A", "#0e4f62", "#7dd3fc"],
+        backgroundColor: ["#399FD8", "#0B3E5A", "#7dd3fc"],
         borderWidth: 0,
         hoverOffset: 4,
       },
     ],
-  }), [statusSummary.cancelledCount, statusSummary.failedCount, statusSummary.pendingOtpCount, statusSummary.successCount]);
+  }), [statusSummary.cancelledCount, statusSummary.failedCount, statusSummary.successCount]);
 
   const currentBalanceNote = balanceError
     ? balanceError
@@ -475,7 +472,6 @@ export default function TransactDashboard() {
                   {[
                     { label: "Success", value: statusSummary.successCount, color: "bg-[#399FD8]" },
                     { label: "Failed", value: statusSummary.failedCount, color: "bg-[#0B3E5A]" },
-                    { label: "Pending OTP", value: statusSummary.pendingOtpCount, color: "bg-[#0e4f62]" },
                     { label: "Cancelled", value: statusSummary.cancelledCount, color: "bg-sky-300" },
                   ].map((status) => (
                     <div key={status.label} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
