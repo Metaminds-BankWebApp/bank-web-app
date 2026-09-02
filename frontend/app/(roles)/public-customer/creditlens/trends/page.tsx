@@ -82,30 +82,30 @@ export default function TrendsPage() {
           <div className="flex min-h-0 flex-1 flex-col gap-4 lg:gap-3 lg:px-2 xl:px-3">
             <div className="creditlens-stagger-2 grid min-w-0 items-stretch gap-4 lg:min-h-0 lg:flex-1 lg:auto-rows-fr xl:grid-cols-[1.85fr_1fr] xl:gap-5">
               <div className="creditlens-card creditlens-card-hover flex h-full min-w-0 flex-col rounded-2xl border border-slate-200/70 bg-white/90 px-4 pb-4 pt-4 shadow-[0_40px_80px_-35px_rgba(2,44,67,0.35)] sm:px-5 sm:pb-5 sm:pt-5 md:rounded-[26px] lg:p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="text-base text-slate-500">{trendData.periodLabel}</div>
-                    <div className="mt-1 truncate text-xl font-semibold text-slate-900 sm:text-2xl">
-                      Credit Risk Score
+                <div className="min-w-0">
+                  <div className="text-base text-slate-500">{trendData.periodLabel}</div>
+                  <div className="mt-1 flex min-w-0 items-center gap-3">
+                    <div className="whitespace-nowrap text-lg font-semibold leading-tight text-slate-900 sm:text-2xl">
+                      Credit Risk History
                     </div>
-                  </div>
 
-                  <Select
-                    value={trendRange}
-                    onValueChange={(value) => {
-                      if (value === "6m" || value === "12m") {
-                        setTrendRange(value);
-                      }
-                    }}
-                  >
-                    <SelectTrigger className="h-11 w-[142px] shrink-0 rounded-full border-slate-300 bg-white px-5 text-base sm:px-6">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="6m">6 Months</SelectItem>
-                      <SelectItem value="12m">12 Months</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Select
+                      value={trendRange}
+                      onValueChange={(value) => {
+                        if (value === "6m" || value === "12m") {
+                          setTrendRange(value);
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-11 w-[142px] shrink-0 rounded-full border-slate-300 bg-white px-5 text-base sm:px-6">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="6m">6 Months</SelectItem>
+                        <SelectItem value="12m">12 Months</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="mt-3 min-h-0 flex-1 sm:mt-4 lg:mt-3">
