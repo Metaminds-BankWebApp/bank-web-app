@@ -283,36 +283,55 @@ export function SpendIqHistoryPage() {
         ) : visibleExpenses.length === 0 ? (
           <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">No expense records found for the selected filters.</div>
         ) : (
-          <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Payment Type</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {visibleExpenses.map((expense) => (
-                  <TableRow
-                    key={expense.expenseId}
-                  >
-                    <TableCell>{formatDate(expense.expenseDate)}</TableCell>
-                    <TableCell>
-                      <span className="px-3 py-1 text-xs rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200">
-                        {expense.categoryName}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-semibold text-red-500">-{formatAmount(Number(expense.amount))}</TableCell>
-                    <TableCell>
-                      <span className="px-3 py-1 text-xs rounded-full bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200">
-                        {paymentLabel(expense.paymentType)}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <>
+            <div className="divide-y divide-slate-100 dark:divide-slate-800 sm:hidden">
+              {visibleExpenses.map((expense) => (
+                <div key={expense.expenseId} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0 flex items-center gap-2">
+                    <span className="shrink-0 text-xs text-gray-500 dark:text-slate-400 tabular-nums">{formatDate(expense.expenseDate)}</span>
+                    <span className="truncate text-sm font-medium text-gray-800 dark:text-slate-100">{expense.categoryName}</span>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-2">
+                    <span className="text-[10px] text-gray-400 dark:text-slate-500">{paymentLabel(expense.paymentType)}</span>
+                    <span className="font-semibold text-red-500">-{formatAmount(Number(expense.amount))}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden sm:block">
+              <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Payment Type</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visibleExpenses.map((expense) => (
+                      <TableRow
+                        key={expense.expenseId}
+                      >
+                        <TableCell>{formatDate(expense.expenseDate)}</TableCell>
+                        <TableCell>
+                          <span className="px-3 py-1 text-xs rounded-full bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-200">
+                            {expense.categoryName}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-semibold text-red-500">-{formatAmount(Number(expense.amount))}</TableCell>
+                        <TableCell>
+                          <span className="px-3 py-1 text-xs rounded-full bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-slate-200">
+                            {paymentLabel(expense.paymentType)}
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+            </div>
+          </>
         )}
         <DataTableFooter>
           <span>{summaryText}</span>

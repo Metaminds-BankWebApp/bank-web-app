@@ -827,7 +827,7 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
 
       <div className="mt-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0b1a3a] dark:text-slate-100">Spend Report</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0b1a3a] dark:text-slate-100">Spend Report</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{selectedMonthLabel}</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -991,7 +991,7 @@ function ReportCard({ title, value, tone = "default" }: { title: string; value: 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
-      <p className={`mt-2 text-xl font-bold ${valueClass}`}>{value}</p>
+      <p className={`mt-2 text-lg sm:text-xl font-bold ${valueClass}`}>{value}</p>
     </div>
   );
 }
@@ -1039,7 +1039,7 @@ function RadialScore({ score }: { score: number }) {
           transform="rotate(-90 80 80)"
         />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-[#0b1a3a] dark:text-slate-100">
+      <div className="absolute inset-0 flex items-center justify-center text-2xl sm:text-3xl font-bold text-[#0b1a3a] dark:text-slate-100">
         {score}
       </div>
     </div>

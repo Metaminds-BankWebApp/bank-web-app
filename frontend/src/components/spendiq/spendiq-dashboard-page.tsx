@@ -11,12 +11,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
-import { getSpendIqBudgets, getSpendIqExpenses, getSpendIqMonthlySummary } from "@/src/api/spendiq/spendiq.service";
+import { getSpendIqBudgets, getSpendIqExpenses, getSpendIqIncomes, getSpendIqMonthlySummary } from "@/src/api/spendiq/spendiq.service";
 import { toApiError } from "@/src/api/client";
 import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { useToast } from "@/src/components/ui/toast";
-import type { SpendIqExpenseResponse, SpendIqMonthlySummaryResponse } from "@/src/types/dto/spendiq.dto";
+import type { SpendIqMonthlySummaryResponse } from "@/src/types/dto/spendiq.dto";
+
+type RecentTransactionRow = {
+  id: string;
+  kind: "expense" | "income";
+  date: string;
+  createdAt: string;
+  label: string;
+  amount: number;
+  paymentType?: string;
+};
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -38,7 +48,7 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
   const [isLoading, setIsLoading] = useState(true);
   const [categoryExpenses, setCategoryExpenses] = useState<Array<{ name: string; value: number }>>([]);
   const [budgetUsageRows, setBudgetUsageRows] = useState<Array<{ name: string; used: number; total: number }>>([]);
-  const [recentExpenses, setRecentExpenses] = useState<SpendIqExpenseResponse[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<RecentTransactionRow[]>([]);
   const [summary, setSummary] = useState<SpendIqMonthlySummaryResponse>({
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
@@ -58,10 +68,11 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
       const currentYear = now.getFullYear();
       const { fromDate, toDate } = monthBounds(currentYear, currentMonth);
 
-      const [monthlySummary, monthExpenses, monthBudgets] = await Promise.all([
+      const [monthlySummary, monthExpenses, monthBudgets, monthIncomes] = await Promise.all([
         getSpendIqMonthlySummary(currentMonth, currentYear),
         getSpendIqExpenses({ fromDate, toDate }),
         getSpendIqBudgets({ month: currentMonth, year: currentYear }),
+        getSpendIqIncomes({ fromDate, toDate }),
       ]);
 
       const monthByCategory = new Map<string, number>();
@@ -88,15 +99,34 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
         .sort((a, b) => b.used - a.used)
         .slice(0, 5);
 
-      const sortedMonthExpenses = [...monthExpenses].sort((a, b) => {
-        const dateDiff = new Date(b.expenseDate).getTime() - new Date(a.expenseDate).getTime();
+      const expenseRows: RecentTransactionRow[] = monthExpenses.map((expense) => ({
+        id: `expense-${expense.expenseId}`,
+        kind: "expense",
+        date: expense.expenseDate,
+        createdAt: expense.createdAt,
+        label: expense.categoryName,
+        amount: Number(expense.amount),
+        paymentType: expense.paymentType,
+      }));
+
+      const incomeRows: RecentTransactionRow[] = monthIncomes.map((income) => ({
+        id: `income-${income.incomeId}`,
+        kind: "income",
+        date: income.incomeDate,
+        createdAt: income.createdAt,
+        label: income.sourceName,
+        amount: Number(income.amount),
+      }));
+
+      const sortedTransactions = [...expenseRows, ...incomeRows].sort((a, b) => {
+        const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
         if (dateDiff !== 0) return dateDiff;
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
 
       setCategoryExpenses(rows);
       setBudgetUsageRows(usageRows);
-      setRecentExpenses(sortedMonthExpenses.slice(0, 5));
+      setRecentTransactions(sortedTransactions.slice(0, 5));
       setSummary(monthlySummary);
     } catch (error) {
       const apiError = toApiError(error);
@@ -310,28 +340,35 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
         </div>
       </div>
 
-      <div className="backdrop-blur-xl bg-white/50 dark:bg-slate-900/80 border border-white/40 dark:border-slate-700 shadow-2xl rounded-2xl p-6">
-        <div className="flex items-baseline justify-between mb-6">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Recent Expenses</h2>
+      <div className="backdrop-blur-xl bg-white/50 dark:bg-slate-900/80 border border-white/40 dark:border-slate-700 shadow-2xl rounded-2xl p-4 sm:p-6">
+        <div className="flex items-baseline justify-between mb-3 sm:mb-6">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Recent Transactions</h2>
           <span className="text-xs text-gray-500 dark:text-slate-400">{currentMonthLabel}</span>
         </div>
 
-        {recentExpenses.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">No recent expenses found for this month.</p>
+        {recentTransactions.length === 0 ? (
+          <p className="text-sm text-slate-500 dark:text-slate-400">No recent expenses or income found for this month.</p>
         ) : (
-          <div className="space-y-4">
-            {recentExpenses.map((exp) => (
-              <div key={exp.expenseId} className="flex flex-wrap justify-between items-center gap-3 bg-white/60 dark:bg-slate-800/80 p-4 rounded-xl transition hover:bg-white/80 dark:hover:bg-slate-800">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-gray-800 dark:text-slate-100 truncate">{exp.categoryName}</span>
-                    <span className="shrink-0 text-xs bg-[#0a234c]/10 dark:bg-sky-400/10 text-[#0a234c] dark:text-sky-200 px-2 py-1 rounded-full">{exp.paymentType}</span>
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-slate-400">Recorded expense</p>
-                  <p className="text-xs text-gray-500 dark:text-slate-400">{formatDate(exp.expenseDate)}</p>
+          <div className="space-y-2 sm:space-y-3">
+            {recentTransactions.map((txn) => (
+              <div key={txn.id} className="flex items-center justify-between gap-3 bg-white/60 dark:bg-slate-800/80 p-3 rounded-xl transition hover:bg-white/80 dark:hover:bg-slate-800">
+                <div className="min-w-0 flex items-center gap-2">
+                  <span className="shrink-0 text-xs text-gray-500 dark:text-slate-400 tabular-nums">{formatDate(txn.date)}</span>
+                  <span className="font-medium text-gray-800 dark:text-slate-100 truncate">{txn.label}</span>
+                  <span
+                    className={`shrink-0 text-xs px-2 py-1 rounded-full ${
+                      txn.kind === "income"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-300"
+                        : "hidden sm:inline-block bg-[#0a234c]/10 dark:bg-sky-400/10 text-[#0a234c] dark:text-sky-200"
+                    }`}
+                  >
+                    {txn.kind === "income" ? "Income" : txn.paymentType}
+                  </span>
                 </div>
 
-                <div className="shrink-0 font-semibold text-[#0a234c] dark:text-sky-200">{formatCurrency(Number(exp.amount))}</div>
+                <div className={`shrink-0 font-semibold ${txn.kind === "income" ? "text-emerald-600 dark:text-emerald-300" : "text-[#0a234c] dark:text-sky-200"}`}>
+                  {txn.kind === "income" ? "+" : "-"} {formatCurrency(txn.amount)}
+                </div>
               </div>
             ))}
           </div>
@@ -369,7 +406,7 @@ function GlassCard({
       }`}
     >
       <p className="text-sm text-gray-600 dark:text-slate-400">{title}</p>
-      <h2 className={`text-xl font-bold mt-2 ${isDanger ? "text-red-600" : "text-[#0a234c] dark:text-sky-200"}`}>{value}</h2>
+      <h2 className={`text-lg sm:text-xl font-bold mt-2 ${isDanger ? "text-red-600" : "text-[#0a234c] dark:text-sky-200"}`}>{value}</h2>
       {notice ? <p className="mt-2 rounded-md bg-red-50 dark:bg-red-950/50 px-2 py-1 text-xs font-semibold text-red-700 dark:text-red-200">{notice}</p> : null}
       <div className="mt-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="text-xs text-gray-500 dark:text-slate-400">{subtitle}</p>

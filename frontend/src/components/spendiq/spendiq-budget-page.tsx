@@ -483,7 +483,7 @@ export function SpendIqBudgetPage() {
               <Pencil size={15} />
             </button>
           </div>
-          <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{formatMoney(summary.totalBudget)}</h2>
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">{formatMoney(summary.totalBudget)}</h2>
           <p className="text-xs text-gray-400 dark:text-slate-500">{`${currentMonthLabel} ${selectedYear}`}</p>
         </div>
         <SummaryCard title="Total Spent" value={formatMoney(summary.totalExpense)} subtitle="Current month spend" />
@@ -619,7 +619,7 @@ export function SpendIqBudgetPage() {
                     <button
                       type="button"
                       onClick={() => openCategoryTransactions(row.categoryName)}
-                      className="text-left text-lg font-bold text-[#0b1a3a] dark:text-cyan-300 tracking-wide hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a234c] dark:focus-visible:ring-sky-400 rounded"
+                      className="text-left text-base sm:text-lg font-bold text-[#0b1a3a] dark:text-cyan-300 tracking-wide hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a234c] dark:focus-visible:ring-sky-400 rounded"
                       aria-label={`View ${row.categoryName} transactions`}
                     >
                       {row.categoryName}
@@ -839,7 +839,7 @@ function SummaryCard({
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-md space-y-2 border border-transparent dark:border-slate-800">
       <p className="text-sm text-gray-500 dark:text-slate-400">{title}</p>
-      <h2 className={`text-lg font-bold ${highlight === "green" ? "text-emerald-600" : highlight === "red" ? "text-red-500" : "text-slate-800 dark:text-slate-100"}`}>
+      <h2 className={`text-base sm:text-lg font-bold ${highlight === "green" ? "text-emerald-600" : highlight === "red" ? "text-red-500" : "text-slate-800 dark:text-slate-100"}`}>
         {value}
       </h2>
       <p className="text-xs text-gray-400 dark:text-slate-500">{subtitle}</p>

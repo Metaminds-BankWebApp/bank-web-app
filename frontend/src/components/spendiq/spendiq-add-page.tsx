@@ -383,7 +383,7 @@ export function SpendIqAddPage() {
         <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Add Income / Expense" />
 
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 sm:p-8 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Add record</h2>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Add record</h2>
 
           <div className="flex items-center gap-8 mb-6">
             <label className="flex items-center gap-3 cursor-pointer group">
@@ -480,7 +480,7 @@ export function SpendIqAddPage() {
         </div>
 
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl p-5 sm:p-8 shadow-sm">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Add new category</h2>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">Add new category</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <input
               type="text"
@@ -515,7 +515,49 @@ export function SpendIqAddPage() {
             <h2 className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Recent Records (Last 10)</h2>
           </div>
 
-          <div className="overflow-x-auto">
+          {!isLoading && timelineRows.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-500 dark:text-slate-400 sm:hidden">No records found.</p>
+          ) : (
+            <div className="divide-y divide-slate-50 dark:divide-slate-800 sm:hidden">
+              {timelineRows.map((row) => (
+                <div key={row.id} className="flex items-center justify-between gap-3 p-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400 tabular-nums">{formatDate(row.date)}</span>
+                      <span className="truncate text-sm font-semibold text-slate-700 dark:text-slate-200">{row.label}</span>
+                    </div>
+                    <span className={`mt-1 inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${row.kind === "expense" ? "bg-red-50 text-red-600 border-red-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"}`}>
+                      {row.kind === "expense" ? "Expense" : "Income"}
+                    </span>
+                  </div>
+
+                  <div className="shrink-0 flex items-center gap-2">
+                    <span className={`font-bold text-sm ${row.kind === "expense" ? "text-red-500" : "text-emerald-600"}`}>
+                      {row.kind === "expense" ? "-" : "+"} {Number(row.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => openEditDialog(row)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 dark:bg-slate-800"
+                      aria-label="Edit record"
+                    >
+                      <Edit2 size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget(row)}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                      aria-label="Delete record"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="hidden overflow-x-auto sm:block">
             <table className="primecore-data-table w-full min-w-[960px]">
               <thead>
                 <tr className="text-left border-b border-slate-100 dark:border-slate-800">
