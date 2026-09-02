@@ -1,11 +1,12 @@
-import { MockFeaturePage } from "@/src/components/mock-feature-page";
-import ModuleHeader from "@/src/components/ui/module-header";
+"use client";
 
-export default function SpendIQSummaryPage() {
+import { AuthGuard } from "@/src/components/auth";
+import { SpendIqSummaryPage } from "@/src/components/spendiq/spendiq-summary-page";
+
+export default function BankCustomerSpendIqSummaryPage() {
   return (
-    <div className="space-y-6">
-      <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Monthly Summary" />
-      <MockFeaturePage title="Monthly Summary" description="Analyze spending patterns over time." hideHeader />
-    </div>
+    <AuthGuard requiredRole="BANK_CUSTOMER">
+      <SpendIqSummaryPage />
+    </AuthGuard>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, RefreshCw } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Bar,
@@ -481,6 +482,8 @@ function buildSpendIqPdfReport({
 
 export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: SpendIqReportPageProps) {
   const { showToast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
   const today = useMemo(() => new Date(), []);
   const [selectedMonth, setSelectedMonth] = useState(allPeriodsValue);
   const [trendRangeMonths, setTrendRangeMonths] = useState<TrendRangeMonths>(3);
@@ -652,6 +655,18 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
     topCategory,
     topCategoryShare,
   ]);
+  const openCategoryTransactions = useCallback((categoryName: string) => {
+    const transactionsPath = pathname.endsWith("/report")
+      ? pathname.replace(/\/report$/, "/category/transactions")
+      : "/public-customer/spendiq/category/transactions";
+    const query = new URLSearchParams({ category: categoryName });
+    if (selectedMonth !== allPeriodsValue) {
+      query.set("fromDate", firstDayOfMonth(selectedYear, selectedMonth));
+      query.set("toDate", lastDayOfMonth(selectedYear, selectedMonth));
+    }
+    router.push(`${transactionsPath}?${query.toString()}`);
+  }, [pathname, router, selectedMonth, selectedYear]);
+
   const selectedMonthLabel = selectedMonth === allPeriodsValue ? "All periods" : `${monthNames[selectedMonth - 1]} ${selectedYear}`;
   const reportStamp = selectedMonth === allPeriodsValue ? "all-periods" : `${selectedYear}-${String(selectedMonth).padStart(2, "0")}`;
   const trendAverageSpend = monthlyTrend.length > 0
@@ -916,7 +931,16 @@ export function SpendIqReportPage({ title = "SpendIQ - Analytics Report" }: Spen
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Bar dataKey="amount" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                  <Bar
+                    dataKey="amount"
+                    fill="#2563eb"
+                    radius={[6, 6, 0, 0]}
+                    cursor="pointer"
+                    onClick={(data) => {
+                      const row = data?.payload as CategoryReportRow | undefined;
+                      if (row?.name) openCategoryTransactions(row.name);
+                    }}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}

@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
-import { getSpendIqBudgets, getSpendIqExpenses, getSpendIqIncomes } from "@/src/api/spendiq/spendiq.service";
+import { getSpendIqBudgets, getSpendIqExpenses, getSpendIqMonthlySummary } from "@/src/api/spendiq/spendiq.service";
 import { toApiError } from "@/src/api/client";
 import { SpendIqLoadingPage } from "@/src/components/spendiq/spendiq-loading-page";
 import ModuleHeader from "@/src/components/ui/module-header";
@@ -23,6 +23,13 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 type SpendIqDashboardPageProps = {
   spendIqRoot: string;
 };
+
+function monthBounds(year: number, month: number): { fromDate: string; toDate: string } {
+  const from = new Date(Date.UTC(year, month - 1, 1));
+  const to = new Date(Date.UTC(year, month, 0));
+  const toIso = (value: Date) => value.toISOString().slice(0, 10);
+  return { fromDate: toIso(from), toDate: toIso(to) };
+}
 
 export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps) {
   const { showToast } = useToast();
@@ -46,56 +53,51 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
   const loadExpenseByCategory = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [expenses, budgets, incomes] = await Promise.all([
-        getSpendIqExpenses(),
-        getSpendIqBudgets(),
-        getSpendIqIncomes(),
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      const { fromDate, toDate } = monthBounds(currentYear, currentMonth);
+
+      const [monthlySummary, monthExpenses, monthBudgets] = await Promise.all([
+        getSpendIqMonthlySummary(currentMonth, currentYear),
+        getSpendIqExpenses({ fromDate, toDate }),
+        getSpendIqBudgets({ month: currentMonth, year: currentYear }),
       ]);
 
-      const byCategory = new Map<string, number>();
-      for (const expense of expenses) {
-        byCategory.set(expense.categoryName, (byCategory.get(expense.categoryName) ?? 0) + Number(expense.amount));
+      const monthByCategory = new Map<string, number>();
+      for (const expense of monthExpenses) {
+        monthByCategory.set(expense.categoryName, (monthByCategory.get(expense.categoryName) ?? 0) + Number(expense.amount));
       }
 
-      const budgetByCategory = new Map<string, number>();
-      for (const budget of budgets) {
-        budgetByCategory.set(budget.categoryName, (budgetByCategory.get(budget.categoryName) ?? 0) + Number(budget.budgetAmount));
+      const monthBudgetByCategory = new Map<string, number>();
+      for (const budget of monthBudgets) {
+        monthBudgetByCategory.set(budget.categoryName, (monthBudgetByCategory.get(budget.categoryName) ?? 0) + Number(budget.budgetAmount));
       }
 
-      const rows = Array.from(byCategory.entries())
+      const rows = Array.from(monthByCategory.entries())
         .map(([name, value]) => ({ name, value }))
         .sort((a, b) => b.value - a.value);
 
-      const usageRows = Array.from(new Set([...byCategory.keys(), ...budgetByCategory.keys()]))
+      const usageRows = Array.from(new Set([...monthByCategory.keys(), ...monthBudgetByCategory.keys()]))
         .map((name) => ({
           name,
-          used: byCategory.get(name) ?? 0,
-          total: budgetByCategory.get(name) ?? 0,
+          used: monthByCategory.get(name) ?? 0,
+          total: monthBudgetByCategory.get(name) ?? 0,
         }))
         .filter((row) => row.used > 0 || row.total > 0)
         .sort((a, b) => b.used - a.used)
         .slice(0, 5);
 
+      const sortedMonthExpenses = [...monthExpenses].sort((a, b) => {
+        const dateDiff = new Date(b.expenseDate).getTime() - new Date(a.expenseDate).getTime();
+        if (dateDiff !== 0) return dateDiff;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+
       setCategoryExpenses(rows);
       setBudgetUsageRows(usageRows);
-      setRecentExpenses(expenses.slice(0, 5));
-
-      const totalExpense = expenses.reduce((sum, expense) => sum + Number(expense.amount ?? 0), 0);
-      const totalIncome = incomes.reduce((sum, income) => sum + Number(income.amount ?? 0), 0);
-      const totalBudget = budgets.reduce((sum, budget) => sum + Number(budget.budgetAmount ?? 0), 0);
-      const netSavings = totalIncome - totalExpense;
-      const remainingBudget = totalBudget - totalExpense;
-
-      setSummary({
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear(),
-        totalIncome,
-        totalExpense,
-        totalBudget,
-        netSavings,
-        remainingBudget,
-        budgetUsagePercentage: totalBudget > 0 ? (totalExpense / totalBudget) * 100 : 0,
-      });
+      setRecentExpenses(sortedMonthExpenses.slice(0, 5));
+      setSummary(monthlySummary);
     } catch (error) {
       const apiError = toApiError(error);
       showToast({ type: "error", title: "Failed to load dashboard data", description: apiError.message });
@@ -114,9 +116,9 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
   );
 
   const openCategoryTransactions = useCallback((categoryName: string) => {
-    const query = new URLSearchParams({
-      category: categoryName,
-    });
+    const now = new Date();
+    const { fromDate, toDate } = monthBounds(now.getFullYear(), now.getMonth() + 1);
+    const query = new URLSearchParams({ category: categoryName, fromDate, toDate });
     router.push(`${spendIqRoot}/category/transactions?${query.toString()}`);
   }, [router, spendIqRoot]);
 
@@ -187,6 +189,13 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
     }).format(new Date(`${value}T00:00:00`));
 
   const hasNegativeSavings = summary.netSavings < 0;
+  const currentMonthLabel = new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(
+    new Date(summary.year, summary.month - 1, 1),
+  );
+  const historyHref = useMemo(() => {
+    const { fromDate, toDate } = monthBounds(summary.year, summary.month);
+    return `${spendIqRoot}/history?${new URLSearchParams({ fromDate, toDate }).toString()}`;
+  }, [spendIqRoot, summary.month, summary.year]);
   const chartCenterLabel = useMemo<Plugin<"doughnut">>(() => ({
     id: "spendiqCenterLabel",
     afterDraw(chart) {
@@ -226,13 +235,13 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="SpendIQ - Expense Overview" />
 
       <div className="grid md:grid-cols-4 gap-6">
-        <GlassCard title="Total Expenses" value={formatCurrency(summary.totalExpense)} subtitle="All time" href={`${spendIqRoot}/history`} actionLabel="View expenses" />
-        <GlassCard title="Budget Total" value={formatCurrency(summary.totalBudget)} subtitle="All saved budgets" href={`${spendIqRoot}/budget`} actionLabel="Edit budget" />
-        <GlassCard title="Remaining Budget" value={formatCurrency(summary.remainingBudget)} subtitle={summary.remainingBudget >= 0 ? "Across saved budgets" : "Over saved budgets"} href={`${spendIqRoot}/budget`} actionLabel="Review budget" />
+        <GlassCard title="Total Expenses" value={formatCurrency(summary.totalExpense)} subtitle={currentMonthLabel} href={historyHref} actionLabel="View expenses" />
+        <GlassCard title="Budget Total" value={formatCurrency(summary.totalBudget)} subtitle={currentMonthLabel} href={`${spendIqRoot}/budget`} actionLabel="Edit budget" />
+        <GlassCard title="Remaining Budget" value={formatCurrency(summary.remainingBudget)} subtitle={summary.remainingBudget >= 0 ? `Within budget - ${currentMonthLabel}` : `Over budget - ${currentMonthLabel}`} href={`${spendIqRoot}/budget`} actionLabel="Review budget" />
         <GlassCard
           title="Savings Estimate"
           value={formatCurrency(summary.netSavings)}
-          subtitle={hasNegativeSavings ? "Expenses are higher than income" : "Income minus expenses"}
+          subtitle={hasNegativeSavings ? `Expenses higher than income - ${currentMonthLabel}` : `Income minus expenses - ${currentMonthLabel}`}
           href={`${spendIqRoot}/summary`}
           actionLabel="View summary"
           variant={hasNegativeSavings ? "danger" : "default"}
@@ -242,19 +251,25 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="relative backdrop-blur-xl bg-white/50 dark:bg-slate-900/80 border border-white/40 dark:border-slate-700 shadow-2xl rounded-2xl p-6 transition hover:shadow-3xl">
-          <h2 className="text-sm font-semibold mb-4 text-gray-700 dark:text-slate-200">Expense by Category</h2>
+          <div className="flex items-baseline justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Expense by Category</h2>
+            <span className="text-xs text-gray-500 dark:text-slate-400">{currentMonthLabel}</span>
+          </div>
 
           <div className="relative h-80 flex items-center justify-center">
             {categoryExpenses.length > 0 ? (
               <Doughnut ref={chartRef} data={data} options={options} plugins={[chartCenterLabel]} />
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No expense data found.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No expense data found for this month.</p>
             )}
           </div>
         </div>
 
         <div className="backdrop-blur-xl bg-white/50 dark:bg-slate-900/80 border border-white/40 dark:border-slate-700 shadow-2xl rounded-2xl p-6 transition hover:shadow-3xl">
-          <h2 className="text-sm font-semibold mb-6 text-gray-700 dark:text-slate-200">Budget Usage by Category</h2>
+          <div className="flex items-baseline justify-between mb-6">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Budget Usage by Category</h2>
+            <span className="text-xs text-gray-500 dark:text-slate-400">{currentMonthLabel}</span>
+          </div>
 
           {budgetUsageRows.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">No budget usage data for this month.</p>
@@ -296,10 +311,13 @@ export function SpendIqDashboardPage({ spendIqRoot }: SpendIqDashboardPageProps)
       </div>
 
       <div className="backdrop-blur-xl bg-white/50 dark:bg-slate-900/80 border border-white/40 dark:border-slate-700 shadow-2xl rounded-2xl p-6">
-        <h2 className="text-sm font-semibold mb-6 text-gray-700 dark:text-slate-200">Recent Expenses</h2>
+        <div className="flex items-baseline justify-between mb-6">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-slate-200">Recent Expenses</h2>
+          <span className="text-xs text-gray-500 dark:text-slate-400">{currentMonthLabel}</span>
+        </div>
 
         {recentExpenses.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">No recent expenses found.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">No recent expenses found for this month.</p>
         ) : (
           <div className="space-y-4">
             {recentExpenses.map((exp) => (
