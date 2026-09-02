@@ -112,8 +112,8 @@ export interface StepProps {
   isGeneratingCredentials?: boolean;
   hasExistingCustomerMatch?: boolean;
   customerLookupError?: string;
-  serverStepOneErrors?: Partial<Record<"nic" | "email" | "username", string>>;
-  onClearServerStepOneError?: (field: "nic" | "email" | "username" | "bankAccount") => void;
+  serverStepOneErrors?: Partial<Record<"nic" | "email" | "mobile" | "username" | "bankAccount", string>>;
+  onClearServerStepOneError?: (field: "nic" | "email" | "mobile" | "username" | "bankAccount") => void;
   onVerifyAccount?: () => Promise<void>;
   isVerifyingAccount?: boolean;
   onSaveCribLinkingStep?: (requestType: string) => Promise<unknown>;
@@ -128,5 +128,6 @@ export interface StepProps {
   isSavingFinancialStep?: boolean;
   isFinancialMaintenance?: boolean;
   isCompletedCustomer?: boolean;
+	isNewCustomer?: boolean;
   onUpdateCompletedCustomerContactDetails?: () => Promise<void>;
 }

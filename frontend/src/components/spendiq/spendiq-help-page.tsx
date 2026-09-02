@@ -1,11 +1,11 @@
 "use client";
 
-import { type ChangeEvent, useState } from "react";
+import { type ChangeEvent, useCallback, useEffect, useState } from "react";
 import ModuleHeader from "@/src/components/ui/module-header";
 import { Input } from "@/src/components/ui/input";
 import { Button } from "@/src/components/ui/button";
 import PopupModal from "@/src/components/ui/popup-modal";
-import { submitSupportRequest } from "@/src/api/support/support.service";
+import { getMySupportConversations, submitSupportRequest, type SupportConversationSummary } from "@/src/api/support/support.service";
 import { toApiError } from "@/src/api/client";
 
 const quickActions = [
@@ -30,17 +30,50 @@ const troubleshooterOptions = [
   { key: "edit", label: "Need to edit records" },
 ];
 
+function formatTicketDate(value: string): string {
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
+}
+
+const statusStyles: Record<string, string> = {
+  OPEN: "bg-amber-100 text-amber-700 dark:bg-amber-950/70 dark:text-amber-200",
+  IN_PROGRESS: "bg-sky-100 text-sky-700 dark:bg-sky-950/70 dark:text-sky-200",
+  CLOSED: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
+};
+
 export function SpendIqHelpPage() {
   const [search, setSearch] = useState("");
   const [openTicket, setOpenTicket] = useState(false);
   const [openFraud, setOpenFraud] = useState(false);
   const [choice, setChoice] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<SupportConversationSummary[]>([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+
+  const loadConversations = useCallback(async () => {
+    setIsLoadingConversations(true);
+    try {
+      const data = await getMySupportConversations();
+      setConversations(data.filter((conversation) => conversation.category === "SpendIQ"));
+    } catch {
+      setConversations([]);
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadConversations();
+  }, [loadConversations]);
+
+  const handleTicketClose = useCallback(() => {
+    setOpenTicket(false);
+    void loadConversations();
+  }, [loadConversations]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 p-4 md:p-8">
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Help & Support" name="You" role="Customer" className="mb-6" />
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-8 mb-6">
+      <main className="max-w-6xl mx-auto p-3 sm:p-6">
+        <div className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-5 sm:p-8 mb-6">
           <h1 className="text-2xl font-semibold text-[#063154] dark:text-slate-100">Help & Support</h1>
           <p className="mt-1 text-sm text-[#063154]/80 dark:text-slate-300">Get answers fast, track your requests, or contact support.</p>
           <div className="mt-6">
@@ -120,7 +153,30 @@ export function SpendIqHelpPage() {
 
         <div className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-6 mb-6">
           <h3 className="text-lg font-semibold text-[#063154] dark:text-slate-100">My Support Requests</h3>
-          <p className="mt-3 text-sm text-[#063154]/80 dark:text-slate-300">No recent tickets</p>
+          {isLoadingConversations ? (
+            <p className="mt-3 text-sm text-[#063154]/80 dark:text-slate-300">Loading tickets...</p>
+          ) : conversations.length === 0 ? (
+            <p className="mt-3 text-sm text-[#063154]/80 dark:text-slate-300">No recent tickets</p>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {conversations.map((conversation) => (
+                <div
+                  key={conversation.conversationId}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-[#E8E8E8] dark:border-slate-700 bg-white dark:bg-slate-800 p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-[#063154] dark:text-slate-100">{conversation.subject}</p>
+                    <p className="truncate text-xs text-[#063154]/70 dark:text-slate-400">
+                      {conversation.lastMessagePreview ?? "No messages yet"} · {formatTicketDate(conversation.lastMessageAt)}
+                    </p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${statusStyles[conversation.status] ?? statusStyles.OPEN}`}>
+                    {conversation.status.replace("_", " ")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="mt-4">
             <Button className="bg-[#2F9D94]" onClick={() => setOpenTicket(true)}>Create New Support Ticket</Button>
           </div>
@@ -141,7 +197,7 @@ export function SpendIqHelpPage() {
         </div>
 
         <PopupModal open={openTicket} onOpenChange={setOpenTicket} title="Create Support Ticket">
-          <TicketForm onClose={() => setOpenTicket(false)} />
+          <TicketForm onClose={handleTicketClose} />
         </PopupModal>
         <PopupModal open={openFraud} onOpenChange={setOpenFraud} title="Report Fraud">
           <FraudForm onClose={() => setOpenFraud(false)} />

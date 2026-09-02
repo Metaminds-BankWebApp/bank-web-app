@@ -28,12 +28,15 @@ export function Review({
    const totalCardLimit = formData.creditCards.reduce((total, card) => total + (parseFloat(card.limit) || 0), 0);
    const totalCardOutstanding = formData.creditCards.reduce((total, card) => total + (parseFloat(card.outstandingBalance) || 0), 0);
    const totalLiabilityAmount = formData.liabilities.reduce((total, item) => total + (parseFloat(item.monthlyAmount) || 0), 0);
+	const cribNotFound =
+		(formData.cribRequestStatus || "").trim().toUpperCase() === "FAILED" &&
+		(formData.cribReportStatus || "").trim().toUpperCase() === "FAILED";
 
    const handleSubmit = async () => {
       setErrorMessage("");
 
       try {
-        if (onCompleteCribReviewStep) {
+        if (isFinancialMaintenance && onCompleteCribReviewStep) {
           await onCompleteCribReviewStep();
         }
         onNext();
@@ -139,27 +142,20 @@ export function Review({
 
                <section className="rounded-xl border border-slate-100 bg-slate-50/70 p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                     <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">Final Checklist</h3>
+					 <h3 className="text-sm font-bold text-[#0d3b66] uppercase tracking-wide">CRIB Result</h3>
                      <button type="button" onClick={() => onEditStep?.(2)} className="text-[10px] font-bold text-[#3e9fd3] hover:underline uppercase transition-colors">Edit</button>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">CRIB Request</p>
-                        <p className="font-semibold text-slate-800 mt-1">{formData.cribRequestStatus || "PENDING"}</p>
-                     </div>
-                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">CRIB Report</p>
-                        <p className="font-semibold text-slate-800 mt-1">{formData.cribReportStatus || "NOT_READY"}</p>
-                     </div>
-                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">Missed Payments</p>
-                        <p className="font-semibold text-slate-800 mt-1">{formData.missedPaymentsLast12Months || 0}</p>
-                     </div>
-                     <div className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                        <p className="text-[10px] text-slate-400 uppercase font-bold">Summary Status</p>
-                        <p className="font-semibold text-slate-800 mt-1">Ready to submit</p>
-                     </div>
-                  </div>
+					{cribNotFound ? (
+						<div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+							<p className="font-semibold">Customer financial data was not found in CRIB.</p>
+							<p className="mt-1 text-xs">The financial snapshot and portfolio sections contain manually entered data only; it was not retrieved from CRIB.</p>
+						</div>
+					) : (
+						<div className="grid grid-cols-2 gap-3 text-sm">
+							<div className="rounded-lg border border-slate-200 bg-white px-3 py-2"><p className="text-[10px] text-slate-400 uppercase font-bold">CRIB Request</p><p className="font-semibold text-slate-800 mt-1">{formData.cribRequestStatus || "PENDING"}</p></div>
+							<div className="rounded-lg border border-slate-200 bg-white px-3 py-2"><p className="text-[10px] text-slate-400 uppercase font-bold">CRIB Report</p><p className="font-semibold text-slate-800 mt-1">{formData.cribReportStatus || "NOT_READY"}</p></div>
+						</div>
+					)}
                </section>
             </div>
       </div>
@@ -187,7 +183,7 @@ export function Review({
               className="gap-2 bg-[#3e9fd3] hover:bg-[#328ab8] text-white px-8 h-10 shadow-md shadow-blue-200"
               disabled={Boolean(isCompletingCribReviewStep)}
             >
-                {isFinancialMaintenance ? "Finalise Financial Update" : "Complete & Send Activation"} <ArrowRight size={16} />
+			  {isFinancialMaintenance ? "Finalise Financial Update" : "Continue to Account Creation"} <ArrowRight size={16} />
             </Button>
         </div>
       </div>

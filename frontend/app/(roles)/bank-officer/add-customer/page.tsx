@@ -54,9 +54,15 @@ import type { StepOneRegistrationRequest, StepOneUpdateRequest } from "@/src/typ
 import { ApiError } from "@/src/types/api-error";
 import { useToast } from "@/src/components/ui/toast";
 
-type StepOneConflictField = "nic" | "email" | "username" | "bankAccount";
+type StepOneConflictField = "nic" | "email" | "mobile" | "username" | "bankAccount";
 type StepOneFieldErrors = Partial<Record<StepOneConflictField, string>>;
 type UnknownRecord = Record<string, unknown>;
+
+type CompletedCustomerSummary = {
+   name: string;
+   nic: string;
+   bankCustomerId: number | null;
+};
 
 type CribPrefillData = {
    creditScore?: number;
@@ -397,32 +403,28 @@ function extractStepOneFieldErrors(error: ApiError): StepOneFieldErrors {
    const source = fieldErrors as Record<string, unknown>;
    const result: StepOneFieldErrors = {};
    if (typeof source.nic === "string") {
-      result.nic = source.nic;
+      result.nic = "This NIC is already registered.";
    }
    if (typeof source.email === "string") {
-      result.email = source.email;
+      result.email = "This email address is already registered.";
    }
+	if (typeof source.mobile === "string") {
+		result.mobile = "This mobile number is already registered.";
+	}
    if (typeof source.username === "string") {
-      result.username = source.username;
+      result.username = "This username is already in use.";
    }
    if (typeof source.bankAccount === "string") {
-      result.bankAccount = source.bankAccount;
+      result.bankAccount = "This bank account is already linked to a customer.";
    }
    if (typeof source.accountNumber === "string") {
-      result.bankAccount = source.accountNumber;
+      result.bankAccount = "This bank account is already linked to a customer.";
    }
 
    return result;
 }
 
 function buildDuplicateFieldMessage(fieldErrors: StepOneFieldErrors): string | null {
-   const labels: Record<StepOneConflictField, string> = {
-      nic: "NIC",
-      email: "Email",
-      username: "Username",
-      bankAccount: "Bank Account",
-   };
-
    const duplicateFields = (Object.keys(fieldErrors) as StepOneConflictField[]).filter(
       (field) => typeof fieldErrors[field] === "string" && Boolean(fieldErrors[field]?.trim())
    );
@@ -431,7 +433,9 @@ function buildDuplicateFieldMessage(fieldErrors: StepOneFieldErrors): string | n
       return null;
    }
 
-   return `Duplicate values found for: ${duplicateFields.map((field) => labels[field]).join(", ")}. Please use unique values.`;
+	return duplicateFields.length === 1
+		? "Please correct the highlighted field."
+		: "Please correct the highlighted fields.";
 }
 
 const generateCustomerId = () => `PC-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -499,6 +503,7 @@ export default function AddCustomerPage() {
    const { showToast } = useToast();
   const [step, setStep] = useState(1);
   const [isSuccess, setIsSuccess] = useState(false);
+	const [completedCustomer, setCompletedCustomer] = useState<CompletedCustomerSummary | null>(null);
   const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [generatedId, setGeneratedId] = useState("");
@@ -525,6 +530,7 @@ export default function AddCustomerPage() {
    const [liveSummaryError, setLiveSummaryError] = useState("");
    const [hasAutoLoadedNicEdit, setHasAutoLoadedNicEdit] = useState(false);
    const [isFinancialMaintenanceMode, setIsFinancialMaintenanceMode] = useState(false);
+	const [isNewCustomer, setIsNewCustomer] = useState(true);
    const customerFullName = `${formData.firstName} ${formData.lastName}`.trim();
 
    // Step-by-step onboarding screen for creating or continuing a bank-customer profile.
@@ -658,6 +664,7 @@ export default function AddCustomerPage() {
       { id: 5, label: "Credit Cards" },
       { id: 6, label: "Other Liabilities" },
       { id: 7, label: "Review & Submit" },
+	  ...(!isFinancialMaintenanceMode ? [{ id: 8, label: "Account Creation" }] : []),
   ];
    const currentStepLabel = steps.find((item) => item.id === step)?.label ?? "Summary";
 
@@ -676,6 +683,7 @@ export default function AddCustomerPage() {
       setHasExistingCustomerMatch(false);
       setCreatedBankCustomerId(null);
       setCustomerLookupError("");
+		setIsNewCustomer(true);
     }
     if (submitError) {
       setSubmitError("");
@@ -744,14 +752,16 @@ export default function AddCustomerPage() {
     }
   };
 
-  const handleReset = () => {
+  const clearWizardState = () => {
     setFormData(initialFormData);
     setStep(1);
-    setIsSuccess(false);
     setSubmitError("");
       setServerStepOneErrors({});
       setCreatedBankCustomerId(null);
       setHasExistingCustomerMatch(false);
+		setIsNewCustomer(true);
+		setIsFinancialMaintenanceMode(false);
+		setCustomerLookupError("");
       setEditingLoanIndex(null);
       setEditingLoanDraft(emptyLoanDraft);
       setEditingCardIndex(null);
@@ -760,6 +770,13 @@ export default function AddCustomerPage() {
       setEditingLiabilityDraft(emptyLiabilityDraft);
       setLiveSummaryError("");
       window.localStorage.removeItem(ADD_CUSTOMER_DRAFT_STORAGE_KEY);
+  };
+
+  const handleReset = () => {
+      clearWizardState();
+      setCompletedCustomer(null);
+      setGeneratedId("");
+      setIsSuccess(false);
   };
 
       // Convert current form fields into the backend format for income step.
@@ -999,6 +1016,7 @@ export default function AddCustomerPage() {
 		 const isCompletedCustomer = onboardingStatus === "COMPLETED";
 		 setCreatedBankCustomerId(prefill.bankCustomerId);
 		 setHasExistingCustomerMatch(true);
+		 setIsNewCustomer(false);
 		 setIsFinancialMaintenanceMode(isCompletedCustomer);
 		 setStep(isCompletedCustomer ? 1 : onboardingStepForStatus(onboardingStatus));
 
@@ -1057,7 +1075,9 @@ export default function AddCustomerPage() {
          if (error instanceof ApiError && error.status === 404) {
             setHasExistingCustomerMatch(false);
             setCreatedBankCustomerId(null);
-            setCustomerLookupError("Customer not found. Check the NIC and try again.");
+			setIsNewCustomer(true);
+			setFormData({ ...initialFormData, nic });
+			setCustomerLookupError("No existing customer found. Complete the details below to create a new customer.");
             return;
          }
          if (error instanceof ApiError) {
@@ -1176,8 +1196,8 @@ export default function AddCustomerPage() {
       setServerStepOneErrors({});
       try {
          const accountNumber = formData.bankAccount.replace(/\s+/g, "").trim();
-         const verification = await verifyBankAccount(accountNumber);
-         if (!verification.exists) {
+		 const verification = await verifyBankAccount(accountNumber);
+		 if (!verification.exists) {
             updateFormData({
                isAccountVerified: false,
                accountVerificationStatus: verification.status,
@@ -1188,11 +1208,7 @@ export default function AddCustomerPage() {
             throw new Error(message);
          }
 
-         updateFormData({
-            isAccountVerified: true,
-            accountVerificationStatus: verification.status,
-            accountVerificationMessage: `Account found. Status: ${verification.status}`,
-         });
+		 updateFormData({ isAccountVerified: true, accountVerificationStatus: verification.status, accountVerificationMessage: `Account found. Status: ${verification.status}` });
 
          let targetBankCustomerId = createdBankCustomerId;
          if (!targetBankCustomerId) {
@@ -1210,6 +1226,7 @@ export default function AddCustomerPage() {
             const response = await continueBankCustomerStepOne(mapStepOnePayload(formData));
             const customerIdentity = await getOwnedBankCustomerIdentityByUserId(response.userId);
             setCreatedBankCustomerId(customerIdentity.bankCustomerId);
+			setIsNewCustomer(true);
          }
 
          updateFormData({
@@ -1269,6 +1286,19 @@ export default function AddCustomerPage() {
          setIsCompletingCribReviewStep(false);
       }
    };
+
+	const completeDigitalBankingAccount = async () => {
+		const confirmation = {
+			name: customerFullName || "New Customer",
+			nic: formData.nic,
+			bankCustomerId: createdBankCustomerId,
+		};
+		await completeCribReviewStep();
+		setCompletedCustomer(confirmation);
+		clearWizardState();
+		setGeneratedId(generateCustomerId());
+		setIsSuccess(true);
+	};
 
 	const updateCompletedCustomerContactDetails = async () => {
 		if (!createdBankCustomerId) throw new Error("Select a completed customer first.");
@@ -2111,6 +2141,7 @@ export default function AddCustomerPage() {
                   serverStepOneErrors={serverStepOneErrors}
                   onClearServerStepOneError={clearServerStepOneError}
 				  isCompletedCustomer={isFinancialMaintenanceMode}
+				  isNewCustomer={isNewCustomer}
 				  onUpdateCompletedCustomerContactDetails={updateCompletedCustomerContactDetails}
                />
             );
@@ -2119,7 +2150,8 @@ export default function AddCustomerPage() {
       case 4: return <Loans {...props} />;
       case 5: return <CreditCards {...props} />;
       case 6: return <Liabilities {...props} />;
-      case 7: return <Review {...props} onCompleteCribReviewStep={completeCribReviewStep} onEditStep={setStep} isCompletingCribReviewStep={isCompletingCribReviewStep} isFinancialMaintenance={isFinancialMaintenanceMode} />;
+	  case 7: return <Review {...props} onCompleteCribReviewStep={completeCribReviewStep} onEditStep={setStep} isCompletingCribReviewStep={isCompletingCribReviewStep} isFinancialMaintenance={isFinancialMaintenanceMode} />;
+	  case 8: return <div className="rounded-xl border border-slate-100 bg-white p-8 shadow-sm space-y-6"><div><h2 className="text-xl font-bold text-[#0d3b66]">Create Digital Banking Account</h2><p className="mt-1 text-sm text-slate-500">This activates access to this application for the verified external bank account.</p></div><div className="rounded-lg border border-sky-100 bg-sky-50 p-4 text-sm text-slate-700">Verified bank account: <strong>{formData.bankAccount}</strong></div><div className="flex justify-between border-t pt-6"><button type="button" onClick={handleBack} className="text-sm font-semibold text-slate-600">Back</button><button type="button" onClick={() => void completeDigitalBankingAccount()} disabled={isCompletingCribReviewStep} className="rounded-md bg-[#3e9fd3] px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">{isCompletingCribReviewStep ? "Creating..." : "Create Digital Account & Send Activation"}</button></div></div>;
          default: return <PersonalDetails {...props} serverStepOneErrors={serverStepOneErrors} onClearServerStepOneError={clearServerStepOneError} />;
     }
   };
@@ -2135,10 +2167,10 @@ export default function AddCustomerPage() {
           {isSuccess ? (
              <div className="flex min-h-[calc(100vh-13rem)] items-center justify-center rounded-xl border border-slate-100 bg-white px-4 py-10 shadow-sm sm:px-8">
                 <SuccessView 
-                   customerName={customerFullName || "New Customer"}  
+                   customerName={completedCustomer?.name || "New Customer"}
                    generatedId={generatedId}
-                   customerNic={formData.nic}
-                   bankCustomerId={createdBankCustomerId}
+                   customerNic={completedCustomer?.nic || ""}
+                   bankCustomerId={completedCustomer?.bankCustomerId ?? null}
                    onReset={handleReset}
                 />
              </div>

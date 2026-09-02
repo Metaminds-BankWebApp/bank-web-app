@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { AlertTriangle, Pencil } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import { Dialog } from "@/src/components/ui/dialog";
@@ -155,6 +156,8 @@ const monthOptions = [
 
 export function SpendIqBudgetPage() {
   const { showToast } = useToast();
+  const router = useRouter();
+  const pathname = usePathname();
   const today = new Date();
   const lastBudgetWarningKeyRef = useRef("");
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
@@ -447,12 +450,21 @@ export function SpendIqBudgetPage() {
 
   const currentMonthLabel = monthOptions.find((item) => item.value === selectedMonth)?.label ?? "Selected";
 
+  function openCategoryTransactions(categoryName: string) {
+    const transactionsPath = pathname.endsWith("/budget")
+      ? pathname.replace(/\/budget$/, "/category/transactions")
+      : "/public-customer/spendiq/category/transactions";
+    const { fromDate, toDate } = monthBounds(selectedYear, selectedMonth);
+    const query = new URLSearchParams({ category: categoryName, fromDate, toDate });
+    router.push(`${transactionsPath}?${query.toString()}`);
+  }
+
   if (isLoading) {
     return <SpendIqLoadingPage />;
   }
 
   return (
-    <div className="p-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">
+    <div className="p-4 sm:p-6 lg:p-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Budget Management" />
 
@@ -604,9 +616,14 @@ export function SpendIqBudgetPage() {
                   className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-5 space-y-4 shadow-sm"
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-lg font-bold text-[#0b1a3a] dark:text-cyan-300 tracking-wide">
+                    <button
+                      type="button"
+                      onClick={() => openCategoryTransactions(row.categoryName)}
+                      className="text-left text-lg font-bold text-[#0b1a3a] dark:text-cyan-300 tracking-wide hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0a234c] dark:focus-visible:ring-sky-400 rounded"
+                      aria-label={`View ${row.categoryName} transactions`}
+                    >
                       {row.categoryName}
-                    </h3>
+                    </button>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${statusClass}`}>
                       {status}
                     </span>

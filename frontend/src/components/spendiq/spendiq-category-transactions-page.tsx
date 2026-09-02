@@ -85,7 +85,7 @@ export function SpendIqCategoryTransactionsPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Category Transactions" />
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-6 border border-transparent dark:border-slate-800">

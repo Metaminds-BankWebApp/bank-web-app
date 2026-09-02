@@ -163,13 +163,13 @@ export function SpendIqCategoryAnalysisPage() {
   }
 
   return (
-    <div className="p-8 space-y-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-8 bg-[#f4f6fb] dark:bg-slate-950 min-h-screen">
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Category Analysis" />
 
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-8 border border-transparent dark:border-slate-800">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-5 sm:p-8 border border-transparent dark:border-slate-800">
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <h2 className="text-xl font-bold text-[#0b1a3a] dark:text-cyan-300">Spending by Category (Top 5)</h2>
-          <div className="grid grid-cols-2 gap-3 lg:w-[420px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:w-[420px]">
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-slate-400">Month</label>
               <Select value={String(selectedMonth)} onValueChange={(value) => setSelectedMonth(Number(value))}>
