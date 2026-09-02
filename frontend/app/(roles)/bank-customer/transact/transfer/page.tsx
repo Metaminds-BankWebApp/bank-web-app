@@ -578,7 +578,7 @@ export default function Page() {
               <div className="space-y-2">
                 <Label>Beneficiary Name <span className="text-red-500">*</span></Label>
                 <Input
-                  placeholder="Beneficiary full name"
+                  placeholder="Registered beneficiary full name"
                   value={beneficiary}
                   onChange={(event) => handleBeneficiaryChange(event.target.value)}
                   aria-invalid={Boolean(formErrors.beneficiary)}

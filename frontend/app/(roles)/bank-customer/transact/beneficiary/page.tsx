@@ -166,7 +166,6 @@ export default function Page() {
                   aria-describedby="receiver-name-note"
                 />
                 <p id="receiver-name-note" className="text-sm text-muted-foreground">
-                  The receiver&apos;s account-holder name will be verified when you save.
                 </p>
               </div>
               <div className="space-y-2 sm:col-span-2">
