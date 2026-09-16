@@ -74,7 +74,7 @@ export function SpendIqHelpPage() {
       <ModuleHeader theme="spendiq" menuMode="feature-layout" title="Help & Support" name="You" role="Customer" className="mb-6" />
       <main className="max-w-6xl mx-auto p-3 sm:p-6">
         <div className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-5 sm:p-8 mb-6">
-          <h1 className="text-2xl font-semibold text-[#063154] dark:text-slate-100">Help & Support</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#063154] dark:text-slate-100">Help & Support</h1>
           <p className="mt-1 text-sm text-[#063154]/80 dark:text-slate-300">Get answers fast, track your requests, or contact support.</p>
           <div className="mt-6">
             <Input
@@ -101,7 +101,7 @@ export function SpendIqHelpPage() {
         </section>
 
         <section className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold text-[#063154] dark:text-slate-100">SpendIQ Help</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-[#063154] dark:text-slate-100">SpendIQ Help</h2>
           <p className="text-sm text-[#063154]/80 dark:text-slate-300 mt-1">Track and manage your spending effectively.</p>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -145,14 +145,14 @@ export function SpendIqHelpPage() {
         </section>
 
         <section className="rounded-[20px] bg-[#063154] text-white shadow-sm p-6 mb-6">
-          <h2 className="text-xl font-semibold">Contact us</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Contact us</h2>
           <p className="mt-1 text-sm text-white/80">Send a secure support request to the support team. We use your signed-in account details automatically.</p>
           <p className="mt-3 text-xs text-white/70">Do not include passwords, OTPs, card details, or full account numbers.</p>
           <Button className="mt-4 bg-[#2F9D94] hover:bg-[#27857e]" onClick={() => setOpenTicket(true)}>Send support request</Button>
         </section>
 
         <div className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-6 mb-6">
-          <h3 className="text-lg font-semibold text-[#063154] dark:text-slate-100">My Support Requests</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-[#063154] dark:text-slate-100">My Support Requests</h3>
           {isLoadingConversations ? (
             <p className="mt-3 text-sm text-[#063154]/80 dark:text-slate-300">Loading tickets...</p>
           ) : conversations.length === 0 ? (
@@ -183,7 +183,7 @@ export function SpendIqHelpPage() {
         </div>
 
         <section className="rounded-[20px] bg-[#F7F6F2] dark:bg-slate-900 border border-[#BCC5CC] dark:border-slate-700 shadow-sm p-6 mb-6">
-          <h3 className="text-lg font-semibold text-[#063154] dark:text-slate-100">Quick Feedback</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-[#063154] dark:text-slate-100">Quick Feedback</h3>
           <div className="mt-3 flex flex-col gap-3 md:flex-row md:items-center">
             <div className="flex gap-2">{[1, 2, 3, 4, 5].map((rating) => <button key={rating} className="px-3 py-1 bg-white dark:bg-slate-800 dark:text-slate-100 rounded-md">{rating}★</button>)}</div>
             <Input placeholder="Short message" className="bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700" />

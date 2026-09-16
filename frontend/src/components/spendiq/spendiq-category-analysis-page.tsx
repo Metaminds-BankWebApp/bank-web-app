@@ -168,7 +168,7 @@ export function SpendIqCategoryAnalysisPage() {
 
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-5 sm:p-8 border border-transparent dark:border-slate-800">
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <h2 className="text-xl font-bold text-[#0b1a3a] dark:text-cyan-300">Spending by Category (Top 5)</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-[#0b1a3a] dark:text-cyan-300">Spending by Category (Top 5)</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:w-[420px]">
             <div>
               <label className="text-xs font-medium text-gray-500 dark:text-slate-400">Month</label>
@@ -239,7 +239,7 @@ export function SpendIqCategoryAnalysisPage() {
               </div>
 
               <div>
-                <h2 className="text-lg font-bold text-gray-800 dark:text-slate-100">{formatMoney(row.amount)}</h2>
+                <h2 className="text-base sm:text-lg font-bold text-gray-800 dark:text-slate-100">{formatMoney(row.amount)}</h2>
                 <p className="text-xs text-gray-500 dark:text-slate-400">{row.percent}% of total expenses</p>
                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                   {row.expenses} expense{row.expenses > 1 ? "s" : ""}

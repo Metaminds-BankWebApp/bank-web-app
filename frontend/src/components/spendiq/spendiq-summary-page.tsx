@@ -237,7 +237,7 @@ function SummaryCard({
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-md space-y-2 border border-transparent dark:border-slate-800">
       <p className="text-sm text-gray-500 dark:text-slate-400">{title}</p>
-      <h2 className={`text-lg font-bold ${highlight === "green" ? "text-emerald-600" : highlight === "red" ? "text-red-500" : "text-slate-800 dark:text-slate-100"}`}>
+      <h2 className={`text-base sm:text-lg font-bold ${highlight === "green" ? "text-emerald-600" : highlight === "red" ? "text-red-500" : "text-slate-800 dark:text-slate-100"}`}>
         {value}
       </h2>
       <p className="text-xs text-gray-400 dark:text-slate-500">{subtitle}</p>

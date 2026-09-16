@@ -257,13 +257,13 @@ export default function ModuleHeader({
     <>
       <header
         className={cn(
-          "flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3 text-white shadow-sm sm:p-4",
+          "flex flex-nowrap items-center justify-between gap-2 rounded-2xl p-3 text-white shadow-sm sm:gap-3 sm:p-4",
           isFeatureLayoutHeader && "shrink-0",
           THEME_BG[theme],
           className
         )}
       >
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 shrink items-center gap-2 sm:gap-3">
           {canOpenMenu ? (
             <button
               type="button"
@@ -276,12 +276,12 @@ export default function ModuleHeader({
           ) : null}
 
           <div className="min-w-0">
-            <h2 className="truncate text-xl font-semibold leading-tight sm:text-2xl">{title}</h2>
+            <h2 className="truncate text-base font-semibold leading-tight sm:text-xl lg:text-2xl">{title}</h2>
             {subtitle ? <p className="truncate text-sm text-white/70">{subtitle}</p> : null}
           </div>
         </div>
 
-        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <div className="relative" ref={notificationsRef}>
             <button
               type="button"
